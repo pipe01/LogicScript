@@ -11,7 +11,7 @@ namespace LogicScript.Parsing.Structures
         public Case(InputSpec inputSpec, BitsValue inputsValue, Statement[]? statements)
         {
             this.InputSpec = inputSpec ?? throw new ArgumentNullException(nameof(inputSpec));
-            this.InputsValue = inputsValue ?? throw new ArgumentNullException(nameof(inputsValue));
+            this.InputsValue = inputsValue;
             this.Statements = statements;
         }
     }

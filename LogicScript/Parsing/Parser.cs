@@ -212,21 +212,21 @@ namespace LogicScript.Parsing
 
                 Take(LexemeKind.RightParenthesis);
 
-                return new CompoundBitsValue(values.ToArray());
+                return new BitsValue(values.ToArray());
             }
             else
             {
                 if (!Take(LexemeKind.Number, out var n))
                 {
                     Advance();
-                    return new LiteralBitsValue(0);
+                    return new BitsValue(0);
                 }
 
                 int @base = 2;
                 if (Take(LexemeKind.Apostrophe, false))
                     @base = 10;
 
-                return new LiteralBitsValue(Convert.ToUInt32(n.Content, @base));
+                return new BitsValue(Convert.ToUInt32(n.Content, @base));
             }
         }
 

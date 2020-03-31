@@ -2,8 +2,8 @@
 
 namespace LogicScript.Parsing.Structures
 {
-    internal class Script
+    public class Script
     {
-        public IList<Case> Cases { get; } = new List<Case>();
+        internal IList<Case> Cases { get; } = new List<Case>();
     }
 }
