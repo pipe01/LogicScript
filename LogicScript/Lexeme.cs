@@ -15,7 +15,7 @@ namespace LogicScript
         LeftParenthesis,
         RightParenthesis,
 
-        Dot,
+        Apostrophe,
         Comma,
         Equals
     }
@@ -23,10 +23,10 @@ namespace LogicScript
     public readonly struct Lexeme
     {
         public readonly LexemeKind Kind;
-        public readonly string Content;
+        public readonly string? Content;
         public readonly int Line;
 
-        public Lexeme(LexemeKind kind, string content, int line)
+        public Lexeme(LexemeKind kind, string? content, int line)
         {
             this.Kind = kind;
             this.Content = content;

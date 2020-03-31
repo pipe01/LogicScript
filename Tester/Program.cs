@@ -1,4 +1,5 @@
 ﻿using LogicScript;
+using LogicScript.Parsing;
 using System;
 using System.Linq;
 
@@ -8,10 +9,11 @@ namespace Tester
     {
         static void Main(string[] args)
         {
-            var l = new Lexer(@"when (in[2], in[1]) = (1, 0)
+            var l = new Lexer(@"when (in[2], in[1]) = asd
 	out[3] = 1");
 
             var ls = l.Lex().ToArray();
+            var a = new Parser(ls).TakeCase();
         }
     }
 }

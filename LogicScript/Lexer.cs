@@ -51,7 +51,7 @@ namespace LogicScript
             return true;
         }
 
-        private Lexeme Lexeme(LexemeKind kind, string content) => new Lexeme(kind, content, Line);
+        private Lexeme Lexeme(LexemeKind kind, string? content) => new Lexeme(kind, content, Line);
 
         private Lexeme Lexeme(LexemeKind kind) => Lexeme(kind, Builder.ToString());
 
@@ -127,8 +127,8 @@ namespace LogicScript
                     return (true, Lexeme(LexemeKind.Equals));
                 case ',':
                     return (true, Lexeme(LexemeKind.Comma));
-                case '.':
-                    return (true, Lexeme(LexemeKind.Dot));
+                case '\'':
+                    return (true, Lexeme(LexemeKind.Apostrophe));
                 case '[':
                     return (true, Lexeme(LexemeKind.LeftBracket));
                 case ']':
