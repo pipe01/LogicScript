@@ -16,6 +16,12 @@ namespace LogicScript.Parsing.Structures
 
         public BitsValue(uint number)
         {
+            if (number == 0)
+            {
+                this.Values = new[] { new LiteralBitValue(false) };
+                return;
+            }
+
             int size = (int)Math.Log(number, 2) + 1;
 
             var b = new BitValue[size];

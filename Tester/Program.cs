@@ -29,13 +29,13 @@ end
             var ls = l.Lex().ToArray();
             var a = new Parser(ls, errors).Parse();
 
-            var engine = new LogicEngine(a);
-            engine.DoUpdate(new Machine());
-
             foreach (var item in errors)
             {
                 Console.WriteLine(item);
             }
+
+            var engine = new LogicEngine(a);
+            engine.DoUpdate(new Machine());
         }
     }
 
@@ -48,12 +48,6 @@ end
             var v = Counter++ % 2 == 0;
             Console.WriteLine($"Read input {i}: {v}");
             return v;
-        }
-
-        public Memory<bool> GetInputs()
-        {
-            Console.WriteLine("Get all inputs");
-            throw new NotImplementedException();
         }
 
         public void SetOutput(int i, bool on)

@@ -22,7 +22,7 @@ namespace LogicScript.Parsing
             this.Errors = errors;
         }
 
-        public Script Parse()
+        public Script? Parse()
         {
             var script = new Script();
 
@@ -39,6 +39,9 @@ namespace LogicScript.Parsing
                         break;
                 }
             }
+
+            if (Errors.Count > 0)
+                return null;
 
             return script;
         }
@@ -169,6 +172,7 @@ namespace LogicScript.Parsing
 
             var value = TakeBitsValue();
 
+            SkipWhitespaces();
             Take(LexemeKind.NewLine);
 
             return new OutputSetStatement(output, value);
