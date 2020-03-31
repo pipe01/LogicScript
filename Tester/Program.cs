@@ -13,7 +13,7 @@ namespace Tester
             var l = new Lexer(
 @"when (in[2], in[1]) = 1010
 	out[3] = 1
-	out = 123'
+	out = 123' #nice
 	out = (1, 0, in[2])
 end
 

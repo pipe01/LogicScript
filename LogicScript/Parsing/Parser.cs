@@ -37,11 +37,6 @@ namespace LogicScript.Parsing
                     case LexemeKind.NewLine:
                         Advance();
                         break;
-                    case LexemeKind.Hash:
-                        while (Current.Kind != LexemeKind.NewLine)
-                            Advance();
-
-                        break;
                 }
             }
 

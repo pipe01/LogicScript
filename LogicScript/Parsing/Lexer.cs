@@ -16,6 +16,7 @@ namespace LogicScript.Parsing
         private bool IsLetter => char.IsLetter(Current);
         private bool IsWhitespace => Current == ' ' || Current == '\t';
         private bool IsNewLine => Current == '\n';
+        private bool IsComment => Current == '#';
 
         private readonly StringBuilder Builder = new StringBuilder();
         private readonly string Text;
@@ -31,7 +32,8 @@ namespace LogicScript.Parsing
         {
             while (TakeLexeme(out var lexeme))
             {
-                yield return lexeme;
+                if (lexeme != null)
+                    yield return lexeme.Value;
             }
 
             if (!IsEOF)
@@ -57,7 +59,7 @@ namespace LogicScript.Parsing
 
         private Lexeme Lexeme(LexemeKind kind) => Lexeme(kind, Builder.ToString());
 
-        private bool TakeLexeme(out Lexeme lexeme)
+        private bool TakeLexeme(out Lexeme? lexeme)
         {
             if (IsEOF)
             {
@@ -84,6 +86,13 @@ namespace LogicScript.Parsing
 
                 Line++;
                 Column = 0;
+            }
+            else if (IsComment)
+            {
+                while (Current != '\n')
+                    Advance();
+
+                lexeme = null;
             }
             else
             {
@@ -145,8 +154,6 @@ namespace LogicScript.Parsing
                     return (true, Lexeme(LexemeKind.LeftParenthesis));
                 case ')':
                     return (true, Lexeme(LexemeKind.RightParenthesis));
-                case '#':
-                    return (true, Lexeme(LexemeKind.Hash));
             }
 
             return (false, default);
