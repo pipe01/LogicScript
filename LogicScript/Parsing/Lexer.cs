@@ -8,6 +8,7 @@ namespace LogicScript.Parsing
     {
         private int Index;
         private int Line;
+        private int Column;
         private char Current;
 
         private bool IsEOF => Index == Text.Length;
@@ -42,6 +43,7 @@ namespace LogicScript.Parsing
         private bool Advance()
         {
             Index++;
+            Column++;
 
             if (Index < Text.Length)
                 Current = Text[Index];
@@ -51,7 +53,7 @@ namespace LogicScript.Parsing
             return true;
         }
 
-        private Lexeme Lexeme(LexemeKind kind, string? content) => new Lexeme(kind, content, Line);
+        private Lexeme Lexeme(LexemeKind kind, string? content) => new Lexeme(kind, content, new SourceLocation(Line, Column - (content?.Length ?? 0)));
 
         private Lexeme Lexeme(LexemeKind kind) => Lexeme(kind, Builder.ToString());
 
@@ -81,6 +83,7 @@ namespace LogicScript.Parsing
                 Advance();
 
                 Line++;
+                Column = 0;
             }
             else
             {
@@ -142,6 +145,8 @@ namespace LogicScript.Parsing
                     return (true, Lexeme(LexemeKind.LeftParenthesis));
                 case ')':
                     return (true, Lexeme(LexemeKind.RightParenthesis));
+                case '#':
+                    return (true, Lexeme(LexemeKind.Hash));
             }
 
             return (false, default);

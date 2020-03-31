@@ -11,11 +11,47 @@ namespace LogicScript.Parsing
         private int Index;
         private ref Lexeme Current => ref Lexemes[Index];
 
-        private readonly Lexeme[] Lexemes;
+        private bool IsEOF => Current.Kind == LexemeKind.EOF;
 
-        public Parser(Lexeme[] lexemes)
+        private readonly Lexeme[] Lexemes;
+        private readonly ErrorSink Errors;
+
+        public Parser(Lexeme[] lexemes, ErrorSink errors)
         {
             this.Lexemes = lexemes;
+            this.Errors = errors;
+        }
+
+        public Script Parse()
+        {
+            var script = new Script();
+
+            while (!IsEOF)
+            {
+                switch (Current.Kind)
+                {
+                    case LexemeKind.Keyword when Current.Content == "when":
+                        script.Cases.Add(TakeCase());
+                        break;
+                    case LexemeKind.Whitespace:
+                    case LexemeKind.NewLine:
+                        Advance();
+                        break;
+                    case LexemeKind.Hash:
+                        while (Current.Kind != LexemeKind.NewLine)
+                            Advance();
+
+                        break;
+                }
+            }
+
+            return script;
+        }
+
+        [DebuggerStepThrough]
+        private void Error(string msg)
+        {
+            Errors.AddError(Current.Location, msg);
         }
 
         [DebuggerStepThrough]
@@ -29,12 +65,32 @@ namespace LogicScript.Parsing
         }
 
         [DebuggerStepThrough]
-        private bool TakeKeyword(string keyword, bool @throw = true)
+        private bool TakeKeyword(string keyword, bool error = true) => TakeKeyword(keyword, out _, error);
+
+        [DebuggerStepThrough]
+        private bool TakeKeyword(string keyword, out Lexeme lexeme, bool error = true)
         {
             if (Current.Kind != LexemeKind.Keyword || Current.Content != keyword)
             {
-                if (@throw)
-                    throw new Exception();
+                if (error)
+                    Error($"Expected '{keyword}', {Current.Kind} found");
+
+                lexeme = default;
+                return false;
+            }
+
+            lexeme = Current;
+            Advance();
+            return true;
+        }
+
+        [DebuggerStepThrough]
+        private bool Take(LexemeKind kind, bool error = true)
+        {
+            if (Current.Kind != kind)
+            {
+                if (error)
+                    Error($"expected '{kind}', {Current.Kind} found");
 
                 return false;
             }
@@ -44,27 +100,12 @@ namespace LogicScript.Parsing
         }
 
         [DebuggerStepThrough]
-        private bool Take(LexemeKind kind, bool @throw = true)
+        private bool Take(LexemeKind kind, out Lexeme lexeme, bool error = true, string? expected = null)
         {
             if (Current.Kind != kind)
             {
-                if (@throw)
-                    throw new Exception();
-
-                return false;
-            }
-
-            Advance();
-            return true;
-        }
-
-        [DebuggerStepThrough]
-        private bool Take(LexemeKind kind, out Lexeme lexeme, bool @throw = true, string? expected = null)
-        {
-            if (Current.Kind != kind)
-            {
-                if (@throw)
-                    throw new Exception($"Expected {expected ?? kind.ToString()}, found {Current.Kind}");
+                if (error)
+                    Error($"expected {expected ?? kind.ToString()}, found {Current.Kind}");
 
                 lexeme = default;
                 return false;
@@ -87,7 +128,7 @@ namespace LogicScript.Parsing
 
         public Case TakeCase()
         {
-            TakeKeyword("when");
+            TakeKeyword("when", out var startLexeme);
             SkipWhitespaces();
 
             var inputSpec = TakeInputSpec();
@@ -103,10 +144,20 @@ namespace LogicScript.Parsing
 
             var stmts = new List<Statement>();
 
-            do
+            bool foundEnd = false;
+            while (!IsEOF)
             {
                 stmts.Add(TakeStatement());
-            } while (!TakeKeyword("end", false));
+
+                if (TakeKeyword("end", error: false))
+                {
+                    foundEnd = true;
+                    break;
+                }
+            }
+
+            if (!foundEnd)
+                Error($"Expected 'end' keyword to close case starting at {startLexeme.Location}");
 
             return new Case(inputSpec, inputsValue, stmts.ToArray());
         }
@@ -130,7 +181,7 @@ namespace LogicScript.Parsing
 
         private InputSpec TakeInputSpec()
         {
-            if (TakeKeyword("in", @throw: false))
+            if (TakeKeyword("in", error: false))
                 return new WholeInputSpec();
 
             Take(LexemeKind.LeftParenthesis);
@@ -149,7 +200,7 @@ namespace LogicScript.Parsing
 
         private BitsValue TakeBitsValue()
         {
-            if (Take(LexemeKind.LeftParenthesis, @throw: false))
+            if (Take(LexemeKind.LeftParenthesis, error: false))
             {
                 var values = new List<BitValue>();
 
@@ -165,7 +216,11 @@ namespace LogicScript.Parsing
             }
             else
             {
-                Take(LexemeKind.Number, out var n);
+                if (!Take(LexemeKind.Number, out var n))
+                {
+                    Advance();
+                    return new LiteralBitsValue(0);
+                }
 
                 int @base = 2;
                 if (Take(LexemeKind.Apostrophe, false))
@@ -180,7 +235,7 @@ namespace LogicScript.Parsing
             if (Take(LexemeKind.Number, out var n, false))
             {
                 if (n.Content?.Length != 1 || (n.Content != "1" && n.Content != "0"))
-                    throw new Exception("Expected bit value (0 or 1)");
+                    Error("expected bit value (0 or 1)");
 
                 return new LiteralBitValue(n.Content == "1");
             }

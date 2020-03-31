@@ -18,20 +18,21 @@ namespace LogicScript.Parsing
 
         Apostrophe,
         Comma,
-        Equals
+        Equals,
+        Hash,
     }
 
     public readonly struct Lexeme
     {
         public readonly LexemeKind Kind;
         public readonly string? Content;
-        public readonly int Line;
+        public readonly SourceLocation Location;
 
-        public Lexeme(LexemeKind kind, string? content, int line)
+        public Lexeme(LexemeKind kind, string? content, SourceLocation location)
         {
             this.Kind = kind;
             this.Content = content;
-            this.Line = line;
+            this.Location = location;
         }
 
         public override string ToString() => Kind.ToString();
