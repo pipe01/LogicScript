@@ -1,6 +1,7 @@
 ﻿using LogicScript.Parsing.Structures;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Globalization;
 
 namespace LogicScript.Parsing
@@ -17,6 +18,7 @@ namespace LogicScript.Parsing
             this.Lexemes = lexemes;
         }
 
+        [DebuggerStepThrough]
         private bool Advance()
         {
             if (Index == Lexemes.Length - 1)
@@ -26,6 +28,7 @@ namespace LogicScript.Parsing
             return true;
         }
 
+        [DebuggerStepThrough]
         private bool TakeKeyword(string keyword, bool @throw = true)
         {
             if (Current.Kind != LexemeKind.Keyword || Current.Content != keyword)
@@ -40,6 +43,7 @@ namespace LogicScript.Parsing
             return true;
         }
 
+        [DebuggerStepThrough]
         private bool Take(LexemeKind kind, bool @throw = true)
         {
             if (Current.Kind != kind)
@@ -54,6 +58,7 @@ namespace LogicScript.Parsing
             return true;
         }
 
+        [DebuggerStepThrough]
         private bool Take(LexemeKind kind, out Lexeme lexeme, bool @throw = true, string? expected = null)
         {
             if (Current.Kind != kind)
@@ -70,6 +75,7 @@ namespace LogicScript.Parsing
             return true;
         }
 
+        [DebuggerStepThrough]
         private void SkipWhitespaces(bool newlines = false)
         {
             while (Current.Kind == LexemeKind.Whitespace || (Current.Kind == LexemeKind.NewLine && newlines))
@@ -89,7 +95,7 @@ namespace LogicScript.Parsing
             Take(LexemeKind.Equals);
             SkipWhitespaces();
 
-            var inputValSpec = TakeInputValSpec();
+            var inputsValue = TakeBitsValue();
 
             SkipWhitespaces();
             Take(LexemeKind.NewLine);
@@ -97,12 +103,12 @@ namespace LogicScript.Parsing
             return null;
         }
 
-        private Statement TakeStatement()
-        {
-            SkipWhitespaces();
+        //private Statement TakeStatement()
+        //{
+        //    SkipWhitespaces();
 
 
-        }
+        //}
 
         private InputSpec TakeInputSpec()
         {
@@ -123,32 +129,21 @@ namespace LogicScript.Parsing
             return new CompoundInputSpec(inputs.ToArray());
         }
 
-        private InputValSpec TakeInputValSpec()
-        {
-            return new InputValSpec(TakeBitValue());
-        }
-
-        private BitValue TakeBitValue()
+        private BitsValue TakeBitsValue()
         {
             if (Take(LexemeKind.LeftParenthesis, @throw: false))
             {
-                var values = new List<bool>();
+                var values = new List<BitValue>();
 
                 do
                 {
                     SkipWhitespaces();
-                    Take(LexemeKind.Number, out var n);
-
-                    if (n.Content?.Length != 1 || (n.Content != "1" && n.Content != "0"))
-                        throw new Exception("Expected bit value (0 or 1)");
-
-                    values.Add(n.Content == "1");
-
+                    values.Add(TakeBitValue());
                 } while (Take(LexemeKind.Comma, false));
 
                 Take(LexemeKind.RightParenthesis);
 
-                return new LiteralBitValue(values.ToArray());
+                return new CompoundBitsValue(values.ToArray());
             }
             else
             {
@@ -158,7 +153,22 @@ namespace LogicScript.Parsing
                 if (Take(LexemeKind.Apostrophe, false))
                     @base = 10;
 
-                return new LiteralBitValue(Convert.ToUInt64(n.Content, @base));
+                return new LiteralBitsValue(Convert.ToUInt32(n.Content, @base));
+            }
+        }
+
+        private BitValue TakeBitValue()
+        {
+            if (Take(LexemeKind.Number, out var n, false))
+            {
+                if (n.Content?.Length != 1 || (n.Content != "1" && n.Content != "0"))
+                    throw new Exception("Expected bit value (0 or 1)");
+
+                return new LiteralBitValue(n.Content == "1");
+            }
+            else
+            {
+                return new InputBitValue(TakeInput());
             }
         }
 

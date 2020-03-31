@@ -9,7 +9,7 @@ namespace Tester
     {
         static void Main(string[] args)
         {
-            var l = new Lexer(@"when (in[2], in[1]) = asd
+            var l = new Lexer(@"when (in[2], in[1]) = (1, in[2], 0)
 	out[3] = 1");
 
             var ls = l.Lex().ToArray();

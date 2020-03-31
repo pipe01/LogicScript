@@ -5,13 +5,13 @@ namespace LogicScript.Parsing.Structures
     internal class Case
     {
         public InputSpec InputSpec { get; }
-        public InputValSpec InputValSpec { get; }
+        public BitsValue InputsValue { get; }
         public Statement[]? Statements { get; }
 
-        public Case(InputSpec inputSpec, InputValSpec inputValSpec, Statement[]? statements)
+        public Case(InputSpec inputSpec, BitsValue inputsValue, Statement[]? statements)
         {
             this.InputSpec = inputSpec ?? throw new ArgumentNullException(nameof(inputSpec));
-            this.InputValSpec = inputValSpec ?? throw new ArgumentNullException(nameof(inputValSpec));
+            this.InputsValue = inputsValue ?? throw new ArgumentNullException(nameof(inputsValue));
             this.Statements = statements;
         }
     }
