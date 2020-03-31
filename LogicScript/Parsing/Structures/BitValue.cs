@@ -12,6 +12,8 @@
         {
             this.Value = value;
         }
+
+        public override string ToString() => Value ? "1" : "0";
     }
 
     internal class InputBitValue : BitValue
@@ -22,5 +24,7 @@
         {
             this.InputIndex = inputIndex;
         }
+
+        public override string ToString() => $"in[{InputIndex}]";
     }
 }

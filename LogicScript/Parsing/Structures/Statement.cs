@@ -1,8 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace LogicScript.Parsing.Structures
 {
@@ -12,6 +8,15 @@ namespace LogicScript.Parsing.Structures
 
     internal class OutputSetStatement : Statement
     {
+        public Output Output { get; }
+        public BitsValue Value { get; }
 
+        public OutputSetStatement(Output output, BitsValue value)
+        {
+            this.Output = output ?? throw new ArgumentNullException(nameof(output));
+            this.Value = value ?? throw new ArgumentNullException(nameof(value));
+        }
+
+        public override string ToString() => $"{Output} = {Value}";
     }
 }

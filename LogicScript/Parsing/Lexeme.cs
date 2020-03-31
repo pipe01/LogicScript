@@ -1,11 +1,12 @@
 ﻿using System;
 
-namespace LogicScript
+namespace LogicScript.Parsing
 {
     public enum LexemeKind
     {
         Whitespace,
         NewLine,
+        EOF,
 
         Number,
         Keyword,

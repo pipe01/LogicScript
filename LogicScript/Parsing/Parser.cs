@@ -80,7 +80,8 @@ namespace LogicScript.Parsing
         {
             while (Current.Kind == LexemeKind.Whitespace || (Current.Kind == LexemeKind.NewLine && newlines))
             {
-                Advance();
+                if (!Advance())
+                    return;
             }
         }
 
@@ -100,15 +101,32 @@ namespace LogicScript.Parsing
             SkipWhitespaces();
             Take(LexemeKind.NewLine);
 
-            return null;
+            var stmts = new List<Statement>();
+
+            do
+            {
+                stmts.Add(TakeStatement());
+            } while (!TakeKeyword("end", false));
+
+            return new Case(inputSpec, inputsValue, stmts.ToArray());
         }
 
-        //private Statement TakeStatement()
-        //{
-        //    SkipWhitespaces();
+        private Statement TakeStatement()
+        {
+            SkipWhitespaces();
 
+            var output = TakeOutput();
 
-        //}
+            SkipWhitespaces();
+            Take(LexemeKind.Equals);
+            SkipWhitespaces();
+
+            var value = TakeBitsValue();
+
+            Take(LexemeKind.NewLine);
+
+            return new OutputSetStatement(output, value);
+        }
 
         private InputSpec TakeInputSpec()
         {
@@ -170,6 +188,21 @@ namespace LogicScript.Parsing
             {
                 return new InputBitValue(TakeInput());
             }
+        }
+
+        private Output TakeOutput()
+        {
+            TakeKeyword("out");
+
+            if (Take(LexemeKind.LeftBracket, false))
+            {
+                Take(LexemeKind.Number, out var numLexeme);
+                Take(LexemeKind.RightBracket);
+
+                return new Output(int.Parse(numLexeme.Content));
+            }
+
+            return new Output(null);
         }
 
         private int TakeInput()

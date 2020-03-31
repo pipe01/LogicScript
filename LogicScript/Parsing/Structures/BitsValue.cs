@@ -14,6 +14,8 @@ namespace LogicScript.Parsing.Structures
         {
             this.Number = number;
         }
+
+        public override string ToString() => $"{Number}'";
     }
 
     internal class CompoundBitsValue : BitsValue
@@ -24,5 +26,7 @@ namespace LogicScript.Parsing.Structures
         {
             this.Values = values ?? throw new ArgumentNullException(nameof(values));
         }
+
+        public override string ToString() => "(" + string.Join(", ", (object[])Values) + ")";
     }
 }

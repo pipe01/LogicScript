@@ -1,9 +1,8 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Text;
 
-namespace LogicScript
+namespace LogicScript.Parsing
 {
     public class Lexer
     {
@@ -11,7 +10,7 @@ namespace LogicScript
         private int Line;
         private char Current;
 
-        private bool IsEOF => Index == Text.Length - 1;
+        private bool IsEOF => Index == Text.Length;
         private bool IsDigit => char.IsDigit(Current);
         private bool IsLetter => char.IsLetter(Current);
         private bool IsWhitespace => Current == ' ' || Current == '\t';
@@ -29,24 +28,25 @@ namespace LogicScript
 
         public IEnumerable<Lexeme> Lex()
         {
-            while (!IsEOF && TakeLexeme(out var lexeme))
+            while (TakeLexeme(out var lexeme))
             {
                 yield return lexeme;
-
-                //Advance();
             }
 
             if (!IsEOF)
                 throw new Exception($"Invalid character found: {Current}");
+
+            yield return Lexeme(LexemeKind.EOF, null);
         }
 
         private bool Advance()
         {
-            if (IsEOF)
-                return false;
-
             Index++;
-            Current = Text[Index];
+
+            if (Index < Text.Length)
+                Current = Text[Index];
+            else
+                return false;
 
             return true;
         }
@@ -57,7 +57,12 @@ namespace LogicScript
 
         private bool TakeLexeme(out Lexeme lexeme)
         {
-            if (IsDigit)
+            if (IsEOF)
+            {
+                lexeme = default;
+                return false;
+            }
+            else if (IsDigit)
             {
                 lexeme = TakeNumberOrDigit();
             }

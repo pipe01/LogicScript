@@ -1,7 +1,7 @@
 ﻿case = "when", ws, inputs_spec, ws, "=", ws, bits_value, [ ws ], nl, { statement };
 
 statement = [ ws ], case_output;
-case_output = output, ws, "=", ws, number;
+case_output = output, ws, "=", ws, bits_value;
 
 output = "out", [ "[", number_dec, "]" ];
 input = "in", "[", number_dec, "]";
@@ -9,7 +9,7 @@ input = "in", "[", number_dec, "]";
 inputs_spec = "in"
 	| "(" { input, ",", ws } ")";
 
-bits_value = number_bin
+bits_value = number
 	| "(", { bit_value, ",", ws }, ")"
 
 bit_value = bit | input;
@@ -18,7 +18,7 @@ bit = "0" | "1";
 digit = "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9";
 number_dec = { digit };
 number_bin = { bit };
-number = ( number_dec, [ "'" ] ) | number_bin;
+number = ( number_dec, "'" ) | number_bin;
 
 ws = one_ws, { one_ws };
 one_ws = " " | "\t";
