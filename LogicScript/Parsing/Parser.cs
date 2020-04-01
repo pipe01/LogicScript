@@ -229,6 +229,9 @@ namespace LogicScript.Parsing
 
                 Take(LexemeKind.RightParenthesis);
 
+                if (values.Count == 1)
+                    return values[0];
+
                 return new ListExpression(values.ToArray(), par.Location);
             }
             else if (Peek(LexemeKind.Keyword, "in"))
