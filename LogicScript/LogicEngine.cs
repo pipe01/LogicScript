@@ -26,24 +26,34 @@ namespace LogicScript
 
         private static void UpdateCase(IMachine machine, Case c)
         {
-            if (c.Statements != null
-                && c.InputSpec is CompoundInputSpec inputSpec
-                && AreInputsMatched(machine, inputSpec.Indices, c.InputsValue.Values))
+            if (c.Statements != null)
             {
-                foreach (var stmt in c.Statements)
+                if (c.InputSpec is CompoundInputSpec inputSpec)
                 {
-                    RunStatement(machine, stmt);
+                    if (AreInputsMatched(machine, c.InputsValue.Values, inputSpec.Indices))
+                        RunStatements(machine, c.Statements);
+                }
+                else if (c.InputSpec is WholeInputSpec)
+                {
+                    if (c.InputsValue.Values.Length != machine.InputCount)
+                        throw new LogicEngineException("Mismatched input count", c);
+
+                    if (AreInputsMatched(machine, c.InputsValue.Values))
+                        RunStatements(machine, c.Statements);
                 }
             }
         }
 
-        private static bool AreInputsMatched(IMachine machine, int[] inputIndices, BitValue[] values)
+        private static bool AreInputsMatched(IMachine machine, BitExpression[] values, int[]? inputIndices = null)
         {
             bool match = true;
+            bool wholeInput = inputIndices == null;
 
-            for (int i = 0; i < inputIndices.Length; i++)
+            int size = wholeInput ? machine.InputCount : inputIndices!.Length;
+
+            for (int i = 0; i < size; i++)
             {
-                bool inputValue = machine.GetInput(inputIndices[i]);
+                bool inputValue = machine.GetInput(wholeInput ? i : inputIndices![i]);
                 bool requiredValue = GetBitValue(machine, values[i]);
 
                 if (inputValue != requiredValue)
@@ -56,35 +66,49 @@ namespace LogicScript
             return match;
         }
 
+        private static void RunStatements(IMachine machine, IEnumerable<Statement> statements)
+        {
+            foreach (var stmt in statements)
+            {
+                RunStatement(machine, stmt);
+            }
+        }
+
         private static void RunStatement(IMachine machine, Statement stmt)
         {
             if (stmt is OutputSetStatement outset)
             {
                 if (outset.Output.Index == null)
                 {
-                    Span<bool> values = stackalloc bool[outset.Value.Values.Length];
+                    if (!(outset.Value is BitsValue bits))
+                        throw new LogicEngineException("Expected bits value", stmt);
 
-                    for (int i = 0; i < outset.Value.Values.Length; i++)
+                    Span<bool> values = stackalloc bool[bits.Values.Length];
+
+                    for (int i = 0; i < bits.Values.Length; i++)
                     {
-                        values[i] = GetBitValue(machine, outset.Value.Values[i]);
+                        values[i] = GetBitValue(machine, bits.Values[i]);
                     }
 
                     machine.SetOutputs(values);
                 }
                 else
                 {
-                    machine.SetOutput(outset.Output.Index.Value, GetBitValue(machine, outset.Value.Values[0]));
+                    if (!(outset.Value is BitExpression bit))
+                        throw new LogicEngineException("Expected bit value", stmt);
+
+                    machine.SetOutput(outset.Output.Index.Value, GetBitValue(machine, bit));
                 }
             }
         }
 
-        private static bool GetBitValue(IMachine machine, BitValue bit)
+        private static bool GetBitValue(IMachine machine, BitExpression bit)
         {
-            if (bit is LiteralBitValue l)
+            if (bit is LiteralBitExpression l)
             {
                 return l.Value;
             }
-            else if (bit is InputBitValue i)
+            else if (bit is InputBitExpression i)
             {
                 return machine.GetInput(i.InputIndex);
             }

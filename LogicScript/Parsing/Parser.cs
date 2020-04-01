@@ -135,7 +135,10 @@ namespace LogicScript.Parsing
             Take(LexemeKind.Equals);
             SkipWhitespaces();
 
-            var inputsValue = TakeBitsValue();
+            var inputsValue = TakeExpression();
+
+            if (inputSpec is CompoundInputSpec comp && inputsValue.Values.Length != comp.Indices.Length)
+                Error("mismatched input count");
 
             SkipWhitespaces();
             Take(LexemeKind.NewLine);
@@ -155,27 +158,29 @@ namespace LogicScript.Parsing
             }
 
             if (!foundEnd)
-                Error($"Expected 'end' keyword to close case starting at {startLexeme.Location}");
+                Error($"expected 'end' keyword to close case starting at {startLexeme.Location}");
 
-            return new Case(inputSpec, inputsValue, stmts.ToArray());
+            return new Case(inputSpec, inputsValue, stmts.ToArray(), startLexeme.Location);
         }
 
         private Statement TakeStatement()
         {
             SkipWhitespaces();
 
+            var location = Current.Location;
             var output = TakeOutput();
 
             SkipWhitespaces();
             Take(LexemeKind.Equals);
             SkipWhitespaces();
 
-            var value = TakeBitsValue();
+            var value = TakeExpression();
+            //TODO Check for count mismatch
 
             SkipWhitespaces();
             Take(LexemeKind.NewLine);
 
-            return new OutputSetStatement(output, value);
+            return new OutputSetStatement(output, value, location);
         }
 
         private InputSpec TakeInputSpec()
@@ -197,50 +202,46 @@ namespace LogicScript.Parsing
             return new CompoundInputSpec(inputs.ToArray());
         }
 
-        private BitsValue TakeBitsValue()
+        private Expression TakeExpression()
         {
             if (Take(LexemeKind.LeftParenthesis, error: false))
             {
-                var values = new List<BitValue>();
+                var values = new List<Expression>();
 
                 do
                 {
                     SkipWhitespaces();
-                    values.Add(TakeBitValue());
+                    values.Add(TakeExpression());
                 } while (Take(LexemeKind.Comma, false));
 
                 Take(LexemeKind.RightParenthesis);
 
-                return new BitsValue(values.ToArray());
+                return new ListExpression(values.ToArray());
             }
             else
             {
-                if (!Take(LexemeKind.Number, out var n))
-                {
-                    Advance();
-                    return new BitsValue(0);
-                }
-
                 int @base = 2;
                 if (Take(LexemeKind.Apostrophe, false))
                     @base = 10;
 
-                return new BitsValue(Convert.ToUInt32(n.Content, @base), n.Content!.Length);
+                Take(LexemeKind.Number, out var n);
+
+                return new NumberLiteralExpression(Convert.ToInt32(n.Content, @base), n.Content!.Length);
             }
         }
 
-        private BitValue TakeBitValue()
+        private BitExpression TakeBitValue()
         {
             if (Take(LexemeKind.Number, out var n, false))
             {
                 if (n.Content?.Length != 1 || (n.Content != "1" && n.Content != "0"))
                     Error("expected bit value (0 or 1)");
 
-                return new LiteralBitValue(n.Content == "1");
+                return new LiteralBitExpression(n.Content == "1");
             }
             else
             {
-                return new InputBitValue(TakeInput());
+                return new InputBitExpression(TakeInput());
             }
         }
 

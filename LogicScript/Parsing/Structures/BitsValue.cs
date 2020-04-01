@@ -3,14 +3,14 @@ using System.Linq;
 
 namespace LogicScript.Parsing.Structures
 {
-    internal readonly struct BitsValue
+    internal class BitsValue : Expression
     {
         /// <summary>
         /// Big endian
         /// </summary>
-        public BitValue[] Values { get; }
+        public BitExpression[] Values { get; }
 
-        public BitsValue(BitValue[] values)
+        public BitsValue(BitExpression[] values)
         {
             this.Values = values ?? throw new ArgumentNullException(nameof(values));
         }
@@ -20,8 +20,8 @@ namespace LogicScript.Parsing.Structures
             if (number == 0)
             {
                 this.Values = length == null
-                    ? new[] { new LiteralBitValue(false) }
-                    : Enumerable.Repeat(LiteralBitValue.False, length.Value).ToArray();
+                    ? new[] { new LiteralBitExpression(false) }
+                    : Enumerable.Repeat(LiteralBitExpression.False, length.Value).ToArray();
                 return;
             }
 
@@ -29,10 +29,10 @@ namespace LogicScript.Parsing.Structures
             if (length != null && length > size)
                 size = length.Value;
 
-            var b = new BitValue[size];
+            var b = new BitExpression[size];
             for (int i = 0; i < size; i++)
             {
-                b[i] = new LiteralBitValue(((number >> (size - 1 - i)) & 1) == 1);
+                b[i] = new LiteralBitExpression(((number >> (size - 1 - i)) & 1) == 1);
             }
             this.Values = b;
         }

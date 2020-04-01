@@ -20,7 +20,11 @@ namespace Tester
 
 #asdasd asd asd
 
-when (in[0], in[1]) = 000000
+when in = 10101
+    out[1] = 1
+end
+
+when (in[0], in[1]) = 10
     out = 123'
 end
 ");
@@ -35,6 +39,9 @@ end
                 Console.WriteLine(item);
             }
 
+            if (errors.Count > 0)
+                Console.ReadKey(true);
+
             var engine = new LogicEngine(a);
             engine.DoUpdate(new Machine());
         }
@@ -43,6 +50,8 @@ end
     public class Machine : IMachine
     {
         private int Counter = 0;
+
+        public int InputCount => 5;
 
         public bool GetInput(int i)
         {
