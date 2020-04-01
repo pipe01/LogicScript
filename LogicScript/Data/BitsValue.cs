@@ -12,6 +12,8 @@ namespace LogicScript.Data
 
         public int Length { get; }
 
+        public ReadOnlyMemory<bool> Bits => Values;
+
         public bool this[int bitIndex]
         {
             get
@@ -39,23 +41,14 @@ namespace LogicScript.Data
 
         internal BitsValue(int number, int? length = null)
         {
-            this.Values = null;
             this.Length = Math.Max((int)Math.Log(number, 2) + 1, length ?? 0);
             this.Number = number;
-        }
 
-        public ReadOnlyMemory<bool> AsMemory()
-        {
-            if (Values != null)
-                return Values;
-
-            var values = new bool[Length];
+            Values = new bool[Length];
             for (int i = 0; i < Length; i++)
             {
-                values[i] = ((Number >> (Length - 1 - i)) & 1) == 1;
+                Values[i] = ((Number >> (Length - 1 - i)) & 1) == 1;
             }
-
-            return values;
         }
 
         public override string ToString() => "(" + string.Join(", ", Values.Select(o => o ? 1 : 0)) + ")";

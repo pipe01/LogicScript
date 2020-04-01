@@ -3,6 +3,7 @@ using LogicScript.Data;
 using LogicScript.Parsing;
 using LogicScript.Parsing.Structures;
 using System;
+using System.Diagnostics;
 using System.Linq;
 
 namespace Tester
@@ -55,8 +56,24 @@ end
                 return;
             }
 
-            var engine = new LogicEngine(script);
-            engine.DoUpdate(new Machine());
+            var engine = new LogicRunner(script);
+            var machine = new Machine { ConsoleOutput = true };
+            engine.DoUpdate(machine);
+
+#if RELEASE
+            machine.ConsoleOutput = false;
+
+            const int iterations = 10000000;
+            var sw = Stopwatch.StartNew();
+
+            for (int i = 0; i < iterations; i++)
+            {
+                engine.DoUpdate(machine);
+            }
+
+            sw.Stop();
+            Console.WriteLine((double)(sw.ElapsedTicks / iterations) / TimeSpan.TicksPerMillisecond + "ms per iteration");
+#endif
         }
     }
 
@@ -68,10 +85,14 @@ end
         private bool[] Inputs = new[] { true, false, true, false };
         private bool[] Outputs = new[] { true, false, true, false };
 
+        public bool ConsoleOutput { get; set; }
+
         public bool GetInput(int i)
         {
             var v = Inputs[i];
-            Console.WriteLine($"Read input {i}: {v}");
+
+            if (ConsoleOutput)
+                Console.WriteLine($"Read input {i}: {v}");
             return v;
         }
 
@@ -79,14 +100,16 @@ end
         {
             Outputs[i] = on;
 
-            Console.WriteLine($"Set output {i} to {on}");
+            if (ConsoleOutput)
+                Console.WriteLine($"Set output {i} to {on}");
         }
 
         public void SetOutputs(BitsValue values)
         {
-            values.AsMemory().CopyTo(Outputs);
+            values.Bits.CopyTo(Outputs);
 
-            Console.WriteLine($"Set outputs to ({string.Join(", ", values.AsMemory().ToArray())})");
+            if (ConsoleOutput)
+                Console.WriteLine($"Set outputs to ({string.Join(", ", values.Bits.ToArray())})");
         }
     }
 }
