@@ -1,11 +1,17 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 
 namespace LogicScript.Parsing
 {
     public class Lexer
     {
+        private static readonly string[] Keywords =
+        {
+            "when", "end", "in", "out"
+        };
+
         private int Index;
         private int Line;
         private int Column;
@@ -17,6 +23,8 @@ namespace LogicScript.Parsing
         private bool IsWhitespace => Current == ' ' || Current == '\t';
         private bool IsNewLine => Current == '\n';
         private bool IsComment => Current == '#';
+
+        private SourceLocation Location => new SourceLocation(Line, Column);
 
         private readonly StringBuilder Builder = new StringBuilder();
         private readonly string Text;
@@ -39,7 +47,7 @@ namespace LogicScript.Parsing
             }
 
             if (!IsEOF)
-                Errors.AddError(new SourceLocation(Line, Column), $"invalid character found: {Current}");
+                Errors.AddError(Location, $"invalid character found: {Current}");
 
             yield return Lexeme(LexemeKind.EOF, null);
         }
@@ -116,12 +124,19 @@ namespace LogicScript.Parsing
 
         private Lexeme TakeKeyword()
         {
+            var startLocation = Location;
+
             Builder.Clear();
 
             do
             {
                 Builder.Append(Current);
             } while (Advance() && IsLetter);
+
+            string keyword = Builder.ToString();
+
+            if (!Keywords.Contains(keyword))
+                Errors.AddError(startLocation, "invalid keyword");
 
             return Lexeme(LexemeKind.Keyword);
         }

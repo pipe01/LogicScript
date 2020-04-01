@@ -19,9 +19,9 @@ namespace Tester
 when in = 1010
     # Set individual output bits
     out[0] = 1
-    out[2] = (& 0 in[2])
+    #out[2] = (& 0 in[2])
     out[2] = and(0, in[2])
-    out[1] = 0 & in[2]
+    #out[1] = 0 & in[2]
 
     # Set all the output bits
     out = 1010
@@ -36,15 +36,25 @@ end
 ", errors);
 
             var ls = l.Lex().ToArray();
-            Script script = new Parser(ls, errors).Parse();
-
-            foreach (var item in errors)
-            {
-                Console.WriteLine(item);
-            }
 
             if (errors.Count > 0)
             {
+                foreach (var item in errors)
+                {
+                    Console.WriteLine(item);
+                }
+                Console.ReadKey(true);
+                return;
+            }
+
+            Script script = new Parser(ls, errors).Parse();
+
+            if (errors.Count > 0)
+            {
+                foreach (var item in errors)
+                {
+                    Console.WriteLine(item);
+                }
                 Console.ReadKey(true);
                 return;
             }
