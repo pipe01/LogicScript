@@ -12,13 +12,16 @@ namespace Tester
     {
         static void Main(string[] args)
         {
+            var errors = new ErrorSink();
+
             var l = new Lexer(
 @"
 when in = 1010
     # Set individual output bits
     out[0] = 1
-    out[2] = 0
-    out[1] = in[2]
+    out[2] = (& 0 in[2])
+    out[2] = and(0, in[2])
+    out[1] = 0 & in[2]
 
     # Set all the output bits
     out = 1010
@@ -30,20 +33,10 @@ end
 # when in = 12'
 # when (in[0], in[1]) = 10
 # when (in[2], in[1]) = 3'
-");
-
-            var errors = new ErrorSink();
+", errors);
 
             var ls = l.Lex().ToArray();
-            Script script = null;
-
-            try
-            {
-                script = new Parser(ls, errors).Parse();
-            }
-            catch (LogicParserException)
-            {
-            }
+            Script script = new Parser(ls, errors).Parse();
 
             foreach (var item in errors)
             {

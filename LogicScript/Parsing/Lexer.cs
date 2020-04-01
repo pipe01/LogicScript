@@ -20,10 +20,12 @@ namespace LogicScript.Parsing
 
         private readonly StringBuilder Builder = new StringBuilder();
         private readonly string Text;
+        private readonly ErrorSink Errors;
 
-        public Lexer(string text)
+        public Lexer(string text, ErrorSink errors)
         {
             this.Text = text?.Replace("\r\n", "\n") ?? throw new ArgumentNullException(nameof(text));
+            this.Errors = errors;
 
             Current = Text[0];
         }
@@ -37,7 +39,7 @@ namespace LogicScript.Parsing
             }
 
             if (!IsEOF)
-                throw new Exception($"Invalid character found: {Current}");
+                Errors.AddError(new SourceLocation(Line, Column), $"invalid character found: {Current}");
 
             yield return Lexeme(LexemeKind.EOF, null);
         }

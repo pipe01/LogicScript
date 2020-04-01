@@ -26,18 +26,17 @@ namespace LogicScript.Parsing
         {
             var script = new Script();
 
-            while (!IsEOF)
+            try
             {
-                switch (Current.Kind)
+                while (!IsEOF)
                 {
-                    case LexemeKind.Keyword when Current.Content == "when":
-                        script.Cases.Add(TakeCase());
-                        break;
-                    case LexemeKind.Whitespace:
-                    case LexemeKind.NewLine:
-                        Advance();
-                        break;
+                    SkipWhitespaces(true);
+
+                    script.Cases.Add(TakeCase());
                 }
+            }
+            catch (LogicParserException)
+            {
             }
 
             if (Errors.Count > 0)
