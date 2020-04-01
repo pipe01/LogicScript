@@ -11,15 +11,16 @@ namespace Tester
         static void Main(string[] args)
         {
             var l = new Lexer(
-@"when (in[2], in[1]) = 1010
-	out[3] = 1
-	out = 123' #nice
-	out = (1, 0, in[2])
-end
+@"
+#when (in[2], in[1]) = 1010
+#	out[3] = 1
+#	out = 123' #nice
+#	out = (1, 0, in[2])
+#end
 
 #asdasd asd asd
 
-when (in[0], in[1]) = 10
+when (in[0], in[1]) = 000000
     out = 123'
 end
 ");

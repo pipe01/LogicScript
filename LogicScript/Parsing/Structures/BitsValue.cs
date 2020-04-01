@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 
 namespace LogicScript.Parsing.Structures
 {
@@ -14,15 +15,19 @@ namespace LogicScript.Parsing.Structures
             this.Values = values ?? throw new ArgumentNullException(nameof(values));
         }
 
-        public BitsValue(uint number)
+        public BitsValue(uint number, int? length = null)
         {
             if (number == 0)
             {
-                this.Values = new[] { new LiteralBitValue(false) };
+                this.Values = length == null
+                    ? new[] { new LiteralBitValue(false) }
+                    : Enumerable.Repeat(LiteralBitValue.False, length.Value).ToArray();
                 return;
             }
 
             int size = (int)Math.Log(number, 2) + 1;
+            if (length != null && length > size)
+                size = length.Value;
 
             var b = new BitValue[size];
             for (int i = 0; i < size; i++)

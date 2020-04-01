@@ -6,6 +6,9 @@
 
     internal class LiteralBitValue : BitValue
     {
+        public static readonly LiteralBitValue True = new LiteralBitValue(true);
+        public static readonly LiteralBitValue False = new LiteralBitValue(false);
+
         public bool Value { get; }
 
         public LiteralBitValue(bool value)

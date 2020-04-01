@@ -88,7 +88,7 @@ namespace LogicScript.Parsing
             if (Current.Kind != kind)
             {
                 if (error)
-                    Error($"expected '{kind}', {Current.Kind} found");
+                    Error($"expected {kind}, {Current.Kind} found");
 
                 return false;
             }
@@ -225,7 +225,7 @@ namespace LogicScript.Parsing
                 if (Take(LexemeKind.Apostrophe, false))
                     @base = 10;
 
-                return new BitsValue(Convert.ToUInt32(n.Content, @base));
+                return new BitsValue(Convert.ToUInt32(n.Content, @base), n.Content!.Length);
             }
         }
 
