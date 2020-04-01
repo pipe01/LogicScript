@@ -184,7 +184,7 @@ namespace LogicScript.Parsing
             var value = TakeExpression();
             if (output.IsIndexed)
             {
-                if (!(value is NumberLiteralExpression num) || num.Length != 1)
+                if (!value.IsSingleBit)
                     Error("expected a single bit (0 or 1)");
             }
 
