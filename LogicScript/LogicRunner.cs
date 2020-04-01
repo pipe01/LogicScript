@@ -8,11 +8,11 @@ using System.Threading.Tasks;
 
 namespace LogicScript
 {
-    public sealed class LogicEngine
+    public sealed class LogicRunner
     {
         private readonly Script Script;
 
-        public LogicEngine(Script script)
+        public LogicRunner(Script script)
         {
             this.Script = script ?? throw new ArgumentNullException(nameof(script));
         }
