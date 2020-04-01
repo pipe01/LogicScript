@@ -154,6 +154,7 @@ namespace LogicScript.Parsing
             bool foundEnd = false;
             while (!IsEOF)
             {
+                SkipWhitespaces(true);
                 stmts.Add(TakeStatement());
 
                 if (TakeKeyword("end", error: false))
@@ -190,7 +191,9 @@ namespace LogicScript.Parsing
             SkipWhitespaces();
             Take(LexemeKind.NewLine);
 
-            return new OutputSetStatement(output, value, location);
+            return output.IsIndexed
+                ? new SetSingleOutputStatement(output.Index.Value, value, location)
+                : new SetOutputStatement(value, location);
         }
 
         private InputSpec TakeInputSpec()

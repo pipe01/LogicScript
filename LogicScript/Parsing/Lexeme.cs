@@ -34,6 +34,6 @@ namespace LogicScript.Parsing
             this.Location = location;
         }
 
-        public override string ToString() => Kind.ToString();
+        public override string ToString() => $"{Kind} ({Content})";
     }
 }

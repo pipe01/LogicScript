@@ -31,26 +31,25 @@ namespace LogicScript
                 return;
 
             var value = GetBitsValue(machine, c.InputsValue);
+            bool match = false;
 
             if (c.InputSpec is CompoundInputSpec compound)
             {
                 if (value.Length != compound.Indices.Length)
                     throw new LogicEngineException("Mismatched input count", c);
 
-                if (AreInputsMatched(machine, compound.Indices, value))
-                    RunStatements(machine, c.Statements);
+                match = AreInputsMatched(machine, compound.Indices, value);
             }
             else if (c.InputSpec is WholeInputSpec)
             {
                 if (value.Length != machine.InputCount)
                     throw new LogicEngineException("Mismatched input count", c);
 
-                //if (c.InputsValue.Values.Length != machine.InputCount)
-                //    throw new LogicEngineException("Mismatched input count", c);
-
-                //if (AreInputsMatched(machine, c.InputsValue.Values))
-                //    RunStatements(machine, c.Statements);
+                match = AreInputsMatched(machine, value);
             }
+
+            if (match)
+                RunStatements(machine, c.Statements);
         }
 
         private static bool AreInputsMatched(IMachine machine, int[] inputIndices, BitsValue bits)
@@ -101,16 +100,18 @@ namespace LogicScript
 
         private static void RunStatement(IMachine machine, Statement stmt)
         {
-            if (stmt is OutputSetStatement outset)
+            if (stmt is SetSingleOutputStatement setsingle)
             {
-                if (outset.Output.Index == null)
-                {
-                    machine.SetOutputs(GetBitsValue(machine, outset.Value));
-                }
-                else
-                {
-                    machine.SetOutput(outset.Output.Index.Value, GetBitValue(machine, outset.Value));
-                }
+                machine.SetOutput(setsingle.Output, GetBitValue(machine, setsingle.Value));
+            }
+            else if (stmt is SetOutputStatement setout)
+            {
+                var value = GetBitsValue(machine, setout.Value);
+
+                if (value.Length != machine.OutputCount)
+                    throw new LogicEngineException("Mismatched output count", stmt);
+
+                machine.SetOutputs(value);
             }
         }
 

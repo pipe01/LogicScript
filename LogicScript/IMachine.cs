@@ -1,5 +1,4 @@
 ﻿using LogicScript.Data;
-using System;
 
 namespace LogicScript
 {

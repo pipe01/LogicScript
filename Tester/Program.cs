@@ -13,32 +13,32 @@ namespace Tester
         {
             var l = new Lexer(
 @"
-#when (in[2], in[1]) = 1010
-#	out[3] = 1
-#	out = '123 #nice
-#	out = (1, 0, in[2])
-#end
+when in = 1010
+    # Set individual output bits
+    out[0] = 1
+    out[2] = 0
+    out[1] = in[2]
 
-#asdasd asd asd
-
-when (in[0], in[1]) = (in[0], in[1])
-    out = 123'
+    # Set all the output bits
+    out = 1010
+    out = 14'  #The ' denotes that it's a decimal number instead of a binary one
 end
 
-when in = 10101
-    out = ((1,0), 1)
-end
-
+# Other example case statements:
+# when in = (1, 0, in[1], 1)
+# when in = 12'
+# when (in[0], in[1]) = 10
+# when (in[2], in[1]) = 3'
 ");
 
             var errors = new ErrorSink();
 
             var ls = l.Lex().ToArray();
-            Script a = null;
+            Script script = null;
 
             try
             {
-                a = new Parser(ls, errors).Parse();
+                script = new Parser(ls, errors).Parse();
             }
             catch (LogicParserException)
             {
@@ -55,7 +55,7 @@ end
                 return;
             }
 
-            var engine = new LogicEngine(a);
+            var engine = new LogicEngine(script);
             engine.DoUpdate(new Machine());
         }
     }
@@ -86,7 +86,7 @@ end
         {
             values.AsMemory().CopyTo(Outputs);
 
-            Console.WriteLine($"Set outputs to ({values.AsMemory()})");
+            Console.WriteLine($"Set outputs to ({string.Join(", ", values.AsMemory().ToArray())})");
         }
     }
 }

@@ -12,17 +12,27 @@ namespace LogicScript.Parsing.Structures
         }
     }
 
-    internal class OutputSetStatement : Statement
+    internal class SetOutputStatement : Statement
     {
-        public Output Output { get; }
         public Expression Value { get; }
 
-        public OutputSetStatement(Output output, Expression value, SourceLocation location) : base(location)
+        public SetOutputStatement(Expression value, SourceLocation location) : base(location)
         {
-            this.Output = output ?? throw new ArgumentNullException(nameof(output));
             this.Value = value;
         }
 
-        public override string ToString() => $"{Output} = {Value}";
+        public override string ToString() => $"out = {Value}";
+    }
+
+    internal class SetSingleOutputStatement : SetOutputStatement
+    {
+        public int Output { get; }
+
+        public SetSingleOutputStatement(int output, Expression value, SourceLocation location) : base(value, location)
+        {
+            this.Output = output;
+        }
+
+        public override string ToString() => $"out[{Output}] = {Value}";
     }
 }
