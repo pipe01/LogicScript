@@ -25,7 +25,7 @@ when in = 10101
 end
 
 when (in[0], in[1]) = 10
-    out = '123
+    out = '123 asd
 end
 ");
 

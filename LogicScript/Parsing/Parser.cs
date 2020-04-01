@@ -47,9 +47,12 @@ namespace LogicScript.Parsing
         }
 
         [DebuggerStepThrough]
-        private void Error(string msg, SourceLocation? on = null)
+        private void Error(string msg, bool fatal = false, SourceLocation? on = null)
         {
             Errors.AddError(on ?? Current.Location, msg);
+
+            if (fatal)
+                throw new Exception();
         }
 
         [DebuggerStepThrough]
@@ -228,7 +231,11 @@ namespace LogicScript.Parsing
                 if (Take(LexemeKind.Apostrophe, false))
                     @base = 10;
 
-                Take(LexemeKind.Number, out var n);
+                if (!Take(LexemeKind.Number, out var n))
+                {
+                    Error("expected expression", true);
+                    return NumberLiteralExpression.Zero;
+                }
 
                 if (@base == 2 && n.Content!.ContainsDecimalDigits())
                 {
