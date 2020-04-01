@@ -14,18 +14,18 @@ namespace Tester
 @"
 #when (in[2], in[1]) = 1010
 #	out[3] = 1
-#	out = 123' #nice
+#	out = '123 #nice
 #	out = (1, 0, in[2])
 #end
 
 #asdasd asd asd
 
 when in = 10101
-    out[1] = 1
+    out = ((1,0), 1)
 end
 
 when (in[0], in[1]) = 10
-    out = 123'
+    out = '123
 end
 ");
 
@@ -40,7 +40,10 @@ end
             }
 
             if (errors.Count > 0)
+            {
                 Console.ReadKey(true);
+                return;
+            }
 
             var engine = new LogicEngine(a);
             engine.DoUpdate(new Machine());

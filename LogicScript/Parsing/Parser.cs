@@ -47,9 +47,9 @@ namespace LogicScript.Parsing
         }
 
         [DebuggerStepThrough]
-        private void Error(string msg)
+        private void Error(string msg, SourceLocation? on = null)
         {
-            Errors.AddError(Current.Location, msg);
+            Errors.AddError(on ?? Current.Location, msg);
         }
 
         [DebuggerStepThrough]
@@ -137,8 +137,8 @@ namespace LogicScript.Parsing
 
             var inputsValue = TakeExpression();
 
-            if (inputSpec is CompoundInputSpec comp && inputsValue.Values.Length != comp.Indices.Length)
-                Error("mismatched input count");
+            //if (inputSpec is CompoundInputSpec comp && inputsValue.Values.Length != comp.Indices.Length)
+            //    Error("mismatched input count");
 
             SkipWhitespaces();
             Take(LexemeKind.NewLine);
@@ -175,7 +175,11 @@ namespace LogicScript.Parsing
             SkipWhitespaces();
 
             var value = TakeExpression();
-            //TODO Check for count mismatch
+            if (output.IsIndexed)
+            {
+                if (!(value is NumberLiteralExpression num) || num.Length != 1)
+                    Error("expected a single bit (0 or 1)");
+            }
 
             SkipWhitespaces();
             Take(LexemeKind.NewLine);
@@ -226,22 +230,13 @@ namespace LogicScript.Parsing
 
                 Take(LexemeKind.Number, out var n);
 
+                if (@base == 2 && n.Content!.ContainsDecimalDigits())
+                {
+                    Error("decimal number must be prefixed");
+                    return NumberLiteralExpression.Zero;
+                }
+
                 return new NumberLiteralExpression(Convert.ToInt32(n.Content, @base), n.Content!.Length);
-            }
-        }
-
-        private BitExpression TakeBitValue()
-        {
-            if (Take(LexemeKind.Number, out var n, false))
-            {
-                if (n.Content?.Length != 1 || (n.Content != "1" && n.Content != "0"))
-                    Error("expected bit value (0 or 1)");
-
-                return new LiteralBitExpression(n.Content == "1");
-            }
-            else
-            {
-                return new InputBitExpression(TakeInput());
             }
         }
 

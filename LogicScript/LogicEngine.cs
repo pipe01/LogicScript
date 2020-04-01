@@ -30,16 +30,16 @@ namespace LogicScript
             {
                 if (c.InputSpec is CompoundInputSpec inputSpec)
                 {
-                    if (AreInputsMatched(machine, c.InputsValue.Values, inputSpec.Indices))
-                        RunStatements(machine, c.Statements);
+                    //if (AreInputsMatched(machine, c.InputsValue.Values, inputSpec.Indices))
+                    //    RunStatements(machine, c.Statements);
                 }
                 else if (c.InputSpec is WholeInputSpec)
                 {
-                    if (c.InputsValue.Values.Length != machine.InputCount)
-                        throw new LogicEngineException("Mismatched input count", c);
+                    //if (c.InputsValue.Values.Length != machine.InputCount)
+                    //    throw new LogicEngineException("Mismatched input count", c);
 
-                    if (AreInputsMatched(machine, c.InputsValue.Values))
-                        RunStatements(machine, c.Statements);
+                    //if (AreInputsMatched(machine, c.InputsValue.Values))
+                    //    RunStatements(machine, c.Statements);
                 }
             }
         }
