@@ -55,7 +55,7 @@ namespace LogicScript.Parsing
             return true;
         }
 
-        private Lexeme Lexeme(LexemeKind kind, string? content) => new Lexeme(kind, content, new SourceLocation(Line, Column - (content?.Length ?? 0)));
+        private Lexeme Lexeme(LexemeKind kind, string content) => new Lexeme(kind, content, new SourceLocation(Line, Column - (content?.Length ?? 0)));
 
         private Lexeme Lexeme(LexemeKind kind) => Lexeme(kind, Builder.ToString());
 

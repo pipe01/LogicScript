@@ -22,7 +22,7 @@ namespace LogicScript.Parsing
             this.Errors = errors;
         }
 
-        public Script? Parse()
+        public Script Parse()
         {
             var script = new Script();
 
@@ -101,7 +101,7 @@ namespace LogicScript.Parsing
         }
 
         [DebuggerStepThrough]
-        private bool Take(LexemeKind kind, out Lexeme lexeme, bool error = true, string? expected = null)
+        private bool Take(LexemeKind kind, out Lexeme lexeme, bool error = true, string expected = null)
         {
             if (Current.Kind != kind)
             {
@@ -128,7 +128,7 @@ namespace LogicScript.Parsing
         }
 
         [DebuggerStepThrough]
-        private bool Peek(LexemeKind kind, string? content = null) => Current.Kind == kind && (content == null || Current.Content == content);
+        private bool Peek(LexemeKind kind, string content = null) => Current.Kind == kind && (content == null || Current.Content == content);
 
         public Case TakeCase()
         {
@@ -241,18 +241,18 @@ namespace LogicScript.Parsing
                 {
                     @base = 10;
                 }
-                else if (n.Content!.ContainsDecimalDigits())
+                else if (n.Content?.ContainsDecimalDigits() ?? false)
                 {
                     Error("decimal number must be sufffixed");
                     @base = 10;
                 }
 
-                return new NumberLiteralExpression(n.Location, Convert.ToInt32(n.Content, @base), n.Content!.Length);
+                return new NumberLiteralExpression(n.Location, Convert.ToInt32(n.Content, @base), n.Content?.Length ?? 0);
             }
             else
             {
                 Error("expected expression", true);
-                throw null!;
+                throw new Exception(); //Not reached
             }
         }
 

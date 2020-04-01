@@ -27,31 +27,37 @@ namespace LogicScript
 
         private static void UpdateCase(IMachine machine, Case c)
         {
-            if (c.Statements != null)
+            if (c.Statements == null)
+                return;
+
+            var value = GetBitsValue(machine, c.InputsValue);
+
+            if (c.InputSpec is CompoundInputSpec compound)
             {
-                if (c.InputSpec is CompoundInputSpec compound)
-                {
-                    var value = GetBitsValue(machine, c.InputsValue);
+                if (value.Length != compound.Indices.Length)
+                    throw new LogicEngineException("Mismatched input count", c);
 
-                    if (AreInputsMatched(machine, compound.Indices, value))
-                        RunStatements(machine, c.Statements);
-                }
-                else if (c.InputSpec is WholeInputSpec)
-                {
-                    //if (c.InputsValue.Values.Length != machine.InputCount)
-                    //    throw new LogicEngineException("Mismatched input count", c);
+                if (AreInputsMatched(machine, compound.Indices, value))
+                    RunStatements(machine, c.Statements);
+            }
+            else if (c.InputSpec is WholeInputSpec)
+            {
+                if (value.Length != machine.InputCount)
+                    throw new LogicEngineException("Mismatched input count", c);
 
-                    //if (AreInputsMatched(machine, c.InputsValue.Values))
-                    //    RunStatements(machine, c.Statements);
-                }
+                //if (c.InputsValue.Values.Length != machine.InputCount)
+                //    throw new LogicEngineException("Mismatched input count", c);
+
+                //if (AreInputsMatched(machine, c.InputsValue.Values))
+                //    RunStatements(machine, c.Statements);
             }
         }
 
-        private static bool AreInputsMatched(IMachine machine, int[] inputs, BitsValue bits)
+        private static bool AreInputsMatched(IMachine machine, int[] inputIndices, BitsValue bits)
         {
             bool match = true;
 
-            for (int i = 0; i < inputs.Length; i++)
+            for (int i = 0; i < inputIndices.Length; i++)
             {
                 bool inputValue = machine.GetInput(i);
                 bool requiredValue = bits[i];
@@ -66,17 +72,14 @@ namespace LogicScript
             return match;
         }
         
-        private static bool AreInputsMatched(IMachine machine, Expression[] values, int[]? inputIndices = null)
+        private static bool AreInputsMatched(IMachine machine, BitsValue bits)
         {
             bool match = true;
-            bool wholeInput = inputIndices == null;
 
-            int size = wholeInput ? machine.InputCount : inputIndices!.Length;
-
-            for (int i = 0; i < size; i++)
+            for (int i = 0; i < machine.InputCount; i++)
             {
-                bool inputValue = machine.GetInput(wholeInput ? i : inputIndices![i]);
-                bool requiredValue = GetBitValue(machine, values[i]);
+                bool inputValue = machine.GetInput(i);
+                bool requiredValue = bits[i];
 
                 if (inputValue != requiredValue)
                 {

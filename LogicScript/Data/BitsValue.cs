@@ -7,7 +7,7 @@ namespace LogicScript.Data
     {
         public static readonly BitsValue Zero = new BitsValue();
 
-        private readonly bool[]? Values;
+        private readonly bool[] Values;
         private readonly int Number;
 
         public int Length { get; }
