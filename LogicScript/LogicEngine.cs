@@ -1,4 +1,5 @@
-﻿using LogicScript.Parsing.Structures;
+﻿using LogicScript.Data;
+using LogicScript.Parsing.Structures;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -28,10 +29,12 @@ namespace LogicScript
         {
             if (c.Statements != null)
             {
-                if (c.InputSpec is CompoundInputSpec inputSpec)
+                if (c.InputSpec is CompoundInputSpec compound)
                 {
-                    //if (AreInputsMatched(machine, c.InputsValue.Values, inputSpec.Indices))
-                    //    RunStatements(machine, c.Statements);
+                    var value = GetBitsValue(machine, c.InputsValue);
+
+                    if (AreInputsMatched(machine, compound.Indices, value))
+                        RunStatements(machine, c.Statements);
                 }
                 else if (c.InputSpec is WholeInputSpec)
                 {
@@ -44,7 +47,26 @@ namespace LogicScript
             }
         }
 
-        private static bool AreInputsMatched(IMachine machine, BitExpression[] values, int[]? inputIndices = null)
+        private static bool AreInputsMatched(IMachine machine, int[] inputs, BitsValue bits)
+        {
+            bool match = true;
+
+            for (int i = 0; i < inputs.Length; i++)
+            {
+                bool inputValue = machine.GetInput(i);
+                bool requiredValue = bits[i];
+
+                if (inputValue != requiredValue)
+                {
+                    match = false;
+                    break;
+                }
+            }
+
+            return match;
+        }
+        
+        private static bool AreInputsMatched(IMachine machine, Expression[] values, int[]? inputIndices = null)
         {
             bool match = true;
             bool wholeInput = inputIndices == null;
@@ -80,40 +102,53 @@ namespace LogicScript
             {
                 if (outset.Output.Index == null)
                 {
-                    if (!(outset.Value is BitsValue bits))
-                        throw new LogicEngineException("Expected bits value", stmt);
-
-                    Span<bool> values = stackalloc bool[bits.Values.Length];
-
-                    for (int i = 0; i < bits.Values.Length; i++)
-                    {
-                        values[i] = GetBitValue(machine, bits.Values[i]);
-                    }
-
-                    machine.SetOutputs(values);
+                    machine.SetOutputs(GetBitsValue(machine, outset.Value));
                 }
                 else
                 {
-                    if (!(outset.Value is BitExpression bit))
-                        throw new LogicEngineException("Expected bit value", stmt);
-
-                    machine.SetOutput(outset.Output.Index.Value, GetBitValue(machine, bit));
+                    machine.SetOutput(outset.Output.Index.Value, GetBitValue(machine, outset.Value));
                 }
             }
         }
 
-        private static bool GetBitValue(IMachine machine, BitExpression bit)
+        private static bool GetBitValue(IMachine machine, Expression expr)
         {
-            if (bit is LiteralBitExpression l)
+            switch (expr)
             {
-                return l.Value;
+                case NumberLiteralExpression num when num.Length == 1:
+                    return num.Value == 1;
+                case InputExpression input:
+                    return machine.GetInput(input.InputIndex);
+
+                default:
+                    throw new LogicEngineException("Expected single-bit value", expr);
             }
-            else if (bit is InputBitExpression i)
+        }
+
+        private static BitsValue GetBitsValue(IMachine machine, Expression expr)
+        {
+            switch (expr)
             {
-                return machine.GetInput(i.InputIndex);
+                case NumberLiteralExpression num:
+                    return new BitsValue(num.Value, num.Length);
+                case ListExpression list:
+                    return GetListValue(list);
+
+                default:
+                    throw new LogicEngineException("Expected multi-bit value", expr);
             }
 
-            throw new Exception("Invalid type");
+            BitsValue GetListValue(ListExpression list)
+            {
+                var items = new bool[list.Expressions.Length];
+
+                for (int i = 0; i < list.Expressions.Length; i++)
+                {
+                    items[i] = GetBitValue(machine, list.Expressions[i]);
+                }
+
+                return new BitsValue(items);
+            }
         }
     }
 }

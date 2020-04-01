@@ -52,7 +52,7 @@ namespace LogicScript.Parsing
             Errors.AddError(on ?? Current.Location, msg);
 
             if (fatal)
-                throw new Exception();
+                throw new LogicParserException();
         }
 
         [DebuggerStepThrough]
@@ -126,6 +126,9 @@ namespace LogicScript.Parsing
                     return;
             }
         }
+
+        [DebuggerStepThrough]
+        private bool Peek(LexemeKind kind, string? content = null) => Current.Kind == kind && (content == null || Current.Content == content);
 
         public Case TakeCase()
         {
@@ -211,7 +214,7 @@ namespace LogicScript.Parsing
 
         private Expression TakeExpression()
         {
-            if (Take(LexemeKind.LeftParenthesis, error: false))
+            if (Take(LexemeKind.LeftParenthesis, out var par, error: false))
             {
                 var values = new List<Expression>();
 
@@ -223,27 +226,33 @@ namespace LogicScript.Parsing
 
                 Take(LexemeKind.RightParenthesis);
 
-                return new ListExpression(values.ToArray());
+                return new ListExpression(values.ToArray(), par.Location);
+            }
+            else if (Peek(LexemeKind.Keyword, "in"))
+            {
+                var loc = Current.Location;
+                return new InputExpression(TakeInput(), loc);
+            }
+            else if (Take(LexemeKind.Number, out var n))
+            {
+                int @base = 2;
+
+                if (Take(LexemeKind.Apostrophe, false))
+                {
+                    @base = 10;
+                }
+                else if (n.Content!.ContainsDecimalDigits())
+                {
+                    Error("decimal number must be sufffixed");
+                    @base = 10;
+                }
+
+                return new NumberLiteralExpression(n.Location, Convert.ToInt32(n.Content, @base), n.Content!.Length);
             }
             else
             {
-                int @base = 2;
-                if (Take(LexemeKind.Apostrophe, false))
-                    @base = 10;
-
-                if (!Take(LexemeKind.Number, out var n))
-                {
-                    Error("expected expression", true);
-                    return NumberLiteralExpression.Zero;
-                }
-
-                if (@base == 2 && n.Content!.ContainsDecimalDigits())
-                {
-                    Error("decimal number must be prefixed");
-                    return NumberLiteralExpression.Zero;
-                }
-
-                return new NumberLiteralExpression(Convert.ToInt32(n.Content, @base), n.Content!.Length);
+                Error("expected expression", true);
+                throw null!;
             }
         }
 

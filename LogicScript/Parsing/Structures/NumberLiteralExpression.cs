@@ -2,15 +2,17 @@
 {
     internal class NumberLiteralExpression : Expression
     {
-        public static readonly NumberLiteralExpression Zero = new NumberLiteralExpression(0, 1);
-
         public int Value { get; }
         public int? Length { get; }
 
-        public NumberLiteralExpression(int value, int? length = null)
+        public override bool IsSingleBit => Length == 1;
+
+        public NumberLiteralExpression(SourceLocation location, int value, int? length = null) : base(location)
         {
             this.Value = value;
             this.Length = length;
         }
+
+        public override string ToString() => Value.ToString();
     }
 }

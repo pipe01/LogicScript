@@ -1,13 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace LogicScript.Parsing.Structures
+﻿namespace LogicScript.Parsing.Structures
 {
-    internal abstract class Expression
+    internal abstract class Expression : ICodeNode
     {
-        
+        public abstract bool IsSingleBit { get; }
+
+        public SourceLocation Location { get; }
+
+        protected Expression(SourceLocation location)
+        {
+            this.Location = location;
+        }
     }
 }

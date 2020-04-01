@@ -1,4 +1,5 @@
 ﻿using LogicScript;
+using LogicScript.Data;
 using LogicScript.Parsing;
 using LogicScript.Parsing.Structures;
 using System;
@@ -20,19 +21,28 @@ namespace Tester
 
 #asdasd asd asd
 
+when (in[0], in[1]) = (in[0], in[1])
+    out = 123'
+end
+
 when in = 10101
     out = ((1,0), 1)
 end
 
-when (in[0], in[1]) = 10
-    out = '123 asd
-end
 ");
 
             var errors = new ErrorSink();
 
             var ls = l.Lex().ToArray();
-            var a = new Parser(ls, errors).Parse();
+            Script a = null;
+
+            try
+            {
+                a = new Parser(ls, errors).Parse();
+            }
+            catch (LogicParserException)
+            {
+            }
 
             foreach (var item in errors)
             {
@@ -52,25 +62,31 @@ end
 
     public class Machine : IMachine
     {
-        private int Counter = 0;
+        public int InputCount => Inputs.Length;
+        public int OutputCount => Outputs.Length;
 
-        public int InputCount => 5;
+        private bool[] Inputs = new[] { true, false, true, false };
+        private bool[] Outputs = new[] { true, false, true, false };
 
         public bool GetInput(int i)
         {
-            var v = Counter++ % 2 == 0;
+            var v = Inputs[i];
             Console.WriteLine($"Read input {i}: {v}");
             return v;
         }
 
         public void SetOutput(int i, bool on)
         {
+            Outputs[i] = on;
+
             Console.WriteLine($"Set output {i} to {on}");
         }
 
-        public void SetOutputs(Span<bool> values)
+        public void SetOutputs(BitsValue values)
         {
-            Console.WriteLine($"Set outputs to ({string.Join(", ", values.ToArray())})");
+            values.AsMemory().CopyTo(Outputs);
+
+            Console.WriteLine($"Set outputs to ({values.AsMemory()})");
         }
     }
 }
