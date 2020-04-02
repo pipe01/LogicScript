@@ -32,7 +32,10 @@ namespace LogicScript.Parsing
                 {
                     SkipWhitespaces(true);
 
-                    script.Cases.Add(TakeCase());
+                    var (@case, taken) = TakeCase();
+
+                    if (taken)
+                        script.Cases.Add(@case);
                 }
             }
             catch (LogicParserException)
@@ -129,9 +132,11 @@ namespace LogicScript.Parsing
         [DebuggerStepThrough]
         private bool Peek(LexemeKind kind, string content = null) => Current.Kind == kind && (content == null || Current.Content == content);
 
-        public Case TakeCase()
+        public (Case Case, bool Taken) TakeCase()
         {
-            TakeKeyword("when", out var startLexeme);
+            if (!TakeKeyword("when", out var startLexeme, false))
+                return (null, false);
+
             SkipWhitespaces();
 
             var inputSpec = TakeInputSpec();
@@ -166,7 +171,7 @@ namespace LogicScript.Parsing
             if (!foundEnd)
                 Error($"expected 'end' keyword to close case starting at {startLexeme.Location}");
 
-            return new Case(inputSpec, inputsValue, stmts.ToArray(), startLexeme.Location);
+            return (new Case(inputSpec, inputsValue, stmts.ToArray(), startLexeme.Location), true);
         }
 
         private Statement TakeStatement()
@@ -181,11 +186,8 @@ namespace LogicScript.Parsing
             SkipWhitespaces();
 
             var value = TakeExpression();
-            if (output.IsIndexed)
-            {
-                if (!value.IsSingleBit)
-                    Error("expected a single bit (0 or 1)");
-            }
+            if (output.IsIndexed && !value.IsSingleBit)
+                Error("expected a single bit (0 or 1)");
 
             SkipWhitespaces();
             Take(LexemeKind.NewLine);
@@ -238,7 +240,7 @@ namespace LogicScript.Parsing
                 var loc = Current.Location;
                 return new InputExpression(TakeInput(), loc);
             }
-            else if (Take(LexemeKind.Number, out var n))
+            else if (Take(LexemeKind.Number, out var n, false))
             {
                 int @base = 2;
 
@@ -254,11 +256,32 @@ namespace LogicScript.Parsing
 
                 return new NumberLiteralExpression(n.Location, Convert.ToInt32(n.Content, @base), n.Content?.Length ?? 0);
             }
+            else if (Peek(LexemeKind.Keyword) && Constants.Operators.TryGetValue(Current.Content, out var op))
+            {
+                return TakeOperator(op);
+            }
             else
             {
                 Error("expected expression", true);
                 throw new Exception(); //Not reached
             }
+        }
+
+        private BitwiseOperator TakeOperator(Operator op)
+        {
+            Take(LexemeKind.Keyword, out var keyword);
+            Take(LexemeKind.LeftParenthesis);
+
+            var exprs = new List<Expression>();
+            do
+            {
+                SkipWhitespaces(true);
+                exprs.Add(TakeExpression());
+            } while (Take(LexemeKind.Comma, false));
+
+            Take(LexemeKind.RightParenthesis);
+
+            return new BitwiseOperator(op, exprs.ToArray(), keyword.Location);
         }
 
         private Output TakeOutput()

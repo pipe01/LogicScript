@@ -16,12 +16,10 @@ namespace Tester
 
             var l = new Lexer(
 @"
-when in = 1010
+when in[1] = 1
     # Set individual output bits
     out[0] = 1
-    #out[2] = (& 0 in[2])
     out[2] = and(0, in[2])
-    #out[1] = 0 & in[2]
 
     # Set all the output bits
     out = 1010
@@ -77,6 +75,8 @@ end
             sw.Stop();
             Console.WriteLine((double)(sw.ElapsedTicks / iterations) / TimeSpan.TicksPerMillisecond + "ms per iteration");
 #endif
+
+            Console.ReadKey(true);
         }
     }
 

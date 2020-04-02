@@ -7,11 +7,6 @@ namespace LogicScript.Parsing
 {
     public class Lexer
     {
-        private static readonly string[] Keywords =
-        {
-            "when", "end", "in", "out"
-        };
-
         private int Index;
         private int Line;
         private int Column;
@@ -67,7 +62,13 @@ namespace LogicScript.Parsing
 
         private Lexeme Lexeme(LexemeKind kind, string content) => new Lexeme(kind, content, new SourceLocation(Line, Column - (content?.Length ?? 0)));
 
-        private Lexeme Lexeme(LexemeKind kind) => Lexeme(kind, Builder.ToString());
+        private Lexeme Lexeme(LexemeKind kind)
+        {
+            var content = Builder.ToString();
+            Builder.Clear();
+
+            return Lexeme(kind, content);
+        }
 
         private bool TakeLexeme(out Lexeme? lexeme)
         {
@@ -135,7 +136,7 @@ namespace LogicScript.Parsing
 
             string keyword = Builder.ToString();
 
-            if (!Keywords.Contains(keyword))
+            if (!Constants.Keywords.Contains(keyword))
                 Errors.AddError(startLocation, "invalid keyword");
 
             return Lexeme(LexemeKind.Keyword);

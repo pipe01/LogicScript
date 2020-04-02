@@ -38,7 +38,7 @@ namespace LogicScript
                 if (value.Length != compound.Indices.Length)
                     throw new LogicEngineException("Mismatched input count", c);
 
-                match = AreInputsMatched(machine, compound.Indices, value);
+                match = AreInputsMatched(machine, value, compound.Indices);
             }
             else if (c.InputSpec is WholeInputSpec)
             {
@@ -52,32 +52,14 @@ namespace LogicScript
                 RunStatements(machine, c.Statements);
         }
 
-        private static bool AreInputsMatched(IMachine machine, int[] inputIndices, BitsValue bits)
+        private static bool AreInputsMatched(IMachine machine, BitsValue bits, int[] inputIndices = null)
         {
             bool match = true;
+            int length = inputIndices?.Length ?? machine.InputCount;
 
-            for (int i = 0; i < inputIndices.Length; i++)
+            for (int i = 0; i < length; i++)
             {
-                bool inputValue = machine.GetInput(i);
-                bool requiredValue = bits[i];
-
-                if (inputValue != requiredValue)
-                {
-                    match = false;
-                    break;
-                }
-            }
-
-            return match;
-        }
-        
-        private static bool AreInputsMatched(IMachine machine, BitsValue bits)
-        {
-            bool match = true;
-
-            for (int i = 0; i < machine.InputCount; i++)
-            {
-                bool inputValue = machine.GetInput(i);
+                bool inputValue = machine.GetInput(inputIndices?[i] ?? i);
                 bool requiredValue = bits[i];
 
                 if (inputValue != requiredValue)
@@ -123,6 +105,8 @@ namespace LogicScript
                     return num.Value == 1;
                 case InputExpression input:
                     return machine.GetInput(input.InputIndex);
+                case BitwiseOperator op:
+                    return DoBitwiseOperator(machine, op);
 
                 default:
                     throw new LogicEngineException("Expected single-bit value", expr);
@@ -152,6 +136,31 @@ namespace LogicScript
                 }
 
                 return new BitsValue(items);
+            }
+        }
+
+        private static bool DoBitwiseOperator(IMachine machine, BitwiseOperator op)
+        {
+            switch (op.Operator)
+            {
+                case Operator.And:
+                    return Aggregate(true, (a, b) => a && b);
+                case Operator.Or:
+                    return Aggregate(false, (a, b) => a || b);
+            }
+
+            throw new LogicEngineException();
+
+            bool Aggregate(bool start, Func<bool, bool, bool> aggregator)
+            {
+                bool val = start;
+
+                foreach (var item in op.Operands)
+                {
+                    val = aggregator(val, GetBitValue(machine, item));
+                }
+
+                return val;
             }
         }
     }
