@@ -35,21 +35,15 @@ namespace LogicScript
 
             if (c.InputSpec is CompoundInputSpec compound)
             {
-                if (value.Length != compound.Indices.Length)
-                    throw new LogicEngineException($"Mismatched input count, expected {compound.Indices.Length}", c);
-
                 match = AreInputsMatched(machine, value, compound.Indices);
             }
             else if (c.InputSpec is WholeInputSpec)
             {
-                if (value.Length != machine.InputCount)
-                    throw new LogicEngineException($"Mismatched input count, expected {machine.InputCount}", c);
-
                 match = AreInputsMatched(machine, value);
             }
             else if (c.InputSpec is SingleInputSpec singlein)
             {
-                if (value.Length != 1)
+                if (!value.IsSingleBit)
                     throw new LogicEngineException("Mismatched input count, expected 1", c);
 
                 match = machine.GetInput(singlein.Index) == value[0];
@@ -95,12 +89,7 @@ namespace LogicScript
             }
             else if (stmt is SetOutputStatement setout)
             {
-                var value = GetBitsValue(machine, setout.Value);
-
-                if (value.Length != machine.OutputCount)
-                    throw new LogicEngineException("Mismatched output count", stmt);
-
-                machine.SetOutputs(value);
+                machine.SetOutputs(GetBitsValue(machine, setout.Value));
             }
         }
 
@@ -125,7 +114,7 @@ namespace LogicScript
             switch (expr)
             {
                 case NumberLiteralExpression num:
-                    return new BitsValue(num.Value, num.Length);
+                    return num.Value;
                 case ListExpression list:
                     return GetListValue(list);
                 case BitwiseOperator op:
@@ -153,20 +142,23 @@ namespace LogicScript
             switch (op.Operator)
             {
                 case Operator.And:
-                    return Aggregate(true, (a, b) => a && b);
+                    return Aggregate(true, (a, b) => a && b, false);
                 case Operator.Or:
-                    return Aggregate(false, (a, b) => a || b);
+                    return Aggregate(false, (a, b) => a || b, true);
             }
 
             throw new LogicEngineException();
 
-            bool Aggregate(bool start, Func<bool, bool, bool> aggregator)
+            bool Aggregate(bool start, Func<bool, bool, bool> aggregator, bool? shortCircuitOn = null)
             {
                 bool val = start;
 
                 foreach (var item in op.Operands)
                 {
                     val = aggregator(val, GetBitValue(machine, item));
+
+                    if (val == shortCircuitOn)
+                        break;
                 }
 
                 return val;

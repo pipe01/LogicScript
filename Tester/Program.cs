@@ -9,27 +9,11 @@ using System.Runtime.InteropServices;
 
 namespace Tester
 {
-    [StructLayout(LayoutKind.Explicit)]
-    public struct Union
-    {
-        [FieldOffset(0)]
-        public bool[] Bool;
-
-        [FieldOffset(0)]
-        public byte Byte;
-    }
-
     class Program
     {
         static void Main(string[] args)
         {
             var errors = new ErrorSink();
-
-            var u = new Union();
-
-
-            bool[] a = new[] { false, false, true, true };
-            bool[] b = new[] { false, true, false, true };
 
             var l = new Lexer(
 @"
@@ -118,7 +102,9 @@ end
 
         public void SetOutput(int i, bool on)
         {
+#if !RELEASE
             Outputs[i] = on;
+#endif
 
             if (ConsoleOutput)
                 Console.WriteLine($"Set output {i} to {on}");
@@ -126,10 +112,12 @@ end
 
         public void SetOutputs(BitsValue values)
         {
-            values.Bits.CopyTo(Outputs);
+#if !RELEASE
+            values.Bits[..Outputs.Length].CopyTo(Outputs);
+#endif
 
             if (ConsoleOutput)
-                Console.WriteLine($"Set outputs to ({string.Join(", ", values.Bits.ToArray())})");
+                Console.WriteLine($"Set outputs to ({values})");
         }
     }
 }
