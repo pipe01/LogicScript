@@ -200,7 +200,19 @@ namespace LogicScript.Parsing
         private InputSpec TakeInputSpec()
         {
             if (TakeKeyword("in", error: false))
-                return new WholeInputSpec();
+            {
+                if (Take(LexemeKind.LeftBracket, false))
+                {
+                    Take(LexemeKind.Number, out var numLexeme);
+                    Take(LexemeKind.RightBracket);
+
+                    return new SingleInputSpec(int.Parse(numLexeme.Content));
+                }
+                else
+                {
+                    return new WholeInputSpec();
+                }
+            }
 
             Take(LexemeKind.LeftParenthesis);
 

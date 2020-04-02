@@ -7,6 +7,7 @@ output = "out", [ "[", number_dec, "]" ];
 input = "in", "[", number_dec, "]";
 
 inputs_spec = "in"
+	| input
 	| "(" { input, ",", ws } ")";
 
 bits_value = number

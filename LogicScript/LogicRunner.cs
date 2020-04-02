@@ -36,16 +36,23 @@ namespace LogicScript
             if (c.InputSpec is CompoundInputSpec compound)
             {
                 if (value.Length != compound.Indices.Length)
-                    throw new LogicEngineException("Mismatched input count", c);
+                    throw new LogicEngineException($"Mismatched input count, expected {compound.Indices.Length}", c);
 
                 match = AreInputsMatched(machine, value, compound.Indices);
             }
             else if (c.InputSpec is WholeInputSpec)
             {
                 if (value.Length != machine.InputCount)
-                    throw new LogicEngineException("Mismatched input count", c);
+                    throw new LogicEngineException($"Mismatched input count, expected {machine.InputCount}", c);
 
                 match = AreInputsMatched(machine, value);
+            }
+            else if (c.InputSpec is SingleInputSpec singlein)
+            {
+                if (value.Length != 1)
+                    throw new LogicEngineException("Mismatched input count, expected 1", c);
+
+                match = machine.GetInput(singlein.Index) == value[0];
             }
 
             if (match)
