@@ -52,5 +52,21 @@ namespace LogicScript.Data
         }
 
         public override string ToString() => "(" + string.Join(", ", Values.Select(o => o ? 1 : 0)) + ")";
+
+        public static BitsValue operator &(BitsValue left, BitsValue right)
+        {
+            int length = left.Length > right.Length ? left.Length : right.Length;
+            bool[] values = new bool[length];
+
+            for (int i = 0; i < length; i++)
+            {
+                bool lval = i >= left.Length ? false : left[i];
+                bool rval = i >= right.Length ? false : right[i];
+
+                values[i] = lval && rval;
+            }
+
+            return new BitsValue(values);
+        }
     }
 }

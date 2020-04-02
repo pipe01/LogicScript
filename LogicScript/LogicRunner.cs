@@ -113,7 +113,7 @@ namespace LogicScript
                 case InputExpression input:
                     return machine.GetInput(input.InputIndex);
                 case BitwiseOperator op:
-                    return DoBitwiseOperator(machine, op);
+                    return DoBitOperator(machine, op);
 
                 default:
                     throw new LogicEngineException("Expected single-bit value", expr);
@@ -128,6 +128,8 @@ namespace LogicScript
                     return new BitsValue(num.Value, num.Length);
                 case ListExpression list:
                     return GetListValue(list);
+                case BitwiseOperator op:
+                    return DoBitsOperator(machine, op);
 
                 default:
                     throw new LogicEngineException("Expected multi-bit value", expr);
@@ -146,7 +148,7 @@ namespace LogicScript
             }
         }
 
-        private static bool DoBitwiseOperator(IMachine machine, BitwiseOperator op)
+        private static bool DoBitOperator(IMachine machine, BitwiseOperator op)
         {
             switch (op.Operator)
             {
@@ -165,6 +167,31 @@ namespace LogicScript
                 foreach (var item in op.Operands)
                 {
                     val = aggregator(val, GetBitValue(machine, item));
+                }
+
+                return val;
+            }
+        }
+
+        private static BitsValue DoBitsOperator(IMachine machine, BitwiseOperator op)
+        {
+            switch (op.Operator)
+            {
+                case Operator.And:
+                    return GetBitsValue(machine, op.Operands[0]) & GetBitsValue(machine, op.Operands[1]);
+                case Operator.Or:
+                    break;
+            }
+
+            throw new LogicEngineException();
+
+            BitsValue Aggregate(BitsValue start, Func<BitsValue, BitsValue, BitsValue> aggregator)
+            {
+                var val = start;
+
+                foreach (var item in op.Operands)
+                {
+                    val = aggregator(val, GetBitsValue(machine, item));
                 }
 
                 return val;

@@ -5,20 +5,37 @@ using LogicScript.Parsing.Structures;
 using System;
 using System.Diagnostics;
 using System.Linq;
+using System.Runtime.InteropServices;
 
 namespace Tester
 {
+    [StructLayout(LayoutKind.Explicit)]
+    public struct Union
+    {
+        [FieldOffset(0)]
+        public bool[] Bool;
+
+        [FieldOffset(0)]
+        public byte Byte;
+    }
+
     class Program
     {
         static void Main(string[] args)
         {
             var errors = new ErrorSink();
 
+            var u = new Union();
+
+
+            bool[] a = new[] { false, false, true, true };
+            bool[] b = new[] { false, true, false, true };
+
             var l = new Lexer(
 @"
-when in[1] = 1
+when in[1] = 0
     # Set individual output bits
-    out[0] = 1
+    out = and(1010, 0110)
     out[2] = and(0, in[2])
 
     # Set all the output bits
