@@ -1,12 +1,12 @@
 ﻿namespace LogicScript.Parsing.Structures
 {
-    internal class InputExpression : Expression
+    internal class SingleInputExpression : Expression
     {
         public int InputIndex { get; }
 
         public override bool IsSingleBit => true;
 
-        public InputExpression(int inputIndex, SourceLocation location) : base(location)
+        public SingleInputExpression(int inputIndex, SourceLocation location) : base(location)
         {
             this.InputIndex = inputIndex;
         }

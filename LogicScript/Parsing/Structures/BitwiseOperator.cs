@@ -13,12 +13,16 @@
             this.Operands = operands;
 
             this.IsSingleBit = true;
-            foreach (var item in operands)
+
+            if (operands.Length > 1)
             {
-                if (!item.IsSingleBit)
+                foreach (var item in operands)
                 {
-                    this.IsSingleBit = false;
-                    break;
+                    if (!item.IsSingleBit)
+                    {
+                        this.IsSingleBit = false;
+                        break;
+                    }
                 }
             }
         }

@@ -19,7 +19,7 @@ namespace Tester
 @"
 when in[1] = 0
     # Set individual output bits
-    out = and(1010, 0110)
+    out[2] = and(in)
     out[2] = and(0, in[2])
 
     # Set all the output bits
@@ -118,6 +118,14 @@ end
 
             if (ConsoleOutput)
                 Console.WriteLine($"Set outputs to ({values})");
+        }
+
+        public BitsValue GetInputs()
+        {
+            if (ConsoleOutput)
+                Console.WriteLine("Read inputs");
+
+            return new BitsValue(Inputs);
         }
     }
 }

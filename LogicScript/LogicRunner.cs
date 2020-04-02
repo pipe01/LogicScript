@@ -73,11 +73,11 @@ namespace LogicScript
             return match;
         }
 
-        private static void RunStatements(IMachine machine, IEnumerable<Statement> statements)
+        private static void RunStatements(IMachine machine, Statement[] statements)
         {
-            foreach (var stmt in statements)
+            for (int i = 0; i < statements.Length; i++)
             {
-                RunStatement(machine, stmt);
+                RunStatement(machine, statements[i]);
             }
         }
 
@@ -99,7 +99,7 @@ namespace LogicScript
             {
                 case NumberLiteralExpression num when num.Length == 1:
                     return num.Value == 1;
-                case InputExpression input:
+                case SingleInputExpression input:
                     return machine.GetInput(input.InputIndex);
                 case BitwiseOperator op:
                     return DoBitOperator(machine, op);
@@ -114,11 +114,13 @@ namespace LogicScript
             switch (expr)
             {
                 case NumberLiteralExpression num:
-                    return num.Value;
+                    return new BitsValue(num.Value, num.Length);
                 case ListExpression list:
                     return GetListValue(list);
                 case BitwiseOperator op:
                     return DoBitsOperator(machine, op);
+                case WholeInputExpression _:
+                    return machine.GetInputs();
 
                 default:
                     throw new LogicEngineException("Expected multi-bit value", expr);
@@ -142,7 +144,9 @@ namespace LogicScript
             switch (op.Operator)
             {
                 case Operator.And:
-                    return Aggregate(true, (a, b) => a && b, false);
+                    return op.Operands.Length == 1
+                        ? GetBitsValue(machine, op.Operands[0]).AggregateBits(true, (a, b) => a && b, false)
+                        : Aggregate(true, (a, b) => a && b, false);
                 case Operator.Or:
                     return Aggregate(false, (a, b) => a || b, true);
             }
@@ -170,23 +174,31 @@ namespace LogicScript
             switch (op.Operator)
             {
                 case Operator.And:
-                    return GetBitsValue(machine, op.Operands[0]) & GetBitsValue(machine, op.Operands[1]);
+                    return Aggregate((a, b) => a & b, o => o == BitsValue.Zero);
                 case Operator.Or:
-                    break;
+                    return Aggregate((a, b) => a | b);
             }
 
             throw new LogicEngineException();
 
-            BitsValue Aggregate(BitsValue start, Func<BitsValue, BitsValue, BitsValue> aggregator)
+            BitsValue Aggregate(Func<BitsValue, BitsValue, BitsValue> aggregator, Func<BitsValue, bool> shortCircuit = null)
             {
-                var val = start;
+                BitsValue? curVal = null;
 
-                foreach (var item in op.Operands)
+                foreach (var expr in op.Operands)
                 {
-                    val = aggregator(val, GetBitsValue(machine, item));
+                    var value = GetBitsValue(machine, expr);
+
+                    if (curVal == null)
+                        curVal = value;
+                    else
+                        curVal = aggregator(curVal.Value, value);
+
+                    if (shortCircuit != null && shortCircuit(curVal.Value))
+                        break;
                 }
 
-                return val;
+                return curVal.Value;
             }
         }
     }

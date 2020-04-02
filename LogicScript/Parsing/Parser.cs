@@ -247,10 +247,11 @@ namespace LogicScript.Parsing
 
                 return new ListExpression(values.ToArray(), par.Location);
             }
-            else if (Peek(LexemeKind.Keyword, "in"))
+            else if (TakeKeyword("in", out var inLex, false))
             {
-                var loc = Current.Location;
-                return new InputExpression(TakeInput(), loc);
+                return Peek(LexemeKind.LeftBracket)
+                    ? (Expression)new SingleInputExpression(TakeInput(false), inLex.Location)
+                    : new WholeInputExpression(inLex.Location);
             }
             else if (Take(LexemeKind.Number, out var n, false))
             {
@@ -266,7 +267,7 @@ namespace LogicScript.Parsing
                     @base = 10;
                 }
 
-                return new NumberLiteralExpression(n.Location, Convert.ToInt32(n.Content, @base), n.Content?.Length ?? 0);
+                return new NumberLiteralExpression(n.Location, Convert.ToUInt64(n.Content, @base), n.Content?.Length ?? 0);
             }
             else if (Peek(LexemeKind.Keyword) && Constants.Operators.TryGetValue(Current.Content, out var op))
             {
@@ -311,9 +312,10 @@ namespace LogicScript.Parsing
             return new Output(null);
         }
 
-        private int TakeInput()
+        private int TakeInput(bool takeKeyword = true)
         {
-            TakeKeyword("in");
+            if (takeKeyword)
+                TakeKeyword("in");
             Take(LexemeKind.LeftBracket);
             Take(LexemeKind.Number, out var numLexeme);
             Take(LexemeKind.RightBracket);

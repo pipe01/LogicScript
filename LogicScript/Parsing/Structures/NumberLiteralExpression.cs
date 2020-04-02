@@ -2,12 +2,12 @@
 {
     internal class NumberLiteralExpression : Expression
     {
-        public long Value { get; }
+        public ulong Value { get; }
         public int? Length { get; }
 
         public override bool IsSingleBit => Length == 1;
 
-        public NumberLiteralExpression(SourceLocation location, long value, int? length = null) : base(location)
+        public NumberLiteralExpression(SourceLocation location, ulong value, int? length = null) : base(location)
         {
             this.Value = value;
             this.Length = length;
