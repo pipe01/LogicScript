@@ -1,14 +1,7 @@
-﻿using BenchmarkDotNet.Configs;
-using BenchmarkDotNet.Diagnosers;
-using BenchmarkDotNet.Running;
-using LogicScript;
+﻿using LogicScript;
 using LogicScript.Data;
-using LogicScript.Parsing;
 using LogicScript.Parsing.Structures;
 using System;
-using System.Diagnostics;
-using System.Linq;
-using System.Runtime.InteropServices;
 
 namespace Tester
 {
@@ -22,7 +15,7 @@ namespace Tester
 
             const string script = @"
 when 0 = 0
-    out[2] = 1' + 2'
+    out[2] = 1' & 2' & (3' + 4') & 5'
     out[2] = and(1, in[2])
 
     out = 1010
@@ -56,8 +49,8 @@ end
         public int InputCount => Inputs.Length;
         public int OutputCount => Outputs.Length;
 
-        private bool[] Inputs = new[] { true, false, true, false };
-        private bool[] Outputs = new[] { true, false, true, false };
+        private readonly bool[] Inputs = new[] { true, false, true, false };
+        private readonly bool[] Outputs = new[] { true, false, true, false };
 
         public bool GetInput(int i)
         {

@@ -9,7 +9,20 @@ namespace LogicScript.Parsing
     internal class Parser
     {
         private int Index;
-        private ref Lexeme Current => ref Lexemes[Index];
+        private Lexeme Current;
+        private Lexeme NextNonWhitespace
+        {
+            get
+            {
+                for (int i = Index + 1; i < Lexemes.Length; i++)
+                {
+                    if (Lexemes[i].Kind != LexemeKind.Whitespace)
+                        return Lexemes[i];
+                }
+
+                return default;
+            }
+        }
 
         private bool IsEOF => Current.Kind == LexemeKind.EOF;
 
@@ -64,6 +77,8 @@ namespace LogicScript.Parsing
                 return false;
 
             Index++;
+            Current = Lexemes[Index];
+
             return true;
         }
 
@@ -199,53 +214,94 @@ namespace LogicScript.Parsing
 
         private Expression TakeExpression()
         {
-            if (Take(LexemeKind.LeftParenthesis, out var par, error: false))
-            {
-                var values = new List<Expression>();
+            return Inner(TakePrimary(), 0);
 
-                do
+            bool Operator(Lexeme lexeme, out Operator op, out int predecence)
+            {
+                if (lexeme.Content != null && Constants.OperatorShortcuts.TryGetValue(lexeme.Content, out op))
                 {
+                    predecence = Constants.OperatorPrecedence[op];
+                    return true;
+                }
+
+                op = default;
+                predecence = 0;
+                return false;
+            }
+
+            Expression Inner(Expression lhs, int minPredecence)
+            {
+                SkipWhitespaces();
+
+                var start = Current.Location;
+                while (Operator(Current, out var op, out var predecence) && predecence >= minPredecence)
+                {
+                    Advance();
                     SkipWhitespaces();
-                    values.Add(TakeExpression());
-                } while (Take(LexemeKind.Comma, false));
 
-                Take(LexemeKind.RightParenthesis);
+                    var rhs = TakePrimary();
+                    SkipWhitespaces();
 
-                if (values.Count == 1)
-                    return values[0];
+                    while (Operator(Current, out var lookaheadOp, out int lookaheadPrecedence) && lookaheadPrecedence > predecence)
+                    {
+                        rhs = Inner(rhs, lookaheadPrecedence);
+                    }
 
-                return new ListExpression(values.ToArray(), par.Location);
-            }
-            else if (TakeKeyword("in", out var inLex, false))
-            {
-                return Peek(LexemeKind.LeftBracket)
-                    ? (Expression)new SingleInputExpression(TakeInput(false), inLex.Location)
-                    : new WholeInputExpression(inLex.Location);
-            }
-            else if (Take(LexemeKind.Number, out var n, false))
-            {
-                int @base = 2;
-
-                if (Take(LexemeKind.Apostrophe, false))
-                {
-                    @base = 10;
+                    lhs = new OperatorExpression(op, new[] { lhs, rhs }, start);
                 }
-                else if (n.Content?.ContainsDecimalDigits() ?? false)
-                {
-                    Error("decimal number must be sufffixed");
-                    @base = 10;
-                }
+                return lhs;
+            }
 
-                return new NumberLiteralExpression(n.Location, Convert.ToUInt64(n.Content, @base), n.Content?.Length ?? 0);
-            }
-            else if (Peek(LexemeKind.Keyword) && Constants.Operators.TryGetValue(Current.Content, out var op))
+            Expression TakePrimary()
             {
-                return TakeOperator(op);
-            }
-            else
-            {
-                Error("expected expression", true);
-                throw new Exception(); //Not reached
+                if (Take(LexemeKind.LeftParenthesis, out var par, error: false))
+                {
+                    var values = new List<Expression>();
+
+                    do
+                    {
+                        SkipWhitespaces();
+                        values.Add(TakeExpression());
+                    } while (Take(LexemeKind.Comma, false));
+
+                    Take(LexemeKind.RightParenthesis);
+
+                    if (values.Count == 1)
+                        return values[0];
+
+                    return new ListExpression(values.ToArray(), par.Location);
+                }
+                else if (TakeKeyword("in", out var inLex, false))
+                {
+                    return Peek(LexemeKind.LeftBracket)
+                        ? (Expression)new SingleInputExpression(TakeInput(false), inLex.Location)
+                        : new WholeInputExpression(inLex.Location);
+                }
+                else if (Take(LexemeKind.Number, out var n, false))
+                {
+                    int @base = 2;
+
+                    if (Take(LexemeKind.Apostrophe, false))
+                    {
+                        @base = 10;
+                    }
+                    else if (n.Content?.ContainsDecimalDigits() ?? false)
+                    {
+                        Error("decimal number must be sufffixed");
+                        @base = 10;
+                    }
+
+                    return new NumberLiteralExpression(n.Location, Convert.ToUInt64(n.Content, @base), n.Content?.Length ?? 0);
+                }
+                else if (Peek(LexemeKind.Keyword) && Constants.Operators.TryGetValue(Current.Content, out var op))
+                {
+                    return TakeOperator(op);
+                }
+                else
+                {
+                    Error("expected expression", true);
+                    throw new Exception(); //Not reached
+                }
             }
         }
 

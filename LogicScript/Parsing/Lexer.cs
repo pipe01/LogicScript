@@ -105,7 +105,7 @@ namespace LogicScript.Parsing
 
                 lexeme = null;
             }
-            else if (Constants.OperatorShortcuts.ContainsKey(Current))
+            else if (Constants.OperatorShortcuts.ContainsKey(Current.ToString()))
             {
                 lexeme = Lexeme(LexemeKind.Operator, Current.ToString());
                 Advance();

@@ -15,13 +15,13 @@ namespace LogicScript.Parsing
             ["or"] = Operator.Or,
         };
 
-        public static readonly IReadOnlyDictionary<char, Operator> OperatorShortcuts = new Dictionary<char, Operator>
+        public static readonly IReadOnlyDictionary<string, Operator> OperatorShortcuts = new Dictionary<string, Operator>
         {
-            ['+'] = Operator.Add,
-            ['-'] = Operator.Subtract,
+            ["+"] = Operator.Add,
+            ["-"] = Operator.Subtract,
 
-            ['&'] = Operator.And,
-            ['|'] = Operator.Or,
+            ["&"] = Operator.And,
+            ["|"] = Operator.Or,
         };
         
         public static readonly IReadOnlyDictionary<Operator, int> OperatorPrecedence = new Dictionary<Operator, int>
