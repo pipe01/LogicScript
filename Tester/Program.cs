@@ -14,14 +14,14 @@ namespace Tester
 #else
 
             const string script = @"
-when 0 == 0
+when 1
     #out[2] = 1' & 2' & (3' + 4') & 5'
     #out[1] = and(111)
     #out[1] = and(101)
     #out[1] = and(0101)
     #out[1] = or(0101)
     #out[1] = or(000)
-    out[1] = !010 == 100
+    out[1] = !in == 0101
     out[1] = !(123' == 123')
     #out = !1010
 end

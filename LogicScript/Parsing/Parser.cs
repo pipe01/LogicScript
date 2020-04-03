@@ -253,7 +253,7 @@ namespace LogicScript.Parsing
                 if (Peek(LexemeKind.Operator, "!"))
                 {
                     Take(LexemeKind.Operator, out var opLex);
-                    return new UnaryOperatorExpression(Structures.Operator.Not, TakeExpression(), opLex.Location);
+                    return new UnaryOperatorExpression(Structures.Operator.Not, TakePrimary(), opLex.Location);
                 }
                 else if (Take(LexemeKind.LeftParenthesis, out var par, error: false))
                 {

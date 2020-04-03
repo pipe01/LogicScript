@@ -14,5 +14,7 @@ namespace LogicScript.Parsing.Structures
             this.Operand = operand;
             this.Operator = @operator;
         }
+
+        public override string ToString() => $"{Operator}({Operand})";
     }
 }
