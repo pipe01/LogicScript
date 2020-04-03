@@ -1,10 +1,6 @@
 ﻿using LogicScript.Data;
 using LogicScript.Parsing.Structures;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace LogicScript
 {
@@ -30,47 +26,11 @@ namespace LogicScript
             if (c.Statements == null)
                 return;
 
-            var value = GetBitsValue(machine, c.InputsValue);
-            bool match = false;
+            var conditionValue = GetValue(machine, c.Condition);
+            var value = GetValue(machine, c.InputsValue);
 
-            if (c.InputSpec is CompoundInputSpec compound)
-            {
-                match = AreInputsMatched(machine, value, compound.Indices);
-            }
-            else if (c.InputSpec is WholeInputSpec)
-            {
-                match = AreInputsMatched(machine, value);
-            }
-            else if (c.InputSpec is SingleInputSpec singlein)
-            {
-                if (!value.IsSingleBit)
-                    throw new LogicEngineException("Mismatched input count, expected 1", c);
-
-                match = machine.GetInput(singlein.Index) == value[0];
-            }
-
-            if (match)
+            if (conditionValue == value)
                 RunStatements(machine, c.Statements);
-        }
-
-        private static bool AreInputsMatched(IMachine machine, BitsValue bits, int[] inputIndices = null)
-        {
-            bool match = true;
-            int length = inputIndices?.Length ?? machine.InputCount;
-
-            for (int i = 0; i < length; i++)
-            {
-                bool inputValue = machine.GetInput(inputIndices?[i] ?? i);
-                bool requiredValue = bits[i];
-
-                if (inputValue != requiredValue)
-                {
-                    match = false;
-                    break;
-                }
-            }
-
-            return match;
         }
 
         private static void RunStatements(IMachine machine, Statement[] statements)
@@ -85,34 +45,25 @@ namespace LogicScript
         {
             if (stmt is SetSingleOutputStatement setsingle)
             {
-                machine.SetOutput(setsingle.Output, GetBitValue(machine, setsingle.Value));
+                var value = GetValue(machine, setsingle.Value);
+
+                if (!value.IsSingleBit)
+                    throw new LogicEngineException("Expected single-bit value", setsingle.Value);
+
+                machine.SetOutput(setsingle.Output, value);
             }
             else if (stmt is SetOutputStatement setout)
             {
-                machine.SetOutputs(GetBitsValue(machine, setout.Value));
+                machine.SetOutputs(GetValue(machine, setout.Value));
             }
         }
 
-        private static bool GetBitValue(IMachine machine, Expression expr)
+        private static BitsValue GetValue(IMachine machine, Expression expr)
         {
             switch (expr)
             {
                 case NumberLiteralExpression num when num.Length == 1:
                     return num.Value == 1;
-                case SingleInputExpression input:
-                    return machine.GetInput(input.InputIndex);
-                case BitwiseOperator op:
-                    return DoBitOperator(machine, op);
-
-                default:
-                    throw new LogicEngineException("Expected single-bit value", expr);
-            }
-        }
-
-        private static BitsValue GetBitsValue(IMachine machine, Expression expr)
-        {
-            switch (expr)
-            {
                 case NumberLiteralExpression num:
                     return new BitsValue(num.Value, num.Length);
                 case ListExpression list:
@@ -121,6 +72,8 @@ namespace LogicScript
                     return DoBitsOperator(machine, op);
                 case WholeInputExpression _:
                     return machine.GetInputs();
+                case SingleInputExpression input:
+                    return machine.GetInput(input.InputIndex);
 
                 default:
                     throw new LogicEngineException("Expected multi-bit value", expr);
@@ -129,43 +82,21 @@ namespace LogicScript
             BitsValue GetListValue(ListExpression list)
             {
                 var items = new bool[list.Expressions.Length];
+                ulong n = 0;
 
-                for (int i = 0; i < list.Expressions.Length; i++)
+                int len = list.Expressions.Length;
+                for (int i = 0; i < len; i++)
                 {
-                    items[i] = GetBitValue(machine, list.Expressions[i]);
+                    var value = GetValue(machine, list.Expressions[i]);
+
+                    if (!value.IsSingleBit)
+                        throw new LogicEngineException("List expressions can only contain single-bit values", list.Expressions[i]);
+
+                    if (value)
+                        n |= 1UL << (len - 1 - i);
                 }
 
                 return new BitsValue(items);
-            }
-        }
-
-        private static bool DoBitOperator(IMachine machine, BitwiseOperator op)
-        {
-            switch (op.Operator)
-            {
-                case Operator.And:
-                    return op.Operands.Length == 1
-                        ? GetBitsValue(machine, op.Operands[0]).AggregateBits(true, (a, b) => a && b, false)
-                        : Aggregate(true, (a, b) => a && b, false);
-                case Operator.Or:
-                    return Aggregate(false, (a, b) => a || b, true);
-            }
-
-            throw new LogicEngineException();
-
-            bool Aggregate(bool start, Func<bool, bool, bool> aggregator, bool? shortCircuitOn = null)
-            {
-                bool val = start;
-
-                foreach (var item in op.Operands)
-                {
-                    val = aggregator(val, GetBitValue(machine, item));
-
-                    if (val == shortCircuitOn)
-                        break;
-                }
-
-                return val;
             }
         }
 
@@ -187,7 +118,7 @@ namespace LogicScript
 
                 foreach (var expr in op.Operands)
                 {
-                    var value = GetBitsValue(machine, expr);
+                    var value = GetValue(machine, expr);
 
                     if (curVal == null)
                         curVal = value;

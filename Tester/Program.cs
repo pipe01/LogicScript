@@ -17,10 +17,10 @@ namespace Tester
 
             var l = new Lexer(
 @"
-when in[1] = 0
+when 0 = 0
     # Set individual output bits
-    out[2] = and(in)
-    out[2] = and(0, in[2])
+    out[2] = and(1, 1)
+    out[2] = and(1, in[2])
 
     # Set all the output bits
     out = 1010
@@ -100,6 +100,14 @@ end
             return v;
         }
 
+        public BitsValue GetInputs()
+        {
+            if (ConsoleOutput)
+                Console.WriteLine("Read inputs");
+
+            return new BitsValue(Inputs);
+        }
+
         public void SetOutput(int i, bool on)
         {
 #if !RELEASE
@@ -113,19 +121,11 @@ end
         public void SetOutputs(BitsValue values)
         {
 #if !RELEASE
-            values.Bits[..Outputs.Length].CopyTo(Outputs);
+            Array.Copy(values.Bits, Outputs, OutputCount);
 #endif
 
             if (ConsoleOutput)
                 Console.WriteLine($"Set outputs to ({values})");
-        }
-
-        public BitsValue GetInputs()
-        {
-            if (ConsoleOutput)
-                Console.WriteLine("Read inputs");
-
-            return new BitsValue(Inputs);
         }
     }
 }

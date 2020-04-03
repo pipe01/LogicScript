@@ -139,7 +139,7 @@ namespace LogicScript.Parsing
 
             SkipWhitespaces();
 
-            var inputSpec = TakeInputSpec();
+            var condition = TakeExpression();
 
             SkipWhitespaces();
             Take(LexemeKind.Equals);
@@ -171,7 +171,7 @@ namespace LogicScript.Parsing
             if (!foundEnd)
                 Error($"expected 'end' keyword to close case starting at {startLexeme.Location}");
 
-            return (new Case(inputSpec, inputsValue, stmts.ToArray(), startLexeme.Location), true);
+            return (new Case(condition, inputsValue, stmts.ToArray(), startLexeme.Location), true);
         }
 
         private Statement TakeStatement()
@@ -195,37 +195,6 @@ namespace LogicScript.Parsing
             return output.IsIndexed
                 ? new SetSingleOutputStatement(output.Index.Value, value, location)
                 : new SetOutputStatement(value, location);
-        }
-
-        private InputSpec TakeInputSpec()
-        {
-            if (TakeKeyword("in", error: false))
-            {
-                if (Take(LexemeKind.LeftBracket, false))
-                {
-                    Take(LexemeKind.Number, out var numLexeme);
-                    Take(LexemeKind.RightBracket);
-
-                    return new SingleInputSpec(int.Parse(numLexeme.Content));
-                }
-                else
-                {
-                    return new WholeInputSpec();
-                }
-            }
-
-            Take(LexemeKind.LeftParenthesis);
-
-            var inputs = new List<int>();
-            do
-            {
-                SkipWhitespaces();
-                inputs.Add(TakeInput());
-            } while (Take(LexemeKind.Comma, false));
-
-            Take(LexemeKind.RightParenthesis);
-
-            return new CompoundInputSpec(inputs.ToArray());
         }
 
         private Expression TakeExpression()

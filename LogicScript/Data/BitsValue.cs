@@ -6,17 +6,18 @@ namespace LogicScript.Data
     public readonly struct BitsValue
     {
         private const int BitSize = 64;
-        public static readonly BitsValue Zero = new BitsValue();
+        public static readonly BitsValue Zero = new BitsValue(0, 1);
+        public static readonly BitsValue One = new BitsValue(1, 1);
 
         private readonly ulong Number;
 
-        public bool IsSingleBit { get; }
-
         public int Length { get; }
+
+        public bool IsSingleBit => Number == 0 || Number == 1;
 
         public bool AreAllBitsSet => Number != 0 && (((Number + 1) & Number) == 0);
 
-        public ReadOnlyMemory<bool> Bits
+        public bool[] Bits
         {
             get
             {
@@ -34,7 +35,6 @@ namespace LogicScript.Data
         internal BitsValue(ulong number, int? length = null)
         {
             this.Number = number;
-            this.IsSingleBit = number == 0 || number == 1;
             this.Length = length ?? BitSize;
         }
 
@@ -52,7 +52,6 @@ namespace LogicScript.Data
             }
 
             this.Number = n;
-            this.IsSingleBit = bits.Length == 1;
             this.Length = bits.Length;
         }
 
@@ -84,6 +83,9 @@ namespace LogicScript.Data
         }
 
         public static implicit operator BitsValue(ulong n) => new BitsValue(n);
+        public static implicit operator BitsValue(bool n) => n ? One : Zero;
+
+        public static implicit operator bool(BitsValue v) => v.IsSingleBit && v == One;
 
         public static bool operator ==(BitsValue left, BitsValue right) => left.Number == right.Number;
         public static bool operator !=(BitsValue left, BitsValue right) => left.Number != right.Number;
