@@ -15,9 +15,10 @@ namespace LogicScript
 
         public void DoUpdate(IMachine machine)
         {
-            foreach (var item in Script.Cases)
+            int len = Script.Cases.Count;
+            for (int i = 0; i < len; i++)
             {
-                UpdateCase(machine, item);
+                UpdateCase(machine, Script.Cases[i]);
             }
         }
 
