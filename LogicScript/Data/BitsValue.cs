@@ -16,10 +16,9 @@ namespace LogicScript.Data
         public bool IsOne => Number == 1;
         public bool AreAllBitsSet => Number != 0 && (Number == OneMask);
         public bool IsAnyBitSet => Number != 0;
+        internal BitsValue Negated => new BitsValue(OneMask ^ Number, Length);
 
         private ulong OneMask => (1UL << Length) - 1;
-
-        internal BitsValue Negated => new BitsValue(OneMask ^ Number, Length);
 
         public bool[] Bits
         {
@@ -59,7 +58,7 @@ namespace LogicScript.Data
             this.Length = bits.Length;
         }
 
-        public override string ToString() => string.Join("", Bits.ToArray().SkipWhile(o => !o).Select(o => o ? 1 : 0));
+        public override string ToString() => string.Join("", Bits.Take(Length).Select(o => o ? 1 : 0));
 
         public override bool Equals(object obj)
         {
