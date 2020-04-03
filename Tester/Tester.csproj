@@ -6,6 +6,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="BenchmarkDotNet" Version="0.12.0" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\LogicScript\LogicScript.csproj" />
   </ItemGroup>
 
