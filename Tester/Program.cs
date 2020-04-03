@@ -16,11 +16,12 @@ namespace Tester
             const string script = @"
 when 0 = 0
     out[2] = 1' & 2' & (3' + 4') & 5'
-    out[2] = and(1, in[2])
+    out[1] = and(111)
+    out[1] = and(101)
+    out[1] = and(0101)
+    out[1] = or(0101)
+    out[1] = or(000)
     out = !1010
-
-    out = 1010
-    out = add(10', 3')
 end
 ";
 

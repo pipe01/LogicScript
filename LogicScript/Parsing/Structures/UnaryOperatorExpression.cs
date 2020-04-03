@@ -1,8 +1,10 @@
-﻿namespace LogicScript.Parsing.Structures
+﻿using System.Linq;
+
+namespace LogicScript.Parsing.Structures
 {
     internal class UnaryOperatorExpression : Expression
     {
-        public override bool IsSingleBit => Operand.IsSingleBit;
+        public override bool IsSingleBit => Operand.IsSingleBit || Constants.AggregationOperators.Any(o => o.Value == Operator);
 
         public Operator Operator { get; }
         public Expression Operand { get; }

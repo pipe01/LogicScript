@@ -103,12 +103,12 @@ namespace LogicScript.Parsing
         }
 
         [DebuggerStepThrough]
-        private bool Take(LexemeKind kind, bool error = true)
+        private bool Take(LexemeKind kind, bool error = true, bool fatal = false, string expected = null)
         {
             if (Current.Kind != kind)
             {
                 if (error)
-                    Error($"expected {kind}, {Current.Kind} found");
+                    Error($"expected {kind}{(expected != null ? $" ({expected})" : null)}, {Current.Kind} found", fatal);
 
                 return false;
             }
@@ -202,13 +202,13 @@ namespace LogicScript.Parsing
 
             var value = TakeExpression();
             if (output.IsIndexed && !value.IsSingleBit)
-                Error("expected a single bit (0 or 1)");
+                Error("expected a single bit or an expression that returns a single bit");
 
             SkipWhitespaces();
             Take(LexemeKind.NewLine);
 
             return output.IsIndexed
-                ? new SetSingleOutputStatement(output.Index.Value, value, location)
+                ? new SetSingleOutputStatement(output.Index, value, location)
                 : new SetOutputStatement(value, location);
         }
 
@@ -247,7 +247,7 @@ namespace LogicScript.Parsing
                         rhs = Inner(rhs, lookaheadPrecedence);
                     }
 
-                    lhs = new OperatorExpression(op, new[] { lhs, rhs }, start);
+                    lhs = new OperatorExpression(op, lhs, rhs, start);
                 }
                 return lhs;
             }
@@ -298,7 +298,7 @@ namespace LogicScript.Parsing
 
                     return new NumberLiteralExpression(n.Location, Convert.ToUInt64(n.Content, @base), n.Content?.Length ?? 0);
                 }
-                else if (Peek(LexemeKind.Keyword) && Constants.Operators.TryGetValue(Current.Content, out var op))
+                else if (Peek(LexemeKind.Keyword) && Constants.AggregationOperators.TryGetValue(Current.Content, out var op))
                 {
                     return TakeExplicitOperator(op);
                 }
@@ -310,45 +310,40 @@ namespace LogicScript.Parsing
             }
         }
 
-        private OperatorExpression TakeExplicitOperator(Operator op)
+        private Expression TakeExplicitOperator(Operator op)
         {
             Take(LexemeKind.Keyword, out var keyword);
-            Take(LexemeKind.LeftParenthesis);
+            Take(LexemeKind.LeftParenthesis, expected: "argument open", fatal: true);
 
-            var exprs = new List<Expression>();
-            do
-            {
-                SkipWhitespaces(true);
-                exprs.Add(TakeExpression());
-            } while (Take(LexemeKind.Comma, false));
+            var expr = TakeExpression();
 
-            Take(LexemeKind.RightParenthesis);
+            Take(LexemeKind.RightParenthesis, expected: "argument close", fatal: true);
 
-            return new OperatorExpression(op, exprs.ToArray(), keyword.Location);
+            return new UnaryOperatorExpression(op, expr, keyword.Location);
         }
 
-        private Output TakeOutput()
+        private (bool IsIndexed, int Index) TakeOutput()
         {
             TakeKeyword("out");
 
             if (Take(LexemeKind.LeftBracket, false))
             {
                 Take(LexemeKind.Number, out var numLexeme);
-                Take(LexemeKind.RightBracket);
+                Take(LexemeKind.RightBracket, expected: "output index close", fatal: true);
 
-                return new Output(int.Parse(numLexeme.Content));
+                return (true, int.Parse(numLexeme.Content));
             }
 
-            return new Output(null);
+            return (false, 0);
         }
 
         private int TakeInput(bool takeKeyword = true)
         {
             if (takeKeyword)
                 TakeKeyword("in");
-            Take(LexemeKind.LeftBracket);
-            Take(LexemeKind.Number, out var numLexeme);
-            Take(LexemeKind.RightBracket);
+            Take(LexemeKind.LeftBracket, expected: "input index open", fatal: true);
+            Take(LexemeKind.Number, out var numLexeme, expected: "input index number");
+            Take(LexemeKind.RightBracket, expected: "input index close", fatal: true);
 
             return int.Parse(numLexeme.Content);
         }

@@ -51,7 +51,7 @@ namespace LogicScript
                 if (!value.IsSingleBit)
                     throw new LogicEngineException("Expected single-bit value", setsingle.Value);
 
-                machine.SetOutput(setsingle.Output, value);
+                machine.SetOutput(setsingle.Output, value.IsOne);
             }
             else if (stmt is SetOutputStatement setout)
             {
@@ -65,14 +65,19 @@ namespace LogicScript
             {
                 case NumberLiteralExpression num:
                     return new BitsValue(num.Value, num.Length);
+
                 case ListExpression list:
                     return GetListValue(list);
+
                 case OperatorExpression op:
                     return DoOperator(machine, op);
+
                 case UnaryOperatorExpression unary:
                     return DoUnaryOperator(machine, unary);
+
                 case WholeInputExpression _:
                     return machine.GetInputs();
+
                 case SingleInputExpression input:
                     return machine.GetInput(input.InputIndex);
 
@@ -93,7 +98,7 @@ namespace LogicScript
                     if (!value.IsSingleBit)
                         throw new LogicEngineException("List expressions can only contain single-bit values", list.Expressions[i]);
 
-                    if (value)
+                    if (value.IsOne)
                         n |= 1UL << (len - 1 - i);
                 }
 
@@ -103,10 +108,16 @@ namespace LogicScript
 
         private static BitsValue DoUnaryOperator(IMachine machine, UnaryOperatorExpression op)
         {
+            var value = GetValue(machine, op.Operand);
+
             switch (op.Operator)
             {
                 case Operator.Not:
-                    return ~GetValue(machine, op.Operand).Number;
+                    return ~value.Number;
+                case Operator.And:
+                    return value.AreAllBitsSet;
+                case Operator.Or:
+                    return value.IsAnyBitSet;
             }
 
             throw new LogicEngineException();
@@ -114,37 +125,22 @@ namespace LogicScript
 
         private static BitsValue DoOperator(IMachine machine, OperatorExpression op)
         {
+            var left = GetValue(machine, op.Left);
+            var right = GetValue(machine, op.Right);
+
             switch (op.Operator)
             {
                 case Operator.Add:
-                    return Aggregate((a, b) => a.Number + b.Number);
+                    return left + right;
+                case Operator.Subtract:
+                    return left - right;
                 case Operator.And:
-                    return Aggregate((a, b) => a.Number & b.Number, o => o == BitsValue.Zero);
+                    return left & right;
                 case Operator.Or:
-                    return Aggregate((a, b) => a.Number | b.Number);
+                    return left | right;
             }
 
             throw new LogicEngineException();
-
-            BitsValue Aggregate(Func<BitsValue, BitsValue, BitsValue> aggregator, Func<BitsValue, bool> shortCircuit = null)
-            {
-                BitsValue? curVal = null;
-
-                foreach (var expr in op.Operands)
-                {
-                    var value = GetValue(machine, expr);
-
-                    if (curVal == null)
-                        curVal = value;
-                    else
-                        curVal = aggregator(curVal.Value, value);
-
-                    if (shortCircuit != null && shortCircuit(curVal.Value))
-                        break;
-                }
-
-                return curVal.Value;
-            }
         }
     }
 }

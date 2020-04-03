@@ -10,12 +10,12 @@ namespace LogicScript.Data
         public static readonly BitsValue One = new BitsValue(1, 1);
 
         public ulong Number { get; }
-
         public int Length { get; }
 
         public bool IsSingleBit => Number == 0 || Number == 1;
-
-        public bool AreAllBitsSet => Number != 0 && (((Number + 1) & Number) == 0);
+        public bool IsOne => Number == 1;
+        public bool AreAllBitsSet => Number != 0 && ((1UL << Length) - 1) == Number;
+        public bool IsAnyBitSet => Number != 0;
 
         public bool[] Bits
         {
@@ -30,7 +30,7 @@ namespace LogicScript.Data
             }
         }
 
-        public bool this[int bitIndex] => ((Number >> (BitSize - 1 - bitIndex)) & 1) == 1;
+        public bool this[int bitIndex] => ((Number >> (Length - 1 - bitIndex)) & 1) == 1;
 
         internal BitsValue(ulong number, int? length = null)
         {
@@ -67,7 +67,7 @@ namespace LogicScript.Data
 
         public override int GetHashCode() => Number.GetHashCode();
 
-        public bool AggregateBits(bool start, Func<bool, bool, bool> aggregator, bool? shortCircuitOn = null)
+        internal bool AggregateBits(bool start, Func<bool, bool, bool> aggregator, bool? shortCircuitOn = null)
         {
             bool value = start;
 
@@ -85,7 +85,7 @@ namespace LogicScript.Data
         public static implicit operator BitsValue(ulong n) => new BitsValue(n);
         public static implicit operator BitsValue(bool n) => n ? One : Zero;
 
-        public static implicit operator bool(BitsValue v) => v.IsSingleBit && v == One;
+        public static implicit operator ulong(BitsValue v) => v.Number;
 
         public static bool operator ==(BitsValue left, BitsValue right) => left.Number == right.Number;
         public static bool operator !=(BitsValue left, BitsValue right) => left.Number != right.Number;
