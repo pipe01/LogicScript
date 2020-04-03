@@ -14,7 +14,7 @@
             this.Left = left;
             this.Right = right;
 
-            this.IsSingleBit = left.IsSingleBit && right.IsSingleBit;
+            this.IsSingleBit = @operator == Operator.Equals || (left.IsSingleBit && right.IsSingleBit);
         }
 
         public override string ToString() => $"{Operator}({Left}, {Right})";

@@ -157,15 +157,10 @@ namespace LogicScript.Parsing
             var condition = TakeExpression();
 
             SkipWhitespaces();
-            Take(LexemeKind.Equals);
-            SkipWhitespaces();
 
-            var inputsValue = TakeExpression();
+            if (Current.Kind == LexemeKind.Equals)
+                Error("unexpected assignment, did you mean to compare with \"==\"?", true);
 
-            //if (inputSpec is CompoundInputSpec comp && inputsValue.Values.Length != comp.Indices.Length)
-            //    Error("mismatched input count");
-
-            SkipWhitespaces();
             Take(LexemeKind.NewLine);
 
             var stmts = new List<Statement>();
@@ -175,6 +170,7 @@ namespace LogicScript.Parsing
             {
                 SkipWhitespaces(true);
                 stmts.Add(TakeStatement());
+                SkipWhitespaces(true);
 
                 if (TakeKeyword("end", error: false))
                 {
@@ -186,7 +182,7 @@ namespace LogicScript.Parsing
             if (!foundEnd)
                 Error($"expected 'end' keyword to close case starting at {startLexeme.Location}");
 
-            return (new Case(condition, inputsValue, stmts.ToArray(), startLexeme.Location), true);
+            return (new Case(condition, stmts.ToArray(), startLexeme.Location), true);
         }
 
         private Statement TakeStatement()

@@ -14,8 +14,12 @@ namespace LogicScript.Data
 
         public bool IsSingleBit => Number == 0 || Number == 1;
         public bool IsOne => Number == 1;
-        public bool AreAllBitsSet => Number != 0 && ((1UL << Length) - 1) == Number;
+        public bool AreAllBitsSet => Number != 0 && (Number == OneMask);
         public bool IsAnyBitSet => Number != 0;
+
+        private ulong OneMask => (1UL << Length) - 1;
+
+        internal BitsValue Negated => new BitsValue(OneMask ^ Number, Length);
 
         public bool[] Bits
         {

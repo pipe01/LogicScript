@@ -9,6 +9,7 @@
         Multiply,
         Divide,
 
+        Equals,
         And,
         Or
     }

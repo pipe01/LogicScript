@@ -19,17 +19,23 @@ namespace LogicScript.Parsing
             ["+"] = Operator.Add,
             ["-"] = Operator.Subtract,
 
+            ["=="] = Operator.Equals,
             ["&"] = Operator.And,
             ["|"] = Operator.Or,
         };
         
         public static readonly IReadOnlyDictionary<Operator, int> OperatorPrecedence = new Dictionary<Operator, int>
         {
+            [Operator.Equals] = 0,
+
             [Operator.Add] = 1,
             [Operator.Subtract] = 1,
 
-            [Operator.And] = 2,
-            [Operator.Or] = 2,
+            [Operator.Multiply] = 2,
+            [Operator.Divide] = 2,
+
+            [Operator.And] = 3,
+            [Operator.Or] = 3,
         };
 
         public static readonly string[] Keywords = new[]

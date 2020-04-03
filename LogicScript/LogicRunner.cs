@@ -28,9 +28,8 @@ namespace LogicScript
                 return;
 
             var conditionValue = GetValue(machine, c.Condition);
-            var value = GetValue(machine, c.InputsValue);
 
-            if (conditionValue == value)
+            if (conditionValue.IsOne)
                 RunStatements(machine, c.Statements);
         }
 
@@ -113,7 +112,7 @@ namespace LogicScript
             switch (op.Operator)
             {
                 case Operator.Not:
-                    return ~value.Number;
+                    return value.Negated;
                 case Operator.And:
                     return value.AreAllBitsSet;
                 case Operator.Or:
@@ -134,6 +133,13 @@ namespace LogicScript
                     return left + right;
                 case Operator.Subtract:
                     return left - right;
+                case Operator.Multiply:
+                    return left * right;
+                case Operator.Divide:
+                    return left / right;
+
+                case Operator.Equals:
+                    return left == right;
                 case Operator.And:
                     return left & right;
                 case Operator.Or:

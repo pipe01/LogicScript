@@ -11,6 +11,7 @@ namespace LogicScript.Parsing
         private int Line;
         private int Column;
         private char Current;
+        private char Next => Index < Text.Length - 1 ? Text[Index + 1] : default;
 
         private bool IsEOF => Index == Text.Length;
         private bool IsDigit => char.IsDigit(Current);
@@ -105,9 +106,9 @@ namespace LogicScript.Parsing
 
                 lexeme = null;
             }
-            else if (Constants.OperatorShortcuts.ContainsKey(Current.ToString()))
+            else if (TryTakeOperator(out var opLex))
             {
-                lexeme = Lexeme(LexemeKind.Operator, Current.ToString());
+                lexeme = opLex;
                 Advance();
             }
             else
@@ -126,6 +127,37 @@ namespace LogicScript.Parsing
             }
 
             return true;
+        }
+
+        private bool TryTakeOperator(out Lexeme lexeme)
+        {
+            char firstChar = Current;
+
+            if (firstChar == '=')
+            {
+                if (Next == '=')
+                {
+                    Advance();
+                    lexeme = Lexeme(LexemeKind.Operator, "==");
+                }
+                else
+                {
+                    lexeme = Lexeme(LexemeKind.Equals, "=");
+                }
+
+                return true;
+            }
+
+            if (Constants.OperatorShortcuts.ContainsKey(firstChar.ToString()))
+            {
+                lexeme = Lexeme(LexemeKind.Operator, firstChar.ToString());
+                return true;
+            }
+            else
+            {
+                lexeme = default;
+                return false;
+            }
         }
 
         private Lexeme TakeKeyword()
