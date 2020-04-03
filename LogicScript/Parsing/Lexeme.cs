@@ -19,6 +19,7 @@ namespace LogicScript.Parsing
         Apostrophe,
         Comma,
         Equals,
+        Operator,
     }
 
     public readonly struct Lexeme

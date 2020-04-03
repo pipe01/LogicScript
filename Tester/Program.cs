@@ -22,7 +22,7 @@ namespace Tester
 
             const string script = @"
 when 0 = 0
-    out[2] = and(1, 1)
+    out[2] = 1' + 2'
     out[2] = and(1, in[2])
 
     out = 1010

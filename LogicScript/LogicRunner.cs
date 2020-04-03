@@ -67,7 +67,7 @@ namespace LogicScript
                     return new BitsValue(num.Value, num.Length);
                 case ListExpression list:
                     return GetListValue(list);
-                case BitwiseOperator op:
+                case OperatorExpression op:
                     return DoBitsOperator(machine, op);
                 case WholeInputExpression _:
                     return machine.GetInputs();
@@ -99,7 +99,7 @@ namespace LogicScript
             }
         }
 
-        private static BitsValue DoBitsOperator(IMachine machine, BitwiseOperator op)
+        private static BitsValue DoBitsOperator(IMachine machine, OperatorExpression op)
         {
             switch (op.Operator)
             {

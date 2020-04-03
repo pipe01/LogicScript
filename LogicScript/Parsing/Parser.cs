@@ -249,7 +249,7 @@ namespace LogicScript.Parsing
             }
         }
 
-        private BitwiseOperator TakeOperator(Operator op)
+        private OperatorExpression TakeOperator(Operator op)
         {
             Take(LexemeKind.Keyword, out var keyword);
             Take(LexemeKind.LeftParenthesis);
@@ -263,7 +263,7 @@ namespace LogicScript.Parsing
 
             Take(LexemeKind.RightParenthesis);
 
-            return new BitwiseOperator(op, exprs.ToArray(), keyword.Location);
+            return new OperatorExpression(op, exprs.ToArray(), keyword.Location);
         }
 
         private Output TakeOutput()

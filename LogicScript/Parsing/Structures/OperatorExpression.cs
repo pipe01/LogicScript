@@ -1,13 +1,13 @@
 ﻿namespace LogicScript.Parsing.Structures
 {
-    internal class BitwiseOperator : Expression
+    internal class OperatorExpression : Expression
     {
         public override bool IsSingleBit { get; }
 
         public Operator Operator { get; }
         public Expression[] Operands { get; }
 
-        public BitwiseOperator(Operator @operator, Expression[] operands, SourceLocation location) : base(location)
+        public OperatorExpression(Operator @operator, Expression[] operands, SourceLocation location) : base(location)
         {
             this.Operator = @operator;
             this.Operands = operands;
@@ -33,7 +33,7 @@
     internal enum Operator
     {
         Add,
-        Substract,
+        Subtract,
 
         And,
         Or

@@ -105,6 +105,11 @@ namespace LogicScript.Parsing
 
                 lexeme = null;
             }
+            else if (Constants.OperatorShortcuts.ContainsKey(Current))
+            {
+                lexeme = Lexeme(LexemeKind.Operator, Current.ToString());
+                Advance();
+            }
             else
             {
                 var (isSymbol, l) = TryTakeSymbol();
