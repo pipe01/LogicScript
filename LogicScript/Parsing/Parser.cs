@@ -254,7 +254,12 @@ namespace LogicScript.Parsing
 
             Expression TakePrimary()
             {
-                if (Take(LexemeKind.LeftParenthesis, out var par, error: false))
+                if (Peek(LexemeKind.Operator, "!"))
+                {
+                    Take(LexemeKind.Operator, out var opLex);
+                    return new UnaryOperatorExpression(Structures.Operator.Not, TakeExpression(), opLex.Location);
+                }
+                else if (Take(LexemeKind.LeftParenthesis, out var par, error: false))
                 {
                     var values = new List<Expression>();
 
@@ -295,7 +300,7 @@ namespace LogicScript.Parsing
                 }
                 else if (Peek(LexemeKind.Keyword) && Constants.Operators.TryGetValue(Current.Content, out var op))
                 {
-                    return TakeOperator(op);
+                    return TakeExplicitOperator(op);
                 }
                 else
                 {
@@ -305,7 +310,7 @@ namespace LogicScript.Parsing
             }
         }
 
-        private OperatorExpression TakeOperator(Operator op)
+        private OperatorExpression TakeExplicitOperator(Operator op)
         {
             Take(LexemeKind.Keyword, out var keyword);
             Take(LexemeKind.LeftParenthesis);

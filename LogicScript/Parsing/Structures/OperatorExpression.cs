@@ -32,6 +32,8 @@
 
     internal enum Operator
     {
+        Not,
+
         Add,
         Subtract,
 

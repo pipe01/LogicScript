@@ -17,6 +17,8 @@ namespace LogicScript.Parsing
 
         public static readonly IReadOnlyDictionary<string, Operator> OperatorShortcuts = new Dictionary<string, Operator>
         {
+            ["!"] = Operator.Not,
+
             ["+"] = Operator.Add,
             ["-"] = Operator.Subtract,
 

@@ -68,7 +68,9 @@ namespace LogicScript
                 case ListExpression list:
                     return GetListValue(list);
                 case OperatorExpression op:
-                    return DoBitsOperator(machine, op);
+                    return DoOperator(machine, op);
+                case UnaryOperatorExpression unary:
+                    return DoUnaryOperator(machine, unary);
                 case WholeInputExpression _:
                     return machine.GetInputs();
                 case SingleInputExpression input:
@@ -99,7 +101,18 @@ namespace LogicScript
             }
         }
 
-        private static BitsValue DoBitsOperator(IMachine machine, OperatorExpression op)
+        private static BitsValue DoUnaryOperator(IMachine machine, UnaryOperatorExpression op)
+        {
+            switch (op.Operator)
+            {
+                case Operator.Not:
+                    return ~GetValue(machine, op.Operand).Number;
+            }
+
+            throw new LogicEngineException();
+        }
+
+        private static BitsValue DoOperator(IMachine machine, OperatorExpression op)
         {
             switch (op.Operator)
             {
