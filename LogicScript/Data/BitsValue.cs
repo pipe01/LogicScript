@@ -9,7 +9,7 @@ namespace LogicScript.Data
         public static readonly BitsValue Zero = new BitsValue(0, 1);
         public static readonly BitsValue One = new BitsValue(1, 1);
 
-        private readonly ulong Number;
+        public ulong Number { get; }
 
         public int Length { get; }
 
@@ -89,10 +89,5 @@ namespace LogicScript.Data
 
         public static bool operator ==(BitsValue left, BitsValue right) => left.Number == right.Number;
         public static bool operator !=(BitsValue left, BitsValue right) => left.Number != right.Number;
-        public static bool operator >(BitsValue left, BitsValue right) => left.Number > right.Number;
-        public static bool operator <(BitsValue left, BitsValue right) => left.Number < right.Number;
-
-        public static BitsValue operator &(BitsValue left, BitsValue right) => left.Number & right.Number;
-        public static BitsValue operator |(BitsValue left, BitsValue right) => left.Number | right.Number;
     }
 }

@@ -8,6 +8,8 @@ namespace LogicScript.Parsing
     {
         public static readonly IReadOnlyDictionary<string, Operator> Operators = new Dictionary<string, Operator>
         {
+            ["add"] = Operator.Add,
+
             ["and"] = Operator.And,
             ["or"] = Operator.Or,
         };

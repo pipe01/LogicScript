@@ -62,8 +62,6 @@ namespace LogicScript
         {
             switch (expr)
             {
-                case NumberLiteralExpression num when num.Length == 1:
-                    return num.Value == 1;
                 case NumberLiteralExpression num:
                     return new BitsValue(num.Value, num.Length);
                 case ListExpression list:
@@ -104,10 +102,12 @@ namespace LogicScript
         {
             switch (op.Operator)
             {
+                case Operator.Add:
+                    return Aggregate((a, b) => a.Number + b.Number);
                 case Operator.And:
-                    return Aggregate((a, b) => a & b, o => o == BitsValue.Zero);
+                    return Aggregate((a, b) => a.Number & b.Number, o => o == BitsValue.Zero);
                 case Operator.Or:
-                    return Aggregate((a, b) => a | b);
+                    return Aggregate((a, b) => a.Number | b.Number);
             }
 
             throw new LogicEngineException();

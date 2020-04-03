@@ -32,6 +32,9 @@
 
     internal enum Operator
     {
+        Add,
+        Substract,
+
         And,
         Or
     }

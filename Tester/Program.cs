@@ -24,7 +24,7 @@ when 0 = 0
 
     # Set all the output bits
     out = 1010
-    out = 14'  #The ' denotes that it's a decimal number instead of a binary one
+    out = add(10', 3')
 end
 
 # Other example case statements:
@@ -125,7 +125,7 @@ end
 #endif
 
             if (ConsoleOutput)
-                Console.WriteLine($"Set outputs to ({values})");
+                Console.WriteLine($"Set outputs to {values.Number} ({values})");
         }
     }
 }
