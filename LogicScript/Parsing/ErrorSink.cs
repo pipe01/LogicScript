@@ -43,6 +43,6 @@ namespace LogicScript.Parsing
             this.Location = location;
         }
 
-        public override string ToString() => $"At {Location}: {Message}";
+        public override string ToString() => $"{(IsWarning ? "Warning" : "Error")} at {Location}: {Message}";
     }
 }

@@ -288,7 +288,7 @@ namespace LogicScript.Parsing
                     }
                     else if (n.Content?.ContainsDecimalDigits() ?? false)
                     {
-                        Error("decimal number must be sufffixed");
+                        Errors.AddWarning(Current.Location, "decimal number must be suffixed");
                         @base = 10;
                     }
 

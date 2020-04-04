@@ -1,4 +1,4 @@
-﻿case = "when", ws, expression, ws, "=", ws, expression, [ ws ], nl, { statement };
+﻿case = "when", ws, expression, [ ws ], nl, { statement };
 
 statement = [ ws ], set_output;
 set_output = output, ws, "=", ws, expression;
