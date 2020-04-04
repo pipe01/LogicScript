@@ -56,12 +56,11 @@ end
                 }
             }
 
-            var engine = new LogicRunner(result.Script);
             var machine = new Machine();
 
             for (int i = 0; i < 3; i++)
             {
-                engine.DoUpdate(machine, i == 0);
+                LogicRunner.RunScript(result.Script, machine, i == 0);
                 Console.WriteLine();
             }
 

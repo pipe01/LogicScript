@@ -1,24 +1,16 @@
 ﻿using LogicScript.Data;
 using LogicScript.Parsing.Structures;
-using System;
 
 namespace LogicScript
 {
-    public sealed class LogicRunner
+    public static class LogicRunner
     {
-        private readonly Script Script;
-
-        public LogicRunner(Script script)
+        public static void RunScript(Script script, IMachine machine, bool isFirstUpdate = false)
         {
-            this.Script = script ?? throw new ArgumentNullException(nameof(script));
-        }
-
-        public void DoUpdate(IMachine machine, bool isFirstUpdate = false)
-        {
-            int len = Script.Cases.Count;
+            int len = script.Cases.Count;
             for (int i = 0; i < len; i++)
             {
-                UpdateCase(machine, Script.Cases[i], isFirstUpdate);
+                UpdateCase(machine, script.Cases[i], isFirstUpdate);
             }
         }
 
