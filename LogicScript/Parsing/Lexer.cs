@@ -1,38 +1,45 @@
 ﻿using LogicScript.Parsing.Structures;
+using LogicScript.Utils;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 
 namespace LogicScript.Parsing
 {
-    public class Lexer
+    internal class Lexer : IDisposable
     {
-        private int Index;
         private int Line;
         private int Column;
-        private char Current;
-        private char Next => Index < Text.Length - 1 ? Text[Index + 1] : default;
+        private char Current => Reader.Current;
 
-        private bool IsEOF => Index == Text.Length;
+        private bool IsEOF => Reader.IsEOF;
         private bool IsDigit => char.IsDigit(Current);
         private bool IsLetter => char.IsLetter(Current);
         private bool IsWhitespace => Current == ' ' || Current == '\t';
-        private bool IsNewLine => Current == '\n';
+        private bool IsNewLine => Current == '\n' || Current == '\r';
         private bool IsComment => Current == '#';
 
         private SourceLocation Location => new SourceLocation(Line, Column);
 
         private readonly StringBuilder Builder = new StringBuilder();
-        private readonly string Text;
         private readonly ErrorSink Errors;
+        private readonly CharReader Reader;
 
-        public Lexer(string text, ErrorSink errors)
+        public Lexer(Stream stream, ErrorSink errors)
         {
-            this.Text = text?.Replace("\r\n", "\n") ?? throw new ArgumentNullException(nameof(text));
+            this.Reader = new CharReader(stream);
             this.Errors = errors;
+        }
 
-            Current = Text[0];
+        public Lexer(string text, ErrorSink errors) : this(new MemoryStream(Encoding.UTF8.GetBytes(text)), errors)
+        {
+        }
+
+        public void Dispose()
+        {
+            Reader.Dispose();
         }
 
         public IEnumerable<Lexeme> Lex()
@@ -51,20 +58,14 @@ namespace LogicScript.Parsing
 
         private bool Advance()
         {
-            Index++;
             Column++;
 
-            if (Index < Text.Length)
-                Current = Text[Index];
-            else
-                return false;
-
-            return true;
+            return Reader.TryAdvance();
         }
 
         private bool Take(char c)
         {
-            if (Index < Text.Length - 1 && Text[Index + 1] == c)
+            if (Reader.TryPeek(out var peek) && peek == c)
             {
                 Advance();
                 return true;
@@ -113,7 +114,7 @@ namespace LogicScript.Parsing
             }
             else if (IsComment)
             {
-                while (Current != '\n')
+                while (!IsNewLine)
                     Advance();
 
                 lexeme = null;

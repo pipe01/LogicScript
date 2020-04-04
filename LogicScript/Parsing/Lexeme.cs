@@ -2,7 +2,7 @@
 
 namespace LogicScript.Parsing
 {
-    public enum LexemeKind
+    internal enum LexemeKind
     {
         Whitespace,
         NewLine,
@@ -22,7 +22,7 @@ namespace LogicScript.Parsing
         Operator,
     }
 
-    public readonly struct Lexeme
+    internal readonly struct Lexeme
     {
         public readonly LexemeKind Kind;
         public readonly string Content;

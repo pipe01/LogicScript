@@ -13,7 +13,7 @@ namespace LogicScript
         {
         }
         
-        public LogicEngineException(string message, ICodeNode node) : base(message + $" at {node.Location}")
+        internal LogicEngineException(string message, ICodeNode node) : base(message + $" at {node.Location}")
         {
         }
 

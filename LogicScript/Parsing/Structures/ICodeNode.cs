@@ -1,6 +1,6 @@
 ﻿namespace LogicScript.Parsing.Structures
 {
-    public interface ICodeNode
+    internal interface ICodeNode
     {
         SourceLocation Location { get; }
     }
