@@ -15,6 +15,7 @@ namespace Tester
 
             const string script = @"
 when 1
+    out[1] = 2' > 3'
     #out[2] = 1' & 2' & (3' + 4') & 5'
     #out[1] = and(111)
     #out[1] = and(101)

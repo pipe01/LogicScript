@@ -142,6 +142,15 @@ namespace LogicScript
 
                 case Operator.Equals:
                     return left == right;
+                case Operator.Greater:
+                    return left > right;
+                case Operator.GreaterOrEqual:
+                    return left >= right;
+                case Operator.Lesser:
+                    return left < right;
+                case Operator.LesserOrEqual:
+                    return left <= right;
+
                 case Operator.And:
                     return left & right;
                 case Operator.Or:

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using LogicScript.Parsing.Structures;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -59,6 +60,17 @@ namespace LogicScript.Parsing
                 return false;
 
             return true;
+        }
+
+        private bool Take(char c)
+        {
+            if (Index < Text.Length - 1 && Text[Index + 1] == c)
+            {
+                Advance();
+                return true;
+            }
+
+            return false;
         }
 
         private Lexeme Lexeme(LexemeKind kind, string content) => new Lexeme(kind, content, new SourceLocation(Line, Column - (content?.Length ?? 0)));
@@ -133,19 +145,19 @@ namespace LogicScript.Parsing
         {
             char firstChar = Current;
 
-            if (firstChar == '=')
+            switch (firstChar)
             {
-                if (Next == '=')
-                {
-                    Advance();
-                    lexeme = Lexeme(LexemeKind.Operator, "==");
-                }
-                else
-                {
-                    lexeme = Lexeme(LexemeKind.Equals, "=");
-                }
-
-                return true;
+                case '=':
+                    lexeme = Take('=')
+                        ? Lexeme(LexemeKind.Operator, "==")
+                        : Lexeme(LexemeKind.Equals, "=");
+                    return true;
+                case '>':
+                    lexeme = Lexeme(LexemeKind.Operator, Take('=') ? ">=" : ">");
+                    return true;
+                case '<':
+                    lexeme = Lexeme(LexemeKind.Operator, Take('=') ? "<=" : "<");
+                    return true;
             }
 
             if (Constants.OperatorShortcuts.ContainsKey(firstChar.ToString()))
@@ -153,11 +165,9 @@ namespace LogicScript.Parsing
                 lexeme = Lexeme(LexemeKind.Operator, firstChar.ToString());
                 return true;
             }
-            else
-            {
-                lexeme = default;
-                return false;
-            }
+
+            lexeme = default;
+            return false;
         }
 
         private Lexeme TakeKeyword()

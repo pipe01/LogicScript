@@ -8,13 +8,13 @@
         public Expression Left { get; }
         public Expression Right { get; }
 
-        public OperatorExpression(Operator @operator, Expression left, Expression right, SourceLocation location) : base(location)
+        public OperatorExpression(Operator op, Expression left, Expression right, SourceLocation location) : base(location)
         {
-            this.Operator = @operator;
+            this.Operator = op;
             this.Left = left;
             this.Right = right;
 
-            this.IsSingleBit = @operator == Operator.Equals || (left.IsSingleBit && right.IsSingleBit);
+            this.IsSingleBit = (op >= Operator.Equals && op <= Operator.LesserOrEqual) || (left.IsSingleBit && right.IsSingleBit);
         }
 
         public override string ToString() => $"{Operator}({Left}, {Right})";

@@ -21,6 +21,11 @@ namespace LogicScript.Parsing
             ["-"] = Operator.Subtract,
 
             ["=="] = Operator.Equals,
+            [">"] = Operator.Greater,
+            [">="] = Operator.GreaterOrEqual,
+            ["<"] = Operator.Lesser,
+            ["<="] = Operator.LesserOrEqual,
+
             ["&"] = Operator.And,
             ["|"] = Operator.Or,
         };
@@ -28,6 +33,10 @@ namespace LogicScript.Parsing
         public static readonly IReadOnlyDictionary<Operator, int> OperatorPrecedence = new Dictionary<Operator, int>
         {
             [Operator.Equals] = 0,
+            [Operator.Greater] = 0,
+            [Operator.GreaterOrEqual] = 0,
+            [Operator.Lesser] = 0,
+            [Operator.LesserOrEqual] = 0,
 
             [Operator.Add] = 1,
             [Operator.Subtract] = 1,

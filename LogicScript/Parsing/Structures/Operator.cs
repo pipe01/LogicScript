@@ -12,6 +12,11 @@
         Truncate,
 
         Equals,
+        Greater,
+        GreaterOrEqual,
+        Lesser,
+        LesserOrEqual,
+
         And,
         Or
     }
