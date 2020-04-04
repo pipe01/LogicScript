@@ -21,11 +21,13 @@ namespace LogicScript.Data
         {
             get
             {
+                ulong n = Number;
                 int len = 0;
-                for (; len < Length; len++)
+
+                while (n > 0)
                 {
-                    if (this[len])
-                        break;
+                    n >>= 1;
+                    len++;
                 }
 
                 return new BitsValue(Number, len);

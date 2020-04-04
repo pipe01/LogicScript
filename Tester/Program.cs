@@ -24,7 +24,7 @@ when 1
     out[1] = !in == 0101
     out[1] = !(123' == 123)
     out[1] = or(1010)
-    out = in + 3'
+    out = trunc(in + 3')
     out = trunc(00001010)
     out = 0001010101
     #out = !1010
