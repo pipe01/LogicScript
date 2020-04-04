@@ -14,6 +14,10 @@ namespace Tester
 #else
 
             const string script = @"
+once
+    out[0] = 1
+end
+
 when 1
     out[1] = 2' > 3'
     #out[2] = 1' & 2' & (3' + 4') & 5'
@@ -54,7 +58,12 @@ end
 
             var engine = new LogicRunner(result.Script);
             var machine = new Machine();
-            engine.DoUpdate(machine);
+
+            for (int i = 0; i < 3; i++)
+            {
+                engine.DoUpdate(machine, i == 0);
+                Console.WriteLine();
+            }
 
             Console.ReadKey(true);
 #endif

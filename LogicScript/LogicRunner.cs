@@ -13,23 +13,36 @@ namespace LogicScript
             this.Script = script ?? throw new ArgumentNullException(nameof(script));
         }
 
-        public void DoUpdate(IMachine machine)
+        public void DoUpdate(IMachine machine, bool isFirstUpdate = false)
         {
             int len = Script.Cases.Count;
             for (int i = 0; i < len; i++)
             {
-                UpdateCase(machine, Script.Cases[i]);
+                UpdateCase(machine, Script.Cases[i], isFirstUpdate);
             }
         }
 
-        private static void UpdateCase(IMachine machine, Case c)
+        private static void UpdateCase(IMachine machine, Case c, bool firstUpdate)
         {
             if (c.Statements == null)
                 return;
 
-            var conditionValue = GetValue(machine, c.Condition);
+            bool run = false;
 
-            if (conditionValue.IsOne)
+            switch (c)
+            {
+                case ConditionalCase cond:
+                    run = GetValue(machine, cond.Condition).IsOne;
+                    break;
+                case UnconditionalCase _:
+                    run = true;
+                    break;
+                case OnceCase _:
+                    run = firstUpdate;
+                    break;
+            }
+
+            if (run)
                 RunStatements(machine, c.Statements);
         }
 

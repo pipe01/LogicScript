@@ -149,27 +149,36 @@ namespace LogicScript.Parsing
 
         public (Case Case, bool Taken) TakeCase()
         {
-            if (!TakeKeyword("when", out var startLexeme, false))
+            Lexeme startLexeme;
+   
+            if (!TakeKeyword("when", out startLexeme, false)
+                && !TakeKeyword("once", out startLexeme, false)
+                && !TakeKeyword("any", out startLexeme, false))
                 return (null, false);
 
             SkipWhitespaces();
 
-            var condition = TakeExpression();
+            Expression condition = null;
+            
+            if (startLexeme.Content == "when")
+            {
+                condition = TakeExpression();
 
-            SkipWhitespaces();
+                SkipWhitespaces();
 
-            if (Current.Kind == LexemeKind.Equals)
-                Error("unexpected assignment, did you mean to compare with \"==\"?", true);
+                if (Current.Kind == LexemeKind.Equals)
+                    Error("unexpected assignment, did you mean to compare with \"==\"?", true);
+            }
 
             Take(LexemeKind.NewLine);
 
-            var stmts = new List<Statement>();
+            var stmtList = new List<Statement>();
 
             bool foundEnd = false;
             while (!IsEOF)
             {
                 SkipWhitespaces(true);
-                stmts.Add(TakeStatement());
+                stmtList.Add(TakeStatement());
                 SkipWhitespaces(true);
 
                 if (TakeKeyword("end", error: false))
@@ -179,10 +188,23 @@ namespace LogicScript.Parsing
                 }
             }
 
+            var stmts = stmtList.ToArray();
+
             if (!foundEnd)
                 Error($"expected 'end' keyword to close case starting at {startLexeme.Location}");
 
-            return (new Case(condition, stmts.ToArray(), startLexeme.Location), true);
+            Case @case;
+
+            if (startLexeme.Content == "when")
+                @case = new ConditionalCase(condition, stmts, startLexeme.Location);
+            else if (startLexeme.Content == "once")
+                @case = new OnceCase(stmts, startLexeme.Location);
+            else if (startLexeme.Content == "any")
+                @case = new UnconditionalCase(stmts, startLexeme.Location);
+            else
+                throw new Exception("Invalid case?");
+
+            return (@case, true);
         }
 
         private Statement TakeStatement()

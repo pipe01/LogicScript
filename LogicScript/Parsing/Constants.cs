@@ -50,7 +50,7 @@ namespace LogicScript.Parsing
 
         public static readonly string[] Keywords = new[]
         {
-            "when", "end", "in", "out",
+            "when", "once", "any", "end", "in", "out",
         }.Concat(AggregationOperators.Keys).ToArray();
     }
 }
