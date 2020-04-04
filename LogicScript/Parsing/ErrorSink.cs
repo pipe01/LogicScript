@@ -10,6 +10,8 @@ namespace LogicScript.Parsing
 
         public int Count => Errors.Count;
 
+        public bool ContainsErrors { get; private set; }
+
         internal ErrorSink()
         {
         }
@@ -20,6 +22,7 @@ namespace LogicScript.Parsing
 
         internal void AddError(SourceLocation location, string msg)
         {
+            ContainsErrors = true;
             Errors.Add(new Error(false, location, msg));
         }
 

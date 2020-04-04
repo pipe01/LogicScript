@@ -24,6 +24,8 @@ when 1
     out[1] = !in == 0101
     out[1] = !(123' == 123)
     out[1] = or(1010)
+    out = in + 3'
+    out = trunc(00001010)
     out = 0001010101
     #out = !1010
 end
@@ -33,12 +35,20 @@ end
 
             if (!result.Success)
             {
+                bool exit = false;
                 foreach (var item in result.Errors)
                 {
+                    if (!item.IsWarning)
+                        exit = true;
+
                     Console.WriteLine(item);
                 }
-                Console.ReadKey(true);
-                return;
+
+                if (exit)
+                {
+                    Console.ReadKey(true);
+                    return;
+                }
             }
 
             var engine = new LogicRunner(result.Script);

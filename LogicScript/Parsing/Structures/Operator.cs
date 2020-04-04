@@ -9,6 +9,8 @@
         Multiply,
         Divide,
 
+        Truncate,
+
         Equals,
         And,
         Or

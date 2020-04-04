@@ -10,6 +10,7 @@ namespace LogicScript.Parsing
         {
             ["and"] = Operator.And,
             ["or"] = Operator.Or,
+            ["trunc"] = Operator.Truncate,
         };
 
         public static readonly IReadOnlyDictionary<string, Operator> OperatorShortcuts = new Dictionary<string, Operator>

@@ -117,6 +117,8 @@ namespace LogicScript
                     return value.AreAllBitsSet;
                 case Operator.Or:
                     return value.IsAnyBitSet;
+                case Operator.Truncate:
+                    return value.Truncated;
             }
 
             throw new LogicEngineException();

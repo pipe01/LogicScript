@@ -55,7 +55,7 @@ namespace LogicScript.Parsing
             {
             }
 
-            if (Errors.Count > 0)
+            if (Errors.ContainsErrors)
                 return null;
 
             return script;

@@ -17,6 +17,20 @@ namespace LogicScript.Data
         public bool AreAllBitsSet => Number != 0 && (Number == OneMask);
         public bool IsAnyBitSet => Number != 0;
         internal BitsValue Negated => new BitsValue(OneMask ^ Number, Length);
+        internal BitsValue Truncated
+        {
+            get
+            {
+                int len = 0;
+                for (; len < Length; len++)
+                {
+                    if (this[len])
+                        break;
+                }
+
+                return new BitsValue(Number, len);
+            }
+        }
 
         private ulong OneMask => (1UL << Length) - 1;
 

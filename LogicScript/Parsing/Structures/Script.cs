@@ -12,12 +12,12 @@ namespace LogicScript.Parsing.Structures
             var errors = new ErrorSink();
             var lexemes = new Lexer(script, errors).Lex().ToArray();
 
-            if (errors.Count > 0)
+            if (errors.ContainsErrors)
                 return new CompilationResult(false, null, errors);
 
             var parsed = new Parser(lexemes, errors).Parse();
 
-            if (errors.Count > 0)
+            if (errors.ContainsErrors)
                 return new CompilationResult(false, null, errors);
 
             return new CompilationResult(true, parsed, null);
