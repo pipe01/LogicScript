@@ -1,7 +1,9 @@
-﻿using System.Collections.Generic;
+﻿using LogicScript.Parsing;
+using LogicScript.Parsing.Structures;
+using System.Collections.Generic;
 using System.Linq;
 
-namespace LogicScript.Parsing.Structures
+namespace LogicScript
 {
     public class Script
     {

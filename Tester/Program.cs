@@ -1,6 +1,5 @@
 ﻿using LogicScript;
 using LogicScript.Data;
-using LogicScript.Parsing.Structures;
 using System;
 
 namespace Tester

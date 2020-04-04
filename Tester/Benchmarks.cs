@@ -1,7 +1,6 @@
 ﻿using BenchmarkDotNet.Attributes;
 using LogicScript;
 using LogicScript.Data;
-using LogicScript.Parsing.Structures;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -28,13 +27,11 @@ end
 ";
 
         private Script Compiled;
-        private LogicRunner Runner;
 
         [GlobalSetup]
         public void Setup()
         {
             Compiled = Script.Compile(RawScript).Script;
-            Runner = new LogicRunner(Compiled);
         }
 
         [Benchmark]
@@ -46,7 +43,7 @@ end
         [Benchmark]
         public void RunScript()
         {
-            Runner.DoUpdate(NoopMachine.Instance);
+            LogicRunner.RunScript(Compiled, NoopMachine.Instance);
         }
 
         private class NoopMachine : IMachine
