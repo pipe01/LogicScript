@@ -52,6 +52,7 @@ end
 
             public int InputCount { get; } = 5;
             public int OutputCount { get; } = 5;
+            public IMemory Memory { get; } = new VolatileMemory();
 
             public bool GetInput(int i) => true;
 

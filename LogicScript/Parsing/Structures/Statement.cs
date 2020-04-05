@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace LogicScript.Parsing.Structures
+﻿namespace LogicScript.Parsing.Structures
 {
     internal abstract class Statement : ICodeNode
     {
@@ -12,27 +10,17 @@ namespace LogicScript.Parsing.Structures
         }
     }
 
-    internal class SetOutputStatement : Statement
+    internal class AssignStatement : Statement
     {
+        public SlotExpression Slot { get; }
         public Expression Value { get; }
 
-        public SetOutputStatement(Expression value, SourceLocation location) : base(location)
+        public AssignStatement(SlotExpression slot, Expression value, SourceLocation location) : base(location)
         {
             this.Value = value;
+            this.Slot = slot;
         }
 
-        public override string ToString() => $"out = {Value}";
-    }
-
-    internal class SetSingleOutputStatement : SetOutputStatement
-    {
-        public int Output { get; }
-
-        public SetSingleOutputStatement(int output, Expression value, SourceLocation location) : base(value, location)
-        {
-            this.Output = output;
-        }
-
-        public override string ToString() => $"out[{Output}] = {Value}";
+        public override string ToString() => $"{Slot} = {Value}";
     }
 }

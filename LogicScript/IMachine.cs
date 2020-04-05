@@ -4,6 +4,8 @@ namespace LogicScript
 {
     public interface IMachine
     {
+        IMemory Memory { get; }
+
         int InputCount { get; }
         int OutputCount { get; }
 

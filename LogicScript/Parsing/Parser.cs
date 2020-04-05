@@ -214,27 +214,30 @@ namespace LogicScript.Parsing
             SkipWhitespaces();
 
             var location = Current.Location;
-            var output = TakeOutput();
+
+            if (!TryTakeSlot(out var slot))
+                Error("expected slot assignment", true);
+
+            if (slot.Slot == Slots.In)
+                Error("expected a writable slot in left side of assignment", true);
 
             SkipWhitespaces();
             Take(LexemeKind.Equals);
             SkipWhitespaces();
 
             var value = TakeExpression();
-            if (output.IsIndexed && !value.IsSingleBit)
+            if (slot.IsIndexed && !value.IsSingleBit)
                 Error("expected a single bit or an expression that returns a single bit");
 
             SkipWhitespaces();
             Take(LexemeKind.NewLine);
 
-            return output.IsIndexed
-                ? new SetSingleOutputStatement(output.Index, value, location)
-                : new SetOutputStatement(value, location);
+            return new AssignStatement(slot, value, location);
         }
 
         private Expression TakeExpression()
         {
-            return Inner(TakePrimary(), 0);
+            return Inner(TakePrimaryExpression(), 0);
 
             bool Operator(Lexeme lexeme, out Operator op, out int predecence)
             {
@@ -259,7 +262,7 @@ namespace LogicScript.Parsing
                     Advance();
                     SkipWhitespaces();
 
-                    var rhs = TakePrimary();
+                    var rhs = TakePrimaryExpression();
                     SkipWhitespaces();
 
                     while (Operator(Current, out var lookaheadOp, out int lookaheadPrecedence) && lookaheadPrecedence > predecence)
@@ -271,62 +274,63 @@ namespace LogicScript.Parsing
                 }
                 return lhs;
             }
+        }
 
-            Expression TakePrimary()
+        private Expression TakePrimaryExpression()
+        {
+            if (Peek(LexemeKind.Operator, "!"))
             {
-                if (Peek(LexemeKind.Operator, "!"))
-                {
-                    Take(LexemeKind.Operator, out var opLex);
-                    return new UnaryOperatorExpression(Structures.Operator.Not, TakePrimary(), opLex.Location);
-                }
-                else if (Take(LexemeKind.LeftParenthesis, out var par, error: false))
-                {
-                    var values = new List<Expression>();
+                Take(LexemeKind.Operator, out var opLex);
+                return new UnaryOperatorExpression(Operator.Not, TakePrimaryExpression(), opLex.Location);
+            }
+            else if (Take(LexemeKind.LeftParenthesis, out var par, error: false))
+            {
+                var values = new List<Expression>();
 
-                    do
-                    {
-                        SkipWhitespaces();
-                        values.Add(TakeExpression());
-                    } while (Take(LexemeKind.Comma, false));
-
-                    Take(LexemeKind.RightParenthesis);
-
-                    if (values.Count == 1)
-                        return values[0];
-
-                    return new ListExpression(values.ToArray(), par.Location);
-                }
-                else if (TakeKeyword("in", out var inLex, false))
+                do
                 {
-                    return Peek(LexemeKind.LeftBracket)
-                        ? (Expression)new SingleInputExpression(TakeInput(false), inLex.Location)
-                        : new WholeInputExpression(inLex.Location);
-                }
-                else if (Take(LexemeKind.Number, out var n, false))
-                {
-                    int @base = 2;
+                    SkipWhitespaces();
+                    values.Add(TakeExpression());
+                } while (Take(LexemeKind.Comma, false));
 
-                    if (Take(LexemeKind.Apostrophe, false))
-                    {
-                        @base = 10;
-                    }
-                    else if (n.Content?.ContainsDecimalDigits() ?? false)
-                    {
-                        Errors.AddWarning(Current.Location, "decimal number must be suffixed");
-                        @base = 10;
-                    }
+                Take(LexemeKind.RightParenthesis);
 
-                    return new NumberLiteralExpression(n.Location, Convert.ToUInt64(n.Content, @base), n.Content?.Length ?? 0);
-                }
-                else if (Peek(LexemeKind.Keyword) && Constants.AggregationOperators.TryGetValue(Current.Content, out var op))
+                if (values.Count == 1)
+                    return values[0];
+
+                return new ListExpression(values.ToArray(), par.Location);
+            }
+            else if (TryTakeSlot(out var slot))
+            {
+                if (slot.Slot == Slots.Out)
+                    Error("cannot read from output", true, slot.Location);
+
+                return slot;
+            }
+            else if (Take(LexemeKind.Number, out var n, false))
+            {
+                int @base = 2;
+
+                if (Take(LexemeKind.Apostrophe, false))
                 {
-                    return TakeExplicitOperator(op);
+                    @base = 10;
                 }
-                else
+                else if (n.Content?.ContainsDecimalDigits() ?? false)
                 {
-                    Error("expected expression", true);
-                    throw new Exception(); //Not reached
+                    Errors.AddWarning(Current.Location, "decimal number must be suffixed");
+                    @base = 10;
                 }
+
+                return new NumberLiteralExpression(n.Location, Convert.ToUInt64(n.Content, @base), n.Content?.Length ?? 0);
+            }
+            else if (Peek(LexemeKind.Keyword) && Constants.AggregationOperators.TryGetValue(Current.Content, out var op))
+            {
+                return TakeExplicitOperator(op);
+            }
+            else
+            {
+                Error("expected expression", true);
+                throw new Exception(); //Not reached
             }
         }
 
@@ -342,30 +346,34 @@ namespace LogicScript.Parsing
             return new UnaryOperatorExpression(op, expr, keyword.Location);
         }
 
-        private (bool IsIndexed, int Index) TakeOutput()
+        private bool TryTakeSlot(out SlotExpression s)
         {
-            TakeKeyword("out");
+            Lexeme lexeme = Current;
+            Slots slot;
 
-            if (Take(LexemeKind.LeftBracket, false))
+            if (TakeKeyword("in", false))
+                slot = Slots.In;
+            else if (TakeKeyword("out", false))
+                slot = Slots.Out;
+            else if (TakeKeyword("mem", false))
+                slot = Slots.Memory;
+            else
             {
-                Take(LexemeKind.Number, out var numLexeme);
-                Take(LexemeKind.RightBracket, expected: "output index close", fatal: true);
-
-                return (true, int.Parse(numLexeme.Content));
+                s = null;
+                return false;
             }
 
-            return (false, 0);
-        }
+            int? index = null;
+            if (Take(LexemeKind.LeftBracket, false))
+            {
+                Take(LexemeKind.Number, out var numLexeme, expected: "index");
+                Take(LexemeKind.RightBracket, expected: "index close", fatal: true);
 
-        private int TakeInput(bool takeKeyword = true)
-        {
-            if (takeKeyword)
-                TakeKeyword("in");
-            Take(LexemeKind.LeftBracket, expected: "input index open", fatal: true);
-            Take(LexemeKind.Number, out var numLexeme, expected: "input index number");
-            Take(LexemeKind.RightBracket, expected: "input index close", fatal: true);
+                index = int.Parse(numLexeme.Content ?? "0");
+            }
 
-            return int.Parse(numLexeme.Content);
+            s = new SlotExpression(slot, index, lexeme.Location);
+            return true;
         }
     }
 }

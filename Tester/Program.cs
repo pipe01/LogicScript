@@ -16,25 +16,10 @@ namespace Tester
 #else
 
             const string script = @"
-once
-    out[0] = 1
-end
-
-when 1
-    out[1] = 2' > 3'
-    out[2] = 1' & 2' & (3' + 4') & 5'
-    out[1] = and(111)
-    out[1] = and(101)
-    out[1] = and(0101)
-    out[1] = or(0101)
-    out[1] = or(000)
-    out[1] = !in == 0101
-    out[1] = !(123' == 123)
-    out[1] = or(1010)
-    out = trunc(in + 3')
-    out = trunc(00001010)
-    out = 0001010101
-    out = !1010
+any
+    out = 1010
+    mem = 123'
+    out[1] = mem[1]
 end
 ";
 
@@ -53,7 +38,7 @@ end
 
             var machine = new Machine();
 
-            for (int i = 0; i < 3; i++)
+            for (int i = 0; i < 1; i++)
             {
                 LogicRunner.RunScript(result.Script, machine, i == 0);
                 Console.WriteLine();
@@ -68,6 +53,8 @@ end
     {
         public int InputCount => Inputs.Length;
         public int OutputCount => Outputs.Length;
+
+        public IMemory Memory { get; } = new VolatileMemory();
 
         private readonly bool[] Inputs = new[] { true, false, true, false };
         private readonly bool[] Outputs = new[] { true, false, true, false };
