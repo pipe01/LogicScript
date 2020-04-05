@@ -22,7 +22,7 @@ namespace LogicScript
             if (errors.ContainsErrors)
                 return new CompilationResult(false, null, errors);
 
-            return new CompilationResult(true, parsed, null);
+            return new CompilationResult(true, parsed, errors);
         }
 
         public readonly struct CompilationResult
@@ -30,9 +30,9 @@ namespace LogicScript
             public bool Success { get; }
 
             public Script Script { get; }
-            public IEnumerable<Error> Errors { get; }
+            public ErrorSink Errors { get; }
 
-            internal CompilationResult(bool success, Script script, IEnumerable<Error> errors)
+            internal CompilationResult(bool success, Script script, ErrorSink errors)
             {
                 this.Success = success;
                 this.Script = script;

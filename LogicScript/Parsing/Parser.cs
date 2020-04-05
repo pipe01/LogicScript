@@ -154,7 +154,9 @@ namespace LogicScript.Parsing
             if (!TakeKeyword("when", out startLexeme, false)
                 && !TakeKeyword("once", out startLexeme, false)
                 && !TakeKeyword("any", out startLexeme, false))
+            {
                 return (null, false);
+            }
 
             SkipWhitespaces();
 

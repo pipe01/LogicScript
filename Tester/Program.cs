@@ -31,28 +31,21 @@ when 1
     out = trunc(in + 3')
     out = trunc(00001010)
     out = 0001010101
-    #out = !1010
+    # out = !1010
 end
 ";
 
             var result = Script.Compile(script);
 
-            if (!result.Success)
+            foreach (var item in result.Errors)
             {
-                bool exit = false;
-                foreach (var item in result.Errors)
-                {
-                    if (!item.IsWarning)
-                        exit = true;
+                Console.WriteLine(item);
+            }
 
-                    Console.WriteLine(item);
-                }
-
-                if (exit)
-                {
-                    Console.ReadKey(true);
-                    return;
-                }
+            if (result.Errors.ContainsErrors)
+            {
+                Console.ReadKey(true);
+                return;
             }
 
             var machine = new Machine();
