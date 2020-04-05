@@ -49,16 +49,7 @@ namespace LogicScript.Utils
             }
             else
             {
-                if (read == '\r' && Reader.Peek() == '\n')
-                {
-                    Current = '\n';
-                    Reader.Read();
-                }
-                else
-                {
-                    Current = (char)read;
-                }
-
+                Current = (char)read;
                 return true;
             }
         }

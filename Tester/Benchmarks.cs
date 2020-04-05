@@ -13,16 +13,16 @@ namespace Tester
     {
         private const string RawScript =
             @"
-when (in[1], in[2]) = 11
+when (in[1], in[2]) == 11
     out = 13'
-    out = add(10', 4')
-    out = add(10, 01)
-    out = and(10, 01)
-    out = or(10, 01)
+    out = 10' + 4'
+    out = 10 + 01
+    out = 10 & 01
+    out = 10 | 01
 
     out[0] = 1
-    out[0] = and(1, 1)
-    out[0] = or(1, 1)
+    out[0] = 1 & 1
+    out[0] = 1 | 1
 end
 ";
 
@@ -34,11 +34,11 @@ end
             Compiled = Script.Compile(RawScript).Script;
         }
 
-        [Benchmark]
-        public void CompileScript()
-        {
-            Script.Compile(RawScript);
-        }
+        //[Benchmark]
+        //public void CompileScript()
+        //{
+        //    Script.Compile(RawScript);
+        //}
 
         [Benchmark]
         public void RunScript()

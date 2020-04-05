@@ -1,4 +1,7 @@
-﻿using LogicScript;
+﻿using BenchmarkDotNet.Configs;
+using BenchmarkDotNet.Diagnosers;
+using BenchmarkDotNet.Running;
+using LogicScript;
 using LogicScript.Data;
 using System;
 
@@ -19,19 +22,19 @@ end
 
 when 1
     out[1] = 2' > 3'
-    #out[2] = 1' & 2' & (3' + 4') & 5'
-    #out[1] = and(111)
-    #out[1] = and(101)
-    #out[1] = and(0101)
-    #out[1] = or(0101)
-    #out[1] = or(000)
+    out[2] = 1' & 2' & (3' + 4') & 5'
+    out[1] = and(111)
+    out[1] = and(101)
+    out[1] = and(0101)
+    out[1] = or(0101)
+    out[1] = or(000)
     out[1] = !in == 0101
     out[1] = !(123' == 123)
     out[1] = or(1010)
     out = trunc(in + 3')
     out = trunc(00001010)
     out = 0001010101
-    # out = !1010
+    out = !1010
 end
 ";
 

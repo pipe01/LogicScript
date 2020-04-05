@@ -18,7 +18,7 @@ namespace LogicScript.Parsing
         private bool IsDigit => char.IsDigit(Current);
         private bool IsLetter => char.IsLetter(Current);
         private bool IsWhitespace => Current == ' ' || Current == '\t';
-        private bool IsNewLine => Current == '\n' || Current == '\r';
+        private bool IsNewLine => Current == '\n';
         private bool IsComment => Current == '#';
 
         private SourceLocation Location => new SourceLocation(Line, Column);
@@ -86,7 +86,12 @@ namespace LogicScript.Parsing
 
         private bool TakeLexeme(out Lexeme? lexeme)
         {
-            if (IsEOF)
+            if (Current == '\r') //Skip \r chars in order to not emit two NewLine lexemes on \r\n sequences
+            {
+                lexeme = default;
+                Advance();
+            }
+            else if (IsEOF)
             {
                 lexeme = default;
                 return false;
@@ -117,7 +122,7 @@ namespace LogicScript.Parsing
                 while (!IsNewLine)
                     Advance();
 
-                lexeme = null;
+                lexeme = default;
             }
             else if (TryTakeOperator(out var opLex))
             {
