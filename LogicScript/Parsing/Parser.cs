@@ -39,6 +39,11 @@ namespace LogicScript.Parsing
         {
             var script = new Script();
 
+            if (Lexemes.Length == 0)
+                return script;
+
+            Current = Lexemes[0];
+
             try
             {
                 while (!IsEOF)
@@ -49,6 +54,8 @@ namespace LogicScript.Parsing
 
                     if (taken)
                         script.Cases.Add(@case);
+                    else if (!IsEOF) //No case taken and we aren't at the end of the file
+                        Error($"expected case, found {Current.Kind}", true);
                 }
             }
             catch (LogicParserException)
