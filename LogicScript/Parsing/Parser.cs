@@ -208,44 +208,46 @@ namespace LogicScript.Parsing
             return (@case, true);
         }
 
-        private IReadOnlyList<Statement> TakeStatements(SourceLocation startLocation)
+        private IReadOnlyList<Statement> TakeStatements(SourceLocation startLocation, bool requireEnd = true)
         {
             var stmtList = new List<Statement>();
 
             bool foundEnd = false;
             while (!IsEOF)
             {
-                if (TakeKeyword("end", error: false))
+                if (requireEnd && TakeKeyword("end", error: false))
                 {
                     foundEnd = true;
                     break;
                 }
 
                 SkipWhitespaces(true);
-                stmtList.Add(TakeStatement());
+
+                if (TryTakeStatement(out var stmt))
+                    stmtList.Add(stmt);
+                else
+                    break;
+
                 SkipWhitespaces(true);
             }
 
-            if (!foundEnd)
+            if (requireEnd && !foundEnd)
                 Error($"expected 'end' keyword to close block starting at {startLocation}");
 
             return stmtList;
         }
 
-        private Statement TakeStatement()
+        private bool TryTakeStatement(out Statement statement)
         {
             SkipWhitespaces(true);
 
-            Statement stmt;
-
-            if (TryTakeIfStatement(out stmt)
-                || TryTakeAssignStatement(out stmt))
+            if (TryTakeIfStatement(out statement)
+                || TryTakeAssignStatement(out statement))
             {
-                return stmt;
+                return true;
             }
 
-            Error("expected statement", true);
-            return null; //Not reached
+            return false; //Not reached
         }
 
         private bool TryTakeIfStatement(out Statement statement)
@@ -262,9 +264,16 @@ namespace LogicScript.Parsing
 
             TakeNewlines();
 
-            var body = TakeStatements(start.Location);
+            var body = TakeStatements(start.Location, false);
 
-            statement = new IfStatement(condition, body, start.Location);
+            IReadOnlyList<Statement> @else = null;
+            if (TakeKeyword("else", out var elseLexeme, false))
+                @else = TakeStatements(elseLexeme.Location, false);
+
+            if (!TakeKeyword("end"))
+                Error($"expected 'end' keyword to close if statement starting at {start.Location}");
+
+            statement = new IfStatement(condition, body, @else, start.Location);
             return true;
         }
 

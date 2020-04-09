@@ -104,6 +104,10 @@ namespace LogicScript
             {
                 RunStatements(machine, stmt.Body);
             }
+            else if (stmt.Else != null)
+            {
+                RunStatements(machine, stmt.Else);
+            }
         }
 
         private static BitsValue GetValue(IMachine machine, Expression expr)

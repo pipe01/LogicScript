@@ -21,8 +21,15 @@ any
     mem = 123'
     out[1] = mem[1]
 
-    if 1
+    if 0
+        out = 1010
+    end
+
+    if in[0]
         out = 123'
+    else
+        out = 42'
+        #something
     end
 end
 ";
