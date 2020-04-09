@@ -24,6 +24,14 @@ namespace LogicScript
             this.Memory = new bool[Capacity];
         }
 
+        public void Clear()
+        {
+            for (int i = 0; i < Memory.Length; i++)
+            {
+                Memory[i] = false;
+            }
+        }
+
         public bool GetBit(int index) => Memory[index];
 
         public void SetBit(int index, bool value) => Memory[index] = value;
