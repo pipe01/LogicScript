@@ -1,6 +1,7 @@
 ﻿using LogicScript.Data;
 using LogicScript.Parsing;
 using LogicScript.Parsing.Structures;
+using System.Collections.Generic;
 
 namespace LogicScript
 {
@@ -39,9 +40,9 @@ namespace LogicScript
                 RunStatements(machine, c.Statements);
         }
 
-        private static void RunStatements(IMachine machine, Statement[] statements)
+        private static void RunStatements(IMachine machine, IReadOnlyList<Statement> statements)
         {
-            for (int i = 0; i < statements.Length; i++)
+            for (int i = 0; i < statements.Count; i++)
             {
                 RunStatement(machine, statements[i]);
             }
@@ -49,39 +50,59 @@ namespace LogicScript
 
         private static void RunStatement(IMachine machine, Statement stmt)
         {
-            if (stmt is AssignStatement assign)
+            switch (stmt)
             {
-                var value = GetValue(machine, assign.Value);
+                case AssignStatement assign:
+                    RunStatement(machine, assign);
+                    break;
+                case IfStatement @if:
+                    RunStatement(machine, @if);
+                    break;
+            }
+        }
 
-                if (assign.Slot.IsIndexed)
+        private static void RunStatement(IMachine machine, AssignStatement stmt)
+        {
+            var value = GetValue(machine, stmt.Value);
+
+            if (stmt.Slot.IsIndexed)
+            {
+                if (!value.IsSingleBit)
+                    throw new LogicEngineException("Expected single-bit value", stmt.Value);
+
+                int index = stmt.Slot.Index.Value;
+
+                switch (stmt.Slot.Slot)
                 {
-                    if (!value.IsSingleBit)
-                        throw new LogicEngineException("Expected single-bit value", assign.Value);
-
-                    int index = assign.Slot.Index.Value;
-
-                    switch (assign.Slot.Slot)
-                    {
-                        case Slots.Out:
-                            machine.SetOutput(index, value.IsOne);
-                            break;
-                        case Slots.Memory:
-                            machine.Memory.SetBit(index, value.IsOne);
-                            break;
-                    }
+                    case Slots.Out:
+                        machine.SetOutput(index, value.IsOne);
+                        break;
+                    case Slots.Memory:
+                        machine.Memory.SetBit(index, value.IsOne);
+                        break;
                 }
-                else
+            }
+            else
+            {
+                switch (stmt.Slot.Slot)
                 {
-                    switch (assign.Slot.Slot)
-                    {
-                        case Slots.Out:
-                            machine.SetOutputs(value);
-                            break;
-                        case Slots.Memory:
-                            machine.Memory.Set(value);
-                            break;
-                    }
+                    case Slots.Out:
+                        machine.SetOutputs(value);
+                        break;
+                    case Slots.Memory:
+                        machine.Memory.Set(value);
+                        break;
                 }
+            }
+        }
+
+        private static void RunStatement(IMachine machine, IfStatement stmt)
+        {
+            var conditionValue = GetValue(machine, stmt.Condition);
+
+            if (conditionValue.Number > 0)
+            {
+                RunStatements(machine, stmt.Body);
             }
         }
 

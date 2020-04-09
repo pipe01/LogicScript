@@ -154,10 +154,21 @@ namespace LogicScript.Parsing
         [DebuggerStepThrough]
         private bool Peek(LexemeKind kind, string content = null) => Current.Kind == kind && (content == null || Current.Content == content);
 
+        /// <summary>
+        /// Takes at least one newline and any amount of whitespace.
+        /// </summary>
+        [DebuggerStepThrough]
+        private void TakeNewlines()
+        {
+            SkipWhitespaces();
+            Take(LexemeKind.NewLine);
+            SkipWhitespaces(true);
+        }
+
         public (Case Case, bool Taken) TakeCase()
         {
             Lexeme startLexeme;
-   
+
             if (!TakeKeyword("when", out startLexeme, false)
                 && !TakeKeyword("once", out startLexeme, false)
                 && !TakeKeyword("any", out startLexeme, false))
@@ -168,7 +179,7 @@ namespace LogicScript.Parsing
             SkipWhitespaces();
 
             Expression condition = null;
-            
+
             if (startLexeme.Content == "when")
             {
                 condition = TakeExpression();
@@ -181,26 +192,7 @@ namespace LogicScript.Parsing
 
             Take(LexemeKind.NewLine);
 
-            var stmtList = new List<Statement>();
-
-            bool foundEnd = false;
-            while (!IsEOF)
-            {
-                SkipWhitespaces(true);
-                stmtList.Add(TakeStatement());
-                SkipWhitespaces(true);
-
-                if (TakeKeyword("end", error: false))
-                {
-                    foundEnd = true;
-                    break;
-                }
-            }
-
-            var stmts = stmtList.ToArray();
-
-            if (!foundEnd)
-                Error($"expected 'end' keyword to close case starting at {startLexeme.Location}");
+            var stmts = TakeStatements(startLexeme.Location);
 
             Case @case;
 
@@ -216,14 +208,73 @@ namespace LogicScript.Parsing
             return (@case, true);
         }
 
+        private IReadOnlyList<Statement> TakeStatements(SourceLocation startLocation)
+        {
+            var stmtList = new List<Statement>();
+
+            bool foundEnd = false;
+            while (!IsEOF)
+            {
+                if (TakeKeyword("end", error: false))
+                {
+                    foundEnd = true;
+                    break;
+                }
+
+                SkipWhitespaces(true);
+                stmtList.Add(TakeStatement());
+                SkipWhitespaces(true);
+            }
+
+            if (!foundEnd)
+                Error($"expected 'end' keyword to close block starting at {startLocation}");
+
+            return stmtList;
+        }
+
         private Statement TakeStatement()
         {
+            SkipWhitespaces(true);
+
+            Statement stmt;
+
+            if (TryTakeIfStatement(out stmt)
+                || TryTakeAssignStatement(out stmt))
+            {
+                return stmt;
+            }
+
+            Error("expected statement", true);
+            return null; //Not reached
+        }
+
+        private bool TryTakeIfStatement(out Statement statement)
+        {
+            if (!TakeKeyword("if", out var start, false))
+            {
+                statement = null;
+                return false;
+            }
+
             SkipWhitespaces();
 
-            var location = Current.Location;
+            var condition = TakeExpression();
 
+            TakeNewlines();
+
+            var body = TakeStatements(start.Location);
+
+            statement = new IfStatement(condition, body, start.Location);
+            return true;
+        }
+
+        private bool TryTakeAssignStatement(out Statement statement)
+        {
             if (!TryTakeSlot(out var slot))
-                Error("expected slot assignment", true);
+            {
+                statement = null;
+                return false;
+            }
 
             if (slot.Slot == Slots.In)
                 Error("expected a writable slot in left side of assignment", true);
@@ -239,7 +290,8 @@ namespace LogicScript.Parsing
             SkipWhitespaces();
             Take(LexemeKind.NewLine);
 
-            return new AssignStatement(slot, value, location);
+            statement = new AssignStatement(slot, value, slot.Location);
+            return true;
         }
 
         private Expression TakeExpression()

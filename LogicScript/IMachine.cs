@@ -15,4 +15,9 @@ namespace LogicScript
         void SetOutput(int i, bool on);
         void SetOutputs(BitsValue values);
     }
+
+    public interface IUpdatableMachine : IMachine
+    {
+        void QueueUpdate();
+    }
 }

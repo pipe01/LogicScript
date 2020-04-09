@@ -20,6 +20,10 @@ any
     out = 1010
     mem = 123'
     out[1] = mem[1]
+
+    if 1
+        out = 123'
+    end
 end
 ";
 
