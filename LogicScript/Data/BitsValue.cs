@@ -51,13 +51,13 @@ namespace LogicScript.Data
 
         public bool this[int bitIndex] => ((Number >> (Length - 1 - bitIndex)) & 1) == 1;
 
-        internal BitsValue(ulong number, int? length = null)
+        public BitsValue(ulong number, int? length = null)
         {
             this.Number = number;
             this.Length = length ?? BitSize;
         }
 
-        internal BitsValue(bool[] bits)
+        public BitsValue(Span<bool> bits)
         {
             if (bits.Length > BitSize)
                 throw new ArgumentException($"Maximum bit size is {BitSize}");
