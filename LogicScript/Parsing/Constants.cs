@@ -10,6 +10,7 @@ namespace LogicScript.Parsing
         {
             ["and"] = Operator.And,
             ["or"] = Operator.Or,
+            ["add"] = Operator.Add,
             ["trunc"] = Operator.Truncate,
         };
 

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using System.Numerics;
 
 namespace LogicScript.Data
 {
@@ -31,6 +32,24 @@ namespace LogicScript.Data
                 }
 
                 return new BitsValue(Number, len);
+            }
+        }
+        internal int PopulationCount
+        {
+            get
+            {
+#if NETCOREAPP3_1
+                return BitOperations.PopCount(Number);
+#else
+                int count = 0;
+                var n = Number;
+                while (n > 0)
+                {
+                    n &= (n - 1);
+                    count++;
+                }
+                return count;
+#endif
             }
         }
 
@@ -102,6 +121,9 @@ namespace LogicScript.Data
         }
 
         public static implicit operator BitsValue(ulong n) => new BitsValue(n);
+        public static implicit operator BitsValue(long n) => new BitsValue((ulong)n);
+        public static implicit operator BitsValue(uint n) => new BitsValue(n);
+        public static implicit operator BitsValue(int n) => new BitsValue((ulong)n);
         public static implicit operator BitsValue(bool n) => n ? One : Zero;
 
         public static implicit operator ulong(BitsValue v) => v.Number;

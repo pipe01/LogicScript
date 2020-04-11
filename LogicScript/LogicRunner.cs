@@ -1,7 +1,9 @@
 ﻿using LogicScript.Data;
 using LogicScript.Parsing;
 using LogicScript.Parsing.Structures;
+using System;
 using System.Collections.Generic;
+using System.Numerics;
 
 namespace LogicScript
 {
@@ -179,6 +181,9 @@ namespace LogicScript
                     return value.AreAllBitsSet;
                 case Operator.Or:
                     return value.IsAnyBitSet;
+                case Operator.Add:
+                    return value.PopulationCount;
+
                 case Operator.Truncate:
                     return value.Truncated;
             }

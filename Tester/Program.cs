@@ -17,7 +17,7 @@ namespace Tester
 
             const string script = @"
 any
-    out = 1010
+    out = add(110011)
     mem = 123'
     out[1] = mem[1]
 
