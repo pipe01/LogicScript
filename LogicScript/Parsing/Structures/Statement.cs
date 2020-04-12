@@ -41,4 +41,13 @@ namespace LogicScript.Parsing.Structures
 
         public override string ToString() => $"if {Condition}";
     }
+
+    internal class QueueUpdateStatement : Statement
+    {
+        public QueueUpdateStatement(SourceLocation location) : base(location)
+        {
+        }
+
+        public override string ToString() => "update";
+    }
 }

@@ -60,6 +60,9 @@ namespace LogicScript
                 case IfStatement @if:
                     RunStatement(machine, @if);
                     break;
+                case QueueUpdateStatement queueStmt:
+                    RunStatement(machine, queueStmt);
+                    break;
             }
         }
 
@@ -110,6 +113,14 @@ namespace LogicScript
             {
                 RunStatements(machine, stmt.Else);
             }
+        }
+
+        private static void RunStatement(IMachine machine, QueueUpdateStatement stmt)
+        {
+            if (!(machine is IUpdatableMachine updatableMachine))
+                throw new LogicEngineException("Update queueing is not supported by the machine", stmt);
+
+            updatableMachine.QueueUpdate();
         }
 
         private static BitsValue GetValue(IMachine machine, Expression expr)

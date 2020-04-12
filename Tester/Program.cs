@@ -25,6 +25,8 @@ any
         out = 1010
     end
 
+    update
+
     if in[0]
         out = 123'
     else

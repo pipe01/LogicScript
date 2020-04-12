@@ -242,7 +242,8 @@ namespace LogicScript.Parsing
             SkipWhitespaces(true);
 
             if (TryTakeIfStatement(out statement)
-                || TryTakeAssignStatement(out statement))
+                || TryTakeAssignStatement(out statement)
+                || TryTakeQueueUpdateStatement(out statement))
             {
                 return true;
             }
@@ -301,6 +302,18 @@ namespace LogicScript.Parsing
 
             statement = new AssignStatement(slot, value, slot.Location);
             return true;
+        }
+
+        private bool TryTakeQueueUpdateStatement(out Statement statement)
+        {
+            if (TakeKeyword("update", out var lexeme, false))
+            {
+                statement = new QueueUpdateStatement(lexeme.Location);
+                return true;
+            }
+
+            statement = null;
+            return false;
         }
 
         private Expression TakeExpression()
