@@ -1,4 +1,5 @@
 ﻿using LogicScript.Data;
+using System;
 
 namespace LogicScript
 {
@@ -6,22 +7,24 @@ namespace LogicScript
     {
         int Capacity { get; }
 
-        bool GetBit(int index);
-        void SetBit(int index, bool value);
-
-        void Set(BitsValue value);
-        BitsValue Get();
+        void Read(BitRange range, Span<bool> inputs);
+        void Write(BitRange range, Span<bool> values);
     }
 
     public sealed class VolatileMemory : IMemory
     {
-        public int Capacity { get; } = 256;
+        public int Capacity { get; }
 
         private readonly bool[] Memory;
 
-        public VolatileMemory()
+        public VolatileMemory() : this(256)
         {
-            this.Memory = new bool[Capacity];
+        }
+
+        public VolatileMemory(int capacity)
+        {
+            this.Memory = new bool[capacity];
+            this.Capacity = capacity;
         }
 
         public void Clear()
@@ -32,12 +35,20 @@ namespace LogicScript
             }
         }
 
-        public bool GetBit(int index) => Memory[index];
+        public void Read(BitRange range, Span<bool> inputs)
+        {
+            for (int i = 0; i < range.Length; i++)
+            {
+                inputs[i] = this.Memory[i + range.Start];
+            }
+        }
 
-        public void SetBit(int index, bool value) => Memory[index] = value;
-
-        public void Set(BitsValue value) => value.Bits.CopyTo(Memory, 0);
-
-        public BitsValue Get() => new BitsValue(Memory);
+        public void Write(BitRange range, Span<bool> values)
+        {
+            for (int i = 0; i < range.Length; i++)
+            {
+                this.Memory[i + range.Start] = values[i];
+            }
+        }
     }
 }

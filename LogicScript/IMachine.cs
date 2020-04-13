@@ -11,8 +11,6 @@ namespace LogicScript
         int OutputCount { get; }
 
         void GetInputs(BitRange range, Span<bool> inputs);
-
-        void SetOutput(int i, bool on);
         void SetOutputs(BitRange range, Span<bool> values);
     }
 

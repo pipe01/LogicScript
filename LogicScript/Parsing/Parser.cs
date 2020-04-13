@@ -1,5 +1,6 @@
 ﻿using LogicScript.Data;
 using LogicScript.Parsing.Structures;
+using LogicScript.Utils;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -392,18 +393,26 @@ namespace LogicScript.Parsing
             else if (Take(LexemeKind.Number, out var n, false))
             {
                 int @base = 2;
+                int length = n.Content.Length;
 
                 if (Take(LexemeKind.Apostrophe, false))
                 {
                     @base = 10;
                 }
-                else if (n.Content?.ContainsDecimalDigits() ?? false)
+                else if (n.Content.ContainsDecimalDigits())
                 {
                     Errors.AddWarning(Current.Location, "decimal number must be suffixed");
                     @base = 10;
                 }
 
-                return new NumberLiteralExpression(n.Location, Convert.ToUInt64(n.Content, @base), n.Content?.Length ?? 0);
+                ulong num = Convert.ToUInt64(n.Content, @base);
+
+                if (@base == 10)
+                {
+                    length = BitUtils.GetBitSize(num);
+                }
+
+                return new NumberLiteralExpression(n.Location, num, length);
             }
             else if (Peek(LexemeKind.Keyword) && Constants.AggregationOperators.TryGetValue(Current.Content, out var op))
             {

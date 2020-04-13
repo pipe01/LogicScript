@@ -17,7 +17,7 @@ namespace Tester
 
             const string script = @"
 any
-    out[0] = in[1]
+    out = 123'
     out[1,] = 1
     out[1,3] = 10
     out = 1010
@@ -74,19 +74,12 @@ end
         private readonly bool[] Inputs = new[] { true, false, true, false };
         private readonly bool[] Outputs = new[] { false, false, true, false };
 
-        public void SetOutput(int i, bool on)
-        {
-            Outputs[i] = on;
-
-            Console.WriteLine($"Set output {i} to {on}");
-        }
-
         public void SetOutputs(BitRange range, Span<bool> values)
         {
             values.CopyTo(Outputs.AsSpan().Slice(range.Start));
 
             var bitsVal = new BitsValue(values);
-            Console.WriteLine($"Set outputs to {bitsVal.Number} ({bitsVal})");
+            Console.WriteLine($"Set outputs [{range}] to {bitsVal.Number} ({bitsVal})");
         }
 
         public void GetInputs(BitRange range, Span<bool> inputs)
@@ -95,6 +88,8 @@ end
             {
                 inputs[i] = Inputs[i + range.Start];
             }
+
+            Console.WriteLine($"Read inputs [{range}]");
         }
     }
 }

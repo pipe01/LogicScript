@@ -28,7 +28,7 @@ namespace LogicScript
             switch (c)
             {
                 case ConditionalCase cond:
-                    run = GetValue(machine, cond.Condition).IsOne;
+                    run = IsTruthy(GetValue(machine, cond.Condition));
                     break;
                 case UnconditionalCase _:
                     run = true;
@@ -52,6 +52,8 @@ namespace LogicScript
 
         private static void RunStatement(IMachine machine, Statement stmt)
         {
+            Console.WriteLine("> " + stmt);
+
             switch (stmt)
             {
                 case AssignStatement assign:
@@ -77,48 +79,35 @@ namespace LogicScript
             if (value.Length != range.Length)
                 throw new LogicEngineException("Range and value length mismatch", stmt);
 
+            Span<bool> bits = stackalloc bool[value.Length];
+            value.FillBits(bits);
+
             switch (stmt.Slot.Slot)
             {
                 case Slots.Out:
-                    Span<bool> bits = stackalloc bool[value.Length];
-                    value.FillBits(bits);
+                    if (range.Start + range.Length > machine.OutputCount)
+                        throw new LogicEngineException("Range out of bounds for outputs", stmt);
 
                     machine.SetOutputs(range, bits);
                     break;
                 case Slots.Memory:
-                    machine.Memory.Set(value);
+                    if (range.Start + range.Length > machine.Memory.Capacity)
+                        throw new LogicEngineException("Range out of bounds for memory", stmt);
+
+                    machine.Memory.Write(range, bits);
                     break;
+                default:
+                    throw new LogicEngineException("Invalid slot on expression", stmt);
             }
-
-            //if (stmt.Slot.IsIndexed)
-            //{
-            //    if (!value.IsSingleBit)
-            //        throw new LogicEngineException("Expected single-bit value", stmt.Value);
-
-            //    var range = stmt.Slot.Range.Value;
-
-            //    switch (stmt.Slot.Slot)
-            //    {
-            //        case Slots.Out:
-            //            Span<bool> bits = stackalloc bool[value.Length];
-            //            machine.SetOutput(index, value.IsOne);
-            //            break;
-            //        case Slots.Memory:
-            //            machine.Memory.SetBit(index, value.IsOne);
-            //            break;
-            //    }
-            //}
-            //else
-            //{
-                
-            //}
         }
+
+        private static bool IsTruthy(BitsValue value) => value.Number > 0;
 
         private static void RunStatement(IMachine machine, IfStatement stmt)
         {
             var conditionValue = GetValue(machine, stmt.Condition);
 
-            if (conditionValue.Number > 0)
+            if (IsTruthy(conditionValue))
             {
                 RunStatements(machine, stmt.Body);
             }
@@ -166,18 +155,21 @@ namespace LogicScript
             if (!range.HasEnd)
                 range = new BitRange(range.Start, machine.InputCount);
 
+            Span<bool> values = stackalloc bool[range.Length];
+
             switch (expr.Slot)
             {
                 case Slots.In:
-                    Span<bool> inputs = stackalloc bool[range.Length];
-                    machine.GetInputs(range, inputs);
-
-                    return new BitsValue(inputs);
-                //case Slots.Memory:
-                //    return expr.IsIndexed ? machine.Memory.GetBit(expr.Range.Value) : machine.Memory.Get();
+                    machine.GetInputs(range, values);
+                    break;
+                case Slots.Memory:
+                    machine.Memory.Read(range, values);
+                    break;
+                default:
+                    throw new LogicEngineException("Invalid slot on expression", expr);
             }
 
-            throw new LogicEngineException("Invalid slot on expression");
+            return new BitsValue(values);
         }
 
         private static BitsValue DoListExpression(IMachine machine, ListExpression list)
