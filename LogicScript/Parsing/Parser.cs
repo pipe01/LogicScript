@@ -1,4 +1,5 @@
-﻿using LogicScript.Parsing.Structures;
+﻿using LogicScript.Data;
+using LogicScript.Parsing.Structures;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -294,7 +295,7 @@ namespace LogicScript.Parsing
             SkipWhitespaces();
 
             var value = TakeExpression();
-            if (slot.IsIndexed && !value.IsSingleBit)
+            if (slot.Range?.Length == 1 && !value.IsSingleBit)
                 Error("expected a single bit or an expression that returns a single bit");
 
             SkipWhitespaces();
@@ -444,17 +445,33 @@ namespace LogicScript.Parsing
                 return false;
             }
 
-            int? index = null;
+            BitRange? range = null;
             if (Take(LexemeKind.LeftBracket, false))
             {
-                Take(LexemeKind.Number, out var numLexeme, expected: "index");
+                range = TakeRange();
                 Take(LexemeKind.RightBracket, expected: "index close", fatal: true);
-
-                index = int.Parse(numLexeme.Content ?? "0");
             }
 
-            s = new SlotExpression(slot, index, lexeme.Location);
+            s = new SlotExpression(slot, range, lexeme.Location);
             return true;
+        }
+
+        private BitRange TakeRange()
+        {
+            Take(LexemeKind.Number, out var startLexeme, expected: "range start index");
+            int start = int.Parse(startLexeme.Content);
+
+            int end = start + 1;
+
+            if (Take(LexemeKind.Comma, false))
+            {
+                if (Take(LexemeKind.Number, out var endLexeme, false))
+                    end = int.Parse(endLexeme.Content);
+                else
+                    end = -1;
+            }
+
+            return new BitRange(start, end);
         }
     }
 }

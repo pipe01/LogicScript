@@ -17,15 +17,17 @@ namespace Tester
 
             const string script = @"
 any
-    out = sum(110011)
+    out[0] = in[1]
+    out[1,] = 1
+    out[1,3] = 10
+    out = 1010
+
     mem = 123'
     out[1] = mem[1]
 
     if 0
         out = 1010
     end
-
-    update
 
     if in[0]
         out = 123'
@@ -70,22 +72,7 @@ end
         public IMemory Memory { get; } = new VolatileMemory();
 
         private readonly bool[] Inputs = new[] { true, false, true, false };
-        private readonly bool[] Outputs = new[] { true, false, true, false };
-
-        public bool GetInput(int i)
-        {
-            var v = Inputs[i];
-
-            Console.WriteLine($"Read input {i}: {v}");
-            return v;
-        }
-
-        public BitsValue GetInputs()
-        {
-            Console.WriteLine("Read inputs");
-
-            return new BitsValue(Inputs);
-        }
+        private readonly bool[] Outputs = new[] { false, false, true, false };
 
         public void SetOutput(int i, bool on)
         {
@@ -94,11 +81,20 @@ end
             Console.WriteLine($"Set output {i} to {on}");
         }
 
-        public void SetOutputs(BitsValue values)
+        public void SetOutputs(BitRange range, Span<bool> values)
         {
-            Array.Copy(values.Bits, Outputs, OutputCount);
+            values.CopyTo(Outputs.AsSpan().Slice(range.Start));
 
-            Console.WriteLine($"Set outputs to {values.Number} ({values})");
+            var bitsVal = new BitsValue(values);
+            Console.WriteLine($"Set outputs to {bitsVal.Number} ({bitsVal})");
+        }
+
+        public void GetInputs(BitRange range, Span<bool> inputs)
+        {
+            for (int i = 0; i < range.Length; i++)
+            {
+                inputs[i] = Inputs[i + range.Start];
+            }
         }
     }
 }

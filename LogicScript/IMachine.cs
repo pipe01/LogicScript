@@ -1,4 +1,5 @@
 ﻿using LogicScript.Data;
+using System;
 
 namespace LogicScript
 {
@@ -9,11 +10,10 @@ namespace LogicScript
         int InputCount { get; }
         int OutputCount { get; }
 
-        bool GetInput(int i);
-        BitsValue GetInputs();
+        void GetInputs(BitRange range, Span<bool> inputs);
 
         void SetOutput(int i, bool on);
-        void SetOutputs(BitsValue values);
+        void SetOutputs(BitRange range, Span<bool> values);
     }
 
     public interface IUpdatableMachine : IMachine

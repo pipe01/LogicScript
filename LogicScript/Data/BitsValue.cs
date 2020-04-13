@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Buffers;
 using System.Linq;
 using System.Numerics;
 
@@ -59,11 +60,8 @@ namespace LogicScript.Data
         {
             get
             {
-                var bits = new bool[BitSize];
-                for (int i = 0; i < BitSize; i++)
-                {
-                    bits[i] = this[i];
-                }
+                var bits = new bool[Length];
+                FillBits(bits);
                 return bits;
             }
         }
@@ -101,6 +99,17 @@ namespace LogicScript.Data
                 return false;
 
             return other == this;
+        }
+
+        public void FillBits(Span<bool> span)
+        {
+            if (span.Length != this.Length)
+                throw new ArgumentException("Length mismatch when trying to fill span with bits");
+
+            for (int i = 0; i < Length; i++)
+            {
+                span[i] = this[i];
+            }
         }
 
         public override int GetHashCode() => Number.GetHashCode();

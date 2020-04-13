@@ -1,20 +1,20 @@
-﻿namespace LogicScript.Parsing.Structures
+﻿using LogicScript.Data;
+
+namespace LogicScript.Parsing.Structures
 {
     internal class SlotExpression : Expression
     {
-        public override bool IsSingleBit => IsIndexed;
+        public override bool IsSingleBit => Range?.Length == 1;
 
         public Slots Slot { get; }
-        public int? Index { get; }
+        public BitRange? Range { get; }
 
-        public bool IsIndexed => Index != null;
-
-        public SlotExpression(Slots slot, int? index, SourceLocation location) : base(location)
+        public SlotExpression(Slots slot, BitRange? range, SourceLocation location) : base(location)
         {
             this.Slot = slot;
-            this.Index = index;
+            this.Range = range;
         }
 
-        public override string ToString() => $"{Slot}{(Index != null ? $"[{Index}]" : "")}";
+        public override string ToString() => $"{Slot}{(Range != null ? $"[{Range}]" : "")}";
     }
 }

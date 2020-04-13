@@ -58,11 +58,15 @@ end
 
             public BitsValue GetInputs() => 0;
 
+            public void GetInputs(BitRange range, Span<bool> inputs)
+            {
+            }
+
             public void SetOutput(int i, bool on)
             {
             }
 
-            public void SetOutputs(BitsValue values)
+            public void SetOutputs(BitRange range, Span<bool> values)
             {
             }
         }

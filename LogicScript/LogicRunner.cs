@@ -69,36 +69,49 @@ namespace LogicScript
         private static void RunStatement(IMachine machine, AssignStatement stmt)
         {
             var value = GetValue(machine, stmt.Value);
+            var range = stmt.Slot.Range ?? new BitRange(0, value.Length);
 
-            if (stmt.Slot.IsIndexed)
+            if (!range.HasEnd)
+                range = new BitRange(range.Start, range.Start + value.Length);
+
+            if (value.Length != range.Length)
+                throw new LogicEngineException("Range and value length mismatch", stmt);
+
+            switch (stmt.Slot.Slot)
             {
-                if (!value.IsSingleBit)
-                    throw new LogicEngineException("Expected single-bit value", stmt.Value);
+                case Slots.Out:
+                    Span<bool> bits = stackalloc bool[value.Length];
+                    value.FillBits(bits);
 
-                int index = stmt.Slot.Index.Value;
+                    machine.SetOutputs(range, bits);
+                    break;
+                case Slots.Memory:
+                    machine.Memory.Set(value);
+                    break;
+            }
 
-                switch (stmt.Slot.Slot)
-                {
-                    case Slots.Out:
-                        machine.SetOutput(index, value.IsOne);
-                        break;
-                    case Slots.Memory:
-                        machine.Memory.SetBit(index, value.IsOne);
-                        break;
-                }
-            }
-            else
-            {
-                switch (stmt.Slot.Slot)
-                {
-                    case Slots.Out:
-                        machine.SetOutputs(value);
-                        break;
-                    case Slots.Memory:
-                        machine.Memory.Set(value);
-                        break;
-                }
-            }
+            //if (stmt.Slot.IsIndexed)
+            //{
+            //    if (!value.IsSingleBit)
+            //        throw new LogicEngineException("Expected single-bit value", stmt.Value);
+
+            //    var range = stmt.Slot.Range.Value;
+
+            //    switch (stmt.Slot.Slot)
+            //    {
+            //        case Slots.Out:
+            //            Span<bool> bits = stackalloc bool[value.Length];
+            //            machine.SetOutput(index, value.IsOne);
+            //            break;
+            //        case Slots.Memory:
+            //            machine.Memory.SetBit(index, value.IsOne);
+            //            break;
+            //    }
+            //}
+            //else
+            //{
+                
+            //}
         }
 
         private static void RunStatement(IMachine machine, IfStatement stmt)
@@ -149,12 +162,19 @@ namespace LogicScript
 
         private static BitsValue DoSlotExpression(IMachine machine, SlotExpression expr)
         {
+            var range = expr.Range ?? new BitRange(0, machine.InputCount);
+            if (!range.HasEnd)
+                range = new BitRange(range.Start, machine.InputCount);
+
             switch (expr.Slot)
             {
                 case Slots.In:
-                    return expr.IsIndexed ? machine.GetInput(expr.Index.Value) : machine.GetInputs();
-                case Slots.Memory:
-                    return expr.IsIndexed ? machine.Memory.GetBit(expr.Index.Value) : machine.Memory.Get();
+                    Span<bool> inputs = stackalloc bool[range.Length];
+                    machine.GetInputs(range, inputs);
+
+                    return new BitsValue(inputs);
+                //case Slots.Memory:
+                //    return expr.IsIndexed ? machine.Memory.GetBit(expr.Range.Value) : machine.Memory.Get();
             }
 
             throw new LogicEngineException("Invalid slot on expression");
