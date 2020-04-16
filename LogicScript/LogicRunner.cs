@@ -52,7 +52,7 @@ namespace LogicScript
 
         private static void RunStatement(IMachine machine, Statement stmt)
         {
-            Console.WriteLine("> " + stmt);
+            //Console.WriteLine("> " + stmt);
 
             switch (stmt)
             {
@@ -242,9 +242,9 @@ namespace LogicScript
                     return left <= right;
 
                 case Operator.And:
-                    return left & right;
+                    return new BitsValue(left & right, Math.Min(left.Length, right.Length));
                 case Operator.Or:
-                    return left | right;
+                    return new BitsValue(left | right, Math.Min(left.Length, right.Length));
             }
 
             throw new LogicEngineException();
