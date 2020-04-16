@@ -282,27 +282,39 @@ namespace LogicScript.Parsing
 
         private bool TryTakeAssignStatement(out Statement statement)
         {
-            if (!TryTakeSlot(out var slot))
+            Expression lhs;
+
+            if (TryTakeSlot(out var slot))
+            {
+                if (slot.Slot == Slots.In)
+                    Error("expected a writable slot in left side of assignment", true);
+
+                lhs = slot;
+            }
+            else
             {
                 statement = null;
                 return false;
             }
 
-            if (slot.Slot == Slots.In)
-                Error("expected a writable slot in left side of assignment", true);
+            if (Take(LexemeKind.LeftBracket, false))
+            {
+                lhs = new IndexerExpression(lhs, TakeRange(), lhs.Location);
+                Take(LexemeKind.RightBracket);
+            }
 
             SkipWhitespaces();
             Take(LexemeKind.Equals);
             SkipWhitespaces();
 
-            var value = TakeExpression();
-            if (slot.Range?.Length == 1 && !value.IsSingleBit)
-                Error("expected a single bit or an expression that returns a single bit");
+            var rhs = TakeExpression();
+            //if (slot.Range?.Length == 1 && !value.IsSingleBit)
+            //    Error("expected a single bit or an expression that returns a single bit");
 
             SkipWhitespaces();
             Take(LexemeKind.NewLine);
 
-            statement = new AssignStatement(slot, value, slot.Location);
+            statement = new AssignStatement(lhs, rhs, slot.Location);
             return true;
         }
 
@@ -361,10 +373,12 @@ namespace LogicScript.Parsing
 
         private Expression TakePrimaryExpression()
         {
+            Expression expr;
+
             if (Peek(LexemeKind.Operator, "!"))
             {
                 Take(LexemeKind.Operator, out var opLex);
-                return new UnaryOperatorExpression(Operator.Not, TakePrimaryExpression(), opLex.Location);
+                expr = new UnaryOperatorExpression(Operator.Not, TakePrimaryExpression(), opLex.Location);
             }
             else if (Take(LexemeKind.LeftParenthesis, out var par, error: false))
             {
@@ -379,16 +393,13 @@ namespace LogicScript.Parsing
                 Take(LexemeKind.RightParenthesis);
 
                 if (values.Count == 1)
-                    return values[0];
-
-                return new ListExpression(values.ToArray(), par.Location);
+                    expr = values[0];
+                else
+                    expr = new ListExpression(values.ToArray(), par.Location);
             }
             else if (TryTakeSlot(out var slot))
             {
-                if (slot.Slot == Slots.Out)
-                    Error("cannot read from output", true, slot.Location);
-
-                return slot;
+                expr = slot;
             }
             else if (Take(LexemeKind.Number, out var n, false))
             {
@@ -412,17 +423,27 @@ namespace LogicScript.Parsing
                     length = BitUtils.GetBitSize(num);
                 }
 
-                return new NumberLiteralExpression(n.Location, num, length);
+                expr = new NumberLiteralExpression(n.Location, num, length);
             }
             else if (Peek(LexemeKind.Keyword) && Constants.AggregationOperators.TryGetValue(Current.Content, out var op))
             {
-                return TakeExplicitOperator(op);
+                expr = TakeExplicitOperator(op);
             }
             else
             {
                 Error("expected expression", true);
                 throw new Exception(); //Not reached
             }
+
+            if (Take(LexemeKind.LeftBracket, false))
+            {
+                var range = TakeRange();
+                Take(LexemeKind.RightBracket);
+
+                expr = new IndexerExpression(expr, range, expr.Location);
+            }
+
+            return expr;
         }
 
         private Expression TakeExplicitOperator(Operator op)
@@ -454,14 +475,7 @@ namespace LogicScript.Parsing
                 return false;
             }
 
-            BitRange? range = null;
-            if (Take(LexemeKind.LeftBracket, false))
-            {
-                range = TakeRange();
-                Take(LexemeKind.RightBracket, expected: "index close", fatal: true);
-            }
-
-            s = new SlotExpression(slot, range, lexeme.Location);
+            s = new SlotExpression(slot, lexeme.Location);
             return true;
         }
 

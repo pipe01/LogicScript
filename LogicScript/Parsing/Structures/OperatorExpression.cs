@@ -3,6 +3,7 @@
     internal class OperatorExpression : Expression
     {
         public override bool IsSingleBit { get; }
+        public override bool IsReadable => true;
 
         public Operator Operator { get; }
         public Expression Left { get; }

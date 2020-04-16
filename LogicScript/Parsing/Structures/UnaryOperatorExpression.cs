@@ -5,6 +5,7 @@ namespace LogicScript.Parsing.Structures
     internal class UnaryOperatorExpression : Expression
     {
         public override bool IsSingleBit => Operand.IsSingleBit || Constants.AggregationOperators.Any(o => o.Value == Operator);
+        public override bool IsReadable => true;
 
         public Operator Operator { get; }
         public Expression Operand { get; }

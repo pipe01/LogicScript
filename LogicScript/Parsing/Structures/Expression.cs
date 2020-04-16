@@ -4,6 +4,9 @@
     {
         public abstract bool IsSingleBit { get; }
 
+        public virtual bool IsReadable => false;
+        public virtual bool IsWriteable => false;
+
         public SourceLocation Location { get; }
 
         protected Expression(SourceLocation location)

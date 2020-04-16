@@ -9,32 +9,28 @@ namespace Tester
 {
     class Program
     {
+        static Program()
+        {
+            Console.WriteLine("nice");
+        }
+
         static void Main(string[] args)
         {
 #if RELEASE
-            BenchmarkRunner.Run<Benchmarks>(ManualConfig.Create(DefaultConfig.Instance).With(MemoryDiagnoser.Default));
+            if (args.Length > 0 && args[0] == "--stress")
+                Benchmarks.StressTest();
+            else
+                BenchmarkRunner.Run<Benchmarks>(ManualConfig.Create(DefaultConfig.Instance).With(MemoryDiagnoser.Default));
 #else
 
             const string script = @"
 any
-    out = 123'
     out[1,] = 1
     out[1,3] = 10
     out = 1010
 
     mem = 123'
     out[1] = mem[1]
-
-    if 0
-        out = 1010
-    end
-
-    if in[0]
-        out = 123'
-    else
-        out = 42'
-        #something
-    end
 end
 ";
 

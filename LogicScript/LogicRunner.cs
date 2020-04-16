@@ -68,10 +68,30 @@ namespace LogicScript
             }
         }
 
+        private static bool IsTruthy(BitsValue value) => value.Number > 0;
+
         private static void RunStatement(IMachine machine, AssignStatement stmt)
         {
-            var value = GetValue(machine, stmt.Value);
-            var range = stmt.Slot.Range ?? new BitRange(0, value.Length);
+            if (!stmt.LeftSide.IsWriteable)
+                throw new LogicEngineException("Expected a writeable expression", stmt);
+            
+            if (!stmt.RightSide.IsReadable)
+                throw new LogicEngineException("Expected a readable expression", stmt);
+
+            var lhs = stmt.LeftSide;
+
+            var value = GetValue(machine, stmt.RightSide);
+            BitRange range;
+
+            if (lhs is IndexerExpression indexer)
+            {
+                range = indexer.Range;
+                lhs = indexer.Operand;
+            }
+            else
+            {
+                range = new BitRange(0, value.Length);
+            }
 
             if (!range.HasEnd)
                 range = new BitRange(range.Start, range.Start + value.Length);
@@ -82,26 +102,29 @@ namespace LogicScript
             Span<bool> bits = stackalloc bool[value.Length];
             value.FillBits(bits);
 
-            switch (stmt.Slot.Slot)
+            if (lhs is SlotExpression slot)
             {
-                case Slots.Out:
-                    if (range.Start + range.Length > machine.OutputCount)
-                        throw new LogicEngineException("Range out of bounds for outputs", stmt);
+                switch (slot.Slot)
+                {
+                    case Slots.Out:
+                        if (range.Start + range.Length > machine.OutputCount)
+                            throw new LogicEngineException("Range out of bounds for outputs", stmt);
 
-                    machine.SetOutputs(range, bits);
-                    break;
-                case Slots.Memory:
-                    if (range.Start + range.Length > machine.Memory.Capacity)
-                        throw new LogicEngineException("Range out of bounds for memory", stmt);
+                        machine.SetOutputs(range, bits);
+                        break;
 
-                    machine.Memory.Write(range, bits);
-                    break;
-                default:
-                    throw new LogicEngineException("Invalid slot on expression", stmt);
+                    case Slots.Memory:
+                        if (range.Start + range.Length > machine.Memory.Capacity)
+                            throw new LogicEngineException("Range out of bounds for memory", stmt);
+
+                        machine.Memory.Write(range, bits);
+                        break;
+
+                    default:
+                        throw new LogicEngineException("Invalid slot on expression", stmt);
+                }
             }
         }
-
-        private static bool IsTruthy(BitsValue value) => value.Number > 0;
 
         private static void RunStatement(IMachine machine, IfStatement stmt)
         {
@@ -141,17 +164,20 @@ namespace LogicScript
                 case UnaryOperatorExpression unary:
                     return DoUnaryOperator(machine, unary);
 
+                case IndexerExpression indexer when indexer.Operand is SlotExpression slot:
+                    return DoSlotExpression(machine, slot, indexer.Range);
+
                 case SlotExpression slot:
-                    return DoSlotExpression(machine, slot);
+                    return DoSlotExpression(machine, slot, null);
 
                 default:
                     throw new LogicEngineException("Expected multi-bit value", expr);
             }
         }
 
-        private static BitsValue DoSlotExpression(IMachine machine, SlotExpression expr)
+        private static BitsValue DoSlotExpression(IMachine machine, SlotExpression expr, BitRange? r)
         {
-            var range = expr.Range ?? new BitRange(0, machine.InputCount);
+            var range = r ?? new BitRange(0, machine.InputCount);
             if (!range.HasEnd)
                 range = new BitRange(range.Start, machine.InputCount);
 

@@ -21,7 +21,7 @@ when (in[1], in[2]) == 11
     out = 10 | 01
 
     out[0] = 1
-    out[0] = 1 & 1
+    out[0,] = 1 & 1
     out[0] = 1 | 1
 end
 ";
@@ -46,6 +46,28 @@ end
             LogicRunner.RunScript(Compiled, NoopMachine.Instance);
         }
 
+        public static void StressTest()
+        {
+            const int iterations = 10000000;
+
+            var result = Script.Compile(@"
+any
+    mem[0,3] = 101
+    out[0,2] = mem[0,2]
+    out[0,] = 10101
+    out[0,] = in[0,2]
+end
+");
+
+            for (int i = 0; i < iterations; i++)
+            {
+                LogicRunner.RunScript(result.Script, NoopMachine.Instance);
+
+                if (i % 1000000 == 0)
+                    Console.WriteLine((((double)i / iterations) * 100) + "%");
+            }
+        }
+
         private class NoopMachine : IMachine
         {
             public static NoopMachine Instance { get; } = new NoopMachine();
@@ -54,15 +76,7 @@ end
             public int OutputCount { get; } = 5;
             public IMemory Memory { get; } = new VolatileMemory();
 
-            public bool GetInput(int i) => true;
-
-            public BitsValue GetInputs() => 0;
-
             public void GetInputs(BitRange range, Span<bool> inputs)
-            {
-            }
-
-            public void SetOutput(int i, bool on)
             {
             }
 

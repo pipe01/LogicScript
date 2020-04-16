@@ -21,6 +21,6 @@
             this.End = end;
         }
 
-        public override string ToString() => HasEnd ? $"{Start},{End}" : Start.ToString();
+        public override string ToString() => HasEnd && End > Start + 1 ? $"{Start},{End}" : Start.ToString();
     }
 }

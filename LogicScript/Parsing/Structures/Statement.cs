@@ -14,16 +14,16 @@ namespace LogicScript.Parsing.Structures
 
     internal class AssignStatement : Statement
     {
-        public SlotExpression Slot { get; }
-        public Expression Value { get; }
+        public Expression LeftSide { get; }
+        public Expression RightSide { get; }
 
-        public AssignStatement(SlotExpression slot, Expression value, SourceLocation location) : base(location)
+        public AssignStatement(Expression leftSide, Expression rightSide, SourceLocation location) : base(location)
         {
-            this.Value = value;
-            this.Slot = slot;
+            this.LeftSide = leftSide;
+            this.RightSide = rightSide;
         }
 
-        public override string ToString() => $"{Slot} = {Value}";
+        public override string ToString() => $"{LeftSide} = {RightSide}";
     }
 
     internal class IfStatement : Statement
