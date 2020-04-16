@@ -188,7 +188,7 @@ namespace LogicScript.Parsing
 
                 SkipWhitespaces();
 
-                if (Current.Kind == LexemeKind.Equals)
+                if (Current.Kind == LexemeKind.EqualsAssign)
                     Error("unexpected assignment, did you mean to compare with \"==\"?", true);
             }
 
@@ -304,7 +304,7 @@ namespace LogicScript.Parsing
             }
 
             SkipWhitespaces();
-            Take(LexemeKind.Equals);
+            Take(LexemeKind.EqualsAssign);
             SkipWhitespaces();
 
             var rhs = TakeExpression();
@@ -330,18 +330,47 @@ namespace LogicScript.Parsing
             return false;
         }
 
+        private Operator ConvertToOperator(LexemeKind kind)
+        {
+            switch (kind)
+            {
+                case LexemeKind.Add: return Operator.Add;
+                case LexemeKind.Subtract: return Operator.Subtract;
+                case LexemeKind.Multiply: return Operator.Multiply;
+                case LexemeKind.Divide: return Operator.Divide;
+                case LexemeKind.Equals: return Operator.Equals;
+                case LexemeKind.NotEquals: return Operator.NotEquals;
+                case LexemeKind.Greater: return Operator.Greater;
+                case LexemeKind.GreaterOrEqual: return Operator.GreaterOrEqual;
+                case LexemeKind.Lesser: return Operator.Lesser;
+                case LexemeKind.LesserOrEqual: return Operator.LesserOrEqual;
+                case LexemeKind.And: return Operator.And;
+                case LexemeKind.Or: return Operator.Or;
+                case LexemeKind.Xor: return Operator.Xor;
+                case LexemeKind.BitShiftLeft: return Operator.BitShiftLeft;
+                case LexemeKind.BitShiftRight: return Operator.BitShiftRight;
+            }
+
+            return Operator.None;
+        }
+
         private Expression TakeExpression()
         {
             return Inner(TakePrimaryExpression(), 0);
 
-            bool Operator(Lexeme lexeme, out Operator op, out int predecence)
+            bool DoOperator(Lexeme lexeme, out Operator op, out int predecence)
             {
-                if (lexeme.Content != null && Constants.OperatorShortcuts.TryGetValue(lexeme.Content, out op))
+                if (lexeme.Content != null)
                 {
-                    predecence = Constants.OperatorPrecedence[op];
+                    op = ConvertToOperator(lexeme.Kind);
+                    if (op == Operator.None)
+                        goto none;
+
+                    predecence = (int)op;
                     return true;
                 }
 
+            none:
                 op = default;
                 predecence = 0;
                 return false;
@@ -352,7 +381,7 @@ namespace LogicScript.Parsing
                 SkipWhitespaces();
 
                 var start = Current.Location;
-                while (Operator(Current, out var op, out var predecence) && predecence >= minPredecence)
+                while (DoOperator(Current, out var op, out var predecence) && predecence >= minPredecence)
                 {
                     Advance();
                     SkipWhitespaces();
@@ -360,7 +389,7 @@ namespace LogicScript.Parsing
                     var rhs = TakePrimaryExpression();
                     SkipWhitespaces();
 
-                    while (Operator(Current, out var lookaheadOp, out int lookaheadPrecedence) && lookaheadPrecedence > predecence)
+                    while (DoOperator(Current, out var lookaheadOp, out int lookaheadPrecedence) && lookaheadPrecedence > predecence)
                     {
                         rhs = Inner(rhs, lookaheadPrecedence);
                     }
@@ -375,9 +404,8 @@ namespace LogicScript.Parsing
         {
             Expression expr;
 
-            if (Peek(LexemeKind.Operator, "!"))
+            if (Take(LexemeKind.Not, out var opLex, false))
             {
-                Take(LexemeKind.Operator, out var opLex);
                 expr = new UnaryOperatorExpression(Operator.Not, TakePrimaryExpression(), opLex.Location);
             }
             else if (Take(LexemeKind.LeftParenthesis, out var par, error: false))
@@ -425,7 +453,7 @@ namespace LogicScript.Parsing
 
                 expr = new NumberLiteralExpression(n.Location, num, length);
             }
-            else if (Peek(LexemeKind.Keyword) && Constants.AggregationOperators.TryGetValue(Current.Content, out var op))
+            else if (Peek(LexemeKind.Keyword) && Constants.ExplicitOperators.TryGetValue(Current.Content, out var op))
             {
                 expr = TakeExplicitOperator(op);
             }

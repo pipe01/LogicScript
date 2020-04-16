@@ -18,8 +18,32 @@ namespace LogicScript.Parsing
 
         Apostrophe,
         Comma,
+        EqualsAssign,
+
+        //Operators
+        //=========
+        Not,
+
+        Add,
+        Subtract,
+        Multiply,
+        Divide,
+
+        Truncate,
+
         Equals,
-        Operator,
+        NotEquals,
+        Greater,
+        GreaterOrEqual,
+        Lesser,
+        LesserOrEqual,
+
+        And,
+        Or,
+        Xor,
+
+        BitShiftLeft,
+        BitShiftRight,
     }
 
     internal readonly struct Lexeme

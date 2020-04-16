@@ -74,6 +74,13 @@ namespace LogicScript.Parsing
             return false;
         }
 
+        private char Consume()
+        {
+            var c = Current;
+            Advance();
+            return c;
+        }
+
         private Lexeme Lexeme(LexemeKind kind, string content) => new Lexeme(kind, content, new SourceLocation(Line, Column - (content?.Length ?? 0)));
 
         private Lexeme Lexeme(LexemeKind kind)
@@ -127,7 +134,6 @@ namespace LogicScript.Parsing
             else if (TryTakeOperator(out var opLex))
             {
                 lexeme = opLex;
-                Advance();
             }
             else
             {
@@ -149,31 +155,54 @@ namespace LogicScript.Parsing
 
         private bool TryTakeOperator(out Lexeme lexeme)
         {
-            char firstChar = Current;
+            LexemeKind kind;
 
-            switch (firstChar)
+            switch (Current)
             {
+                case '+':
+                    kind = LexemeKind.Add;
+                    break;
+                case '-':
+                    kind = LexemeKind.Subtract;
+                    break;
+                case '*':
+                    kind = LexemeKind.Multiply;
+                    break;
+                case '/':
+                    kind = LexemeKind.Divide;
+                    break;
                 case '=':
-                    lexeme = Take('=')
-                        ? Lexeme(LexemeKind.Operator, "==")
-                        : Lexeme(LexemeKind.Equals, "=");
-                    return true;
+                    kind = Take('=') ? LexemeKind.Equals : LexemeKind.EqualsAssign;
+                    break;
+                case '!':
+                    kind = Take('=') ? LexemeKind.NotEquals : LexemeKind.Not;
+                    break;
                 case '>':
-                    lexeme = Lexeme(LexemeKind.Operator, Take('=') ? ">=" : ">");
-                    return true;
+                    kind = Take('=') ? LexemeKind.GreaterOrEqual :
+                           Take('>') ? LexemeKind.BitShiftRight : LexemeKind.Greater;
+                    break;
                 case '<':
-                    lexeme = Lexeme(LexemeKind.Operator, Take('=') ? "<=" : "<");
-                    return true;
+                    kind = Take('=') ? LexemeKind.LesserOrEqual :
+                           Take('<') ? LexemeKind.BitShiftLeft : LexemeKind.Lesser;
+                    break;
+                case '&':
+                    kind = LexemeKind.And;
+                    break;
+                case '|':
+                    kind = LexemeKind.Or;
+                    break;
+                case '^':
+                    kind = LexemeKind.Xor;
+                    break;
+
+                default:
+                    lexeme = default;
+                    return false;
             }
 
-            if (Constants.OperatorShortcuts.ContainsKey(firstChar.ToString()))
-            {
-                lexeme = Lexeme(LexemeKind.Operator, firstChar.ToString());
-                return true;
-            }
-
-            lexeme = default;
-            return false;
+            lexeme = Lexeme(kind);
+            Advance();
+            return true;
         }
 
         private Lexeme TakeKeyword()
@@ -212,7 +241,7 @@ namespace LogicScript.Parsing
             switch (Current)
             {
                 case '=':
-                    return (true, Lexeme(LexemeKind.Equals));
+                    return (true, Lexeme(LexemeKind.EqualsAssign));
                 case ',':
                     return (true, Lexeme(LexemeKind.Comma));
                 case '\'':

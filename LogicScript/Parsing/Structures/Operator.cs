@@ -2,22 +2,30 @@
 {
     internal enum Operator
     {
-        Not,
+        None = -1,
 
-        Add,
-        Subtract,
-        Multiply,
-        Divide,
-
-        Truncate,
-
+        NotEquals,
         Equals,
         Greater,
         GreaterOrEqual,
         Lesser,
         LesserOrEqual,
 
+        BitShiftLeft,
+        BitShiftRight,
+
+        Add,
+        Subtract,
+
+        Multiply,
+        Divide,
+
         And,
-        Or
+        Or,
+        Xor,
+
+        //Operators without precedence
+        Not,
+        Truncate,
     }
 }
