@@ -214,26 +214,16 @@ namespace LogicScript.Parsing
         {
             var stmtList = new List<Statement>();
 
-            bool foundEnd = false;
-            while (!IsEOF)
+            SkipWhitespaces(true);
+
+            while (TryTakeStatement(out var stmt))
             {
-                if (requireEnd && TakeKeyword("end", error: false))
-                {
-                    foundEnd = true;
-                    break;
-                }
-
-                SkipWhitespaces(true);
-
-                if (TryTakeStatement(out var stmt))
-                    stmtList.Add(stmt);
-                else
-                    break;
+                stmtList.Add(stmt);
 
                 SkipWhitespaces(true);
             }
 
-            if (requireEnd && !foundEnd)
+            if (requireEnd && !TakeKeyword("end", false))
                 Error($"expected 'end' keyword to close block starting at {startLocation}");
 
             return stmtList;
