@@ -5,9 +5,9 @@
         public override bool IsSingleBit { get; }
         public override bool IsReadable => true;
 
-        public Operator Operator { get; }
-        public Expression Left { get; }
-        public Expression Right { get; }
+        public Operator Operator { get; set; }
+        public Expression Left { get; set; }
+        public Expression Right { get; set; }
 
         public OperatorExpression(Operator op, Expression left, Expression right, SourceLocation location) : base(location)
         {

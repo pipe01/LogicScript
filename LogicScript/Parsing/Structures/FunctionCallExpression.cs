@@ -8,8 +8,8 @@ namespace LogicScript.Parsing.Structures
 
         public override bool IsReadable => true;
 
-        public string Name { get; }
-        public IReadOnlyList<Expression> Arguments { get; }
+        public string Name { get; set; }
+        public IReadOnlyList<Expression> Arguments { get; set; }
 
         public FunctionCallExpression(string name, IReadOnlyList<Expression> arguments, SourceLocation location) : base(location)
         {

@@ -7,6 +7,8 @@
         public virtual bool IsReadable => false;
         public virtual bool IsWriteable => false;
 
+        public virtual bool IsConstant => false;
+
         public SourceLocation Location { get; }
 
         protected Expression(SourceLocation location)

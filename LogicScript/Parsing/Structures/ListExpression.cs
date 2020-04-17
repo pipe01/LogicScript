@@ -7,7 +7,7 @@ namespace LogicScript.Parsing.Structures
         public override bool IsSingleBit => Expressions.Length == 1;
         public override bool IsReadable => true;
 
-        public Expression[] Expressions { get; }
+        public Expression[] Expressions { get; set; }
 
         public ListExpression(Expression[] expressions, SourceLocation location) : base(location)
         {

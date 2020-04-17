@@ -5,8 +5,8 @@
         public override bool IsSingleBit => Length == 1;
         public override bool IsReadable => true;
 
-        public ulong Value { get; }
-        public int? Length { get; }
+        public ulong Value { get; set; }
+        public int? Length { get; set; }
 
         public NumberLiteralExpression(SourceLocation location, ulong value, int? length = null) : base(location)
         {

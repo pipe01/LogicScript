@@ -7,8 +7,8 @@ namespace LogicScript.Parsing.Structures
         public override bool IsSingleBit => Operand.IsSingleBit;
         public override bool IsReadable => true;
 
-        public Operator Operator { get; }
-        public Expression Operand { get; }
+        public Operator Operator { get; set; }
+        public Expression Operand { get; set; }
 
         public UnaryOperatorExpression(Operator @operator, Expression operand, SourceLocation location) : base(location)
         {

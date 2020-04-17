@@ -10,8 +10,8 @@ namespace LogicScript.Parsing.Structures
         public override bool IsReadable => Operand.IsReadable;
         public override bool IsWriteable => Operand.IsWriteable;
 
-        public Expression Operand { get; }
-        public BitRange Range { get; }
+        public Expression Operand { get; set; }
+        public BitRange Range { get; set; }
 
         public IndexerExpression(Expression operand, BitRange range, SourceLocation location) : base(location)
         {
