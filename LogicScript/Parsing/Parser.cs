@@ -466,9 +466,9 @@ namespace LogicScript.Parsing
 
                 expr = new NumberLiteralExpression(n.Location, num, length);
             }
-            else if (Peek(LexemeKind.Keyword) && Constants.ExplicitOperators.TryGetValue(Current.Content, out var op))
+            else if (Peek(LexemeKind.String))
             {
-                expr = TakeExplicitOperator(op);
+                expr = TakeFunctionCall();
             }
             else
             {
@@ -485,6 +485,27 @@ namespace LogicScript.Parsing
             }
 
             return expr;
+        }
+
+        private Expression TakeFunctionCall()
+        {
+            Take(LexemeKind.String, out var nameLexeme, expected: "function name");
+            Take(LexemeKind.LeftParenthesis, expected: "argument list opening parenthesis");
+
+            var args = new List<Expression>();
+
+            do
+            {
+                SkipWhitespaces(true);
+
+                args.Add(TakeExpression());
+
+                SkipWhitespaces(true);
+            } while (Take(LexemeKind.Comma, false));
+
+            Take(LexemeKind.RightParenthesis, expected: "argument list closing parenthesis");
+
+            return new FunctionCallExpression(nameLexeme.Content, args.ToArray(), nameLexeme.Location);
         }
 
         private Expression TakeExplicitOperator(Operator op)

@@ -27,8 +27,8 @@ namespace Tester
 @include ""asd.lsx""
 
 any
-    out = 1 + 2'
-    out = 10 * 3'
+    out = and(1010)
+    out = trunc(10 * 3', 2')
     out = 1010
 
     mem = 123'

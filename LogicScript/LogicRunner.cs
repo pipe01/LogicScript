@@ -173,8 +173,51 @@ namespace LogicScript
                 case SlotExpression slot:
                     return DoSlotExpression(machine, slot, null);
 
+                case FunctionCallExpression funcCall:
+                    return DoFunctionCall(machine, funcCall);
+
                 default:
                     throw new LogicEngineException("Expected multi-bit value", expr);
+            }
+        }
+
+        private static BitsValue DoFunctionCall(IMachine machine, FunctionCallExpression funcCall)
+        {
+            Span<BitsValue> values = stackalloc BitsValue[funcCall.Arguments.Count];
+
+            for (int i = 0; i < funcCall.Arguments.Count; i++)
+            {
+                values[i] = GetValue(machine, funcCall.Arguments[i]);
+            }
+
+            switch (funcCall.Name)
+            {
+                case "and":
+                    if (values.Length != 1)
+                        throw new LogicEngineException("Expected 1 argument on call to 'add'", funcCall);
+                    return values[0].AreAllBitsSet;
+
+                case "or":
+                    if (values.Length != 1)
+                        throw new LogicEngineException("Expected 1 argument on call to 'or'", funcCall);
+                    return values[0].IsAnyBitSet;
+
+                case "sum":
+                    if (values.Length != 1)
+                        throw new LogicEngineException("Expected 1 argument on call to 'sum'", funcCall);
+                    return values[0].PopulationCount;
+
+                case "trunc" when values.Length == 2:
+                    return new BitsValue(values[0], (int)values[1].Number);
+
+                case "trunc" when values.Length == 1:
+                    return values[0].Truncated;
+
+                case "trunc":
+                    throw new LogicEngineException("Expected 1 or 2 arguments", funcCall);
+
+                default:
+                    throw new LogicEngineException($"Unknown function '{funcCall.Name}'", funcCall);
             }
         }
 
@@ -229,15 +272,6 @@ namespace LogicScript
             {
                 case Operator.Not:
                     return value.Negated;
-                case Operator.And:
-                    return value.AreAllBitsSet;
-                case Operator.Or:
-                    return value.IsAnyBitSet;
-                case Operator.Add:
-                    return value.PopulationCount;
-
-                case Operator.Truncate:
-                    return value.Truncated;
             }
 
             throw new LogicEngineException();
