@@ -28,7 +28,7 @@ namespace Tester
 
 any
     out = and(1010)
-    out = trunc(10 * 3', 2')
+    out = trunc(10 * 3', (1, 0))
     out = 1010
 
     mem = 123'

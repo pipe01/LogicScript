@@ -55,8 +55,6 @@ namespace LogicScript
 
         private static void RunStatement(IMachine machine, Statement stmt)
         {
-            //Console.WriteLine("> " + stmt);
-
             switch (stmt)
             {
                 case AssignStatement assign:
@@ -246,7 +244,6 @@ namespace LogicScript
 
         private static BitsValue DoListExpression(IMachine machine, ListExpression list)
         {
-            var items = new bool[list.Expressions.Length];
             ulong n = 0;
 
             int len = list.Expressions.Length;
@@ -261,7 +258,7 @@ namespace LogicScript
                     n |= 1UL << (len - 1 - i);
             }
 
-            return new BitsValue(items);
+            return new BitsValue(n, len);
         }
 
         private static BitsValue DoUnaryOperator(IMachine machine, UnaryOperatorExpression op)
