@@ -149,7 +149,7 @@ namespace LogicScript
             updatableMachine.QueueUpdate();
         }
 
-        private static BitsValue GetValue(IMachine machine, Expression expr)
+        internal static BitsValue GetValue(IMachine machine, Expression expr)
         {
             switch (expr)
             {
@@ -179,7 +179,7 @@ namespace LogicScript
             }
         }
 
-        private static BitsValue DoFunctionCall(IMachine machine, FunctionCallExpression funcCall)
+        internal static BitsValue DoFunctionCall(IMachine machine, FunctionCallExpression funcCall)
         {
             Span<BitsValue> values = stackalloc BitsValue[funcCall.Arguments.Count];
 
@@ -212,7 +212,7 @@ namespace LogicScript
                     return values[0].Truncated;
 
                 case "trunc":
-                    throw new LogicEngineException("Expected 1 or 2 arguments", funcCall);
+                    throw new LogicEngineException("Expected 1 or 2 arguments on call to 'trunc'", funcCall);
 
                 default:
                     throw new LogicEngineException($"Unknown function '{funcCall.Name}'", funcCall);
@@ -242,7 +242,7 @@ namespace LogicScript
             return new BitsValue(values);
         }
 
-        private static BitsValue DoListExpression(IMachine machine, ListExpression list)
+        internal static BitsValue DoListExpression(IMachine machine, ListExpression list)
         {
             ulong n = 0;
 
@@ -261,7 +261,7 @@ namespace LogicScript
             return new BitsValue(n, len);
         }
 
-        private static BitsValue DoUnaryOperator(IMachine machine, UnaryOperatorExpression op)
+        internal static BitsValue DoUnaryOperator(IMachine machine, UnaryOperatorExpression op)
         {
             var value = GetValue(machine, op.Operand);
 
@@ -274,7 +274,7 @@ namespace LogicScript
             throw new LogicEngineException();
         }
 
-        private static BitsValue DoOperator(IMachine machine, OperatorExpression op)
+        internal static BitsValue DoOperator(IMachine machine, OperatorExpression op)
         {
             var left = GetValue(machine, op.Left);
             var right = GetValue(machine, op.Right);

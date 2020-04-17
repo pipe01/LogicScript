@@ -91,7 +91,7 @@ namespace LogicScript.Data
             this.Length = bits.Length;
         }
 
-        public override string ToString() => string.Join("", Bits.Take(Length).Select(o => o ? 1 : 0));
+        public override string ToString() => Number.ToString();
 
         public override bool Equals(object obj)
         {

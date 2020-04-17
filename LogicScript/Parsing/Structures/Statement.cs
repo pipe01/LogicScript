@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
 namespace LogicScript.Parsing.Structures
 {
@@ -36,7 +37,7 @@ namespace LogicScript.Parsing.Structures
         {
             this.Condition = condition;
             this.Body = body;
-            this.Else = @else;
+            this.Else = @else ?? Array.Empty<Statement>();
         }
 
         public override string ToString() => $"if {Condition}";

@@ -22,6 +22,8 @@ namespace LogicScript
             if (errors.ContainsErrors)
                 return new CompilationResult(false, null, errors);
 
+            EvaluatorVisitor.Visit(parsed);
+
             return new CompilationResult(true, parsed, errors);
         }
 
