@@ -255,6 +255,8 @@ namespace LogicScript
                     return left * right;
                 case Operator.Divide:
                     return left / right;
+                case Operator.Modulo:
+                    return left.Number % right.Number;
 
                 case Operator.Equals:
                     return left == right;

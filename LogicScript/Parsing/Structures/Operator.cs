@@ -17,6 +17,7 @@
         Add,
         Subtract,
 
+        Modulo,
         Multiply,
         Divide,
 

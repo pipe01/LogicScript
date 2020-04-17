@@ -171,6 +171,9 @@ namespace LogicScript.Parsing
                 case '/':
                     kind = LexemeKind.Divide;
                     break;
+                case '%':
+                    kind = LexemeKind.Modulo;
+                    break;
                 case '=':
                     kind = Take('=') ? LexemeKind.Equals : LexemeKind.EqualsAssign;
                     break;

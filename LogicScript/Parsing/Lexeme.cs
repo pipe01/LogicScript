@@ -28,6 +28,7 @@ namespace LogicScript.Parsing
         Subtract,
         Multiply,
         Divide,
+        Modulo,
 
         Truncate,
 
