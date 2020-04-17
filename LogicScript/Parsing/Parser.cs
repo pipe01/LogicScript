@@ -52,12 +52,7 @@ namespace LogicScript.Parsing
                 {
                     SkipWhitespaces(true);
 
-                    var (@case, taken) = TakeCase();
-
-                    if (taken)
-                        script.Cases.Add(@case);
-                    else if (!IsEOF) //No case taken and we aren't at the end of the file
-                        Error($"expected case, found {Current.Kind}", true);
+                    script.TopLevelNodes.Add(TakeTopLevel());
                 }
             }
             catch (LogicParserException)
@@ -167,7 +162,35 @@ namespace LogicScript.Parsing
             SkipWhitespaces(true);
         }
 
-        public (Case Case, bool Taken) TakeCase()
+        private TopLevelNode TakeTopLevel()
+        {
+            if (Take(LexemeKind.AtSign, out var atLexeme, false))
+            {
+                return TakeDirective(atLexeme.Location);
+            }
+            else
+            {
+                var (@case, taken) = TakeCase();
+
+                if (taken)
+                    return @case;
+                else
+                    Error($"expected case, found {Current.Kind}", true);
+            }
+
+            throw null; //Not reached
+        }
+
+        private Directive TakeDirective(SourceLocation startLocation)
+        {
+            Take(LexemeKind.String, out var nameLexeme);
+            Take(LexemeKind.Whitespace);
+            Take(LexemeKind.String, out var valueLexeme);
+
+            return new Directive(nameLexeme.Content, valueLexeme.Content, startLocation);
+        }
+
+        private (Case Case, bool Taken) TakeCase()
         {
             Lexeme startLexeme;
 

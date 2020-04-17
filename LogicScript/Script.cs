@@ -7,7 +7,7 @@ namespace LogicScript
 {
     public class Script
     {
-        internal IList<Case> Cases { get; } = new List<Case>();
+        internal IList<TopLevelNode> TopLevelNodes { get; } = new List<TopLevelNode>();
 
         public static CompilationResult Compile(string script)
         {

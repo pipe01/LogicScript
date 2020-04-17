@@ -7,9 +7,11 @@ namespace LogicScript.Parsing
         Whitespace,
         NewLine,
         EOF,
+        AtSign,
 
         Number,
         Keyword,
+        String,
 
         LeftBracket,
         RightBracket,

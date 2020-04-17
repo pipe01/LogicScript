@@ -11,10 +11,13 @@ namespace LogicScript
     {
         public static void RunScript(Script script, IMachine machine, bool isFirstUpdate = false)
         {
-            int len = script.Cases.Count;
+            int len = script.TopLevelNodes.Count;
             for (int i = 0; i < len; i++)
             {
-                UpdateCase(machine, script.Cases[i], isFirstUpdate);
+                var node = script.TopLevelNodes[i];
+
+                if (node is Case @case)
+                    UpdateCase(machine, @case, isFirstUpdate);
             }
         }
 

@@ -98,6 +98,10 @@ namespace LogicScript.Parsing
                 lexeme = default;
                 Advance();
             }
+            else if (Current == '"')
+            {
+                lexeme = TakeString();
+            }
             else if (IsEOF)
             {
                 lexeme = default;
@@ -109,7 +113,7 @@ namespace LogicScript.Parsing
             }
             else if (IsLetter)
             {
-                lexeme = TakeKeyword();
+                lexeme = TakeWord();
             }
             else if (IsWhitespace)
             {
@@ -208,10 +212,23 @@ namespace LogicScript.Parsing
             return true;
         }
 
-        private Lexeme TakeKeyword()
+        private Lexeme TakeString()
         {
-            var startLocation = Location;
+            Advance();
+            Builder.Clear();
 
+            do
+            {
+                Builder.Append(Current);
+            } while (Advance() && Current != '"' && !IsNewLine);
+
+            Advance();
+
+            return Lexeme(LexemeKind.String);
+        }
+
+        private Lexeme TakeWord()
+        {
             Builder.Clear();
 
             do
@@ -221,10 +238,10 @@ namespace LogicScript.Parsing
 
             string keyword = Builder.ToString();
 
-            if (!Constants.Keywords.Contains(keyword))
-                Errors.AddError(startLocation, "invalid keyword");
+            if (Constants.Keywords.Contains(keyword))
+                return Lexeme(LexemeKind.Keyword);
 
-            return Lexeme(LexemeKind.Keyword);
+            return Lexeme(LexemeKind.String);
         }
 
         private Lexeme TakeNumberOrDigit()
@@ -257,6 +274,8 @@ namespace LogicScript.Parsing
                     return (true, Lexeme(LexemeKind.LeftParenthesis));
                 case ')':
                     return (true, Lexeme(LexemeKind.RightParenthesis));
+                case '@':
+                    return (true, Lexeme(LexemeKind.AtSign));
             }
 
             return (false, default);

@@ -24,9 +24,11 @@ namespace Tester
 #else
 
             const string script = @"
+@include ""asd.lsx""
+
 any
-    out = 1
-    out = 10
+    out = 1 + 2'
+    out = 10 * 3'
     out = 1010
 
     mem = 123'

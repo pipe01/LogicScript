@@ -1,17 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
 namespace LogicScript.Parsing.Structures
 {
-    internal abstract class Case : ICodeNode
+    internal abstract class Case : TopLevelNode
     {
         public IReadOnlyList<Statement> Statements { get; }
-        public SourceLocation Location { get; }
 
-        public Case(IReadOnlyList<Statement> statements, SourceLocation location)
+        protected Case(IReadOnlyList<Statement> statements, SourceLocation location) : base(location)
         {
             this.Statements = statements;
-            this.Location = location;
         }
     }
 
