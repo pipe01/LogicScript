@@ -111,6 +111,14 @@ namespace LogicScript.Data
                 span[i] = this[i];
             }
         }
+        
+        public void FillBits(Span<bool> span, int start, int end)
+        {
+            for (int i = 0; i < end; i++)
+            {
+                span[i] = this[i + start];
+            }
+        }
 
         public override int GetHashCode() => Number.GetHashCode();
 

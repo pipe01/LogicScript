@@ -22,7 +22,7 @@ namespace Tester
 @include ""asd.lsx""
 
 any
-    out = and(1010)
+    out = 123'[0,2]
     out = trunc(10 * 3', (1, 0))
     out = 1010
 

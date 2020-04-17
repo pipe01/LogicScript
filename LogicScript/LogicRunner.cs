@@ -168,6 +168,9 @@ namespace LogicScript
                 case IndexerExpression indexer when indexer.Operand is SlotExpression slot:
                     return DoSlotExpression(machine, slot, indexer.Range);
 
+                case IndexerExpression indexer:
+                    return DoIndexerExpression(machine, indexer);
+
                 case SlotExpression slot:
                     return DoSlotExpression(machine, slot, null);
 
@@ -177,6 +180,20 @@ namespace LogicScript
                 default:
                     throw new LogicEngineException("Expected multi-bit value", expr);
             }
+        }
+
+        private static BitsValue DoIndexerExpression(IMachine machine, IndexerExpression indexer)
+        {
+            var value = GetValue(machine, indexer.Operand);
+
+            int end = indexer.Range.Length;
+            if (!indexer.Range.HasEnd)
+                end = value.Length;
+
+            Span<bool> bits = stackalloc bool[end - indexer.Range.Start];
+            value.FillBits(bits, indexer.Range.Start, end);
+
+            return new BitsValue(bits);
         }
 
         internal static BitsValue DoFunctionCall(IMachine machine, FunctionCallExpression funcCall)
