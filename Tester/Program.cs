@@ -9,11 +9,6 @@ namespace Tester
 {
     class Program
     {
-        static Program()
-        {
-            Console.WriteLine("nice");
-        }
-
         static void Main(string[] args)
         {
 #if RELEASE
@@ -51,7 +46,7 @@ end
 
             var machine = new Machine();
 
-            for (int i = 0; i < 1; i++)
+            for (int i = 0; i < 4; i++)
             {
                 LogicRunner.RunScript(result.Script, machine, i == 0);
                 Console.WriteLine();

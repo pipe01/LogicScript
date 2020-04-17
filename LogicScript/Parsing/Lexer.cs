@@ -135,21 +135,12 @@ namespace LogicScript.Parsing
 
                 lexeme = default;
             }
-            else if (TryTakeOperator(out var opLex))
+            else if (TryTakeSymbol(out var opLex))
             {
                 lexeme = opLex;
             }
             else
             {
-                var (isSymbol, l) = TryTakeSymbol();
-                if (isSymbol)
-                {
-                    lexeme = l;
-
-                    Advance();
-                    return true;
-                }
-
                 lexeme = default;
                 return false;
             }
@@ -157,12 +148,34 @@ namespace LogicScript.Parsing
             return true;
         }
 
-        private bool TryTakeOperator(out Lexeme lexeme)
+        private bool TryTakeSymbol(out Lexeme lexeme)
         {
             LexemeKind kind;
 
             switch (Current)
             {
+                case ',':
+                    kind = LexemeKind.Comma;
+                    break;
+                case '\'':
+                    kind = LexemeKind.Apostrophe;
+                    break;
+                case '[':
+                    kind = LexemeKind.LeftBracket;
+                    break;
+                case ']':
+                    kind = LexemeKind.RightBracket;
+                    break;
+                case '(':
+                    kind = LexemeKind.LeftParenthesis;
+                    break;
+                case ')':
+                    kind = LexemeKind.RightParenthesis;
+                    break;
+                case '@':
+                    kind = LexemeKind.AtSign;
+                    break;
+
                 case '+':
                     kind = LexemeKind.Add;
                     break;
@@ -254,31 +267,6 @@ namespace LogicScript.Parsing
             } while (Advance() && IsDigit);
 
             return Lexeme(LexemeKind.Number);
-        }
-
-        private (bool Success, Lexeme Lexeme) TryTakeSymbol()
-        {
-            switch (Current)
-            {
-                case '=':
-                    return (true, Lexeme(LexemeKind.EqualsAssign));
-                case ',':
-                    return (true, Lexeme(LexemeKind.Comma));
-                case '\'':
-                    return (true, Lexeme(LexemeKind.Apostrophe));
-                case '[':
-                    return (true, Lexeme(LexemeKind.LeftBracket));
-                case ']':
-                    return (true, Lexeme(LexemeKind.RightBracket));
-                case '(':
-                    return (true, Lexeme(LexemeKind.LeftParenthesis));
-                case ')':
-                    return (true, Lexeme(LexemeKind.RightParenthesis));
-                case '@':
-                    return (true, Lexeme(LexemeKind.AtSign));
-            }
-
-            return (false, default);
         }
     }
 }

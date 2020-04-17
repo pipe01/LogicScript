@@ -45,7 +45,8 @@ namespace LogicScript.Parsing
             {
                 // This is kind of a hack, however it's the easiest way to precompute values
                 // The logic runner will successfully compute any constant values with a null machine,
-                // as it won't require it if the values are constant.
+                // as it won't require it if the values are constant. Non-constant values will query
+                // the machine for inputs or memory, and will throw an NRE.
 
                 try
                 {
