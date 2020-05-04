@@ -12,7 +12,10 @@ namespace LogicScript
         public static CompilationResult Compile(string script)
         {
             var errors = new ErrorSink();
-            var lexemes = new Lexer(script, errors).Lex().ToArray();
+
+            Lexeme[] lexemes;
+            using (var lexer = new Lexer(script, errors))
+                lexemes = lexer.Lex().ToArray();
 
             if (errors.ContainsErrors)
                 return new CompilationResult(false, null, errors);
