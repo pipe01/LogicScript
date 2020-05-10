@@ -256,14 +256,10 @@ namespace LogicScript.Parsing
         {
             SkipWhitespaces(true);
 
-            if (TryTakeIfStatement(out statement)
+            return TryTakeIfStatement(out statement)
+                || TryTakeForStatement(out statement)
                 || TryTakeAssignStatement(out statement)
-                || TryTakeQueueUpdateStatement(out statement))
-            {
-                return true;
-            }
-
-            return false; //Not reached
+                || TryTakeQueueUpdateStatement(out statement);
         }
 
         private bool TryTakeIfStatement(out Statement statement)
@@ -290,6 +286,39 @@ namespace LogicScript.Parsing
                 Error($"expected 'end' keyword to close if statement starting at {start.Location}");
 
             statement = new IfStatement(condition, body, @else, start.Location);
+            return true;
+        }
+
+        private bool TryTakeForStatement(out Statement statement)
+        {
+            if (!TakeKeyword("for", out var start, false))
+            {
+                statement = null;
+                return false;
+            }
+
+            Take(LexemeKind.Whitespace);
+            SkipWhitespaces();
+
+            Take(LexemeKind.String, out var varName, expected: "for variable name");
+
+            Take(LexemeKind.Whitespace);
+            SkipWhitespaces();
+
+            TakeKeyword("from");
+            SkipWhitespaces();
+
+            var from = TakeExpression();
+            SkipWhitespaces();
+
+            TakeKeyword("to");
+            SkipWhitespaces();
+
+            var to = TakeExpression();
+
+            var body = TakeStatements(start.Location);
+
+            statement = new ForStatement(varName.Content, from, to, body, start.Location);
             return true;
         }
 

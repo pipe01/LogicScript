@@ -51,4 +51,20 @@ namespace LogicScript.Parsing.Structures
 
         public override string ToString() => "update";
     }
+
+    internal class ForStatement : Statement
+    {
+        public string VarName { get; set; }
+        public Expression From { get; set; }
+        public Expression To { get; set; }
+        public IReadOnlyList<Statement> Body { get; set; }
+
+        public ForStatement(string varName, Expression from, Expression to, IReadOnlyList<Statement> body, SourceLocation location) : base(location)
+        {
+            this.From = from;
+            this.To = to;
+            this.Body = body;
+            this.VarName = varName;
+        }
+    }
 }

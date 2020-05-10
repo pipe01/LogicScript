@@ -22,6 +22,10 @@ namespace Tester
 @include ""asd.lsx""
 
 any
+    for i from 0 to 7
+        out = 0
+    end
+
     out = 123'[0,2]
     out = trunc(10 * 3', (1, 0))
     out = 1010

@@ -66,6 +66,9 @@ namespace LogicScript
                 case QueueUpdateStatement queueStmt:
                     RunStatement(machine, queueStmt);
                     break;
+                case ForStatement forStatement:
+                    RunStatement(machine, forStatement);
+                    break;
             }
         }
 
@@ -138,6 +141,17 @@ namespace LogicScript
             else if (stmt.Else != null)
             {
                 RunStatements(machine, stmt.Else);
+            }
+        }
+
+        private static void RunStatement(IMachine machine, ForStatement stmt)
+        {
+            var from = GetValue(machine, stmt.From).Number;
+            var to = GetValue(machine, stmt.To).Number;
+
+            for (ulong i = from; i < to; i++)
+            {
+                RunStatements(machine, stmt.Body);
             }
         }
 
