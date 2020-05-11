@@ -305,11 +305,18 @@ namespace LogicScript.Parsing
             Take(LexemeKind.Whitespace);
             SkipWhitespaces();
 
-            TakeKeyword("from");
-            SkipWhitespaces();
+            Expression from;
 
-            var from = TakeExpression();
-            SkipWhitespaces();
+            if (TakeKeyword("from", false))
+            {
+                SkipWhitespaces();
+                from = TakeExpression();
+                SkipWhitespaces();
+            }
+            else
+            {
+                from = new NumberLiteralExpression(Current.Location, 0, 1);
+            }
 
             TakeKeyword("to");
             SkipWhitespaces();
@@ -539,18 +546,6 @@ namespace LogicScript.Parsing
             Take(LexemeKind.RightParenthesis, expected: "argument list closing parenthesis");
 
             return new FunctionCallExpression(nameLexeme.Content, args.ToArray(), nameLexeme.Location);
-        }
-
-        private Expression TakeExplicitOperator(Operator op)
-        {
-            Take(LexemeKind.Keyword, out var keyword);
-            Take(LexemeKind.LeftParenthesis, expected: "argument open", fatal: true);
-
-            var expr = TakeExpression();
-
-            Take(LexemeKind.RightParenthesis, expected: "argument close", fatal: true);
-
-            return new UnaryOperatorExpression(op, expr, keyword.Location);
         }
 
         private bool TryTakeSlot(out SlotExpression s)

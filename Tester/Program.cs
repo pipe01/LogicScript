@@ -22,8 +22,10 @@ namespace Tester
 @include ""asd.lsx""
 
 any
-    for i from 0 to 7
-        out = i
+    for i to 7'
+        for j to 5'
+            out = i * j
+        end
     end
 
     out = 123'[0,2]
@@ -64,17 +66,14 @@ end
     public class Machine : IMachine
     {
         public int InputCount => Inputs.Length;
-        public int OutputCount => Outputs.Length;
+        public int OutputCount => 99;
 
         public IMemory Memory { get; } = new VolatileMemory();
 
         private readonly bool[] Inputs = new[] { true, false, true, false };
-        private readonly bool[] Outputs = new[] { false, false, true, false };
 
         public void SetOutputs(BitRange range, Span<bool> values)
         {
-            values.CopyTo(Outputs.AsSpan().Slice(range.Start));
-
             var bitsVal = new BitsValue(values);
             Console.WriteLine($"Set outputs [{range}] to {bitsVal.Number} ({bitsVal})");
         }
