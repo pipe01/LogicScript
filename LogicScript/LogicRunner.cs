@@ -23,10 +23,10 @@ namespace LogicScript
 
             public void Unset(string name) => Variables.Remove(name);
 
-            public BitsValue Get(string name)
+            public BitsValue Get(string name, ICodeNode node)
             {
                 if (!Variables.TryGetValue(name, out var val))
-                    throw new LogicEngineException($"variable {name} not defined");
+                    throw new LogicEngineException($"variable \"{name}\" not defined", node);
 
                 return val;
             }
@@ -217,7 +217,7 @@ namespace LogicScript
                     return DoFunctionCall(ctx, funcCall);
 
                 case VariableAccessExpression varAccess:
-                    return ctx.Get(varAccess.Name);
+                    return ctx.Get(varAccess.Name, varAccess);
 
                 default:
                     throw new LogicEngineException("Expected multi-bit value", expr);
