@@ -28,7 +28,7 @@ namespace LogicScript
             public BitsValue Get(string name, ICodeNode node)
             {
                 if (!Variables.TryGetValue(name, out var val))
-                    throw new LogicEngineException($"variable \"{name}\" not defined", node);
+                    throw new LogicEngineException($"Variable \"{name}\" not defined", node);
 
                 return val;
             }
@@ -342,7 +342,7 @@ namespace LogicScript
             }
             else
             {
-                range = new BitRange(0, value.Length);
+                range = new BitRange(0, GetLength(ctx.Machine, lhs));
             }
 
             if (!range.HasEnd)
@@ -390,6 +390,23 @@ namespace LogicScript
             }
 
             return value;
+
+            int GetLength(IMachine machine, Expression expr)
+            {
+                if (expr is SlotExpression s)
+                {
+                    if (s.Slot == Slots.Out)
+                        return machine.OutputCount;
+                    else if (s.Slot == Slots.Memory)
+                        return machine.Memory.Capacity;
+                }
+                else if (expr is VariableAccessExpression var)
+                {
+                    return BitsValue.BitSize;
+                }
+
+                return 0;
+            }
         }
     }
 }

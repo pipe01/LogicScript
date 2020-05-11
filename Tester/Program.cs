@@ -20,7 +20,7 @@ namespace Tester
 
             const string script = @"
 any
-    test[0,5] = 10'
+    out = 10; out = 01
 
     if 1
         out = 2'
