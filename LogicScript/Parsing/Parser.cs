@@ -67,6 +67,13 @@ namespace LogicScript.Parsing
         }
 
         [DebuggerStepThrough]
+        private T Error<T>(string msg, bool fatal = false, SourceLocation? on = null)
+        {
+            Error(msg, fatal, on);
+            return default;
+        }
+
+        [DebuggerStepThrough]
         private bool Advance()
         {
             if (Index == Lexemes.Length - 1)
@@ -182,13 +189,22 @@ namespace LogicScript.Parsing
             var name = nameLexeme.Content;
             var value = valueLexeme.Content;
 
-            Script.Directives[name] = value;
-
-            if (name == "strict")
+            switch (name)
             {
-                Script.Strict = value == "on" ? true
-                        : value == "off" ? false
-                        : throw new LogicParserException($"Invalid 'strict' directive value '{value}'");
+                case "strict":
+                    Script.Strict =
+                        value == "on" ? true :
+                        value == "off" ? false : Error<bool>($"Invalid 'strict' directive value '{value}'", on: valueLexeme.Location);
+                    break;
+                case "suffix":
+                    Script.AutoSuffix =
+                        value == "on" ? true :
+                        value == "off" ? false : Error<bool>($"Invalid 'suffix' directive value '{value}'", on: valueLexeme.Location);
+                    break;
+
+                default:
+                    Error($"Invalid directive '{name}'", on: nameLexeme.Location);
+                    break;
             }
 
             return new Directive(name, value, startLocation);
@@ -348,43 +364,6 @@ namespace LogicScript.Parsing
             return true;
         }
 
-        //private bool TryTakeAssignStatement(out Statement statement)
-        //{
-        //    Expression lhs;
-
-        //    if (TryTakeSlot(out var slot))
-        //    {
-        //        if (slot.Slot == Slots.In)
-        //            Error("expected a writable slot in left side of assignment", true);
-
-        //        lhs = slot;
-        //    }
-        //    else
-        //    {
-        //        statement = null;
-        //        return false;
-        //    }
-
-        //    if (Take(LexemeKind.LeftBracket, false))
-        //    {
-        //        lhs = new IndexerExpression(lhs, TakeRange(), lhs.Location);
-        //        Take(LexemeKind.RightBracket);
-        //    }
-
-        //    SkipWhitespaces();
-        //    Take(LexemeKind.EqualsAssign);
-        //    SkipWhitespaces();
-
-        //    var rhs = TakeExpression();
-
-        //    SkipWhitespaces();
-        //    Take(LexemeKind.NewLine);
-
-        //    //statement = new AssignStatement(lhs, rhs, slot.Location);
-        //    statement = new ExpressionStatement(new OperatorExpression(Operator.Assign, lhs, rhs, slot.Location), slot.Location);
-        //    return true;
-        //}
-
         private bool TryTakeQueueUpdateStatement(out Statement statement)
         {
             if (TakeKeyword("update", out var lexeme, false))
@@ -508,7 +487,9 @@ namespace LogicScript.Parsing
                 }
                 else if (n.Content.ContainsDecimalDigits())
                 {
-                    Errors.AddWarning(Current.Location, "decimal number must be suffixed");
+                    if (!Script.AutoSuffix)
+                        Errors.AddWarning(Current.Location, "decimal number must be suffixed");
+
                     @base = 10;
                 }
 
@@ -538,10 +519,21 @@ namespace LogicScript.Parsing
 
             if (Take(LexemeKind.LeftBracket, false))
             {
-                var range = TakeRange();
+                var start = TakeExpression();
+                Expression end = null;
+                bool hasEnd = true;
+
+                if (Take(LexemeKind.Comma, false))
+                {
+                    if (Peek(LexemeKind.RightBracket))
+                        hasEnd = false;
+                    else
+                        end = TakeExpression();
+                }
+
                 Take(LexemeKind.RightBracket);
 
-                expr = new IndexerExpression(expr, range, expr.Location);
+                expr = new IndexerExpression(expr, start, end, hasEnd, expr.Location);
             }
 
             return expr;

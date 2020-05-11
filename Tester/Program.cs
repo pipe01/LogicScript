@@ -19,16 +19,12 @@ namespace Tester
 #else
 
             const string script = @"
-@strict off
+@sufafix on
 
 any
-    out = nice
+    nice = 1010
 
-    if 1
-        out = 2'
-    else
-        out = 3'
-    end
+    out = nice[0,3]
 end
 ";
 

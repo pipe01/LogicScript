@@ -116,7 +116,7 @@ namespace LogicScript.Data
 
         public void FillBits(Span<bool> span, int start, int end)
         {
-            for (int i = 0; i < end; i++)
+            for (int i = 0; i < end - start; i++)
             {
                 span[i] = this[i + start];
             }

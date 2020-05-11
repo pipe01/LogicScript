@@ -9,9 +9,8 @@ namespace LogicScript
     {
         internal IList<TopLevelNode> TopLevelNodes { get; } = new List<TopLevelNode>();
 
-        internal IDictionary<string, string> Directives { get; } = new Dictionary<string, string>();
-
         internal bool Strict { get; set; } = true;
+        internal bool AutoSuffix { get; set; }
 
         public static CompilationResult Compile(string script)
         {

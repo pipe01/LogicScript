@@ -157,7 +157,7 @@ namespace LogicScript
                     return DoUnaryOperator(ctx, unary);
 
                 case IndexerExpression indexer when indexer.Operand is SlotExpression slot:
-                    return DoSlotExpression(ctx, slot, indexer.Range);
+                    return DoSlotExpression(ctx, slot, indexer);
 
                 case IndexerExpression indexer:
                     return DoIndexerExpression(ctx, indexer);
@@ -176,16 +176,30 @@ namespace LogicScript
             }
         }
 
+        private BitRange GetRange(CaseContext ctx, IndexerExpression indexer, int length)
+        {
+            var start = (int)GetValue(ctx, indexer.Start).Number;
+            int end;
+
+            if (indexer.HasEnd)
+            {
+                end = indexer.End == null ? start + 1 : (int)GetValue(ctx, indexer.End).Number;
+            }
+            else
+            {
+                end = length;
+            }
+
+            return new BitRange(start, end);
+        }
+
         private BitsValue DoIndexerExpression(CaseContext ctx, IndexerExpression indexer)
         {
             var value = GetValue(ctx, indexer.Operand);
+            var range = GetRange(ctx, indexer, value.Length);
 
-            int end = indexer.Range.Length;
-            if (!indexer.Range.HasEnd)
-                end = value.Length;
-
-            Span<bool> bits = stackalloc bool[end - indexer.Range.Start];
-            value.FillBits(bits, indexer.Range.Start, end);
+            Span<bool> bits = stackalloc bool[range.End - range.Start];
+            value.FillBits(bits, range.Start, range.End);
 
             return new BitsValue(bits);
         }
@@ -223,19 +237,20 @@ namespace LogicScript
                     return values[0].Truncated;
 
                 case "trunc":
-                    throw new LogicEngineException("Expected 1 or 2 arguments on call to 'trunc'", funcCall);
+                    throw new LogicEngineException($"Expected 1 or 2 arguments on call to 'trunc', got {values.Length}", funcCall);
 
                 default:
                     throw new LogicEngineException($"Unknown function '{funcCall.Name}'", funcCall);
             }
         }
 
-        private BitsValue DoSlotExpression(CaseContext ctx, SlotExpression expr, BitRange? r)
+        private BitsValue DoSlotExpression(CaseContext ctx, SlotExpression expr, IndexerExpression indexer)
         {
-            var range = r ?? new BitRange(0, ctx.Machine.InputCount);
-            if (!range.HasEnd)
-                range = new BitRange(range.Start, ctx.Machine.InputCount);
+            int maxLength =
+                expr.Slot == Slots.In ? ctx.Machine.InputCount :
+                expr.Slot == Slots.Out ? ctx.Machine.Memory.Capacity : throw new LogicEngineException("Invalid slot", expr);
 
+            var range = GetRange(ctx, indexer, maxLength);
             Span<bool> values = stackalloc bool[range.Length];
 
             switch (expr.Slot)
@@ -342,7 +357,7 @@ namespace LogicScript
 
             if (lhs is IndexerExpression indexer)
             {
-                range = indexer.Range;
+                range = GetRange(ctx, indexer, value.Length);
                 lhs = indexer.Operand;
                 isRanged = true;
             }
@@ -355,7 +370,7 @@ namespace LogicScript
                 range = new BitRange(range.Start, range.Start + value.Length);
 
             if (value.Length > range.Length)
-                throw new LogicEngineException("Range and value length mismatch", op);
+                throw new LogicEngineException("Value doesn't fit in range", op);
 
             Span<bool> bits = stackalloc bool[value.Length];
             value.FillBits(bits);
@@ -390,8 +405,8 @@ namespace LogicScript
                 }
                 else
                 {
-                    var val = ctx.Get(var.Name, var);
-                    throw new Exception("sry but no");
+                    //var val = ctx.Get(var.Name, var);
+                    throw new LogicEngineException("Cannot index variable", var);
                 }
             }
 
