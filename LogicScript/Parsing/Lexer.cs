@@ -154,6 +154,10 @@ namespace LogicScript.Parsing
 
             switch (Current)
             {
+                case ';':
+                    kind = LexemeKind.NewLine;
+                    break;
+
                 case ',':
                     kind = LexemeKind.Comma;
                     break;
