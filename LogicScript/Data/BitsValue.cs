@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Buffers;
-using System.Linq;
 using System.Numerics;
 
 namespace LogicScript.Data
@@ -111,7 +109,7 @@ namespace LogicScript.Data
                 span[i] = this[i];
             }
         }
-        
+
         public void FillBits(Span<bool> span, int start, int end)
         {
             for (int i = 0; i < end; i++)

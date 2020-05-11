@@ -52,7 +52,7 @@ end
 
             for (int i = 0; i < 4; i++)
             {
-                LogicRunner.RunScript(result.Script, machine, i == 0);
+                new LogicRunner().RunScript(result.Script, machine, i == 0);
                 Console.WriteLine();
             }
 
