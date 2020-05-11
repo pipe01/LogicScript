@@ -525,7 +525,7 @@ namespace LogicScript.Parsing
                 Expression end = null;
                 bool hasEnd = true;
 
-                if (Take(LexemeKind.Comma, false))
+                if (Take(LexemeKind.DotDot, false))
                 {
                     if (Peek(LexemeKind.RightBracket))
                         hasEnd = false;
@@ -580,24 +580,6 @@ namespace LogicScript.Parsing
 
             s = new SlotExpression(slot, lexeme.Location);
             return true;
-        }
-
-        private BitRange TakeRange()
-        {
-            Take(LexemeKind.Number, out var startLexeme, expected: "range start index");
-            int start = int.Parse(startLexeme.Content);
-
-            int end = start + 1;
-
-            if (Take(LexemeKind.Comma, false))
-            {
-                if (Take(LexemeKind.Number, out var endLexeme, false))
-                    end = int.Parse(endLexeme.Content);
-                else
-                    end = -1;
-            }
-
-            return new BitRange(start, end);
         }
     }
 }

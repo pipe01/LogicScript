@@ -161,6 +161,9 @@ namespace LogicScript.Parsing
                 case ',':
                     kind = LexemeKind.Comma;
                     break;
+                case '.' when Take('.'):
+                    kind = LexemeKind.DotDot;
+                    break;
                 case '\'':
                     kind = LexemeKind.Apostrophe;
                     break;

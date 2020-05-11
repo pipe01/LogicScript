@@ -20,6 +20,7 @@ namespace LogicScript.Parsing
 
         Apostrophe,
         Comma,
+        DotDot,
         EqualsAssign,
 
         //Operators

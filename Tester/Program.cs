@@ -7,7 +7,7 @@ using System;
 
 namespace Tester
 {
-    class Program
+    static class Program
     {
         static void Main(string[] args)
         {
@@ -22,9 +22,9 @@ namespace Tester
 @precompute off
 
 any
-    nice = 1010 * 2 ^ 5
+    nice = 1010 * 2' ^ 5'
 
-    out = nice[0,3']
+    out = nice[0..3']
 end
 ";
 
