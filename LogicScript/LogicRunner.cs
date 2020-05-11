@@ -335,7 +335,10 @@ namespace LogicScript
                 case Operator.And:
                     return new BitsValue(left & right, Math.Min(left.Length, right.Length));
                 case Operator.Or:
-                    return new BitsValue(left | right, Math.Min(left.Length, right.Length));
+                    return new BitsValue(left | right, Math.Max(left.Length, right.Length));
+
+                case Operator.Xor:
+                    return new BitsValue(left ^ right, Math.Max(left.Length, right.Length));
             }
 
             throw new LogicEngineException();

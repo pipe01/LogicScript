@@ -9,9 +9,9 @@ namespace LogicScript.Parsing.Structures
         public override bool IsReadable => true;
 
         public string Name { get; set; }
-        public IReadOnlyList<Expression> Arguments { get; set; }
+        public IList<Expression> Arguments { get; set; }
 
-        public FunctionCallExpression(string name, IReadOnlyList<Expression> arguments, SourceLocation location) : base(location)
+        public FunctionCallExpression(string name, IList<Expression> arguments, SourceLocation location) : base(location)
         {
             this.Name = name;
             this.Arguments = arguments;

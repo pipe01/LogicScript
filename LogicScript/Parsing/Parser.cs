@@ -189,17 +189,19 @@ namespace LogicScript.Parsing
             var name = nameLexeme.Content;
             var value = valueLexeme.Content;
 
+            bool? onOff = value == "on" ? true :
+                          value == "off" ? false : (bool?)null;
+
             switch (name)
             {
                 case "strict":
-                    Script.Strict =
-                        value == "on" ? true :
-                        value == "off" ? false : Error<bool>($"Invalid 'strict' directive value '{value}'", on: valueLexeme.Location);
+                    Script.Strict = onOff ?? Error<bool>($"Invalid 'strict' directive value '{value}'", on: valueLexeme.Location);
                     break;
                 case "suffix":
-                    Script.AutoSuffix =
-                        value == "on" ? true :
-                        value == "off" ? false : Error<bool>($"Invalid 'suffix' directive value '{value}'", on: valueLexeme.Location);
+                    Script.AutoSuffix = onOff ?? Error<bool>($"Invalid 'suffix' directive value '{value}'", on: valueLexeme.Location);
+                    break;
+                case "precompute":
+                    Script.Precompute = onOff ?? Error<bool>($"Invalid 'precompute' directive value '{value}'", on: valueLexeme.Location);
                     break;
 
                 default:
@@ -556,7 +558,7 @@ namespace LogicScript.Parsing
 
             Take(LexemeKind.RightParenthesis, expected: "argument list closing parenthesis");
 
-            return new FunctionCallExpression(nameLexeme.Content, args.ToArray(), nameLexeme.Location);
+            return new FunctionCallExpression(nameLexeme.Content, args, nameLexeme.Location);
         }
 
         private bool TryTakeSlot(out SlotExpression s)

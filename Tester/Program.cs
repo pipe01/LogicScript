@@ -19,8 +19,10 @@ namespace Tester
 #else
 
             const string script = @"
+@precompute off
+
 any
-    nice = 1010
+    nice = 1010 * 2 ^ 5
 
     out = nice[0,3']
 end

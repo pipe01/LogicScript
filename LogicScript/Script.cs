@@ -11,6 +11,7 @@ namespace LogicScript
 
         internal bool Strict { get; set; } = true;
         internal bool AutoSuffix { get; set; }
+        internal bool Precompute { get; set; } = true;
 
         public static CompilationResult Compile(string script)
         {
@@ -28,7 +29,8 @@ namespace LogicScript
             if (errors.ContainsErrors)
                 return new CompilationResult(false, null, errors);
 
-            EvaluatorVisitor.Visit(parsed);
+            if (parsed.Precompute)
+                EvaluatorVisitor.Visit(parsed);
 
             return new CompilationResult(true, parsed, errors);
         }
