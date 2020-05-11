@@ -497,7 +497,12 @@ namespace LogicScript.Parsing
             }
             else if (Peek(LexemeKind.String))
             {
-                expr = TakeFunctionCall();
+                Take(LexemeKind.String, out var nameLexeme);
+
+                if (Peek(LexemeKind.LeftParenthesis))
+                    expr = TakeFunctionCall(nameLexeme);
+                else
+                    expr = new VariableAccessExpression(nameLexeme.Content, nameLexeme.Location);
             }
             else
             {
@@ -516,9 +521,8 @@ namespace LogicScript.Parsing
             return expr;
         }
 
-        private Expression TakeFunctionCall()
+        private Expression TakeFunctionCall(Lexeme nameLexeme)
         {
-            Take(LexemeKind.String, out var nameLexeme, expected: "function name");
             Take(LexemeKind.LeftParenthesis, expected: "argument list opening parenthesis");
 
             var args = new List<Expression>();

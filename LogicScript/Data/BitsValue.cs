@@ -5,12 +5,12 @@ namespace LogicScript.Data
 {
     public readonly struct BitsValue
     {
-        private const int BitSize = 64;
+        public const int BitSize = 64;
         public static readonly BitsValue Zero = new BitsValue(0, 1);
         public static readonly BitsValue One = new BitsValue(1, 1);
 
-        public ulong Number { get; }
-        public int Length { get; }
+        public readonly ulong Number;
+        public readonly int Length;
 
         public bool IsSingleBit => Number == 0 || Number == 1;
         public bool IsOne => Number == 1;
@@ -66,10 +66,14 @@ namespace LogicScript.Data
 
         public bool this[int bitIndex] => ((Number >> (Length - 1 - bitIndex)) & 1) == 1;
 
-        public BitsValue(ulong number, int? length = null)
+        public BitsValue(ulong number, int length)
         {
             this.Number = number;
-            this.Length = length ?? BitSize;
+            this.Length = length;
+        }
+
+        public BitsValue(ulong number) : this(number, BitSize)
+        {
         }
 
         public BitsValue(Span<bool> bits)

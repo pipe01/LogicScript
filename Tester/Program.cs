@@ -23,7 +23,7 @@ namespace Tester
 
 any
     for i from 0 to 7
-        out = 0
+        out = i
     end
 
     out = 123'[0,2]

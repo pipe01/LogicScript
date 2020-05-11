@@ -170,16 +170,14 @@ namespace LogicScript
 
         private void RunStatement(CaseContext ctx, ForStatement stmt)
         {
-            var from = GetValue(ctx, stmt.From).Number;
-            var to = GetValue(ctx, stmt.To).Number;
+            var from = GetValue(ctx, stmt.From);
+            var to = GetValue(ctx, stmt.To);
 
-            for (ulong i = from; i < to; i++)
+            for (ulong i = from.Number; i < to.Number; i++)
             {
-                ctx.Set(stmt.VarName, i);
+                ctx.Set(stmt.VarName, new BitsValue(i, to.Length));
                 RunStatements(ctx, stmt.Body);
             }
-
-            ctx.Unset(stmt.VarName);
         }
 
         private void RunStatement(CaseContext ctx, QueueUpdateStatement stmt)
@@ -217,6 +215,9 @@ namespace LogicScript
 
                 case FunctionCallExpression funcCall:
                     return DoFunctionCall(ctx, funcCall);
+
+                case VariableAccessExpression varAccess:
+                    return ctx.Get(varAccess.Name);
 
                 default:
                     throw new LogicEngineException("Expected multi-bit value", expr);
