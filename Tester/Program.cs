@@ -19,21 +19,15 @@ namespace Tester
 #else
 
             const string script = @"
-@include ""asd.lsx""
-
 any
-    for i to 7'
-        for j to 5'
-            out = i * j
-        end
+    out = 1
+    out
+
+    if 1
+        out = 2'
+    else
+        out = 3'
     end
-
-    out = 123'[0,2]
-    out = trunc(10 * 3', (1, 0))
-    out = 1010
-
-    mem = 123'
-    out[1] = mem[1]
 end
 ";
 

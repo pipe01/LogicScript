@@ -35,11 +35,11 @@ namespace LogicScript.Parsing
                     Visit(item);
                 }
             }
-            else if (statement is AssignStatement assignStmt)
-            {
-                assignStmt.LeftSide = Evaluate(assignStmt.LeftSide);
-                assignStmt.RightSide = Evaluate(assignStmt.RightSide);
-            }
+            //else if (statement is ExpressionStatement exprStmt && exprStmt.Expression is )
+            //{
+            //    assignStmt.LeftSide = Evaluate(assignStmt.LeftSide);
+            //    assignStmt.RightSide = Evaluate(assignStmt.RightSide);
+            //}
 
             Expression Evaluate(Expression expr)
             {

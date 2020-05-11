@@ -4,6 +4,8 @@
     {
         None = -1,
 
+        Assign,
+
         NotEquals,
         Equals,
         Greater,

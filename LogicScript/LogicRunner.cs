@@ -81,8 +81,8 @@ namespace LogicScript
         {
             switch (stmt)
             {
-                case AssignStatement assign:
-                    RunStatement(ctx, assign);
+                case ExpressionStatement exprStmt:
+                    GetValue(ctx, exprStmt.Expression);
                     break;
                 case IfStatement @if:
                     RunStatement(ctx, @if);
@@ -97,62 +97,6 @@ namespace LogicScript
         }
 
         private bool IsTruthy(BitsValue value) => value.Number > 0;
-
-        private void RunStatement(CaseContext ctx, AssignStatement stmt)
-        {
-            if (!stmt.LeftSide.IsWriteable)
-                throw new LogicEngineException("Expected a writeable expression", stmt);
-
-            if (!stmt.RightSide.IsReadable)
-                throw new LogicEngineException("Expected a readable expression", stmt);
-
-            var lhs = stmt.LeftSide;
-
-            var value = GetValue(ctx, stmt.RightSide);
-            BitRange range;
-
-            if (lhs is IndexerExpression indexer)
-            {
-                range = indexer.Range;
-                lhs = indexer.Operand;
-            }
-            else
-            {
-                range = new BitRange(0, value.Length);
-            }
-
-            if (!range.HasEnd)
-                range = new BitRange(range.Start, range.Start + value.Length);
-
-            if (value.Length != range.Length)
-                throw new LogicEngineException("Range and value length mismatch", stmt);
-
-            Span<bool> bits = stackalloc bool[value.Length];
-            value.FillBits(bits);
-
-            if (lhs is SlotExpression slot)
-            {
-                switch (slot.Slot)
-                {
-                    case Slots.Out:
-                        if (range.Start + range.Length > ctx.Machine.OutputCount)
-                            throw new LogicEngineException("Range out of bounds for outputs", stmt);
-
-                        ctx.Machine.SetOutputs(range, bits);
-                        break;
-
-                    case Slots.Memory:
-                        if (range.Start + range.Length > ctx.Machine.Memory.Capacity)
-                            throw new LogicEngineException("Range out of bounds for memory", stmt);
-
-                        ctx.Machine.Memory.Write(range, bits);
-                        break;
-
-                    default:
-                        throw new LogicEngineException("Invalid slot on expression", stmt);
-                }
-            }
-        }
 
         private void RunStatement(CaseContext ctx, IfStatement stmt)
         {
@@ -340,6 +284,9 @@ namespace LogicScript
 
             switch (op.Operator)
             {
+                case Operator.Assign:
+                    return DoAssignment(ctx, op);
+
                 case Operator.Add:
                     return left + right;
                 case Operator.Subtract:
@@ -369,6 +316,64 @@ namespace LogicScript
             }
 
             throw new LogicEngineException();
+        }
+
+        private BitsValue DoAssignment(CaseContext ctx, OperatorExpression op)
+        {
+            if (!op.Left.IsWriteable)
+                throw new LogicEngineException("Expected a writeable expression", op);
+
+            if (!op.Right.IsReadable)
+                throw new LogicEngineException("Expected a readable expression", op);
+
+            var lhs = op.Left;
+
+            var value = GetValue(ctx, op.Right);
+            BitRange range;
+
+            if (lhs is IndexerExpression indexer)
+            {
+                range = indexer.Range;
+                lhs = indexer.Operand;
+            }
+            else
+            {
+                range = new BitRange(0, value.Length);
+            }
+
+            if (!range.HasEnd)
+                range = new BitRange(range.Start, range.Start + value.Length);
+
+            if (value.Length != range.Length)
+                throw new LogicEngineException("Range and value length mismatch", op);
+
+            Span<bool> bits = stackalloc bool[value.Length];
+            value.FillBits(bits);
+
+            if (lhs is SlotExpression slot)
+            {
+                switch (slot.Slot)
+                {
+                    case Slots.Out:
+                        if (range.Start + range.Length > ctx.Machine.OutputCount)
+                            throw new LogicEngineException("Range out of bounds for outputs", op);
+
+                        ctx.Machine.SetOutputs(range, bits);
+                        break;
+
+                    case Slots.Memory:
+                        if (range.Start + range.Length > ctx.Machine.Memory.Capacity)
+                            throw new LogicEngineException("Range out of bounds for memory", op);
+
+                        ctx.Machine.Memory.Write(range, bits);
+                        break;
+
+                    default:
+                        throw new LogicEngineException("Invalid slot on expression", op);
+                }
+            }
+
+            return value;
         }
     }
 }

@@ -13,18 +13,16 @@ namespace LogicScript.Parsing.Structures
         }
     }
 
-    internal class AssignStatement : Statement
+    internal class ExpressionStatement : Statement
     {
-        public Expression LeftSide { get; set; }
-        public Expression RightSide { get; set; }
+        public Expression Expression { get; set; }
 
-        public AssignStatement(Expression leftSide, Expression rightSide, SourceLocation location) : base(location)
+        public ExpressionStatement(Expression expression, SourceLocation location) : base(location)
         {
-            this.LeftSide = leftSide;
-            this.RightSide = rightSide;
+            this.Expression = expression;
         }
 
-        public override string ToString() => $"{LeftSide} = {RightSide}";
+        public override string ToString() => Expression.ToString();
     }
 
     internal class IfStatement : Statement

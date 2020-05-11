@@ -233,33 +233,50 @@ namespace LogicScript.Parsing
             return (@case, true);
         }
 
-        private IReadOnlyList<Statement> TakeStatements(SourceLocation startLocation, bool requireEnd = true)
+        private IReadOnlyList<Statement> TakeStatements(SourceLocation startLocation, Func<bool> end = null)
+            => TakeStatements(startLocation, out _, end);
+
+        private IReadOnlyList<Statement> TakeStatements(SourceLocation startLocation, out Lexeme endLexeme, Func<bool> end = null)
         {
+            end = end ?? (() => TakeKeyword("end", false));
+            endLexeme = Current;
+
             var stmtList = new List<Statement>();
 
             SkipWhitespaces(true);
 
-            while (TryTakeStatement(out var stmt))
+            while (!end())
             {
-                stmtList.Add(stmt);
+                if (IsEOF)
+                    Error($"expected end of block starting at {startLocation}, found end of file", true);
+
+                stmtList.Add(TakeStatement());
 
                 SkipWhitespaces(true);
+                endLexeme = Current;
             }
-
-            if (requireEnd && !TakeKeyword("end", false))
-                Error($"expected 'end' keyword to close block starting at {startLocation}");
 
             return stmtList;
         }
 
-        private bool TryTakeStatement(out Statement statement)
+        private Statement TakeStatement()
         {
             SkipWhitespaces(true);
 
-            return TryTakeIfStatement(out statement)
+            if (!(TryTakeIfStatement(out var statement)
                 || TryTakeForStatement(out statement)
                 || TryTakeAssignStatement(out statement)
-                || TryTakeQueueUpdateStatement(out statement);
+                || TryTakeQueueUpdateStatement(out statement)))
+            {
+                return TakeExpressionStatement();
+            }
+
+            return statement;
+        }
+
+        private Statement TakeExpressionStatement()
+        {
+            return new ExpressionStatement(TakeExpression(), Current.Location);
         }
 
         private bool TryTakeIfStatement(out Statement statement)
@@ -276,14 +293,11 @@ namespace LogicScript.Parsing
 
             TakeNewlines();
 
-            var body = TakeStatements(start.Location, false);
+            var body = TakeStatements(start.Location, out var endLexeme, () => TakeKeyword("end", false) || TakeKeyword("else", false));
 
             IReadOnlyList<Statement> @else = null;
-            if (TakeKeyword("else", out var elseLexeme, false))
-                @else = TakeStatements(elseLexeme.Location, false);
-
-            if (!TakeKeyword("end"))
-                Error($"expected 'end' keyword to close if statement starting at {start.Location}");
+            if (endLexeme.Content == "else")
+                @else = TakeStatements(endLexeme.Location);
 
             statement = new IfStatement(condition, body, @else, start.Location);
             return true;
@@ -357,13 +371,12 @@ namespace LogicScript.Parsing
             SkipWhitespaces();
 
             var rhs = TakeExpression();
-            //if (slot.Range?.Length == 1 && !value.IsSingleBit)
-            //    Error("expected a single bit or an expression that returns a single bit");
 
             SkipWhitespaces();
             Take(LexemeKind.NewLine);
 
-            statement = new AssignStatement(lhs, rhs, slot.Location);
+            //statement = new AssignStatement(lhs, rhs, slot.Location);
+            statement = new ExpressionStatement(new OperatorExpression(Operator.Assign, lhs, rhs, slot.Location), slot.Location);
             return true;
         }
 
