@@ -45,7 +45,7 @@ end
 
             for (int i = 0; i < 1; i++)
             {
-                new LogicRunner().RunScript(result.Script, machine, i == 0);
+                LogicRunner.RunScript(result.Script, machine, i == 0);
                 Console.WriteLine();
             }
 

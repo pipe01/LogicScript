@@ -43,7 +43,7 @@ end
         [Benchmark]
         public void RunScript()
         {
-            new LogicRunner().RunScript(Compiled, NoopMachine.Instance);
+            LogicRunner.RunScript(Compiled, NoopMachine.Instance);
         }
 
         public static void StressTest()
@@ -61,7 +61,7 @@ end
 
             for (int i = 0; i < iterations; i++)
             {
-                new LogicRunner().RunScript(result.Script, NoopMachine.Instance);
+                LogicRunner.RunScript(result.Script, NoopMachine.Instance);
 
                 if (i % 1000000 == 0)
                     Console.WriteLine((((double)i / iterations) * 100) + "%");

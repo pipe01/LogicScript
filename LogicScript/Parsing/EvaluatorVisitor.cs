@@ -59,7 +59,7 @@ namespace LogicScript.Parsing
 
                 try
                 {
-                    var value = new LogicRunner().GetValue(new LogicRunner.CaseContext(), expr);
+                    var value = LogicRunner.GetValue(new LogicRunner.CaseContext(), expr);
 
                     Debug.WriteLine($"Evaluated '{expr}' to '{value}'");
 
