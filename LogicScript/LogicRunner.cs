@@ -145,7 +145,7 @@ namespace LogicScript
             switch (expr)
             {
                 case NumberLiteralExpression num:
-                    return new BitsValue(num.Value, num.Length);
+                    return num.Value;
 
                 case ListExpression list:
                     return DoListExpression(ctx, list);

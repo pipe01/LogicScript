@@ -350,7 +350,7 @@ namespace LogicScript.Parsing
             }
             else
             {
-                from = new NumberLiteralExpression(Current.Location, 0, 1);
+                from = new NumberLiteralExpression(BitsValue.Zero, Current.Location);
             }
 
             TakeKeyword("to");
@@ -500,7 +500,7 @@ namespace LogicScript.Parsing
                     length = BitUtils.GetBitSize(num);
                 }
 
-                expr = new NumberLiteralExpression(n.Location, num, length);
+                expr = new NumberLiteralExpression(new BitsValue(num, length), n.Location);
             }
             else if (Peek(LexemeKind.String))
             {

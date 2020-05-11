@@ -54,7 +54,7 @@ namespace LogicScript.Parsing
 
                     Debug.WriteLine($"Evaluated '{expr}' to '{value}'");
 
-                    return new NumberLiteralExpression(expr.Location, value.Number, value.Length);
+                    return new NumberLiteralExpression(value, expr.Location);
                 }
                 catch
                 {

@@ -4,16 +4,14 @@ namespace LogicScript.Parsing.Structures
 {
     internal class NumberLiteralExpression : Expression
     {
-        public override bool IsSingleBit => Length == 1;
+        public override bool IsSingleBit => Value.IsSingleBit;
         public override bool IsReadable => true;
 
-        public ulong Value { get; set; }
-        public int Length { get; set; }
+        public BitsValue Value { get; set; }
 
-        public NumberLiteralExpression(SourceLocation location, ulong value, int? length = null) : base(location)
+        public NumberLiteralExpression(BitsValue value, SourceLocation location) : base(location)
         {
             this.Value = value;
-            this.Length = length ?? BitsValue.BitSize;
         }
 
         public override string ToString() => Value.ToString();
