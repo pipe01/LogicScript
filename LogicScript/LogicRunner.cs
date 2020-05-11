@@ -23,6 +23,8 @@ namespace LogicScript
 
             public void Unset(string name) => Variables.Remove(name);
 
+            public bool Has(string name) => Variables.ContainsKey(name);
+
             public BitsValue Get(string name, ICodeNode node)
             {
                 if (!Variables.TryGetValue(name, out var val))
@@ -279,14 +281,14 @@ namespace LogicScript
 
         private BitsValue DoOperator(CaseContext ctx, OperatorExpression op)
         {
+            if (op.Operator == Operator.Assign)
+                return DoAssignment(ctx, op);
+
             var left = GetValue(ctx, op.Left);
             var right = GetValue(ctx, op.Right);
 
             switch (op.Operator)
             {
-                case Operator.Assign:
-                    return DoAssignment(ctx, op);
-
                 case Operator.Add:
                     return left + right;
                 case Operator.Subtract:
@@ -330,11 +332,13 @@ namespace LogicScript
 
             var value = GetValue(ctx, op.Right);
             BitRange range;
+            bool isRanged = false;
 
             if (lhs is IndexerExpression indexer)
             {
                 range = indexer.Range;
                 lhs = indexer.Operand;
+                isRanged = true;
             }
             else
             {
@@ -344,7 +348,7 @@ namespace LogicScript
             if (!range.HasEnd)
                 range = new BitRange(range.Start, range.Start + value.Length);
 
-            if (value.Length != range.Length)
+            if (value.Length > range.Length)
                 throw new LogicEngineException("Range and value length mismatch", op);
 
             Span<bool> bits = stackalloc bool[value.Length];
@@ -370,6 +374,18 @@ namespace LogicScript
 
                     default:
                         throw new LogicEngineException("Invalid slot on expression", op);
+                }
+            }
+            else if (lhs is VariableAccessExpression var)
+            {
+                if (!isRanged)
+                {
+                    ctx.Set(var.Name, value);
+                }
+                else
+                {
+                    var val = ctx.Get(var.Name, var);
+                    throw new Exception("sry but no");
                 }
             }
 

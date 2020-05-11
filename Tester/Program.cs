@@ -20,8 +20,7 @@ namespace Tester
 
             const string script = @"
 any
-    out = 1
-    out
+    test[0,5] = 10'
 
     if 1
         out = 2'
@@ -46,7 +45,7 @@ end
 
             var machine = new Machine();
 
-            for (int i = 0; i < 4; i++)
+            for (int i = 0; i < 1; i++)
             {
                 new LogicRunner().RunScript(result.Script, machine, i == 0);
                 Console.WriteLine();

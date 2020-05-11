@@ -252,6 +252,7 @@ namespace LogicScript.Parsing
 
                 stmtList.Add(TakeStatement());
 
+                Take(LexemeKind.NewLine);
                 SkipWhitespaces(true);
                 endLexeme = Current;
             }
@@ -265,7 +266,7 @@ namespace LogicScript.Parsing
 
             if (!(TryTakeIfStatement(out var statement)
                 || TryTakeForStatement(out statement)
-                || TryTakeAssignStatement(out statement)
+                //|| TryTakeAssignStatement(out statement)
                 || TryTakeQueueUpdateStatement(out statement)))
             {
                 return TakeExpressionStatement();
@@ -343,42 +344,42 @@ namespace LogicScript.Parsing
             return true;
         }
 
-        private bool TryTakeAssignStatement(out Statement statement)
-        {
-            Expression lhs;
+        //private bool TryTakeAssignStatement(out Statement statement)
+        //{
+        //    Expression lhs;
 
-            if (TryTakeSlot(out var slot))
-            {
-                if (slot.Slot == Slots.In)
-                    Error("expected a writable slot in left side of assignment", true);
+        //    if (TryTakeSlot(out var slot))
+        //    {
+        //        if (slot.Slot == Slots.In)
+        //            Error("expected a writable slot in left side of assignment", true);
 
-                lhs = slot;
-            }
-            else
-            {
-                statement = null;
-                return false;
-            }
+        //        lhs = slot;
+        //    }
+        //    else
+        //    {
+        //        statement = null;
+        //        return false;
+        //    }
 
-            if (Take(LexemeKind.LeftBracket, false))
-            {
-                lhs = new IndexerExpression(lhs, TakeRange(), lhs.Location);
-                Take(LexemeKind.RightBracket);
-            }
+        //    if (Take(LexemeKind.LeftBracket, false))
+        //    {
+        //        lhs = new IndexerExpression(lhs, TakeRange(), lhs.Location);
+        //        Take(LexemeKind.RightBracket);
+        //    }
 
-            SkipWhitespaces();
-            Take(LexemeKind.EqualsAssign);
-            SkipWhitespaces();
+        //    SkipWhitespaces();
+        //    Take(LexemeKind.EqualsAssign);
+        //    SkipWhitespaces();
 
-            var rhs = TakeExpression();
+        //    var rhs = TakeExpression();
 
-            SkipWhitespaces();
-            Take(LexemeKind.NewLine);
+        //    SkipWhitespaces();
+        //    Take(LexemeKind.NewLine);
 
-            //statement = new AssignStatement(lhs, rhs, slot.Location);
-            statement = new ExpressionStatement(new OperatorExpression(Operator.Assign, lhs, rhs, slot.Location), slot.Location);
-            return true;
-        }
+        //    //statement = new AssignStatement(lhs, rhs, slot.Location);
+        //    statement = new ExpressionStatement(new OperatorExpression(Operator.Assign, lhs, rhs, slot.Location), slot.Location);
+        //    return true;
+        //}
 
         private bool TryTakeQueueUpdateStatement(out Statement statement)
         {
@@ -396,6 +397,7 @@ namespace LogicScript.Parsing
         {
             switch (kind)
             {
+                case LexemeKind.EqualsAssign: return Operator.Assign;
                 case LexemeKind.Add: return Operator.Add;
                 case LexemeKind.Subtract: return Operator.Subtract;
                 case LexemeKind.Multiply: return Operator.Multiply;
