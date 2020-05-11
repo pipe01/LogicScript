@@ -12,10 +12,12 @@ namespace LogicScript
         {
             public readonly IMachine Machine;
             public readonly IDictionary<string, BitsValue> Variables;
+            public readonly Script Script;
 
-            public CaseContext(IMachine machine)
+            public CaseContext(IMachine machine, Script script)
             {
                 this.Machine = machine;
+                this.Script = script;
                 this.Variables = new Dictionary<string, BitsValue>();
             }
 
@@ -28,7 +30,12 @@ namespace LogicScript
             public BitsValue Get(string name, ICodeNode node)
             {
                 if (!Variables.TryGetValue(name, out var val))
-                    throw new LogicEngineException($"Variable \"{name}\" not defined", node);
+                {
+                    if (Script.Strict)
+                        throw new LogicEngineException($"Variable \"{name}\" not defined", node);
+                    else
+                        return BitsValue.Zero;
+                }
 
                 return val;
             }
@@ -42,16 +49,15 @@ namespace LogicScript
                 var node = script.TopLevelNodes[i];
 
                 if (node is Case @case)
-                    UpdateCase(machine, @case, isFirstUpdate);
+                    UpdateCase(new CaseContext(machine, script), @case, isFirstUpdate);
             }
         }
 
-        private void UpdateCase(IMachine machine, Case c, bool firstUpdate)
+        private void UpdateCase(CaseContext ctx, Case c, bool firstUpdate)
         {
             if (c.Statements == null)
                 return;
 
-            var ctx = new CaseContext(machine);
             bool run = false;
 
             switch (c)

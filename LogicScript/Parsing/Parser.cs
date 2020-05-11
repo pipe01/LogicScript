@@ -12,19 +12,7 @@ namespace LogicScript.Parsing
     {
         private int Index;
         private Lexeme Current;
-        private Lexeme NextNonWhitespace
-        {
-            get
-            {
-                for (int i = Index + 1; i < Lexemes.Length; i++)
-                {
-                    if (Lexemes[i].Kind != LexemeKind.Whitespace)
-                        return Lexemes[i];
-                }
-
-                return default;
-            }
-        }
+        private Script Script;
 
         private bool IsEOF => Current.Kind == LexemeKind.EOF;
 
@@ -44,6 +32,8 @@ namespace LogicScript.Parsing
             if (Lexemes.Length == 0)
                 return script;
 
+            this.Script = script;
+
             Current = Lexemes[0];
 
             try
@@ -58,6 +48,8 @@ namespace LogicScript.Parsing
             catch (LogicParserException)
             {
             }
+
+            this.Script = null;
 
             if (Errors.ContainsErrors)
                 return null;
@@ -187,7 +179,19 @@ namespace LogicScript.Parsing
             Take(LexemeKind.Whitespace);
             Take(LexemeKind.String, out var valueLexeme);
 
-            return new Directive(nameLexeme.Content, valueLexeme.Content, startLocation);
+            var name = nameLexeme.Content;
+            var value = valueLexeme.Content;
+
+            Script.Directives[name] = value;
+
+            if (name == "strict")
+            {
+                Script.Strict = value == "on" ? true
+                        : value == "off" ? false
+                        : throw new LogicParserException($"Invalid 'strict' directive value '{value}'");
+            }
+
+            return new Directive(name, value, startLocation);
         }
 
         private (Case Case, bool Taken) TakeCase()

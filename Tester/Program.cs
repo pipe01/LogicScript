@@ -19,8 +19,10 @@ namespace Tester
 #else
 
             const string script = @"
+@strict off
+
 any
-    out = 10; out = 01
+    out = nice
 
     if 1
         out = 2'
