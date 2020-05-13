@@ -248,7 +248,7 @@ namespace LogicScript
         {
             int maxLength =
                 expr.Slot == Slots.In ? ctx.Machine.InputCount :
-                expr.Slot == Slots.Out ? ctx.Machine.Memory.Capacity : throw new LogicEngineException("Invalid slot", expr);
+                expr.Slot == Slots.Memory ? ctx.Machine.Memory.Capacity : throw new LogicEngineException("Invalid slot", expr);
 
             var range = GetRange(ctx, indexer, maxLength);
             Span<bool> values = stackalloc bool[range.Length];

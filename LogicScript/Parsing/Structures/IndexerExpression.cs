@@ -1,5 +1,4 @@
-﻿using LogicScript.Data;
-using System;
+﻿using System;
 
 namespace LogicScript.Parsing.Structures
 {
