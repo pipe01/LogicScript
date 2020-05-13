@@ -142,38 +142,37 @@ namespace LogicScript
 
         internal static BitsValue GetValue(CaseContext ctx, Expression expr)
         {
-            switch (expr)
+            switch (expr.Type)
             {
-                case NumberLiteralExpression num:
-                    return num.Value;
+                case ExpressionType.FunctionCall:
+                    return DoFunctionCall(ctx, (FunctionCallExpression)expr);
 
-                case ListExpression list:
-                    return DoListExpression(ctx, list);
+                case ExpressionType.Indexer:
+                    var indexer = (IndexerExpression)expr;
+                    if (indexer.Operand.Type == ExpressionType.Slot)
+                        return DoSlotExpression(ctx, (SlotExpression)indexer.Operand, indexer);
+                    return DoIndexerExpression(ctx, (IndexerExpression)expr);
 
-                case OperatorExpression op:
-                    return DoOperator(ctx, op);
+                case ExpressionType.List:
+                    return DoListExpression(ctx, (ListExpression)expr);
 
-                case UnaryOperatorExpression unary:
-                    return DoUnaryOperator(ctx, unary);
+                case ExpressionType.NumberLiteral:
+                    return ((NumberLiteralExpression)expr).Value;
 
-                case IndexerExpression indexer when indexer.Operand is SlotExpression slot:
-                    return DoSlotExpression(ctx, slot, indexer);
+                case ExpressionType.Operator:
+                    return DoOperator(ctx, (OperatorExpression)expr);
 
-                case IndexerExpression indexer:
-                    return DoIndexerExpression(ctx, indexer);
+                case ExpressionType.Slot:
+                    return DoSlotExpression(ctx, (SlotExpression)expr, null);
 
-                case SlotExpression slot:
-                    return DoSlotExpression(ctx, slot, null);
+                case ExpressionType.UnaryOperator:
+                    return DoUnaryOperator(ctx, (UnaryOperatorExpression)expr);
 
-                case FunctionCallExpression funcCall:
-                    return DoFunctionCall(ctx, funcCall);
-
-                case VariableAccessExpression varAccess:
-                    return ctx.Get(varAccess.Name, varAccess);
-
-                default:
-                    throw new LogicEngineException("Expected multi-bit value", expr);
+                case ExpressionType.VariableAccess:
+                    return ctx.Get(((VariableAccessExpression)expr).Name, expr);
             }
+
+            throw new LogicEngineException("Expected multi-bit value", expr);
         }
 
         private static BitRange GetRange(CaseContext ctx, IndexerExpression indexer, int length)

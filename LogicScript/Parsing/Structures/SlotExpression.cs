@@ -3,6 +3,7 @@
     internal class SlotExpression : Expression
     {
         public override bool IsSingleBit => false;
+        public override ExpressionType Type => ExpressionType.Slot;
         public override bool IsReadable => Slot == Slots.In || Slot == Slots.Memory;
         public override bool IsWriteable => Slot == Slots.Out || Slot == Slots.Memory;
 

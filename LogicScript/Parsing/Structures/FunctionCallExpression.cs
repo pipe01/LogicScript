@@ -5,6 +5,7 @@ namespace LogicScript.Parsing.Structures
     internal class FunctionCallExpression : Expression
     {
         public override bool IsSingleBit => Name == "and" || Name == "or";
+        public override ExpressionType Type => ExpressionType.FunctionCall;
 
         public override bool IsReadable => true;
 

@@ -5,6 +5,7 @@ namespace LogicScript.Parsing.Structures
     internal class ListExpression : Expression
     {
         public override bool IsSingleBit => Expressions.Length == 1;
+        public override ExpressionType Type => ExpressionType.List;
         public override bool IsReadable => true;
 
         public Expression[] Expressions { get; set; }

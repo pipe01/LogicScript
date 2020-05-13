@@ -5,6 +5,7 @@ namespace LogicScript.Parsing.Structures
     internal class IndexerExpression : Expression
     {
         public override bool IsSingleBit => End == null;
+        public override ExpressionType Type => ExpressionType.Indexer;
 
         public override bool IsReadable => Operand.IsReadable;
         public override bool IsWriteable => Operand.IsWriteable;

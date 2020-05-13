@@ -3,6 +3,7 @@
     internal class VariableAccessExpression : Expression
     {
         public override bool IsSingleBit => false;
+        public override ExpressionType Type => ExpressionType.VariableAccess;
         public override bool IsReadable => true;
         public override bool IsWriteable => true;
 

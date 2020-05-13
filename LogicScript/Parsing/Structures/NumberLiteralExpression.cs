@@ -5,6 +5,7 @@ namespace LogicScript.Parsing.Structures
     internal class NumberLiteralExpression : Expression
     {
         public override bool IsSingleBit => Value.IsSingleBit;
+        public override ExpressionType Type => ExpressionType.NumberLiteral;
         public override bool IsReadable => true;
 
         public BitsValue Value { get; set; }
