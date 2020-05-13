@@ -3,6 +3,7 @@ using LogicScript.Parsing;
 using LogicScript.Parsing.Structures;
 using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 
 namespace LogicScript
 {
@@ -175,30 +176,22 @@ namespace LogicScript
             throw new LogicEngineException("Expected multi-bit value", expr);
         }
 
-        private static BitRange GetRange(CaseContext ctx, IndexerExpression indexer, int length)
+        private static void GetRange(CaseContext ctx, IndexerExpression indexer, int length, out int start, out int end)
         {
-            var start = (int)GetValue(ctx, indexer.Start).Number;
-            int end;
+            start = (int)GetValue(ctx, indexer.Start).Number;
 
-            if (indexer.HasEnd)
-            {
-                end = indexer.End == null ? start + 1 : (int)GetValue(ctx, indexer.End).Number;
-            }
-            else
-            {
-                end = length;
-            }
-
-            return new BitRange(start, end);
+            end = indexer.HasEnd
+                ? indexer.End == null ? start + 1
+                : (int)GetValue(ctx, indexer.End).Number : length;
         }
 
         private static BitsValue DoIndexerExpression(CaseContext ctx, IndexerExpression indexer)
         {
             var value = GetValue(ctx, indexer.Operand);
-            var range = GetRange(ctx, indexer, value.Length);
+            GetRange(ctx, indexer, value.Length, out var start, out var end);
 
-            Span<bool> bits = stackalloc bool[range.End - range.Start];
-            value.FillBits(bits, range.Start, range.End);
+            Span<bool> bits = stackalloc bool[end - start];
+            value.FillBits(bits, start, end);
 
             return new BitsValue(bits);
         }
@@ -249,16 +242,16 @@ namespace LogicScript
                 expr.Slot == Slots.In ? ctx.Machine.InputCount :
                 expr.Slot == Slots.Memory ? ctx.Machine.Memory.Capacity : throw new LogicEngineException("Invalid slot", expr);
 
-            var range = GetRange(ctx, indexer, maxLength);
-            Span<bool> values = stackalloc bool[range.Length];
+            GetRange(ctx, indexer, maxLength, out var start, out var end);
+            Span<bool> values = stackalloc bool[end - start];
 
             switch (expr.Slot)
             {
                 case Slots.In:
-                    ctx.Machine.GetInputs(range, values);
+                    ctx.Machine.GetInputs(start, values);
                     break;
                 case Slots.Memory:
-                    ctx.Machine.Memory.Read(range, values);
+                    ctx.Machine.Memory.Read(start, values);
                     break;
                 default:
                     throw new LogicEngineException("Invalid slot on expression", expr);
@@ -354,24 +347,25 @@ namespace LogicScript
             var lhs = op.Left;
 
             var value = GetValue(ctx, op.Right);
-            BitRange range;
+            int start, end;
             bool isRanged = false;
 
             if (lhs is IndexerExpression indexer)
             {
-                range = GetRange(ctx, indexer, value.Length);
+                GetRange(ctx, indexer, value.Length, out start, out end);
                 lhs = indexer.Operand;
                 isRanged = true;
             }
             else
             {
-                range = new BitRange(0, GetLength(ctx.Machine, lhs));
+                start = 0;
+                end = GetLength(ctx.Machine, lhs);
             }
 
-            if (!range.HasEnd)
-                range = new BitRange(range.Start, range.Start + value.Length);
+            if (end == 0)
+                end = start + value.Length;
 
-            if (value.Length > range.Length)
+            if (value.Length > end - start)
                 throw new LogicEngineException("Value doesn't fit in range", op);
 
             Span<bool> bits = stackalloc bool[value.Length];
@@ -382,17 +376,17 @@ namespace LogicScript
                 switch (slot.Slot)
                 {
                     case Slots.Out:
-                        if (range.Start + range.Length > ctx.Machine.OutputCount)
+                        if (end > ctx.Machine.OutputCount)
                             throw new LogicEngineException("Range out of bounds for outputs", op);
 
-                        ctx.Machine.SetOutputs(range, bits);
+                        ctx.Machine.SetOutputs(start, bits);
                         break;
 
                     case Slots.Memory:
-                        if (range.Start + range.Length > ctx.Machine.Memory.Capacity)
+                        if (end > ctx.Machine.Memory.Capacity)
                             throw new LogicEngineException("Range out of bounds for memory", op);
 
-                        ctx.Machine.Memory.Write(range, bits);
+                        ctx.Machine.Memory.Write(start, bits);
                         break;
 
                     default:
@@ -413,23 +407,24 @@ namespace LogicScript
             }
 
             return value;
+        }
 
-            int GetLength(IMachine machine, Expression expr)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static int GetLength(IMachine machine, Expression expr)
+        {
+            if (expr is SlotExpression s)
             {
-                if (expr is SlotExpression s)
-                {
-                    if (s.Slot == Slots.Out)
-                        return machine.OutputCount;
-                    else if (s.Slot == Slots.Memory)
-                        return machine.Memory.Capacity;
-                }
-                else if (expr is VariableAccessExpression var)
-                {
-                    return BitsValue.BitSize;
-                }
-
-                return 0;
+                if (s.Slot == Slots.Out)
+                    return machine.OutputCount;
+                else if (s.Slot == Slots.Memory)
+                    return machine.Memory.Capacity;
             }
+            else if (expr.Type == ExpressionType.VariableAccess)
+            {
+                return BitsValue.BitSize;
+            }
+
+            return 0;
         }
     }
 }

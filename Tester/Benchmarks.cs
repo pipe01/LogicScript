@@ -21,7 +21,7 @@ when (in[1], in[2]) == 11
     out = 10 | 01
 
     out[0] = 1
-    out[0,] = 1 & 1
+    out[0..] = 1 & 1
     out[0] = 1 | 1
 end
 ";
@@ -52,10 +52,22 @@ end
 
             var result = Script.Compile(@"
 any
-    mem[0,3] = 101
-    out[0,2] = mem[0,2]
-    out[0,] = 10101
-    out[0,] = in[0,2]
+    mem[0..3] = 101
+    out[0..2] = mem[0..2]
+    out[0..] = 10101
+    out[0..] = in[0..2]
+end
+
+when (in[1], in[2]) == 11
+    out = 13'
+    out = 10' + 4'
+    out = 10 + 01
+    out = 10 & 01
+    out = 10 | 01
+
+    out[0] = 1
+    out[0..] = 1 & 1
+    out[0] = 1 | 1
 end
 ");
 
@@ -76,11 +88,11 @@ end
             public int OutputCount { get; } = 5;
             public IMemory Memory { get; } = new VolatileMemory();
 
-            public void GetInputs(BitRange range, Span<bool> inputs)
+            public void GetInputs(int start, Span<bool> inputs)
             {
             }
 
-            public void SetOutputs(BitRange range, Span<bool> values)
+            public void SetOutputs(int start, Span<bool> values)
             {
             }
         }

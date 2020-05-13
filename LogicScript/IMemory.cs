@@ -7,8 +7,8 @@ namespace LogicScript
     {
         int Capacity { get; }
 
-        void Read(BitRange range, Span<bool> inputs);
-        void Write(BitRange range, Span<bool> values);
+        void Read(int start, Span<bool> inputs);
+        void Write(int start, Span<bool> values);
     }
 
     public sealed class VolatileMemory : IMemory
@@ -35,19 +35,19 @@ namespace LogicScript
             }
         }
 
-        public void Read(BitRange range, Span<bool> inputs)
+        public void Read(int start, Span<bool> inputs)
         {
-            for (int i = 0; i < range.Length; i++)
+            for (int i = 0; i < inputs.Length; i++)
             {
-                inputs[i] = this.Memory[i + range.Start];
+                inputs[i] = this.Memory[i + start];
             }
         }
 
-        public void Write(BitRange range, Span<bool> values)
+        public void Write(int start, Span<bool> values)
         {
-            for (int i = 0; i < range.Length; i++)
+            for (int i = 0; i < values.Length; i++)
             {
-                this.Memory[i + range.Start] = values[i];
+                this.Memory[i + start] = values[i];
             }
         }
     }

@@ -11,11 +11,13 @@ namespace Tester
     {
         static void Main(string[] args)
         {
-#if RELEASE
+#if RELEASE || true
             if (args.Length > 0 && args[0] == "--stress")
                 Benchmarks.StressTest();
             else
                 BenchmarkRunner.Run<Benchmarks>(ManualConfig.Create(DefaultConfig.Instance).With(MemoryDiagnoser.Default));
+
+            return;
 #else
 
             const string script = @"
@@ -63,20 +65,20 @@ end
 
         private readonly bool[] Inputs = new[] { true, false, true, false };
 
-        public void SetOutputs(BitRange range, Span<bool> values)
+        public void SetOutputs(int start, Span<bool> values)
         {
             var bitsVal = new BitsValue(values);
-            Console.WriteLine($"Set outputs [{range}] to {bitsVal.Number} ({bitsVal})");
+            Console.WriteLine($"Set outputs [{start}..{start + values.Length}] to {bitsVal.Number} ({bitsVal})");
         }
 
-        public void GetInputs(BitRange range, Span<bool> inputs)
+        public void GetInputs(int start, Span<bool> inputs)
         {
-            for (int i = 0; i < range.Length; i++)
+            for (int i = 0; i < inputs.Length; i++)
             {
-                inputs[i] = Inputs[i + range.Start];
+                inputs[i] = Inputs[i + start];
             }
 
-            Console.WriteLine($"Read inputs [{range}]");
+            Console.WriteLine($"Read inputs [{start}..{start + inputs.Length}]");
         }
     }
 }
