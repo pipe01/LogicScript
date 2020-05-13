@@ -11,18 +11,16 @@ namespace Tester
     {
         static void Main(string[] args)
         {
-#if RELEASE || true
-            if (args.Length > 0 && args[0] == "--stress")
-                Benchmarks.StressTest();
-            else
-                BenchmarkRunner.Run<Benchmarks>(ManualConfig.Create(DefaultConfig.Instance).With(MemoryDiagnoser.Default));
-
-            return;
+#if RELEASE
+            BenchmarkRunner.Run<Benchmarks>(ManualConfig.Create(DefaultConfig.Instance).With(MemoryDiagnoser.Default));
 #else
+            if (args.Length > 0 && args[0] == "--stress")
+            {
+                Benchmarks.StressTest();
+                return;
+            }
 
             const string script = @"
-@precompute off
-
 any
     nice = 1010 * 2' ^ 5'
 

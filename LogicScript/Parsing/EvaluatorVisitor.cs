@@ -49,7 +49,7 @@ namespace LogicScript.Parsing
 
             Expression Evaluate(Expression expr)
             {
-                if (expr is NumberLiteralExpression || expr is VariableAccessExpression || expr is SlotExpression)
+                if (expr is NumberLiteralExpression || expr is VariableAccessExpression || expr is SlotExpression || (expr is OperatorExpression op && op.Operator == Operator.Assign))
                     return expr;
 
                 // This is kind of a hack, however it's the easiest way to precompute values
@@ -59,7 +59,8 @@ namespace LogicScript.Parsing
 
                 try
                 {
-                    var value = LogicRunner.GetValue(new LogicRunner.CaseContext(), expr);
+                    var ctx = new LogicRunner.CaseContext(null, null);
+                    var value = LogicRunner.GetValue(ref ctx, expr);
 
                     Debug.WriteLine($"Evaluated '{expr}' to '{value}'");
 

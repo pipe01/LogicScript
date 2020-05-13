@@ -9,7 +9,7 @@ namespace LogicScript
 {
     public static class LogicRunner
     {
-        internal ref struct CaseContext
+        internal struct CaseContext
         {
             public readonly IMachine Machine;
             public readonly IDictionary<string, BitsValue> Variables;
@@ -50,11 +50,14 @@ namespace LogicScript
                 var node = script.TopLevelNodes[i];
 
                 if (node is Case @case)
-                    UpdateCase(new CaseContext(machine, script), @case, isFirstUpdate);
+                {
+                    var ctx = new CaseContext(machine, script);
+                    UpdateCase(ref ctx, @case, isFirstUpdate);
+                }
             }
         }
 
-        private static void UpdateCase(CaseContext ctx, Case c, bool firstUpdate)
+        private static void UpdateCase(ref CaseContext ctx, Case c, bool firstUpdate)
         {
             if (c.Statements == null)
                 return;
@@ -64,7 +67,7 @@ namespace LogicScript
             switch (c)
             {
                 case ConditionalCase cond:
-                    run = IsTruthy(GetValue(ctx, cond.Condition));
+                    run = IsTruthy(GetValue(ref ctx, cond.Condition));
                     break;
                 case UnconditionalCase _:
                     run = true;
@@ -75,65 +78,65 @@ namespace LogicScript
             }
 
             if (run)
-                RunStatements(ctx, c.Statements);
+                RunStatements(ref ctx, c.Statements);
         }
 
-        private static void RunStatements(CaseContext ctx, IReadOnlyList<Statement> statements)
+        private static void RunStatements(ref CaseContext ctx, IReadOnlyList<Statement> statements)
         {
             for (int i = 0; i < statements.Count; i++)
             {
-                RunStatement(ctx, statements[i]);
+                RunStatement(ref ctx, statements[i]);
             }
         }
 
-        private static void RunStatement(CaseContext ctx, Statement stmt)
+        private static void RunStatement(ref CaseContext ctx, Statement stmt)
         {
             switch (stmt)
             {
                 case ExpressionStatement exprStmt:
-                    GetValue(ctx, exprStmt.Expression);
+                    GetValue(ref ctx, exprStmt.Expression);
                     break;
                 case IfStatement @if:
-                    RunStatement(ctx, @if);
+                    RunStatement(ref ctx, @if);
                     break;
                 case QueueUpdateStatement queueStmt:
-                    RunStatement(ctx, queueStmt);
+                    RunStatement(ref ctx, queueStmt);
                     break;
                 case ForStatement forStatement:
-                    RunStatement(ctx, forStatement);
+                    RunStatement(ref ctx, forStatement);
                     break;
             }
         }
 
         private static bool IsTruthy(BitsValue value) => value.Number > 0;
 
-        private static void RunStatement(CaseContext ctx, IfStatement stmt)
+        private static void RunStatement(ref CaseContext ctx, IfStatement stmt)
         {
-            var conditionValue = GetValue(ctx, stmt.Condition);
+            var conditionValue = GetValue(ref ctx, stmt.Condition);
 
             if (IsTruthy(conditionValue))
             {
-                RunStatements(ctx, stmt.Body);
+                RunStatements(ref ctx, stmt.Body);
             }
             else if (stmt.Else != null)
             {
-                RunStatements(ctx, stmt.Else);
+                RunStatements(ref ctx, stmt.Else);
             }
         }
 
-        private static void RunStatement(CaseContext ctx, ForStatement stmt)
+        private static void RunStatement(ref CaseContext ctx, ForStatement stmt)
         {
-            var from = GetValue(ctx, stmt.From);
-            var to = GetValue(ctx, stmt.To);
+            var from = GetValue(ref ctx, stmt.From);
+            var to = GetValue(ref ctx, stmt.To);
 
             for (ulong i = from.Number; i < to.Number; i++)
             {
                 ctx.Set(stmt.VarName, new BitsValue(i, to.Length));
-                RunStatements(ctx, stmt.Body);
+                RunStatements(ref ctx, stmt.Body);
             }
         }
 
-        private static void RunStatement(CaseContext ctx, QueueUpdateStatement stmt)
+        private static void RunStatement(ref CaseContext ctx, QueueUpdateStatement stmt)
         {
             if (!(ctx.Machine is IUpdatableMachine updatableMachine))
                 throw new LogicEngineException("Update queueing is not supported by the machine", stmt);
@@ -141,54 +144,57 @@ namespace LogicScript
             updatableMachine.QueueUpdate();
         }
 
-        internal static BitsValue GetValue(CaseContext ctx, Expression expr)
+        internal static BitsValue GetValue(ref CaseContext ctx, Expression expr)
         {
             switch (expr.Type)
             {
                 case ExpressionType.FunctionCall:
-                    return DoFunctionCall(ctx, (FunctionCallExpression)expr);
+                    return DoFunctionCall(ref ctx, (FunctionCallExpression)expr);
 
                 case ExpressionType.Indexer:
                     var indexer = (IndexerExpression)expr;
                     if (indexer.Operand.Type == ExpressionType.Slot)
-                        return DoSlotExpression(ctx, (SlotExpression)indexer.Operand, indexer);
-                    return DoIndexerExpression(ctx, (IndexerExpression)expr);
+                        return DoSlotExpression(ref ctx, (SlotExpression)indexer.Operand, indexer);
+                    return DoIndexerExpression(ref ctx, (IndexerExpression)expr);
 
                 case ExpressionType.List:
-                    return DoListExpression(ctx, (ListExpression)expr);
+                    return DoListExpression(ref ctx, (ListExpression)expr);
 
                 case ExpressionType.NumberLiteral:
                     return ((NumberLiteralExpression)expr).Value;
 
                 case ExpressionType.Operator:
-                    return DoOperator(ctx, (OperatorExpression)expr);
+                    return DoOperator(ref ctx, (OperatorExpression)expr);
 
                 case ExpressionType.Slot:
-                    return DoSlotExpression(ctx, (SlotExpression)expr, null);
+                    return DoSlotExpression(ref ctx, (SlotExpression)expr, null);
 
                 case ExpressionType.UnaryOperator:
-                    return DoUnaryOperator(ctx, (UnaryOperatorExpression)expr);
+                    return DoUnaryOperator(ref ctx, (UnaryOperatorExpression)expr);
 
                 case ExpressionType.VariableAccess:
-                    return ctx.Get(((VariableAccessExpression)expr).Name, expr);
+                    var val = ctx.Get(((VariableAccessExpression)expr).Name, expr);
+                    return ref val;
             }
 
             throw new LogicEngineException("Expected multi-bit value", expr);
         }
 
-        private static void GetRange(CaseContext ctx, IndexerExpression indexer, int length, out int start, out int end)
+        private static void GetRange(ref CaseContext ctx, IndexerExpression indexer, int length, out int start, out int end)
         {
-            start = (int)GetValue(ctx, indexer.Start).Number;
+            start = (int)GetValue(ref ctx, indexer.Start).Number;
 
             end = indexer.HasEnd
-                ? indexer.End == null ? start + 1
-                : (int)GetValue(ctx, indexer.End).Number : length;
+                ? indexer.End == null
+                    ? start + 1
+                    : (int)GetValue(ref ctx, indexer.End).Number
+                : length;
         }
 
-        private static BitsValue DoIndexerExpression(CaseContext ctx, IndexerExpression indexer)
+        private static BitsValue DoIndexerExpression(ref CaseContext ctx, IndexerExpression indexer)
         {
-            var value = GetValue(ctx, indexer.Operand);
-            GetRange(ctx, indexer, value.Length, out var start, out var end);
+            var value = GetValue(ref ctx, indexer.Operand);
+            GetRange(ref ctx, indexer, value.Length, out var start, out var end);
 
             Span<bool> bits = stackalloc bool[end - start];
             value.FillBits(bits, start, end);
@@ -196,13 +202,13 @@ namespace LogicScript
             return new BitsValue(bits);
         }
 
-        private static BitsValue DoFunctionCall(CaseContext ctx, FunctionCallExpression funcCall)
+        private static BitsValue DoFunctionCall(ref CaseContext ctx, FunctionCallExpression funcCall)
         {
             Span<BitsValue> values = stackalloc BitsValue[funcCall.Arguments.Count];
 
             for (int i = 0; i < funcCall.Arguments.Count; i++)
             {
-                values[i] = GetValue(ctx, funcCall.Arguments[i]);
+                values[i] = GetValue(ref ctx, funcCall.Arguments[i]);
             }
 
             switch (funcCall.Name)
@@ -236,13 +242,13 @@ namespace LogicScript
             }
         }
 
-        private static BitsValue DoSlotExpression(CaseContext ctx, SlotExpression expr, IndexerExpression indexer)
+        private static BitsValue DoSlotExpression(ref CaseContext ctx, SlotExpression expr, IndexerExpression indexer)
         {
             int maxLength =
                 expr.Slot == Slots.In ? ctx.Machine.InputCount :
                 expr.Slot == Slots.Memory ? ctx.Machine.Memory.Capacity : throw new LogicEngineException("Invalid slot", expr);
 
-            GetRange(ctx, indexer, maxLength, out var start, out var end);
+            GetRange(ref ctx, indexer, maxLength, out var start, out var end);
             Span<bool> values = stackalloc bool[end - start];
 
             switch (expr.Slot)
@@ -260,14 +266,14 @@ namespace LogicScript
             return new BitsValue(values);
         }
 
-        private static BitsValue DoListExpression(CaseContext ctx, ListExpression list)
+        private static BitsValue DoListExpression(ref CaseContext ctx, ListExpression list)
         {
             ulong n = 0;
 
             int len = list.Expressions.Length;
             for (int i = 0; i < len; i++)
             {
-                var value = GetValue(ctx, list.Expressions[i]);
+                var value = GetValue(ref ctx, list.Expressions[i]);
 
                 if (!value.IsSingleBit)
                     throw new LogicEngineException("List expressions can only contain single-bit values", list.Expressions[i]);
@@ -279,9 +285,9 @@ namespace LogicScript
             return new BitsValue(n, len);
         }
 
-        private static BitsValue DoUnaryOperator(CaseContext ctx, UnaryOperatorExpression op)
+        private static BitsValue DoUnaryOperator(ref CaseContext ctx, UnaryOperatorExpression op)
         {
-            var value = GetValue(ctx, op.Operand);
+            var value = GetValue(ref ctx, op.Operand);
 
             switch (op.Operator)
             {
@@ -292,13 +298,13 @@ namespace LogicScript
             throw new LogicEngineException();
         }
 
-        private static BitsValue DoOperator(CaseContext ctx, OperatorExpression op)
+        private static BitsValue DoOperator(ref CaseContext ctx, OperatorExpression op)
         {
             if (op.Operator == Operator.Assign)
-                return DoAssignment(ctx, op);
+                return DoAssignment(ref ctx, op);
 
-            var left = GetValue(ctx, op.Left);
-            var right = GetValue(ctx, op.Right);
+            var left = GetValue(ref ctx, op.Left);
+            var right = GetValue(ref ctx, op.Right);
 
             switch (op.Operator)
             {
@@ -336,7 +342,7 @@ namespace LogicScript
             throw new LogicEngineException();
         }
 
-        private static BitsValue DoAssignment(CaseContext ctx, OperatorExpression op)
+        private static BitsValue DoAssignment(ref CaseContext ctx, OperatorExpression op)
         {
             if (!op.Left.IsWriteable)
                 throw new LogicEngineException("Expected a writeable expression", op);
@@ -346,13 +352,13 @@ namespace LogicScript
 
             var lhs = op.Left;
 
-            var value = GetValue(ctx, op.Right);
+            var value = GetValue(ref ctx, op.Right);
             int start, end;
             bool isRanged = false;
 
             if (lhs is IndexerExpression indexer)
             {
-                GetRange(ctx, indexer, value.Length, out start, out end);
+                GetRange(ref ctx, indexer, value.Length, out start, out end);
                 lhs = indexer.Operand;
                 isRanged = true;
             }
