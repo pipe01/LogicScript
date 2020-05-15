@@ -7,6 +7,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LogicScript", "LogicScript\
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Tester", "Tester\Tester.csproj", "{D3D8D859-02A9-4870-9118-835BE73C644A}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GrEmit", "..\..\..\..\..\..\source\repos\gremit\GrEmit\GrEmit.csproj", "{7C61C40C-837A-4E7D-B3DF-764010970DCF}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -31,6 +33,14 @@ Global
 		{D3D8D859-02A9-4870-9118-835BE73C644A}.Release|Any CPU.Build.0 = Release|Any CPU
 		{D3D8D859-02A9-4870-9118-835BE73C644A}.Release|x64.ActiveCfg = Release|x64
 		{D3D8D859-02A9-4870-9118-835BE73C644A}.Release|x64.Build.0 = Release|x64
+		{7C61C40C-837A-4E7D-B3DF-764010970DCF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7C61C40C-837A-4E7D-B3DF-764010970DCF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7C61C40C-837A-4E7D-B3DF-764010970DCF}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{7C61C40C-837A-4E7D-B3DF-764010970DCF}.Debug|x64.Build.0 = Debug|Any CPU
+		{7C61C40C-837A-4E7D-B3DF-764010970DCF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7C61C40C-837A-4E7D-B3DF-764010970DCF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7C61C40C-837A-4E7D-B3DF-764010970DCF}.Release|x64.ActiveCfg = Release|Any CPU
+		{7C61C40C-837A-4E7D-B3DF-764010970DCF}.Release|x64.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

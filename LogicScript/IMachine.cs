@@ -10,9 +10,8 @@ namespace LogicScript
         int InputCount { get; }
         int OutputCount { get; }
 
-        void GetInputs(int start, Span<bool> inputs);
-        void SetOutputs(int start, Span<bool> values);
-        void SetOut(BitsValue value);
+        BitsValue GetInputs(int start);
+        void SetOutputs(int start, BitsValue values);
     }
 
     public interface IUpdatableMachine : IMachine

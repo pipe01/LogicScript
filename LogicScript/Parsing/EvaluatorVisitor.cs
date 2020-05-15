@@ -59,12 +59,13 @@ namespace LogicScript.Parsing
 
                 try
                 {
-                    var ctx = new LogicRunner.CaseContext(null, null);
-                    var value = LogicRunner.GetValue(ref ctx, expr);
+                    //var ctx = new LogicRunner.CaseContext(null, null);
+                    //var value = LogicRunner.GetValue(ref ctx, expr);
 
-                    Debug.WriteLine($"Evaluated '{expr}' to '{value}'");
+                    //Debug.WriteLine($"Evaluated '{expr}' to '{value}'");
 
-                    return new NumberLiteralExpression(value, expr.Location);
+                    //return new NumberLiteralExpression(value, expr.Location);
+                    return null;
                 }
                 catch
                 {

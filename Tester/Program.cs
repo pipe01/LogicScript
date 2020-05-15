@@ -14,22 +14,32 @@ namespace Tester
 #if RELEASE
             BenchmarkRunner.Run<Benchmarks>(ManualConfig.Create(DefaultConfig.Instance).With(MemoryDiagnoser.Default));
 #else
-            if (args.Length > 0 && args[0] == "--stress")
-            {
-                Benchmarks.StressTest();
-                return;
-            }
-
             const string script = @"@precompute off
 any
-    out = 3' / 2'
+    out = 1 > 2'    # 0
+    out = 3' > 2'   # 1
+
+    out = 1 >= 2'   # 0
+    out = 2' >= 2'  # 1
+    out = 3' >= 2'  # 1
+
+    out = 1 == 2    # 0
+    out = 1 == 1    # 1
+
+    out = 1 != 2    # 1
+    out = 1 != 1    # 0
+
+    out = 1 <= 2'   # 1
+    out = 2' <= 2'  # 1
+    out = 3' <= 2'  # 0
+
 end
 ";
 
-            Span<bool> values = stackalloc bool[10];
+            var a = 5;
+            var b = 7;
+            var c = a <= b;
 
-            var asd = 2 % 3;
-            Console.WriteLine(asd);
 
             var result = Script.Compile(script);
 
@@ -45,16 +55,6 @@ end
             }
 
             new Compiler().Compile(result.Script, new Machine());
-            return;
-
-            var machine = new Machine();
-
-            for (int i = 0; i < 1; i++)
-            {
-                LogicRunner.RunScript(result.Script, machine, i == 0);
-                Console.WriteLine();
-            }
-
             Console.ReadKey(true);
 #endif
         }
@@ -69,24 +69,17 @@ end
 
         private readonly bool[] Inputs = new[] { true, false, true, false };
 
-        public void SetOutputs(int start, Span<bool> values)
+        public void SetOutputs(int start, BitsValue values)
         {
             var bitsVal = new BitsValue(values);
             Console.WriteLine($"Set outputs [{start}..{start + values.Length}] to {bitsVal.Number} ({bitsVal})");
         }
 
-        public void GetInputs(int start, Span<bool> inputs)
+        public BitsValue GetInputs(int start)
         {
-            for (int i = 0; i < inputs.Length; i++)
-            {
-                inputs[i] = Inputs[i + start];
-            }
+            Console.WriteLine($"Read inputs [{start}..]");
 
-            Console.WriteLine($"Read inputs [{start}..{start + inputs.Length}]");
-        }
-
-        public void SetOut(BitsValue value)
-        {
+            return new BitsValue(Inputs[start..]);
         }
     }
 }
