@@ -20,13 +20,16 @@ namespace Tester
                 return;
             }
 
-            const string script = @"
+            const string script = @"@precompute off
 any
-    nice = 1010 * 2' ^ 5'
-
-    out = nice[0..3']
+    out = 3' / 2'
 end
 ";
+
+            Span<bool> values = stackalloc bool[10];
+
+            var asd = 2 % 3;
+            Console.WriteLine(asd);
 
             var result = Script.Compile(script);
 
@@ -40,6 +43,9 @@ end
                 Console.ReadKey(true);
                 return;
             }
+
+            new Compiler().Compile(result.Script, new Machine());
+            return;
 
             var machine = new Machine();
 
@@ -77,6 +83,10 @@ end
             }
 
             Console.WriteLine($"Read inputs [{start}..{start + inputs.Length}]");
+        }
+
+        public void SetOut(BitsValue value)
+        {
         }
     }
 }

@@ -95,6 +95,11 @@ end
             public void SetOutputs(int start, Span<bool> values)
             {
             }
+
+            public void SetOut(BitsValue value)
+            {
+                throw new NotImplementedException();
+            }
         }
     }
 }

@@ -12,6 +12,7 @@ namespace LogicScript
 
         void GetInputs(int start, Span<bool> inputs);
         void SetOutputs(int start, Span<bool> values);
+        void SetOut(BitsValue value);
     }
 
     public interface IUpdatableMachine : IMachine
