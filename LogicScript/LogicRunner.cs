@@ -173,8 +173,7 @@ namespace LogicScript
                     return DoUnaryOperator(ref ctx, (UnaryOperatorExpression)expr);
 
                 case ExpressionType.VariableAccess:
-                    var val = ctx.Get(((VariableAccessExpression)expr).Name, expr);
-                    return ref val;
+                    return ctx.Get(((VariableAccessExpression)expr).Name, expr);
             }
 
             throw new LogicEngineException("Expected multi-bit value", expr);
