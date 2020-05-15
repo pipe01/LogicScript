@@ -18,14 +18,14 @@ namespace LogicScript
     {
         private readonly Script Script;
 
-        public void Compile(Script script, IMachine machine)
+        public IEnumerable<Action<IMachine>> Compile(Script script, IMachine machine)
         {
             foreach (var item in script.TopLevelNodes)
             {
                 if (item is Case c)
                 {
                     var a = CompileCase(c);
-                    a(machine);
+                    yield return a;
                 }
             }
         }

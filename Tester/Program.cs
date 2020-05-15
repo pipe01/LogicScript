@@ -14,34 +14,7 @@ namespace Tester
 #if RELEASE
             BenchmarkRunner.Run<Benchmarks>(ManualConfig.Create(DefaultConfig.Instance).With(MemoryDiagnoser.Default));
 #else
-            const string script = @"@precompute off
-any
-    out = 1 > 2'    # 0
-    out = 3' > 2'   # 1
-
-    out = 1 >= 2'   # 0
-    out = 2' >= 2'  # 1
-    out = 3' >= 2'  # 1
-
-    out = 1 == 2    # 0
-    out = 1 == 1    # 1
-
-    out = 1 != 2    # 1
-    out = 1 != 1    # 0
-
-    out = 1 <= 2'   # 1
-    out = 2' <= 2'  # 1
-    out = 3' <= 2'  # 0
-
-end
-";
-
-            var a = 5;
-            var b = 7;
-            var c = a <= b;
-
-
-            var result = Script.Compile(script);
+            var result = Script.Compile(Benchmarks.RawScript);
 
             foreach (var item in result.Errors)
             {
@@ -65,18 +38,26 @@ end
         public int InputCount => Inputs.Length;
         public int OutputCount => 99;
 
+        public bool Noop { get; set; }
+
         public IMemory Memory { get; } = new VolatileMemory();
 
         private readonly bool[] Inputs = new[] { true, false, true, false };
 
         public void SetOutputs(int start, BitsValue values)
         {
+            if (Noop)
+                return;
+
             var bitsVal = new BitsValue(values);
             Console.WriteLine($"Set outputs [{start}..{start + values.Length}] to {bitsVal.Number} ({bitsVal})");
         }
 
         public BitsValue GetInputs(int start)
         {
+            if (Noop)
+                return BitsValue.Zero;
+
             Console.WriteLine($"Read inputs [{start}..]");
 
             return new BitsValue(Inputs[start..]);
