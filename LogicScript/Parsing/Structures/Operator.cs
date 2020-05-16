@@ -29,6 +29,5 @@
 
         //Operators without precedence
         Not,
-        Truncate,
     }
 }

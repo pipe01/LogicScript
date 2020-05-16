@@ -186,12 +186,9 @@ namespace LogicScript
                 else if (!DoComparison())
                 {
                     Visit(expr.Left);
-                    Generator.Dup();
-                    Generator.Stloc(Temp1);
-
+                    BitsValueToNumber();
                     Visit(expr.Right);
-                    Generator.Dup();
-                    Generator.Stloc(Temp2);
+                    BitsValueToNumber();
 
                     //var label = Generator.DefineLabel("minmax");
 
@@ -205,7 +202,6 @@ namespace LogicScript
                     //Generator.Stloc(Temp1);
 
                     //Generator.MarkLabel(label);
-
 
                     switch (expr.Operator)
                     {
@@ -225,17 +221,16 @@ namespace LogicScript
                             Generator.Div(true);
                             break;
                         case Operator.And:
-                            
+                            Generator.And();
                             break;
                         case Operator.Or:
+                            Generator.Or();
                             break;
                         case Operator.Xor:
+                            Generator.Xor();
                             break;
                         case Operator.Not:
-                            break;
-                        case Operator.Truncate:
-                            break;
-                        default:
+                            Generator.Not();
                             break;
                     }
                 }
@@ -251,12 +246,13 @@ namespace LogicScript
                     Generator.Stloc(Temp1);
                     BitsValueToNumber();
 
-                    //Load right member (shift amount), and store in Temp2
+                    // Load right member (shift amount), and store in Temp2
                     Visit(expr.Right);
                     BitsValueToNumber();
                     Generator.Dup();
                     Generator.Stloc(Temp2);
 
+                    // Do the shift
                     if (expr.Operator == Operator.BitShiftLeft)
                         Generator.Shl();
                     else
@@ -272,8 +268,6 @@ namespace LogicScript
                         Generator.Add();
                     else
                         Generator.Sub();
-
-                    convert = false;
 
                     NumberToBitsValue(true);
                 }
