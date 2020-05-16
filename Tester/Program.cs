@@ -21,10 +21,6 @@ any
 end
 ");
 
-            var a = 2;
-            var b = 4;
-            var c = a > b ? a : b;
-
             foreach (var item in result.Errors)
             {
                 Console.WriteLine(item);
