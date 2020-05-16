@@ -46,8 +46,6 @@ namespace LogicScript
         {
             private static readonly ConstructorInfo BitsValueCtor = typeof(BitsValue).GetConstructor(new[] { typeof(uint) });
             private static readonly ConstructorInfo BitsValueCtorLength = typeof(BitsValue).GetConstructor(new[] { typeof(uint), typeof(int) });
-            private static readonly FieldInfo BitsValueNumber = typeof(BitsValue).GetField(nameof(BitsValue.Number));
-            private static readonly FieldInfo BitsValueLength = typeof(BitsValue).GetField(nameof(BitsValue.Length));
 
             private readonly GroboIL Generator;
             private readonly ILGenerator RawGenerator;
@@ -140,11 +138,11 @@ namespace LogicScript
                 NumberToBitsValue(true);
             }
 
-            private void ValueLength() => Generator.Ldfld(BitsValueLength);
+            private void ValueLength() => Generator.Ldfld(Info.OfField<BitsValue>(nameof(BitsValue.Length)));
 
             private void NumberToBitsValue(bool takeLength = false) => Generator.Newobj(takeLength ? BitsValueCtorLength : BitsValueCtor);
 
-            private void BitsValueToNumber() => Generator.Ldfld(BitsValueNumber);
+            private void BitsValueToNumber() => Generator.Ldfld(Info.OfField<BitsValue>(nameof(BitsValue.Number)));
 
             private void Visit(Expression expr)
             {
