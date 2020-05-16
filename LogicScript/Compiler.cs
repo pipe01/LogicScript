@@ -1,6 +1,4 @@
-﻿#if !NETSTANDARD2_0
-
-using GrEmit;
+﻿using GrEmit;
 using LogicScript.Data;
 using LogicScript.Parsing;
 using LogicScript.Parsing.Structures;
@@ -16,16 +14,13 @@ namespace LogicScript
 {
     public class Compiler
     {
-        private readonly Script Script;
-
-        public IEnumerable<Action<IMachine>> Compile(Script script, IMachine machine)
+        public IEnumerable<Action<IMachine>> Compile(Script script)
         {
             foreach (var item in script.TopLevelNodes)
             {
                 if (item is Case c)
                 {
-                    var a = CompileCase(c);
-                    yield return a;
+                    yield return CompileCase(c);
                 }
             }
         }
@@ -50,17 +45,22 @@ namespace LogicScript
         private class Visitor
         {
             private static readonly ConstructorInfo BitsValueCtor = typeof(BitsValue).GetConstructor(new[] { typeof(uint) });
+            private static readonly ConstructorInfo BitsValueCtorLength = typeof(BitsValue).GetConstructor(new[] { typeof(uint), typeof(int) });
             private static readonly FieldInfo BitsValueNumber = typeof(BitsValue).GetField(nameof(BitsValue.Number));
-            private static readonly MethodInfo BitsValueIsTruthy = typeof(BitsValue).GetProperty(nameof(BitsValue.IsAnyBitSet)).GetMethod;
+            private static readonly FieldInfo BitsValueLength = typeof(BitsValue).GetField(nameof(BitsValue.Length));
 
             private readonly GroboIL Generator;
             private readonly ILGenerator RawGenerator;
             private readonly IDictionary<string, GroboIL.Local> Locals = new Dictionary<string, GroboIL.Local>();
+            private readonly GroboIL.Local Temp1, Temp2;
 
             public Visitor(GroboIL generator)
             {
                 this.Generator = generator ?? throw new ArgumentNullException(nameof(generator));
                 this.RawGenerator = (ILGenerator)typeof(GroboIL).GetField("il", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(generator);
+
+                Temp1 = generator.DeclareLocal(typeof(BitsValue), "temp1");
+                Temp2 = generator.DeclareLocal(typeof(ulong), "temp2");
             }
 
             public void Visit(IReadOnlyList<Statement> statements)
@@ -73,6 +73,8 @@ namespace LogicScript
 
             private void Visit(Statement statement)
             {
+                Generator.MarkLabel(Generator.DefineLabel(statement.ToString()));
+
                 switch (statement)
                 {
                     case ExpressionStatement expr:
@@ -131,9 +133,16 @@ namespace LogicScript
 
             private void LoadMachine() => Generator.Ldarg(0);
 
-            private void LoadValue(BitsValue value) => Generator.Ldc_I8((long)value.Number);
+            private void LoadValue(BitsValue value)
+            {
+                Generator.Ldc_I8((long)value.Number);
+                Generator.Ldc_I4(value.Length);
+                NumberToBitsValue(true);
+            }
 
-            private void NumberToBitsValue() => Generator.Newobj(BitsValueCtor);
+            private void ValueLength() => Generator.Ldfld(BitsValueLength);
+
+            private void NumberToBitsValue(bool takeLength = false) => Generator.Newobj(takeLength ? BitsValueCtorLength : BitsValueCtor);
 
             private void BitsValueToNumber() => Generator.Ldfld(BitsValueNumber);
 
@@ -143,7 +152,6 @@ namespace LogicScript
                 {
                     case NumberLiteralExpression literal:
                         LoadValue(literal.Value);
-                        NumberToBitsValue();
                         break;
 
                     case OperatorExpression opExpr:
@@ -170,19 +178,37 @@ namespace LogicScript
                 {
                     VisitAssignment(expr.Left, expr.Right);
                 }
+                else if (expr.Operator == Operator.BitShiftLeft || expr.Operator == Operator.BitShiftRight)
+                {
+                    DoBitshift();
+                    convert = false;
+                }
                 else if (!DoComparison())
                 {
                     Visit(expr.Left);
+                    Generator.Dup();
+                    Generator.Stloc(Temp1);
+
                     Visit(expr.Right);
+                    Generator.Dup();
+                    Generator.Stloc(Temp2);
+
+                    //var label = Generator.DefineLabel("minmax");
+
+                    //Generator.Ldloc(Temp1);
+                    //Generator.Ldloc(Temp2);
+                    //Generator.Cgt(true); // Temp1 > Temp2
+                    //Generator.Brtrue(label);
+
+                    //// Temp2 > Temp1
+                    //Generator.Ldloc(Temp2);
+                    //Generator.Stloc(Temp1);
+
+                    //Generator.MarkLabel(label);
+
 
                     switch (expr.Operator)
                     {
-                        case Operator.BitShiftLeft:
-                            Generator.Shl();
-                            break;
-                        case Operator.BitShiftRight:
-                            Generator.Shr(true);
-                            break;
                         case Operator.Add:
                             Generator.Add();
                             break;
@@ -216,6 +242,41 @@ namespace LogicScript
 
                 if (convert)
                     NumberToBitsValue();
+
+                void DoBitshift()
+                {
+                    // Load left member (number), and store in Temp1
+                    Visit(expr.Left);
+                    Generator.Dup();
+                    Generator.Stloc(Temp1);
+                    BitsValueToNumber();
+
+                    //Load right member (shift amount), and store in Temp2
+                    Visit(expr.Right);
+                    BitsValueToNumber();
+                    Generator.Dup();
+                    Generator.Stloc(Temp2);
+
+                    if (expr.Operator == Operator.BitShiftLeft)
+                        Generator.Shl();
+                    else
+                        Generator.Shr(true);
+
+                    // Calculate result length (add or subtract shift amount from operand length)
+                    Generator.Ldloc(Temp1);
+                    ValueLength();
+                    Generator.Ldloc(Temp2);
+                    Generator.Conv<int>();
+
+                    if (expr.Operator == Operator.BitShiftLeft)
+                        Generator.Add();
+                    else
+                        Generator.Sub();
+
+                    convert = false;
+
+                    NumberToBitsValue(true);
+                }
 
                 bool DoComparison()
                 {
@@ -283,12 +344,15 @@ namespace LogicScript
 
             private void VisitAssignment(Expression left, Expression right)
             {
-                Expression start = null;
+                IndexerExpression indexer = null;
 
-                if (left is IndexerExpression indexer)
+                if (left is IndexerExpression)
                 {
-                    start = indexer.Start;
+                    indexer = left as IndexerExpression;
                     left = indexer.Operand;
+
+                    if (indexer.End != null)
+                        throw new LogicEngineException("Indexers on left side of assignment cannot have an end position", indexer);
                 }
 
                 if (left is SlotExpression slotExpr)
@@ -297,13 +361,14 @@ namespace LogicScript
                     {
                         LoadMachine();
 
-                        if (start == null)
+                        if (indexer == null)
                         {
                             Generator.Ldc_I4(0);
                         }
                         else
                         {
-                            Visit(start);
+                            Visit(indexer.Start);
+                            BitsValueToNumber();
                             Generator.Conv<int>();
                         }
 
@@ -329,5 +394,3 @@ namespace LogicScript
         }
     }
 }
-
-#endif

@@ -39,7 +39,7 @@ end
             if (result.Errors.ContainsErrors)
                 throw new InvalidOperationException("Script failed to compile");
 
-            Compiled = new Compiler().Compile(result.Script, Machine).First();
+            Compiled = new Compiler().Compile(result.Script).First();
             Script = result.Script;
         }
 

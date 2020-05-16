@@ -4,6 +4,7 @@ using BenchmarkDotNet.Running;
 using LogicScript;
 using LogicScript.Data;
 using System;
+using System.Linq;
 
 namespace Tester
 {
@@ -14,7 +15,15 @@ namespace Tester
 #if RELEASE
             BenchmarkRunner.Run<Benchmarks>(ManualConfig.Create(DefaultConfig.Instance).With(MemoryDiagnoser.Default));
 #else
-            var result = Script.Compile(Benchmarks.RawScript);
+            var result = Script.Compile(@"
+any
+    out = 1 << 2
+end
+");
+
+            var a = 2;
+            var b = 4;
+            var c = a > b ? a : b;
 
             foreach (var item in result.Errors)
             {
@@ -27,7 +36,8 @@ namespace Tester
                 return;
             }
 
-            new Compiler().Compile(result.Script, new Machine());
+            var firstCase = new Compiler().Compile(result.Script).First();
+            firstCase(new Machine());
             Console.ReadKey(true);
 #endif
         }
