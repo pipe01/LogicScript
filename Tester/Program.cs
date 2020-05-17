@@ -17,7 +17,7 @@ namespace Tester
 #else
             var result = Script.Compile(@"
 any
-    out = 1 + 2
+    out = trunc(111, 2)
 end
 ");
 

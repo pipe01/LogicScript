@@ -1,6 +1,5 @@
 ﻿using GrEmit;
 using LogicScript.Data;
-using LogicScript.Parsing.Structures;
 using System;
 using System.Collections.Generic;
 using System.Reflection;
@@ -25,6 +24,8 @@ namespace LogicScript
 
             Temp1 = generator.DeclareLocal(typeof(BitsValue), "temp1");
             Temp2 = generator.DeclareLocal(typeof(ulong), "temp2");
+
+            RegisterFunctions();
         }
 
         private GroboIL.Local Local(string name)
@@ -42,14 +43,34 @@ namespace LogicScript
         private void LoadValue(BitsValue value)
         {
             Generator.Ldc_I8((long)value.Number);
+            Generator.Conv<ulong>();
             Generator.Ldc_I4(value.Length);
             NumberToBitsValue(true);
         }
 
+        private void PointerToValue() => Generator.Ldobj(typeof(BitsValue));
+
+        private void ValueToPointer()
+        {
+            var local = Generator.DeclareLocal(typeof(BitsValue), "pointer");
+            Generator.Stloc(local);
+            Generator.Ldloca(local);
+        }
+
         private void ValueLength() => Generator.Ldfld(Info.OfField<BitsValue>(nameof(BitsValue.Length)));
 
-        private void NumberToBitsValue(bool takeLength = false) => Generator.Newobj(takeLength ? BitsValueCtorLength : BitsValueCtor);
+        private void NumberToBitsValue(bool takeLength = false)
+        {
+            Generator.Newobj(takeLength ? BitsValueCtorLength : BitsValueCtor);
+            ValueToPointer();
+        }
 
         private void BitsValueToNumber() => Generator.Ldfld(Info.OfField<BitsValue>(nameof(BitsValue.Number)));
+
+        private void BoolToBitsValue()
+        {
+            Generator.Call(typeof(BitsValue).GetMethod(nameof(BitsValue.FromBool)));
+            ValueToPointer();
+        }
     }
 }

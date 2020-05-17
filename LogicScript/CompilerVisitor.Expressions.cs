@@ -30,16 +30,13 @@ namespace LogicScript
 
         private void Visit(FunctionCallExpression expr)
         {
-            switch (expr.Name)
-            {
-
-            }
+            EmitFunctionCall(expr.Name, expr.Arguments, expr);
         }
 
         private void Visit(VariableAccessExpression expr)
         {
             var local = Local(expr.Name);
-            Generator.Ldloc(local);
+            Generator.Ldloca(local);
         }
 
         private void Visit(OperatorExpression expr)
@@ -239,6 +236,7 @@ namespace LogicScript
                     }
 
                     Visit(right);
+                    PointerToValue();
                     Generator.Call(typeof(IMachine).GetMethod(nameof(IMachine.SetOutputs)));
                 }
                 else if (slotExpr.Slot == Slots.Memory)

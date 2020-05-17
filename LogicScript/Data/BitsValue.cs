@@ -68,6 +68,7 @@ namespace LogicScript.Data
 
         public BitsValue(ulong number, int length)
         {
+            Console.WriteLine($"New BitsValue with number {number} and length {length}");
             this.Number = number;
             this.Length = length;
         }
@@ -138,6 +139,15 @@ namespace LogicScript.Data
 
             return value;
         }
+
+        internal BitsValue Truncate(int length)
+        {
+            ulong mask = (1UL << length) - 1;
+
+            return new BitsValue(Number & mask, length);
+        }
+
+        public static BitsValue FromBool(bool b) => b ? One : Zero;
 
         public static implicit operator BitsValue(ulong n) => new BitsValue(n);
         public static implicit operator BitsValue(long n) => new BitsValue((ulong)n);
