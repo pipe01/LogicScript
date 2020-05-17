@@ -14,6 +14,8 @@ namespace LogicScript
             Functions = new Dictionary<string, Action<IList<Expression>>>
             {
                 ["and"] = FunctionAnd,
+                ["or"] = FunctionOr,
+                ["sum"] = FunctionSum,
                 ["trunc"] = FunctionTruncate,
             };
         }
@@ -57,6 +59,29 @@ namespace LogicScript
 
             Generator.Call(Info.OfPropertyGet<BitsValue>(nameof(BitsValue.AreAllBitsSet)));
             BoolToBitsValue();
+        }
+        
+        private void FunctionOr(IList<Expression> args)
+        {
+            if (args.Count != 1)
+                throw new LogicEngineException("Function 'or' expected 1 argument");
+
+            LoadArguments(args);
+
+            Generator.Call(Info.OfPropertyGet<BitsValue>(nameof(BitsValue.IsAnyBitSet)));
+            BoolToBitsValue();
+        }
+        
+        private void FunctionSum(IList<Expression> args)
+        {
+            if (args.Count != 1)
+                throw new LogicEngineException("Function 'sum' expected 1 argument");
+
+            LoadArguments(args);
+
+            Generator.Call(Info.OfPropertyGet<BitsValue>(nameof(BitsValue.PopulationCount)));
+            Generator.Conv<ulong>();
+            NumberToBitsValue();
         }
 
         private void FunctionTruncate(IList<Expression> args)
