@@ -17,7 +17,7 @@ namespace Tester
 #else
             var result = Script.Compile(@"
 any
-    out = asd(1010)
+    out = in
 end
 ");
 

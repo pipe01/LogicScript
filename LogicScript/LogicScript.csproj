@@ -18,12 +18,9 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
+    <PackageReference Include="GrEmit" Version="3.3.1" />
     <PackageReference Include="InfoOf.Fody" Version="1.6.0" />
     <PackageReference Include="System.Reflection.Emit" Version="4.7.0" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\..\..\..\..\..\..\source\repos\gremit\GrEmit\GrEmit.csproj" />
   </ItemGroup>
 
 </Project>
