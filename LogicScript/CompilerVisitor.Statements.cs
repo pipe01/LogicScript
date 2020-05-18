@@ -1,4 +1,5 @@
-﻿using LogicScript.Parsing.Structures;
+﻿using LogicScript.Data;
+using LogicScript.Parsing.Structures;
 using System;
 using System.Collections.Generic;
 
@@ -27,6 +28,10 @@ namespace LogicScript
 
                 case IfStatement ifStmt:
                     Visit(ifStmt);
+                    break;
+
+                case ForStatement forStmt:
+                    Visit(forStmt);
                     break;
 
                 default:
@@ -62,6 +67,45 @@ namespace LogicScript
                 Visit(stmt.Body);
                 Generator.MarkLabel(mainEndLabel);
             }
+        }
+
+        private void Visit(ForStatement stmt)
+        {
+            var loopStartLabel = Generator.DefineLabel("loopstart");
+
+            var indexLocal = Local(stmt.VarName);
+            var toLocal = Generator.DeclareLocal(typeof(ulong), "end");
+
+            Visit(stmt.From);
+            Generator.Dup();
+            Generator.Ldobj(typeof(BitsValue));
+            Generator.Stloc(indexLocal);
+
+            Visit(stmt.To);
+            BitsValueToNumber();
+            Generator.Stloc(toLocal);
+
+            BitsValueToNumber();
+
+            Generator.MarkLabel(loopStartLabel);
+
+            Visit(stmt.Body);
+
+            // Increment index
+            Generator.Ldc_I8(1);
+            Generator.Conv<ulong>();
+            Generator.Add();
+            NumberToBitsValue();
+            Generator.Ldobj(typeof(BitsValue));
+            Generator.Stloc(indexLocal);
+
+            // Check index == max, if true branch to end
+            Generator.Ldloca(indexLocal);
+            BitsValueToNumber();
+            Generator.Dup();
+            Generator.Ldloc(toLocal);
+            Generator.Bne_Un(loopStartLabel);
+            Generator.Pop();
         }
     }
 }

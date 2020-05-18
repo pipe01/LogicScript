@@ -348,6 +348,7 @@ namespace LogicScript
                 var local = Local(varExpr.Name);
 
                 Visit(right);
+                Generator.Ldobj(typeof(BitsValue));
                 Generator.Stloc(local);
             }
             else
