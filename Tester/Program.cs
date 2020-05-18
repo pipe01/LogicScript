@@ -17,11 +17,7 @@ namespace Tester
 #else
             var result = Script.Compile(@"@precompute off
 any
-    for i from 0 to 100
-        out = i
 
-        break
-    end
 end
 ");
 

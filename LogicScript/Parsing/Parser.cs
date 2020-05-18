@@ -201,9 +201,6 @@ namespace LogicScript.Parsing
                 case "suffix":
                     Script.AutoSuffix = onOff ?? Error<bool>($"Invalid 'suffix' directive value '{value}'", on: valueLexeme.Location);
                     break;
-                case "precompute":
-                    Script.Precompute = onOff ?? Error<bool>($"Invalid 'precompute' directive value '{value}'", on: valueLexeme.Location);
-                    break;
 
                 default:
                     Error($"Invalid directive '{name}'", on: nameLexeme.Location);
