@@ -7,8 +7,8 @@ namespace LogicScript
     {
         int Capacity { get; }
 
-        void Read(int start, Span<bool> inputs);
-        void Write(int start, Span<bool> values);
+        BitsValue Read(int start, int count);
+        void Write(int start, BitsValue value);
     }
 
     public sealed class VolatileMemory : IMemory
@@ -35,19 +35,20 @@ namespace LogicScript
             }
         }
 
-        public void Read(int start, Span<bool> inputs)
+        public BitsValue Read(int start, int count)
         {
-            for (int i = 0; i < inputs.Length; i++)
-            {
-                inputs[i] = this.Memory[i + start];
-            }
+#if NETCOREAPP3_1
+            return new BitsValue(Memory[start..(start + count)]);
+#else
+            return new BitsValue(Memory.AsSpan().Slice(start, count));
+#endif
         }
 
-        public void Write(int start, Span<bool> values)
+        public void Write(int start, BitsValue value)
         {
-            for (int i = 0; i < values.Length; i++)
+            for (int i = 0; i < value.Length; i++)
             {
-                this.Memory[i + start] = values[i];
+                this.Memory[i + start] = value[i];
             }
         }
     }

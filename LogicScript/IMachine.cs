@@ -1,5 +1,4 @@
 ﻿using LogicScript.Data;
-using System;
 
 namespace LogicScript
 {
@@ -10,7 +9,7 @@ namespace LogicScript
         int InputCount { get; }
         int OutputCount { get; }
 
-        void GetInputs(int start, Span<bool> values);
+        BitsValue GetInputs(int start, int count);
         void SetOutputs(int start, BitsValue values);
     }
 

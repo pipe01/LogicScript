@@ -40,6 +40,8 @@ namespace LogicScript
 
         private void LoadMachine() => Generator.Ldarg(0);
 
+        private void LoadMemory() => Generator.Call(Info.OfPropertyGet<IMachine>(nameof(IMachine.Memory)));
+
         private void LoadValue(BitsValue value)
         {
             Generator.Ldc_I8((long)value.Number);
@@ -50,7 +52,7 @@ namespace LogicScript
 
         private void PointerToValue() => Generator.Ldobj(typeof(BitsValue));
 
-        private void ValueToPointer()
+        private void ValueToReference()
         {
             var local = Generator.DeclareLocal(typeof(BitsValue), "pointer");
             Generator.Stloc(local);
@@ -62,7 +64,7 @@ namespace LogicScript
         private void NumberToBitsValue(bool takeLength = false)
         {
             Generator.Newobj(takeLength ? BitsValueCtorLength : BitsValueCtor);
-            ValueToPointer();
+            ValueToReference();
         }
 
         private void BitsValueToNumber() => Generator.Ldfld(Info.OfField<BitsValue>(nameof(BitsValue.Number)));
@@ -70,7 +72,7 @@ namespace LogicScript
         private void BoolToBitsValue()
         {
             Generator.Call(typeof(BitsValue).GetMethod(nameof(BitsValue.FromBool)));
-            ValueToPointer();
+            ValueToReference();
         }
     }
 }

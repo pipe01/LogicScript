@@ -10,6 +10,8 @@ namespace LogicScript
     {
         private void Visit(Expression expr)
         {
+            Generator.Nop();
+
             switch (expr)
             {
                 case NumberLiteralExpression literal:
@@ -43,11 +45,23 @@ namespace LogicScript
 
         private void Visit(SlotExpression expr, Expression start = null, Expression end = null)
         {
-            Generator.MarkLabel(Generator.DefineLabel(expr.ToString()));
+            LoadMachine();
+            if (expr.Slot == Slots.Memory)
+                LoadMemory();
 
-            var spanLocal = Generator.DeclareLocal(typeof(Span<bool>));
-            var lengthLocal = Generator.DeclareLocal(typeof(int));
-            var valueLocal = Generator.DeclareLocal(typeof(BitsValue));
+            // If the start expression is null, start from 0
+            if (start != null)
+            {
+                Visit(start);
+                BitsValueToNumber();
+                Generator.Conv<int>();
+            }
+            else
+            {
+                Generator.Ldc_I4(0);
+            }
+            Generator.Dup();
+            Generator.Neg();
 
             // If the "end" expression isn't null, load it's value. If it is, get the slot length and set that as the end position
             if (end != null)
@@ -65,7 +79,7 @@ namespace LogicScript
                 }
                 else if (expr.Slot == Slots.Memory)
                 {
-                    Generator.Call(Info.OfPropertyGet<IMachine>(nameof(IMachine.Memory)));
+                    LoadMemory();
                     Generator.Call(Info.OfPropertyGet<IMemory>(nameof(IMemory.Capacity)));
                 }
                 else
@@ -74,29 +88,34 @@ namespace LogicScript
                 }
             }
 
-            // If the start expression is null, start from 0
-            if (start != null)
-            {
-                Visit(start);
-                BitsValueToNumber();
-                Generator.Conv<int>();
-            }
-            else
-            {
-                Generator.Ldc_I4(0);
-            }
+            Generator.Add();
 
-            Generator.Sub();
-            Generator.Stloc(lengthLocal);
+            if (expr.Slot == Slots.In)
+                Generator.Call(Info.OfMethod<IMachine>(nameof(IMachine.GetInputs), "System.Int32,System.Int32"));
+            else if (expr.Slot == Slots.Memory)
+                Generator.Call(Info.OfMethod<IMemory>(nameof(IMemory.Read), "System.Int32,System.Int32"));
+            else
+                throw new LogicEngineException("Invalid slot", expr);
+
+            ValueToReference();
+
+            /*LoadMachine();
+            Generator.Ldloc(startLocal);
 
             // Allocate Span<bool> with the calculated length
             Generator.Ldloc(lengthLocal);
-            Generator.Conv<uint>();
-            OpCodes.Localloc
+            Generator.Conv<UIntPtr>();
+            Generator.Localloc();
+            Generator.Ldloc(lengthLocal);
+            Generator.Newobj(typeof(Span<bool>).GetConstructor(new[] { typeof(void).MakePointerType(), typeof(int) }));
+            Generator.Stloc(spanLocal);
+            Generator.Ldloc(spanLocal);
 
-            Generator.Ldc_I8(123);
-            Generator.Conv<ulong>();
-            NumberToBitsValue();
+            Generator.Call(Info.OfMethod<IMachine>(nameof(IMachine.GetInputs), "System.Int32, System.Span`1<System.Boolean>"));
+
+            Generator.Ldloc(spanLocal);
+            Generator.Newobj(Info.OfConstructor<BitsValue>("System.Span`1<System.Boolean>"));
+            ValueToReference();*/
         }
 
         private void Visit(FunctionCallExpression expr)
@@ -278,28 +297,31 @@ namespace LogicScript
 
             if (left is SlotExpression slotExpr)
             {
+                LoadMachine();
+                if (slotExpr.Slot == Slots.Memory)
+                    LoadMemory();
+
+                if (indexer == null)
+                {
+                    Generator.Ldc_I4(0);
+                }
+                else
+                {
+                    Visit(indexer.Start);
+                    BitsValueToNumber();
+                    Generator.Conv<int>();
+                }
+
+                Visit(right);
+                PointerToValue();
+
                 if (slotExpr.Slot == Slots.Out)
                 {
-                    LoadMachine();
-
-                    if (indexer == null)
-                    {
-                        Generator.Ldc_I4(0);
-                    }
-                    else
-                    {
-                        Visit(indexer.Start);
-                        BitsValueToNumber();
-                        Generator.Conv<int>();
-                    }
-
-                    Visit(right);
-                    PointerToValue();
                     Generator.Call(typeof(IMachine).GetMethod(nameof(IMachine.SetOutputs)));
                 }
                 else if (slotExpr.Slot == Slots.Memory)
                 {
-
+                    Generator.Call(Info.OfMethod<IMemory>(nameof(IMemory.Write), "System.Int32,LogicScript.Data.BitsValue"));
                 }
             }
             else if (left is VariableAccessExpression varExpr)

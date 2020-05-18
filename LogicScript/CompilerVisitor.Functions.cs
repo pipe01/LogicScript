@@ -94,7 +94,7 @@ namespace LogicScript
             if (args.Count == 1)
             {
                 Generator.Call(Info.OfPropertyGet<BitsValue>(nameof(BitsValue.Truncated)));
-                ValueToPointer();
+                ValueToReference();
             }
             else if (args.Count == 2)
             {
@@ -103,7 +103,7 @@ namespace LogicScript
                 Generator.Conv<int>();
 
                 Generator.Call(Info.OfMethod<BitsValue>(nameof(BitsValue.Truncate), "System.Int32"));
-                ValueToPointer();
+                ValueToReference();
             }
         }
     }

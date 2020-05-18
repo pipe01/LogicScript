@@ -256,7 +256,7 @@ namespace LogicScript
                     //ctx.Machine.GetInputs(start, values);
                     break;
                 case Slots.Memory:
-                    ctx.Machine.Memory.Read(start, values);
+                    //ctx.Machine.Memory.Read(start, new BitsValue(values));
                     break;
                 default:
                     throw new LogicEngineException("Invalid slot on expression", expr);
@@ -393,7 +393,7 @@ namespace LogicScript
                         if (end > ctx.Machine.Memory.Capacity)
                             throw new LogicEngineException("Range out of bounds for memory", op);
 
-                        ctx.Machine.Memory.Write(start, bits);
+                        //ctx.Machine.Memory.Write(start, bits);
                         break;
 
                     default:
