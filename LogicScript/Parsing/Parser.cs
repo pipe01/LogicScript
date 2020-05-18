@@ -289,8 +289,7 @@ namespace LogicScript.Parsing
 
             if (!(TryTakeIfStatement(out var statement)
                 || TryTakeForStatement(out statement)
-                //|| TryTakeAssignStatement(out statement)
-                || TryTakeQueueUpdateStatement(out statement)))
+                || TryTakeSimpleStatement(out statement)))
             {
                 return TakeExpressionStatement();
             }
@@ -367,41 +366,47 @@ namespace LogicScript.Parsing
             return true;
         }
 
-        private bool TryTakeQueueUpdateStatement(out Statement statement)
+        private bool TryTakeSimpleStatement(out Statement statement)
         {
             if (TakeKeyword("update", out var lexeme, false))
             {
                 statement = new QueueUpdateStatement(lexeme.Location);
-                return true;
+            }
+            else if (TakeKeyword("break", out lexeme, false))
+            {
+                statement = new BreakStatement(lexeme.Location);
+            }
+            else
+            {
+                statement = null;
+                return false;
             }
 
-            statement = null;
-            return false;
+            return true;
         }
 
         private Operator ConvertToOperator(LexemeKind kind)
         {
-            switch (kind)
+            return kind switch
             {
-                case LexemeKind.EqualsAssign: return Operator.Assign;
-                case LexemeKind.Add: return Operator.Add;
-                case LexemeKind.Subtract: return Operator.Subtract;
-                case LexemeKind.Multiply: return Operator.Multiply;
-                case LexemeKind.Divide: return Operator.Divide;
-                case LexemeKind.Equals: return Operator.Equals;
-                case LexemeKind.NotEquals: return Operator.NotEquals;
-                case LexemeKind.Greater: return Operator.Greater;
-                case LexemeKind.GreaterOrEqual: return Operator.GreaterOrEqual;
-                case LexemeKind.Lesser: return Operator.Lesser;
-                case LexemeKind.LesserOrEqual: return Operator.LesserOrEqual;
-                case LexemeKind.And: return Operator.And;
-                case LexemeKind.Or: return Operator.Or;
-                case LexemeKind.Hat: return Operator.Xor;
-                case LexemeKind.BitShiftLeft: return Operator.BitShiftLeft;
-                case LexemeKind.BitShiftRight: return Operator.BitShiftRight;
-            }
-
-            return Operator.None;
+                LexemeKind.EqualsAssign => Operator.Assign,
+                LexemeKind.Add => Operator.Add,
+                LexemeKind.Subtract => Operator.Subtract,
+                LexemeKind.Multiply => Operator.Multiply,
+                LexemeKind.Divide => Operator.Divide,
+                LexemeKind.Equals => Operator.Equals,
+                LexemeKind.NotEquals => Operator.NotEquals,
+                LexemeKind.Greater => Operator.Greater,
+                LexemeKind.GreaterOrEqual => Operator.GreaterOrEqual,
+                LexemeKind.Lesser => Operator.Lesser,
+                LexemeKind.LesserOrEqual => Operator.LesserOrEqual,
+                LexemeKind.And => Operator.And,
+                LexemeKind.Or => Operator.Or,
+                LexemeKind.Hat => Operator.Xor,
+                LexemeKind.BitShiftLeft => Operator.BitShiftLeft,
+                LexemeKind.BitShiftRight => Operator.BitShiftRight,
+                _ => Operator.None,
+            };
         }
 
         private Expression TakeExpression()

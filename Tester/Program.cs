@@ -17,9 +17,10 @@ namespace Tester
 #else
             var result = Script.Compile(@"@precompute off
 any
-    max = 10'
-    for i from 0 to max
+    for i from 0 to 100
         out = i
+
+        break
     end
 end
 ");

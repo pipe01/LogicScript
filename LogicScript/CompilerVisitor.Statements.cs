@@ -1,4 +1,5 @@
-﻿using LogicScript.Data;
+﻿using GrEmit;
+using LogicScript.Data;
 using LogicScript.Parsing.Structures;
 using System;
 using System.Collections.Generic;
@@ -7,6 +8,8 @@ namespace LogicScript
 {
     internal partial class CompilerVisitor
     {
+        private GroboIL.Label CurrentLoopEndLabel;
+
         public void Visit(IReadOnlyList<Statement> statements)
         {
             foreach (var stmt in statements)
@@ -32,6 +35,10 @@ namespace LogicScript
 
                 case ForStatement forStmt:
                     Visit(forStmt);
+                    break;
+
+                case BreakStatement breakStmt:
+                    Visit(breakStmt);
                     break;
 
                 default:
@@ -76,6 +83,9 @@ namespace LogicScript
             var indexLocal = Local(stmt.VarName);
             var toLocal = Generator.DeclareLocal(typeof(ulong), "end");
 
+            var previousEndLabel = CurrentLoopEndLabel;
+            var endLabel = CurrentLoopEndLabel = Generator.DefineLabel("forend");
+
             Visit(stmt.From);
             Generator.Dup();
             Generator.Ldobj(typeof(BitsValue));
@@ -105,7 +115,19 @@ namespace LogicScript
             Generator.Dup();
             Generator.Ldloc(toLocal);
             Generator.Bne_Un(loopStartLabel);
+
+            Generator.MarkLabel(endLabel);
+            CurrentLoopEndLabel = previousEndLabel;
+
             Generator.Pop();
+        }
+
+        private void Visit(BreakStatement stmt)
+        {
+            if (CurrentLoopEndLabel == null)
+                throw new LogicEngineException("Break statement outside of loop", stmt);
+
+            Generator.Br(CurrentLoopEndLabel);
         }
     }
 }

@@ -50,6 +50,15 @@ namespace LogicScript.Parsing.Structures
         public override string ToString() => "update";
     }
 
+    internal class BreakStatement : Statement
+    {
+        public BreakStatement(SourceLocation location) : base(location)
+        {
+        }
+
+        public override string ToString() => "break";
+    }
+
     internal class ForStatement : Statement
     {
         public string VarName { get; set; }
