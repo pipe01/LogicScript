@@ -21,6 +21,7 @@ namespace LogicScript.Parsing
         Apostrophe,
         Comma,
         DotDot,
+        Hat,
         EqualsAssign,
 
         //Operators
@@ -44,7 +45,6 @@ namespace LogicScript.Parsing
 
         And,
         Or,
-        Xor,
 
         BitShiftLeft,
         BitShiftRight,

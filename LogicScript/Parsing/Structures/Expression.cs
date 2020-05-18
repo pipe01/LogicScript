@@ -22,6 +22,7 @@
     {
         FunctionCall,
         Indexer,
+        Range,
         List,
         NumberLiteral,
         Operator,

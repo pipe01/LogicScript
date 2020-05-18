@@ -77,11 +77,6 @@ namespace LogicScript.Parsing
                                 f.Arguments[i] = Evaluate(f.Arguments[i]);
                             }
                             break;
-                        case IndexerExpression i:
-                            i.Start = Evaluate(i.Start);
-                            i.End = Evaluate(i.End);
-                            i.Operand = Evaluate(i.Operand);
-                            break;
                         case ListExpression l:
                             for (int i = 0; i < l.Expressions.Length; i++)
                             {

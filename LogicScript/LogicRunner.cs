@@ -181,13 +181,14 @@ namespace LogicScript
 
         private static void GetRange(ref CaseContext ctx, IndexerExpression indexer, int length, out int start, out int end)
         {
-            start = (int)GetValue(ref ctx, indexer.Start).Number;
+            //start = (int)GetValue(ref ctx, indexer.Index).Number;
 
-            end = indexer.HasEnd
-                ? indexer.End == null
-                    ? start + 1
-                    : (int)GetValue(ref ctx, indexer.End).Number
-                : length;
+            //end = indexer.FromEnd
+            //    ? indexer.End == null
+            //        ? start + 1
+            //        : (int)GetValue(ref ctx, indexer.End).Number
+            //    : length;
+            throw null;
         }
 
         private static BitsValue DoIndexerExpression(ref CaseContext ctx, IndexerExpression indexer)

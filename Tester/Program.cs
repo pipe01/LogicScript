@@ -15,10 +15,15 @@ namespace Tester
 #if RELEASE
             BenchmarkRunner.Run<Benchmarks>(ManualConfig.Create(DefaultConfig.Instance).With(MemoryDiagnoser.Default));
 #else
-            var result = Script.Compile(@"
+            var result = Script.Compile(@"@precompute off
 any
-    mem[1] = 1
-    out = mem[0..5]
+    out = in[0]
+
+    if in[in[0]]
+        out = 1
+    else
+        out = 0
+    end
 end
 ");
 

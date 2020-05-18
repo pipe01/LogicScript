@@ -3,6 +3,7 @@ using LogicScript.Parsing;
 using LogicScript.Parsing.Structures;
 using System;
 using System.Reflection.Emit;
+using Index = LogicScript.Parsing.Structures.Index;
 
 namespace LogicScript
 {
@@ -31,7 +32,11 @@ namespace LogicScript
                     break;
 
                 case IndexerExpression indexer when indexer.Operand is SlotExpression slot:
-                    Visit(slot, indexer.Start, indexer.End);
+                    Visit(slot, indexer.Index);
+                    break;
+                    
+                case RangeExpression range when range.Operand is SlotExpression slot:
+                    Visit(slot, range.Start, range.End);
                     break;
 
                 case SlotExpression slotExpr:
@@ -43,52 +48,30 @@ namespace LogicScript
             }
         }
 
-        private void Visit(SlotExpression expr, Expression start = null, Expression end = null)
+        private void Visit(SlotExpression expr, Index start = default, Index? end = null)
         {
             LoadMachine();
             if (expr.Slot == Slots.Memory)
                 LoadMemory();
 
-            // If the start expression is null, start from 0
-            if (start != null)
+            LoadIndex(expr, start);
+
+            // Calculate range length
+            if (end == null)
             {
-                Visit(start);
-                BitsValueToNumber();
-                Generator.Conv<int>();
+                Generator.Ldc_I4(1);
             }
             else
             {
-                Generator.Ldc_I4(0);
-            }
-            Generator.Dup();
-            Generator.Neg();
+                Generator.Dup(); // Duplicate start index for GetInputs parameter
 
-            // If the "end" expression isn't null, load it's value. If it is, get the slot length and set that as the end position
-            if (end != null)
-            {
-                Visit(end);
-                BitsValueToNumber();
-                Generator.Conv<int>();
-            }
-            else
-            {
-                LoadMachine();
-                if (expr.Slot == Slots.In)
-                {
-                    Generator.Call(Info.OfPropertyGet<IMachine>(nameof(IMachine.InputCount)));
-                }
-                else if (expr.Slot == Slots.Memory)
-                {
-                    LoadMemory();
-                    Generator.Call(Info.OfPropertyGet<IMemory>(nameof(IMemory.Capacity)));
-                }
-                else
-                {
-                    throw new LogicEngineException("Invalid slot", expr);
-                }
-            }
+                // length = -start + end
+                Generator.Neg();
 
-            Generator.Add();
+                LoadIndex(expr, end.Value);
+
+                Generator.Add();
+            }
 
             if (expr.Slot == Slots.In)
                 Generator.Call(Info.OfMethod<IMachine>(nameof(IMachine.GetInputs), "System.Int32,System.Int32"));
@@ -98,24 +81,44 @@ namespace LogicScript
                 throw new LogicEngineException("Invalid slot", expr);
 
             ValueToReference();
+        }
 
-            /*LoadMachine();
-            Generator.Ldloc(startLocal);
+        private void GetSlotSize(SlotExpression expr)
+        {
+            LoadMachine();
+            if (expr.Slot == Slots.In)
+            {
+                Generator.Call(Info.OfPropertyGet<IMachine>(nameof(IMachine.InputCount)));
+            }
+            else if (expr.Slot == Slots.Memory)
+            {
+                LoadMemory();
+                Generator.Call(Info.OfPropertyGet<IMemory>(nameof(IMemory.Capacity)));
+            }
+            else
+            {
+                throw new LogicEngineException("Invalid slot", expr);
+            }
+        }
 
-            // Allocate Span<bool> with the calculated length
-            Generator.Ldloc(lengthLocal);
-            Generator.Conv<UIntPtr>();
-            Generator.Localloc();
-            Generator.Ldloc(lengthLocal);
-            Generator.Newobj(typeof(Span<bool>).GetConstructor(new[] { typeof(void).MakePointerType(), typeof(int) }));
-            Generator.Stloc(spanLocal);
-            Generator.Ldloc(spanLocal);
+        private void LoadIndex(SlotExpression expr, Index idx)
+        {
+            if (idx.FromEnd)
+                GetSlotSize(expr);
 
-            Generator.Call(Info.OfMethod<IMachine>(nameof(IMachine.GetInputs), "System.Int32, System.Span`1<System.Boolean>"));
+            if (idx.Value == null)
+            {
+                Generator.Ldc_I4(0);
+            }
+            else
+            {
+                Visit(idx.Value);
+                BitsValueToNumber();
+                Generator.Conv<int>();
+            }
 
-            Generator.Ldloc(spanLocal);
-            Generator.Newobj(Info.OfConstructor<BitsValue>("System.Span`1<System.Boolean>"));
-            ValueToReference();*/
+            if (idx.FromEnd)
+                Generator.Sub();
         }
 
         private void Visit(FunctionCallExpression expr)
@@ -284,15 +287,20 @@ namespace LogicScript
 
         private void VisitAssignment(Expression left, Expression right)
         {
-            IndexerExpression indexer = null;
+            Index? start = null;
 
-            if (left is IndexerExpression)
+            if (left is RangeExpression range)
             {
-                indexer = left as IndexerExpression;
-                left = indexer.Operand;
+                start = range.Start;
+                left = range.Operand;
 
-                if (indexer.End != null)
-                    throw new LogicEngineException("Indexers on left side of assignment cannot have an end position", indexer);
+                if (range.End != Index.End)
+                    throw new LogicEngineException("Indexers on left side of assignment cannot have an end position", left);
+            }
+            else if (left is IndexerExpression indexer)
+            {
+                start = indexer.Index;
+                left = indexer.Operand;
             }
 
             if (left is SlotExpression slotExpr)
@@ -301,16 +309,10 @@ namespace LogicScript
                 if (slotExpr.Slot == Slots.Memory)
                     LoadMemory();
 
-                if (indexer == null)
-                {
+                if (start == null)
                     Generator.Ldc_I4(0);
-                }
                 else
-                {
-                    Visit(indexer.Start);
-                    BitsValueToNumber();
-                    Generator.Conv<int>();
-                }
+                    LoadIndex(slotExpr, start.Value);
 
                 Visit(right);
                 PointerToValue();
@@ -326,10 +328,17 @@ namespace LogicScript
             }
             else if (left is VariableAccessExpression varExpr)
             {
+                if (start != null)
+                    throw new LogicEngineException("Variable assignments cannot be indexer", left);
+
                 var local = Local(varExpr.Name);
 
                 Visit(right);
                 Generator.Stloc(local);
+            }
+            else
+            {
+                throw new LogicEngineException("Invalid expression", left);
             }
 
             Generator.Ldc_I8(0);

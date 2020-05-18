@@ -68,7 +68,6 @@ namespace LogicScript.Data
 
         public BitsValue(ulong number, int length)
         {
-            Console.WriteLine($"New BitsValue with number {number} and length {length}");
             this.Number = number;
             this.Length = length;
         }

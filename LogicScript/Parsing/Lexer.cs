@@ -182,6 +182,9 @@ namespace LogicScript.Parsing
                 case '@':
                     kind = LexemeKind.AtSign;
                     break;
+                case '^':
+                    kind = LexemeKind.Hat;
+                    break;
 
                 case '+':
                     kind = LexemeKind.Add;
@@ -217,9 +220,6 @@ namespace LogicScript.Parsing
                     break;
                 case '|':
                     kind = LexemeKind.Or;
-                    break;
-                case '^':
-                    kind = LexemeKind.Xor;
                     break;
 
                 default:

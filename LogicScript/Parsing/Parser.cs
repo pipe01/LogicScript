@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
+using Index = LogicScript.Parsing.Structures.Index;
 
 namespace LogicScript.Parsing
 {
@@ -395,7 +396,7 @@ namespace LogicScript.Parsing
                 case LexemeKind.LesserOrEqual: return Operator.LesserOrEqual;
                 case LexemeKind.And: return Operator.And;
                 case LexemeKind.Or: return Operator.Or;
-                case LexemeKind.Xor: return Operator.Xor;
+                case LexemeKind.Hat: return Operator.Xor;
                 case LexemeKind.BitShiftLeft: return Operator.BitShiftLeft;
                 case LexemeKind.BitShiftRight: return Operator.BitShiftRight;
             }
@@ -521,24 +522,33 @@ namespace LogicScript.Parsing
 
             if (Take(LexemeKind.LeftBracket, false))
             {
-                var start = TakeExpression();
-                Expression end = null;
-                bool hasEnd = true;
+                var start = TakeIndex();
 
                 if (Take(LexemeKind.DotDot, false))
                 {
-                    if (Peek(LexemeKind.RightBracket))
-                        hasEnd = false;
-                    else
-                        end = TakeExpression();
+                    var end = Structures.Index.End; // A range like [0..] is really [0..^0]
+
+                    if (!Peek(LexemeKind.RightBracket))
+                        end = TakeIndex();
+
+                    expr = new RangeExpression(expr, start, end, expr.Location);
+                }
+                else
+                {
+                    expr = new IndexerExpression(expr, start, expr.Location);
                 }
 
                 Take(LexemeKind.RightBracket);
-
-                expr = new IndexerExpression(expr, start, end, hasEnd, expr.Location);
             }
 
             return expr;
+        }
+
+        private Index TakeIndex()
+        {
+            bool fromEnd = Take(LexemeKind.Hat, false);
+
+            return new Index(TakeExpression(), fromEnd);
         }
 
         private Expression TakeFunctionCall(Lexeme nameLexeme)
