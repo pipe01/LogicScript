@@ -17,13 +17,7 @@ namespace Tester
 #else
             var result = Script.Compile(@"@precompute off
 any
-    out = in[0]
-
-    if in[in[0]]
-        out = 1
-    else
-        out = 0
-    end
+    out = !1010
 end
 ");
 

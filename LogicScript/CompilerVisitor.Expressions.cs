@@ -43,6 +43,10 @@ namespace LogicScript
                     Visit(slotExpr);
                     break;
 
+                case UnaryOperatorExpression unary:
+                    Visit(unary);
+                    break;
+
                 default:
                     throw new LogicEngineException("Invalid expression", expr);
             }
@@ -121,6 +125,19 @@ namespace LogicScript
                 Generator.Sub();
         }
 
+        private void Visit(UnaryOperatorExpression expr)
+        {
+            Visit(expr.Operand);
+
+            switch (expr.Operator)
+            {
+                case Operator.Not:
+                    Generator.Call(Info.OfPropertyGet<BitsValue>(nameof(BitsValue.Negated)));
+                    ValueToReference();
+                    break;
+            }
+        }
+
         private void Visit(FunctionCallExpression expr)
         {
             EmitFunctionCall(expr.Name, expr.Arguments, expr);
@@ -177,9 +194,6 @@ namespace LogicScript
                         break;
                     case Operator.Xor:
                         Generator.Xor();
-                        break;
-                    case Operator.Not:
-                        Generator.Not();
                         break;
                 }
             }
