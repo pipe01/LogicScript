@@ -6,9 +6,11 @@ using System.Reflection.Emit;
 
 namespace LogicScript
 {
-    public class Compiler
+    internal delegate void CaseDelegate(IMachine machine);
+
+    internal static class Compiler
     {
-        public IEnumerable<Action<IMachine>> Compile(Script script)
+        public static IEnumerable<CaseDelegate> Compile(Script script)
         {
             foreach (var item in script.TopLevelNodes)
             {
@@ -19,7 +21,7 @@ namespace LogicScript
             }
         }
 
-        private Action<IMachine> CompileCase(Case c)
+        public static CaseDelegate CompileCase(Case c)
         {
             var method = new DynamicMethod($"<>{c.GetType().Name}", typeof(void), new[] { typeof(IMachine) });
 
@@ -33,7 +35,7 @@ namespace LogicScript
                 Console.WriteLine(il.GetILCode());
             }
 
-            return (Action<IMachine>)method.CreateDelegate(typeof(Action<IMachine>));
+            return (CaseDelegate)method.CreateDelegate(typeof(CaseDelegate));
         }
     }
 }

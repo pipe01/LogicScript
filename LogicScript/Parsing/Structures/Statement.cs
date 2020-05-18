@@ -74,4 +74,16 @@ namespace LogicScript.Parsing.Structures
             this.VarName = varName;
         }
     }
+
+    internal class WhileStatement : Statement
+    {
+        public Expression Condition { get; set; }
+        public IReadOnlyList<Statement> Body { get; set; }
+
+        public WhileStatement(Expression condition, IReadOnlyList<Statement> body, SourceLocation location) : base(location)
+        {
+            this.Condition = condition;
+            this.Body = body;
+        }
+    }
 }

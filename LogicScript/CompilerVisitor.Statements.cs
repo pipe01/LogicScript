@@ -37,6 +37,10 @@ namespace LogicScript
                     Visit(forStmt);
                     break;
 
+                case WhileStatement whileStmt:
+                    Visit(whileStmt);
+                    break;
+
                 case BreakStatement breakStmt:
                     Visit(breakStmt);
                     break;
@@ -120,6 +124,27 @@ namespace LogicScript
             CurrentLoopEndLabel = previousEndLabel;
 
             Generator.Pop();
+        }
+
+        private void Visit(WhileStatement stmt)
+        {
+            var previousEndLabel = CurrentLoopEndLabel;
+
+            var loopStartLabel = Generator.DefineLabel("whilestart");
+            var loopEndLabel = CurrentLoopEndLabel = Generator.DefineLabel("whileend");
+
+            Generator.MarkLabel(loopStartLabel);
+
+            Visit(stmt.Condition);
+            BitsValueToNumber();
+            Generator.Brfalse(loopEndLabel);
+
+            Visit(stmt.Body);
+            Generator.Br(loopStartLabel);
+
+            Generator.MarkLabel(loopEndLabel);
+
+            CurrentLoopEndLabel = previousEndLabel;
         }
 
         private void Visit(BreakStatement stmt)

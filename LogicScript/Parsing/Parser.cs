@@ -61,6 +61,7 @@ namespace LogicScript.Parsing
         [DebuggerStepThrough]
         private void Error(string msg, bool fatal = false, SourceLocation? on = null)
         {
+            Debugger.Break();
             Errors.AddError(on ?? Current.Location, msg);
 
             if (fatal)
@@ -139,8 +140,11 @@ namespace LogicScript.Parsing
         }
 
         [DebuggerStepThrough]
-        private void SkipWhitespaces(bool newlines = false)
+        private void SkipWhitespaces(bool newlines = false, bool requireOne = false)
         {
+            if (requireOne)
+                Take(LexemeKind.Whitespace);
+
             while (Current.Kind == LexemeKind.Whitespace || (Current.Kind == LexemeKind.NewLine && newlines))
             {
                 if (!Advance())
@@ -184,7 +188,7 @@ namespace LogicScript.Parsing
         private Directive TakeDirective(SourceLocation startLocation)
         {
             Take(LexemeKind.String, out var nameLexeme);
-            Take(LexemeKind.Whitespace);
+            SkipWhitespaces(requireOne: true);
             Take(LexemeKind.String, out var valueLexeme);
 
             var name = nameLexeme.Content;
@@ -263,7 +267,7 @@ namespace LogicScript.Parsing
 
             var stmtList = new List<Statement>();
 
-            SkipWhitespaces(true);
+            SkipWhitespaces(newlines: true);
 
             while (!end())
             {
@@ -286,6 +290,7 @@ namespace LogicScript.Parsing
 
             if (!(TryTakeIfStatement(out var statement)
                 || TryTakeForStatement(out statement)
+                || TryTakeWhileStatement(out statement)
                 || TryTakeSimpleStatement(out statement)))
             {
                 return TakeExpressionStatement();
@@ -307,7 +312,7 @@ namespace LogicScript.Parsing
                 return false;
             }
 
-            SkipWhitespaces();
+            SkipWhitespaces(requireOne: true);
 
             var condition = TakeExpression();
 
@@ -331,13 +336,11 @@ namespace LogicScript.Parsing
                 return false;
             }
 
-            Take(LexemeKind.Whitespace);
-            SkipWhitespaces();
+            SkipWhitespaces(requireOne: true);
 
             Take(LexemeKind.String, out var varName, expected: "for variable name");
 
-            Take(LexemeKind.Whitespace);
-            SkipWhitespaces();
+            SkipWhitespaces(requireOne: true);
 
             Expression from;
 
@@ -360,6 +363,26 @@ namespace LogicScript.Parsing
             var body = TakeStatements(start.Location);
 
             statement = new ForStatement(varName.Content, from, to, body, start.Location);
+            return true;
+        }
+
+        private bool TryTakeWhileStatement(out Statement statement)
+        {
+            if (!TakeKeyword("while", out var start, false))
+            {
+                statement = null;
+                return false;
+            }
+
+            SkipWhitespaces(requireOne: true);
+
+            var condition = TakeExpression();
+
+            Take(LexemeKind.NewLine);
+
+            var body = TakeStatements(start.Location);
+
+            statement = new WhileStatement(condition, body, start.Location);
             return true;
         }
 

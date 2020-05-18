@@ -28,7 +28,6 @@ any
 end
 ";
 
-        private readonly Action<IMachine> Compiled;
         private readonly Script Script;
         private readonly IMachine Machine = new Machine { Noop = true };
 
@@ -39,14 +38,13 @@ end
             if (result.Errors.ContainsErrors)
                 throw new InvalidOperationException("Script failed to compile");
 
-            Compiled = new Compiler().Compile(result.Script).First();
             Script = result.Script;
         }
 
         [Benchmark]
         public void RunCompiled()
         {
-            Compiled(Machine);
+            Script.Run(Machine);
         }
 
         [Benchmark]

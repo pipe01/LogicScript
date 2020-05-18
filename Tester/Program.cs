@@ -15,9 +15,16 @@ namespace Tester
 #if RELEASE
             BenchmarkRunner.Run<Benchmarks>(ManualConfig.Create(DefaultConfig.Instance).With(MemoryDiagnoser.Default));
 #else
-            var result = Script.Compile(@"@precompute off
+            var result = Script.Compile(@"
 any
+    test = 10'
+    while 1
+        test = test - 1
 
+        if test == 0
+            break
+        end
+    end
 end
 ");
 
@@ -32,8 +39,8 @@ end
                 return;
             }
 
-            var firstCase = new Compiler().Compile(result.Script).First();
-            firstCase(new Machine());
+            result.Script.Run(new Machine());
+
             Console.ReadKey(true);
 #endif
         }
