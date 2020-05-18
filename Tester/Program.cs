@@ -17,9 +17,12 @@ namespace Tester
 #else
             var result = Script.Compile(@"
 any
-    out = in
+    out = in[1..3]
 end
 ");
+
+            int a = 10;
+            Span<bool> vals = stackalloc bool[a];
 
             foreach (var item in result.Errors)
             {
@@ -59,14 +62,17 @@ end
             Console.WriteLine($"Set outputs [{start}..{start + values.Length}] to {bitsVal.Number} ({bitsVal})");
         }
 
-        public BitsValue GetInputs(int start)
+        public void GetInputs(int start, Span<bool> values)
         {
             if (Noop)
-                return BitsValue.Zero;
+                return;
 
             Console.WriteLine($"Read inputs [{start}..]");
 
-            return new BitsValue(Inputs[start..]);
+            for (int i = 0; i < values.Length; i++)
+            {
+                values[i] = Inputs[i + start];
+            }
         }
     }
 }

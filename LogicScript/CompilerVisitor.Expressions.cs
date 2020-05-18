@@ -1,6 +1,8 @@
-﻿using LogicScript.Parsing;
+﻿using LogicScript.Data;
+using LogicScript.Parsing;
 using LogicScript.Parsing.Structures;
 using System;
+using System.Reflection.Emit;
 
 namespace LogicScript
 {
@@ -25,7 +27,76 @@ namespace LogicScript
                 case FunctionCallExpression funcCall:
                     Visit(funcCall);
                     break;
+
+                case IndexerExpression indexer when indexer.Operand is SlotExpression slot:
+                    Visit(slot, indexer.Start, indexer.End);
+                    break;
+
+                case SlotExpression slotExpr:
+                    Visit(slotExpr);
+                    break;
+
+                default:
+                    throw new LogicEngineException("Invalid expression", expr);
             }
+        }
+
+        private void Visit(SlotExpression expr, Expression start = null, Expression end = null)
+        {
+            Generator.MarkLabel(Generator.DefineLabel(expr.ToString()));
+
+            var spanLocal = Generator.DeclareLocal(typeof(Span<bool>));
+            var lengthLocal = Generator.DeclareLocal(typeof(int));
+            var valueLocal = Generator.DeclareLocal(typeof(BitsValue));
+
+            // If the "end" expression isn't null, load it's value. If it is, get the slot length and set that as the end position
+            if (end != null)
+            {
+                Visit(end);
+                BitsValueToNumber();
+                Generator.Conv<int>();
+            }
+            else
+            {
+                LoadMachine();
+                if (expr.Slot == Slots.In)
+                {
+                    Generator.Call(Info.OfPropertyGet<IMachine>(nameof(IMachine.InputCount)));
+                }
+                else if (expr.Slot == Slots.Memory)
+                {
+                    Generator.Call(Info.OfPropertyGet<IMachine>(nameof(IMachine.Memory)));
+                    Generator.Call(Info.OfPropertyGet<IMemory>(nameof(IMemory.Capacity)));
+                }
+                else
+                {
+                    throw new LogicEngineException("Invalid slot", expr);
+                }
+            }
+
+            // If the start expression is null, start from 0
+            if (start != null)
+            {
+                Visit(start);
+                BitsValueToNumber();
+                Generator.Conv<int>();
+            }
+            else
+            {
+                Generator.Ldc_I4(0);
+            }
+
+            Generator.Sub();
+            Generator.Stloc(lengthLocal);
+
+            // Allocate Span<bool> with the calculated length
+            Generator.Ldloc(lengthLocal);
+            Generator.Conv<uint>();
+            OpCodes.Localloc
+
+            Generator.Ldc_I8(123);
+            Generator.Conv<ulong>();
+            NumberToBitsValue();
         }
 
         private void Visit(FunctionCallExpression expr)
@@ -58,19 +129,6 @@ namespace LogicScript
                 BitsValueToNumber();
                 Visit(expr.Right);
                 BitsValueToNumber();
-
-                //var label = Generator.DefineLabel("minmax");
-
-                //Generator.Ldloc(Temp1);
-                //Generator.Ldloc(Temp2);
-                //Generator.Cgt(true); // Temp1 > Temp2
-                //Generator.Brtrue(label);
-
-                //// Temp2 > Temp1
-                //Generator.Ldloc(Temp2);
-                //Generator.Stloc(Temp1);
-
-                //Generator.MarkLabel(label);
 
                 switch (expr.Operator)
                 {
