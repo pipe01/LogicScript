@@ -1,5 +1,6 @@
 ﻿using GrEmit;
 using LogicScript.Data;
+using LogicScript.Parsing;
 using System;
 using System.Collections.Generic;
 using System.Reflection;
@@ -17,7 +18,7 @@ namespace LogicScript
         private readonly IDictionary<string, GroboIL.Local> Locals = new Dictionary<string, GroboIL.Local>();
         private readonly GroboIL.Local Temp1, Temp2;
 
-        public CompilerVisitor(GroboIL generator)
+        public CompilerVisitor(GroboIL generator, ErrorSink errors)
         {
             this.Generator = generator ?? throw new ArgumentNullException(nameof(generator));
             this.RawGenerator = (ILGenerator)typeof(GroboIL).GetField("il", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(generator);

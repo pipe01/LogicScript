@@ -1,5 +1,6 @@
 ﻿using LogicScript.Parsing;
 using LogicScript.Parsing.Structures;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -8,17 +9,14 @@ namespace LogicScript
     public class Script
     {
         internal IList<TopLevelNode> TopLevelNodes { get; } = new List<TopLevelNode>();
-        internal CaseDelegate[] Methods { get; private set; }
+        internal CaseDelegate Method { get; private set; }
 
         internal bool Strict { get; set; } = true;
         internal bool AutoSuffix { get; set; }
 
         public void Run(IMachine machine)
         {
-            for (int i = 0; i < Methods.Length; i++)
-            {
-                Methods[i](machine);
-            }
+            Method(machine);
         }
 
         public static CompilationResult Compile(string script)
@@ -37,7 +35,7 @@ namespace LogicScript
             if (errors.ContainsErrors)
                 return new CompilationResult(false, null, errors);
 
-            parsed.Methods = parsed.TopLevelNodes.OfType<Case>().Select(Compiler.CompileCase).ToArray();
+            parsed.Method = Compiler.CompileCases(errors, parsed.TopLevelNodes.OfType<Case>().ToArray(), "Script");
 
             return new CompilationResult(true, parsed, errors);
         }

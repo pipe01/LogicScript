@@ -17,14 +17,11 @@ namespace Tester
 #else
             var result = Script.Compile(@"
 any
-    test = 10'
-    while 1
-        test = test - 1
+    out = 1'
+end
 
-        if test == 0
-            break
-        end
-    end
+when in[0]
+    out = 2'
 end
 ");
 

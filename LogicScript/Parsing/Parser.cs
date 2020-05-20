@@ -61,7 +61,6 @@ namespace LogicScript.Parsing
         [DebuggerStepThrough]
         private void Error(string msg, bool fatal = false, SourceLocation? on = null)
         {
-            Debugger.Break();
             Errors.AddError(on ?? Current.Location, msg);
 
             if (fatal)

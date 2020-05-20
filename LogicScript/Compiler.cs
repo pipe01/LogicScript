@@ -1,7 +1,9 @@
 ﻿using GrEmit;
+using LogicScript.Parsing;
 using LogicScript.Parsing.Structures;
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 using System.Reflection.Emit;
 
 namespace LogicScript
@@ -10,32 +12,52 @@ namespace LogicScript
 
     internal static class Compiler
     {
-        public static IEnumerable<CaseDelegate> Compile(Script script)
+        public static CaseDelegate CompileCases(ErrorSink errors, Case[] cases, string name)
         {
-            foreach (var item in script.TopLevelNodes)
+            var ab = AssemblyBuilder.DefineDynamicAssembly(new AssemblyName(name), AssemblyBuilderAccess.RunAndCollect);
+            var mb = ab.DefineDynamicModule("MainModule");
+            var cb = mb.DefineType("Cases");
+
+            var methods = new List<MethodInfo>();
+
+            for (int i = 0; i < cases.Length; i++)
             {
-                if (item is Case c)
+                var method = cb.DefineMethod($"Case{i}", MethodAttributes.Private | MethodAttributes.Static, typeof(void), new[] { typeof(IMachine) });
+
+                using (var il = new GroboIL(method))
                 {
-                    yield return CompileCase(c);
+                    var visitor = new CompilerVisitor(il, errors);
+                    visitor.Visit(cases[i]);
+
+                    il.Ret();
+
+                    Console.WriteLine(il.GetILCode());
                 }
+
+                methods.Add(method);
             }
+
+            CreateRunAllMethod(cb, methods);
+
+            var type = cb.CreateType();
+
+            return (CaseDelegate)type.GetMethod("RunAll").CreateDelegate(typeof(CaseDelegate));
         }
 
-        public static CaseDelegate CompileCase(Case c)
+        private static void CreateRunAllMethod(TypeBuilder tb, IEnumerable<MethodInfo> methods)
         {
-            var method = new DynamicMethod($"<>{c.GetType().Name}", typeof(void), new[] { typeof(IMachine) });
+            var runAllMethod = tb.DefineMethod("RunAll", MethodAttributes.Public | MethodAttributes.Static, typeof(void), new[] { typeof(IMachine) });
 
-            using (var il = new GroboIL(method))
+            using (var il = new GroboIL(runAllMethod))
             {
-                var visitor = new CompilerVisitor(il);
-                visitor.Visit(c.Statements);
+                foreach (var method in methods)
+                {
+                    il.Ldarg(0);
+                    il.Call(method);
+                }
 
                 il.Ret();
-
-                Console.WriteLine(il.GetILCode());
             }
-
-            return (CaseDelegate)method.CreateDelegate(typeof(CaseDelegate));
         }
     }
 }
