@@ -1,8 +1,10 @@
 ﻿using GrEmit;
 using LogicScript.Data;
+using LogicScript.Parsing;
 using LogicScript.Parsing.Structures;
 using System;
 using System.Collections.Generic;
+using System.Reflection.Emit;
 
 namespace LogicScript
 {
@@ -43,6 +45,10 @@ namespace LogicScript
 
                 case BreakStatement breakStmt:
                     Visit(breakStmt);
+                    break;
+
+                case QueueUpdateStatement queueStmt:
+                    Visit(queueStmt);
                     break;
 
                 default:
@@ -153,6 +159,24 @@ namespace LogicScript
                 throw new LogicEngineException("Break statement outside of loop", stmt);
 
             Generator.Br(CurrentLoopEndLabel);
+        }
+
+        private void Visit(QueueUpdateStatement stmt)
+        {
+            var callLabel = Generator.DefineLabel("callupdate");
+
+            LoadMachine();
+
+            Generator.Isinst(typeof(IUpdatableMachine));
+            Generator.Dup();
+            Generator.Brtrue(callLabel);
+
+            Generator.Ldstr($"Called 'update' on a non-updatable machine at {stmt.Location}");
+            Generator.Newobj(Info.OfConstructor<LogicEngineException>("System.String"));
+            Generator.Throw();
+
+            Generator.MarkLabel(callLabel);
+            Generator.Call(Info.OfMethod<IUpdatableMachine>(nameof(IUpdatableMachine.QueueUpdate)));
         }
     }
 }

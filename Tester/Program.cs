@@ -17,13 +17,8 @@ namespace Tester
 #else
             var result = Script.Compile(@"
 any
-    out = 1'
-end
 
-when in[0]
-    out = 2'
-end
-");
+end");
 
             foreach (var item in result.Errors)
             {

@@ -1,4 +1,5 @@
-﻿using LogicScript.Parsing.Structures;
+﻿using LogicScript.Parsing;
+using LogicScript.Parsing.Structures;
 using System;
 
 namespace LogicScript
@@ -13,7 +14,11 @@ namespace LogicScript
         {
         }
         
-        internal LogicEngineException(string message, ICodeNode node) : base(message + $" at {node.Location}")
+        internal LogicEngineException(string message, ICodeNode node) : this(message, node.Location)
+        {
+        }
+        
+        internal LogicEngineException(string message, SourceLocation location) : base(message + $" at {location}")
         {
         }
 
