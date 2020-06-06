@@ -31,7 +31,7 @@ namespace LogicScript
 
                     il.Ret();
 
-                    Console.WriteLine(il.GetILCode());
+                    //Console.WriteLine(il.GetILCode());
                 }
 
                 methods.Add(method);
@@ -39,7 +39,12 @@ namespace LogicScript
 
             CreateRunAllMethod(cb, methods);
 
-            var type = cb.CreateType();
+            var type =
+#if NETSTANDARD2_0
+                cb.CreateTypeInfo();
+#else
+                cb.CreateType();
+#endif
 
             return (CaseDelegate)type.GetMethod("RunAll").CreateDelegate(typeof(CaseDelegate));
         }
