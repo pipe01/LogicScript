@@ -13,11 +13,11 @@ namespace LogicScript
         public LogicEngineException(string message) : base(message)
         {
         }
-        
+
         internal LogicEngineException(string message, ICodeNode node) : this(message, node.Location)
         {
         }
-        
+
         internal LogicEngineException(string message, SourceLocation location) : base(message + $" at {location}")
         {
         }

@@ -11,36 +11,44 @@ namespace LogicScript
         void Write(int start, BitsValue value);
     }
 
-    public sealed class VolatileMemory : IMemory
+    public sealed class BufferedMemory : IMemory
     {
-        public int Capacity { get; }
+        public int Capacity { get; private set; }
+        public bool[] Buffer { get; private set; }
 
-        private readonly bool[] Memory;
-
-        public VolatileMemory() : this(256)
+        public BufferedMemory() : this(256)
         {
         }
 
-        public VolatileMemory(int capacity)
+        public BufferedMemory(int capacity) : this(new bool[capacity])
         {
-            this.Memory = new bool[capacity];
-            this.Capacity = capacity;
+        }
+
+        public BufferedMemory(bool[] buffer)
+        {
+            SetBuffer(buffer);
+        }
+
+        public void SetBuffer(bool[] buffer)
+        {
+            this.Buffer = buffer;
+            this.Capacity = buffer.Length;
         }
 
         public void Clear()
         {
-            for (int i = 0; i < Memory.Length; i++)
+            for (int i = 0; i < Buffer.Length; i++)
             {
-                Memory[i] = false;
+                Buffer[i] = false;
             }
         }
 
         public BitsValue Read(int start, int count)
         {
 #if NETCOREAPP3_1
-            return new BitsValue(Memory[start..(start + count)]);
+            return new BitsValue(Buffer[start..(start + count)]);
 #else
-            return new BitsValue(Memory.AsSpan().Slice(start, count));
+            return new BitsValue(Buffer.AsSpan().Slice(start, count));
 #endif
         }
 
@@ -48,7 +56,7 @@ namespace LogicScript
         {
             for (int i = 0; i < value.Length; i++)
             {
-                this.Memory[i + start] = value[i];
+                this.Buffer[i + start] = value[i];
             }
         }
     }

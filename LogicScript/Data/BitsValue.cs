@@ -16,8 +16,8 @@ namespace LogicScript.Data
         public bool IsOne => Number == 1;
         public bool AreAllBitsSet => Number != 0 && (Number == OneMask);
         public bool IsAnyBitSet => Number != 0;
-        internal BitsValue Negated => new BitsValue(OneMask ^ Number, Length);
-        internal BitsValue Truncated
+        public BitsValue Negated => new BitsValue(OneMask ^ Number, Length);
+        public BitsValue Truncated
         {
             get
             {
@@ -33,7 +33,7 @@ namespace LogicScript.Data
                 return new BitsValue(Number, len);
             }
         }
-        internal int PopulationCount
+        public int PopulationCount
         {
             get
             {
@@ -124,22 +124,7 @@ namespace LogicScript.Data
 
         public override int GetHashCode() => Number.GetHashCode();
 
-        internal bool AggregateBits(bool start, Func<bool, bool, bool> aggregator, bool? shortCircuitOn = null)
-        {
-            bool value = start;
-
-            for (int i = 0; i < Length; i++)
-            {
-                value = aggregator(value, this[i]);
-
-                if (value == shortCircuitOn)
-                    break;
-            }
-
-            return value;
-        }
-
-        internal BitsValue Truncate(int length)
+        public BitsValue Truncate(int length)
         {
             ulong mask = (1UL << length) - 1;
 

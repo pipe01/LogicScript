@@ -60,7 +60,7 @@ namespace LogicScript
             Generator.Call(Info.OfPropertyGet<BitsValue>(nameof(BitsValue.AreAllBitsSet)));
             BoolToBitsValue();
         }
-        
+
         private void FunctionOr(IList<Expression> args)
         {
             if (args.Count != 1)
@@ -71,7 +71,7 @@ namespace LogicScript
             Generator.Call(Info.OfPropertyGet<BitsValue>(nameof(BitsValue.IsAnyBitSet)));
             BoolToBitsValue();
         }
-        
+
         private void FunctionSum(IList<Expression> args)
         {
             if (args.Count != 1)

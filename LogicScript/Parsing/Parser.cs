@@ -4,7 +4,6 @@ using LogicScript.Utils;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Globalization;
 using Index = LogicScript.Parsing.Structures.Index;
 
 namespace LogicScript.Parsing
@@ -444,7 +443,7 @@ namespace LogicScript.Parsing
                     return true;
                 }
 
-            none:
+                none:
                 op = default;
                 predecence = 0;
                 return false;

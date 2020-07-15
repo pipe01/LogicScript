@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace LogicScript.Parsing
+﻿namespace LogicScript.Parsing
 {
     internal enum LexemeKind
     {

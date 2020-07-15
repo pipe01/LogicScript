@@ -1,7 +1,6 @@
 ﻿using GrEmit;
 using LogicScript.Parsing;
 using LogicScript.Parsing.Structures;
-using System;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Reflection.Emit;

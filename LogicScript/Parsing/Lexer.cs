@@ -1,5 +1,4 @@
-﻿using LogicScript.Parsing.Structures;
-using LogicScript.Utils;
+﻿using LogicScript.Utils;
 using System;
 using System.Collections.Generic;
 using System.IO;

@@ -2,7 +2,6 @@
 using LogicScript.Parsing;
 using LogicScript.Parsing.Structures;
 using System;
-using System.Reflection.Emit;
 using Index = LogicScript.Parsing.Structures.Index;
 
 namespace LogicScript
@@ -34,7 +33,7 @@ namespace LogicScript
                 case IndexerExpression indexer when indexer.Operand is SlotExpression slot:
                     Visit(slot, indexer.Index);
                     break;
-                    
+
                 case RangeExpression range when range.Operand is SlotExpression slot:
                     Visit(slot, range.Start, range.End);
                     break;

@@ -1,10 +1,8 @@
 ﻿using GrEmit;
 using LogicScript.Data;
-using LogicScript.Parsing;
 using LogicScript.Parsing.Structures;
 using System;
 using System.Collections.Generic;
-using System.Reflection.Emit;
 
 namespace LogicScript
 {

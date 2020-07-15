@@ -1,6 +1,4 @@
-﻿using System.Linq;
-
-namespace LogicScript.Parsing.Structures
+﻿namespace LogicScript.Parsing.Structures
 {
     internal class UnaryOperatorExpression : Expression
     {
