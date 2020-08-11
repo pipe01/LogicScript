@@ -40,16 +40,18 @@ namespace LogicScript.Data
 #if NETCOREAPP3_1
                 return BitOperations.PopCount(Number);
 #else
-                int count = 0;
-                var n = Number;
-                while (n > 0)
-                {
-                    n &= (n - 1);
-                    count++;
-                }
-                return count;
+                const ulong m1 = 0x5555555555555555;
+                const ulong m2 = 0x3333333333333333;
+                const ulong m4 = 0x0f0f0f0f0f0f0f0f;
+                const ulong h01 = 0x0101010101010101;
+
+                ulong x = Number;
+                x -= (x >> 1) & m1;
+                x = (x & m2) + ((x >> 2) & m2);
+                x = (x + (x >> 4)) & m4;
+                return (int)((x * h01) >> 56);
 #endif
-            }
+                }
         }
 
         private ulong OneMask => (1UL << Length) - 1;
