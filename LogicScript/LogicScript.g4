@@ -10,7 +10,8 @@ when_decl           : 'when' (expression | '*') NEWLINE block ;
 
 block               : (statement NEWLINE)* 'end' ;
 
-statement           : expr_statement ;
+statement           : assign_statement | expr_statement ;
+assign_statement    : IDENT EQUALS expression ;
 expr_statement      : expression;
 
 expression          : '(' expression ')'                   # exprParen
@@ -46,6 +47,7 @@ NEWLINE             : [\r\n]+ ;
 
 BIT_SIZE            : '[' DEC_NUMBER ']' ;
 
+EQUALS      : '=' ;
 COMPARE_EQUALS      : '==' ;
 COMPARE_GREATER     : '>' ;
 COMPARE_LESSER     : '<' ;
