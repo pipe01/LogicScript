@@ -25,6 +25,16 @@ namespace LogicScript.Parsing.Structures
         public override string ToString() => Expression.ToString();
     }
 
+    internal class BlockStatement : Statement
+    {
+        public IReadOnlyList<Statement> Statements { get; set; }
+
+        public BlockStatement(IReadOnlyList<Statement> statements, SourceLocation location) : base(location)
+        {
+            this.Statements = statements;
+        }
+    }
+
     internal class IfStatement : Statement
     {
         public Expression Condition { get; set; }

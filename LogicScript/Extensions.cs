@@ -1,4 +1,7 @@
-﻿namespace LogicScript
+﻿using Antlr4.Runtime;
+using LogicScript.Parsing;
+
+namespace LogicScript
 {
     internal static class Extensions
     {
@@ -12,5 +15,8 @@
 
             return false;
         }
+
+        public static SourceLocation StartLocation(this ParserRuleContext context)
+            => new SourceLocation(context.Start);
     }
 }

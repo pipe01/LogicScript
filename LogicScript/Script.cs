@@ -7,6 +7,10 @@ namespace LogicScript
 {
     public class Script
     {
+        internal IDictionary<string, PortInfo> Inputs = new Dictionary<string, PortInfo>();
+        internal IDictionary<string, PortInfo> Outputs = new Dictionary<string, PortInfo>();
+        internal IDictionary<string, PortInfo> Registers = new Dictionary<string, PortInfo>();
+
         internal IList<TopLevelNode> TopLevelNodes { get; } = new List<TopLevelNode>();
         internal CaseDelegate Method { get; private set; }
 
