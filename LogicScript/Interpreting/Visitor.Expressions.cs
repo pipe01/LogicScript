@@ -23,7 +23,7 @@ namespace LogicScript.Interpreting
             throw new InterpreterException("Unknown expression", expr.Location);
         }
 
-        public BitsValue Visit(BinaryOperatorExpression expr)
+        private BitsValue Visit(BinaryOperatorExpression expr)
         {
             var left = Visit(expr.Left);
             var right = Visit(expr.Right);
@@ -54,7 +54,7 @@ namespace LogicScript.Interpreting
             }
         }
 
-        public BitsValue Visit(ReferenceExpression expr)
+        private BitsValue Visit(ReferenceExpression expr)
         {
             switch (expr.Reference.Target)
             {
@@ -65,10 +65,39 @@ namespace LogicScript.Interpreting
                     return Input[Script.Inputs[expr.Reference.Name].Index] ? BitsValue.One : BitsValue.Zero;
 
                 case ReferenceTarget.Register:
-                    throw new NotImplementedException();
+                    return Machine.ReadRegister(Script.Registers[expr.Reference.Name].Index);
             }
 
             throw new InterpreterException("Unknown reference target", expr.Location);
+        }
+
+        private BitsValue Visit(TernaryOperatorExpression expr)
+        {
+            var cond = Visit(expr.Condition);
+
+            if (cond.Number != 0)
+                return Visit(expr.IfTrue);
+            else
+                return Visit(expr.IfFalse);
+        }
+
+        private BitsValue Visit(UnaryOperatorExpression expr)
+        {
+            var operand = Visit(expr.Operand);
+
+            switch (expr.Operator)
+            {
+                case Operator.Not:
+                    return operand.Negated;
+                case Operator.Rise:
+                    throw new NotImplementedException();
+                case Operator.Fall:
+                    throw new NotImplementedException();
+                case Operator.Change:
+                    throw new NotImplementedException();
+            }
+
+            throw new InterpreterException("Unknown operand", expr.Location);
         }
     }
 }

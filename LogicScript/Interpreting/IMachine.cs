@@ -1,4 +1,5 @@
-﻿using System;
+﻿using LogicScript.Data;
+using System;
 
 namespace LogicScript.Interpreting
 {
@@ -8,7 +9,10 @@ namespace LogicScript.Interpreting
         int OutputCount { get; }
 
         void ReadInput(Span<bool> values);
-        void WriteOutput(Span<bool> values);
+        void WriteOutput(int index, bool value);
+
+        BitsValue ReadRegister(int index);
+        void WriteRegister(int index, BitsValue value);
 
         void Print(string msg);
     }

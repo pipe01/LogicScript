@@ -1,4 +1,5 @@
-﻿using LogicScript.Parsing.Structures.Statements;
+﻿using LogicScript.Parsing.Structures;
+using LogicScript.Parsing.Structures.Statements;
 
 namespace LogicScript.Interpreting
 {
@@ -24,6 +25,41 @@ namespace LogicScript.Interpreting
             {
                 Visit(item);
             }
+        }
+
+        private void Visit(AssignStatement stmt)
+        {
+            var value = Visit(stmt.Value);
+
+            switch (stmt.Reference.Target)
+            {
+                case ReferenceTarget.Input:
+                    throw new InterpreterException("Cannot write to input", stmt.Location);
+
+                case ReferenceTarget.Output:
+                    if (value.Length != 1)
+                        throw new InterpreterException("Value must be a single bit to be written to output", stmt.Location);
+
+                    Machine.WriteOutput(Script.Outputs[stmt.Reference.Name].Index, value.IsOne);
+                    break;
+
+                case ReferenceTarget.Register:
+                    Machine.WriteRegister(Script.Registers[stmt.Reference.Name].Index, value.IsOne);
+                    break;
+
+                default:
+                    throw new InterpreterException("Unknown assignment target", stmt.Location);
+            }
+        }
+
+        private void Visit(IfStatement stmt)
+        {
+            var cond = Visit(stmt.Condition);
+
+            if (cond.Number != 0)
+                Visit(stmt.Body);
+            else if (stmt.Else != null)
+                Visit(stmt.Else);
         }
 
         private void Visit(TaskStatement stmt)

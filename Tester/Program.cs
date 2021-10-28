@@ -1,4 +1,5 @@
 ﻿using LogicScript;
+using LogicScript.Data;
 using LogicScript.Interpreting;
 using LogicScript.Parsing;
 using System;
@@ -52,8 +53,18 @@ end
             {
             }
 
-            public void WriteOutput(Span<bool> values)
+            public void WriteOutput(int index, bool value)
             {
+            }
+
+            public BitsValue ReadRegister(int index)
+            {
+                throw new NotImplementedException();
+            }
+
+            public void WriteRegister(int index, BitsValue value)
+            {
+                throw new NotImplementedException();
             }
         }
     }
