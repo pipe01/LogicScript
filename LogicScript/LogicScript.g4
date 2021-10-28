@@ -47,7 +47,7 @@ fragment INPUT      : 'input' ;
 fragment OUTPUT     : 'output' ;
 
 DEC_NUMBER          : DEC_DIGIT+ ;
-IDENT               : (LOWERCASE | UPPERCASE)+ ;
+IDENT               : (LOWERCASE | UPPERCASE | '_') (LOWERCASE | UPPERCASE | DEC_DIGIT | '_')* ;
 TEXT                : '"' .*? '"' ;
 WHITESPACE          : [ \r]+ -> skip ;
 NEWLINE             : [\r\n]+ ;

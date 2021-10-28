@@ -14,7 +14,7 @@ namespace Tester
 input test
 output'2 out
 
-const myconst = test
+const myconst = 123
 
 reg'123 on
 
