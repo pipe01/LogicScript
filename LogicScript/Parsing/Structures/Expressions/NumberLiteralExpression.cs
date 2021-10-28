@@ -10,5 +10,7 @@ namespace LogicScript.Parsing.Structures.Expressions
         {
             this.Value = value;
         }
+
+        public override string ToString() => Value.ToString();
     }
 }

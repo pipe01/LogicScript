@@ -12,5 +12,7 @@
             this.Left = left;
             this.Right = right;
         }
+
+        public override string ToString() => $"{Operator}({Left}, {Right})";
     }
 }

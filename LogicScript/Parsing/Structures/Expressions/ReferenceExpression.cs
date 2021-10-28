@@ -8,5 +8,7 @@
         {
             this.Target = target;
         }
+
+        public override string ToString() => Target.ToString();
     }
 }

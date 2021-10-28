@@ -10,5 +10,7 @@
             this.Operator = op;
             this.Operand = operand;
         }
+
+        public override string ToString() => $"{Operator}({Operand})";
     }
 }
