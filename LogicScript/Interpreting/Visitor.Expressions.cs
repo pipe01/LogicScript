@@ -131,9 +131,9 @@ namespace LogicScript.Interpreting
             var operand = Visit(expr.Operand);
 
             if (expr.Size > operand.Length)
-                return new BitsValue(operand.Number & ((1ul << expr.Size) - 1), expr.Size);
+                return new BitsValue(operand.Number, expr.Size);
             else if (expr.Size < operand.Length)
-                return new BitsValue(operand >> operand.Length - expr.Size, expr.Size);
+                return new BitsValue(operand.Number >> (operand.Length - expr.Size), expr.Size);
 
             return operand;
         }
