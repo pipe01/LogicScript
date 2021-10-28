@@ -13,7 +13,7 @@ port_info           : BIT_SIZE? IDENT ;
 
 block               : (stmt NEWLINE)* ;
 
-stmt                : stmt_if | stmt_assign | stmt_task | stmt_vardecl ;
+stmt                : stmt_if | stmt_for | stmt_assign | stmt_task | stmt_vardecl ;
 stmt_assign         : reference EQUALS expression       # assignRegular
                     | reference TRUNC_EQUALS expression # assignTruncate
                     ;
@@ -23,11 +23,18 @@ stmt_elseif         : 'else if' if_body ;
 stmt_else           : 'else' NEWLINE block 'end' ;
 if_body             : expression NEWLINE block (stmt_elseif | stmt_else | 'end') ;
 
+stmt_for            :
+                    'for' VARIABLE
+                    ('from' from=expression)?
+                    'to' to=expression
+                    NEWLINE block 'end'
+                    ;
+
 stmt_task           : '@' (task_print | task_printbin) ;
 task_print          : 'print' (expression | TEXT) ;
 task_printbin       : 'print.b' expression ;
 
-stmt_vardecl        : 'local' '$' IDENT BIT_SIZE? ('=' expression)? ;
+stmt_vardecl        : 'local' VARIABLE BIT_SIZE? ('=' expression)? ;
 
 expression          : '(' expression ')'                            # exprParen
                     | '(' expression ')\'' DEC_NUMBER               # exprTrunc
@@ -57,7 +64,7 @@ atom                : reference
 
 number              : DEC_NUMBER | BIN_NUMBER | HEX_NUMBER ;
 
-reference           : '$' IDENT # refLocal
+reference           : VARIABLE  # refLocal
                     | IDENT     # refPort
                     ;
 
@@ -79,6 +86,8 @@ IDENT               : (LOWERCASE | UPPERCASE | '_') (LOWERCASE | UPPERCASE | DEC
 WHITESPACE          : [ \r]+ -> channel(HIDDEN) ;
 NEWLINE             : [ \r\n]+ ;
 TEXT                : '"' .*? '"' ;
+
+VARIABLE            : '$' IDENT ;
 
 BIT_SIZE            : '\'' DEC_NUMBER ;
 

@@ -27,7 +27,7 @@ namespace LogicScript.Parsing.Visitors
 
         public override Reference VisitRefLocal([NotNull] LogicScriptParser.RefLocalContext context)
         {
-            var name = context.IDENT().GetText();
+            var name = context.VARIABLE().GetText().TrimStart('$');
 
             if (!Context.Locals.TryGetValue(name, out var local))
                 throw new ParseException($"Local variable ${name} is not declared", context.Loc());

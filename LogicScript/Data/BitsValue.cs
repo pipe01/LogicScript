@@ -128,11 +128,14 @@ namespace LogicScript.Data
 
         public override int GetHashCode() => Number.GetHashCode();
 
-        public BitsValue Truncate(int length)
+        public BitsValue Resize(int newLength)
         {
-            ulong mask = (1UL << length) - 1;
+            if (newLength > Length)
+                return new BitsValue(Number, newLength);
+            else if (newLength < Length)
+                return new BitsValue(Number & ((1ul << newLength) - 1), newLength);
 
-            return new BitsValue(Number & mask, length);
+            return this;
         }
 
         public static int BitsToFit(ulong n) => (int)Math.Ceiling(Math.Log(n, 2));
@@ -149,5 +152,7 @@ namespace LogicScript.Data
 
         public static bool operator ==(BitsValue left, BitsValue right) => left.Number == right.Number;
         public static bool operator !=(BitsValue left, BitsValue right) => left.Number != right.Number;
+        public static bool operator >(BitsValue left, BitsValue right) => left.Number > right.Number;
+        public static bool operator <(BitsValue left, BitsValue right) => left.Number < right.Number;
     }
 }

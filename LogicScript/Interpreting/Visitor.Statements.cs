@@ -19,6 +19,8 @@ namespace LogicScript.Interpreting
                 Visit(task);
             else if (stmt is DeclareLocalStatement local)
                 Visit(local);
+            else if (stmt is ForStatement forStmt)
+                Visit(forStmt);
             else
                 throw new InterpreterException("Unknown statement", stmt.Location);
         }
@@ -92,6 +94,20 @@ namespace LogicScript.Interpreting
             var value = stmt.Initializer == null ? new BitsValue(0, stmt.Size) : Visit(stmt.Initializer);
 
             Locals.Add(stmt.Name, value);
+        }
+
+        private void Visit(ForStatement stmt)
+        {
+            var from = stmt.From == null ? 0 : Visit(stmt.From).Number;
+            var to = Visit(stmt.To);
+            var size = to.Length;
+
+            for (ulong i = from; i < to.Number; i++)
+            {
+                Locals[stmt.VariableName] = new BitsValue(i, size);
+
+                Visit(stmt.Body);
+            }
         }
     }
 }

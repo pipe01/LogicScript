@@ -68,12 +68,38 @@ namespace LogicScript.Parsing.Visitors
             return new IfStatement(context.Loc(), cond, body, @else);
         }
 
+        public override Statement VisitStmt_for([NotNull] LogicScriptParser.Stmt_forContext context)
+        {
+            var varName = context.VARIABLE().GetText().TrimStart('$');
+            var from = context.from == null ? null : new ExpressionVisitor(Context).Visit(context.from);
+            var to = new ExpressionVisitor(Context).Visit(context.to);
+
+            var mustCreateLocal = !Context.Locals.ContainsKey(varName);
+
+            if (mustCreateLocal)
+                Context.Locals.Add(varName, new LocalInfo(to.BitSize));
+
+            var body = Visit(context.block());
+            var forStmt = new ForStatement(context.Loc(), varName, from, to, body);
+
+            if (mustCreateLocal)
+            {
+                return new BlockStatement(context.Loc(), new Statement[]
+                {
+                    new DeclareLocalStatement(new SourceLocation(context.VARIABLE().Symbol), varName, to.BitSize, null),
+                    forStmt
+                });
+            }
+
+            return forStmt;
+        }
+
         public override Statement VisitStmt_vardecl([NotNull] LogicScriptParser.Stmt_vardeclContext context)
         {
-            var name = context.IDENT().GetText();
+            var name = context.VARIABLE().GetText().TrimStart('$');
 
             if (Context.DoesIdentifierExist(name))
-                throw new ParseException($"Identifier '{name}' already exists", new SourceLocation(context.IDENT().Symbol));
+                throw new ParseException($"Identifier '{name}' already exists", new SourceLocation(context.VARIABLE().Symbol));
 
             Expression? value = null;
 
