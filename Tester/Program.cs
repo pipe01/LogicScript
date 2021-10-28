@@ -21,6 +21,9 @@ reg'64 on
 when rise(test)
     on = myconst
 
+    $print ""nice cock""
+    $print on
+
     if test == 1
         on = 1
     else if test == 2

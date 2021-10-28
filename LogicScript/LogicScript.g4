@@ -13,13 +13,16 @@ port_info           : BIT_SIZE? IDENT ;
 
 block               : (statement NEWLINE)* ;
 
-statement           : if_statement | assign_statement ;
+statement           : if_statement | assign_statement | task_statement ;
 assign_statement    : reference EQUALS expression ;
+
 if_statement        : 'if' if_body ;
 elseif_statement    : 'else if' if_body ;
 else_statement      : 'else' NEWLINE block 'end' ;
-
 if_body             : expression NEWLINE block (elseif_statement | else_statement | 'end') ;
+
+task_statement      : '$' print_task ;
+print_task          : 'print' (expression | TEXT) ;
 
 expression          : '(' expression ')'                  # exprParen
                     | funcName=IDENT '(' expression ')'   # exprCall
@@ -53,6 +56,7 @@ DEC_NUMBER          : DEC_DIGIT+ ;
 IDENT               : (LOWERCASE | UPPERCASE | '_') (LOWERCASE | UPPERCASE | DEC_DIGIT | '_')* ;
 WHITESPACE          : [ \r]+ -> channel(HIDDEN) ;
 NEWLINE             : [\r\n]+ ;
+TEXT                : '"' .*? '"' ;
 
 BIT_SIZE            : '\'' DEC_NUMBER ;
 

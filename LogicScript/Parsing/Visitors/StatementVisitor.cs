@@ -52,5 +52,21 @@ namespace LogicScript.Parsing.Visitors
 
             return new IfStatement(context.Loc(), cond, body, @else);
         }
+
+        public override Statement VisitPrint_task([NotNull] LogicScriptParser.Print_taskContext context)
+        {
+            if (context.expression() != null)
+            {
+                var value = new ExpressionVisitor(Context).Visit(context.expression());
+
+                return new ShowTaskStatement(context.Loc(), value);
+            }
+            else if (context.TEXT() != null)
+            {
+                return new PrintTaskStatement(context.Loc(), context.TEXT().GetText().Trim('"'));
+            }
+
+            throw new ParseException("Invalid print value", context.Loc());
+        }
     }
 }
