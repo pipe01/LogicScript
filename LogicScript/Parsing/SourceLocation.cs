@@ -16,6 +16,6 @@ namespace LogicScript.Parsing
         {
         }
 
-        public override string ToString() => $"{Line + 1}:{Column + 1}";
+        public override string ToString() => $"{Line}:{Column}";
     }
 }

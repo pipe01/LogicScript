@@ -20,7 +20,7 @@ namespace LogicScript.Parsing.Visitors
             var target = Script.Inputs.ContainsKey(identName) ? ReferenceTarget.Input
                         : Script.Outputs.ContainsKey(identName) ? ReferenceTarget.Output
                         : Script.Registers.ContainsKey(identName) ? ReferenceTarget.Register
-                        : throw new Exception("Undefined identifier"); //TODO Throw proper exception type
+                        : throw new ParseException($"Unknown identifier '{identName}'", new SourceLocation(context.IDENT().Symbol));
 
             return new Reference(target, identName);
         }

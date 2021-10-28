@@ -1,17 +1,9 @@
 ﻿using Antlr4.Runtime;
 using Antlr4.Runtime.Misc;
-using Antlr4.Runtime.Tree;
-using BenchmarkDotNet.Configs;
-using BenchmarkDotNet.Diagnosers;
-using BenchmarkDotNet.Running;
 using LogicScript;
-using LogicScript.Data;
 using LogicScript.Parsing;
-using LogicScript.Parsing.Structures;
 using LogicScript.Parsing.Visitors;
 using System;
-using System.Collections;
-using System.Linq;
 
 namespace Tester
 {
@@ -21,7 +13,7 @@ namespace Tester
         {
             public void SyntaxError([NotNull] IRecognizer recognizer, [Nullable] IToken offendingSymbol, int line, int charPositionInLine, [NotNull] string msg, [Nullable] RecognitionException e)
             {
-                throw new Exception($"{msg} on line {line}:{charPositionInLine}");
+                throw new ParseException(msg, new SourceLocation(line, charPositionInLine), e);
             }
         }
 
@@ -30,15 +22,20 @@ namespace Tester
             var input = new AntlrInputStream(@"input asd
 input test
 output'2 out
-
+asd
 reg'123 on
 
 when *
-    1 & 2 | 3 == !(6 ^ 4) & 5
+    on = out
 end
 
 ");
+            var lexer = new LogicScriptLexer(input);
+            var stream = new CommonTokenStream(lexer);
+            var parser = new LogicScriptParser(stream);
+            parser.AddErrorListener(new Listener());
 
+            var script = new ScriptVisitor().Visit(parser.script());
         }
     }
 }

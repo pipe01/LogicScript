@@ -26,7 +26,9 @@ namespace LogicScript.Parsing.Visitors
                 }
                 else if (decl.when_decl() != null)
                 {
-                    var block = new StatementVisitor(script).Visit(decl.when_decl().block());
+                    var body = new StatementVisitor(script).Visit(decl.when_decl().block());
+
+                    script.Blocks.Add(new WhenBlock(decl.Loc(), body));
                 }
             }
 

@@ -1,6 +1,6 @@
 ﻿namespace LogicScript.Parsing.Structures.Statements
 {
-    internal abstract class Statement
+    internal abstract class Statement : ICodeNode
     {
         public SourceLocation Location { get; }
 

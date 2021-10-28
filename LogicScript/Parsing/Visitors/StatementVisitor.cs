@@ -16,6 +16,10 @@ namespace LogicScript.Parsing.Visitors
         public override Statement VisitAssign_statement([NotNull] LogicScriptParser.Assign_statementContext context)
         {
             var @ref = new ReferenceVisitor(Script).Visit(context.reference());
+
+            if (!@ref.IsWritable)
+                throw new ParseException("The left side of an assignment must be writable", context.reference().Loc());
+
             var value = new ExpressionVisitor(Script).Visit(context.expression());
 
             return new AssignStatement(context.Loc(), @ref, value);

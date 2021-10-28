@@ -27,6 +27,9 @@ namespace LogicScript.Parsing.Visitors
             {
                 var @ref = new ReferenceVisitor(Script).Visit(context.reference());
 
+                if (!@ref.IsReadable)
+                    throw new ParseException("An identifier in an expression must be readable", context.reference().Loc());
+
                 return new ReferenceExpression(context.Loc(), @ref);
             }
 

@@ -40,7 +40,7 @@ fragment DEC_DIGIT  : [0-9] ;
 fragment INPUT      : 'input' ;
 fragment OUTPUT     : 'output' ;
 
-DEC_NUMBER              : DEC_DIGIT+ ;
+DEC_NUMBER          : DEC_DIGIT+ ;
 IDENT               : (LOWERCASE | UPPERCASE)+ ;
 TEXT                : '"' .*? '"' ;
 WHITESPACE          : [ \r]+ -> skip ;
@@ -48,10 +48,10 @@ NEWLINE             : [\r\n]+ ;
 
 BIT_SIZE            : '\'' DEC_NUMBER ;
 
-EQUALS      : '=' ;
+EQUALS              : '=' ;
 COMPARE_EQUALS      : '==' ;
 COMPARE_GREATER     : '>' ;
-COMPARE_LESSER     : '<' ;
+COMPARE_LESSER      : '<' ;
 
 AND                 : '&' ;
 OR                  : '|' ;

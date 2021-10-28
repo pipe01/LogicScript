@@ -1,6 +1,6 @@
 ﻿namespace LogicScript.Parsing.Structures.Expressions
 {
-    internal abstract class Expression
+    internal abstract class Expression : ICodeNode
     {
         public SourceLocation Location { get; }
 
