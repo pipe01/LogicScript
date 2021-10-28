@@ -26,7 +26,7 @@ namespace LogicScript.Parsing.Visitors
                 }
                 else if (decl.when_decl() != null)
                 {
-                    var block = new StatementVisitor().Visit(decl.when_decl().block());
+                    var block = new StatementVisitor(script).Visit(decl.when_decl().block());
                 }
             }
 
@@ -34,7 +34,7 @@ namespace LogicScript.Parsing.Visitors
 
             static PortInfo GetPortInfo(ITerminalNode bitSize, int index)
             {
-                return new PortInfo(index, bitSize == null ? 1 : int.Parse(bitSize.GetText().TrimStart('[', ' ').TrimEnd(']', ' ')));
+                return new PortInfo(index, bitSize == null ? 1 : int.Parse(bitSize.GetText().TrimStart('\'')));
             }
         }
     }

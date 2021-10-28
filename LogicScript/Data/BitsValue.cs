@@ -51,7 +51,7 @@ namespace LogicScript.Data
                 x = (x + (x >> 4)) & m4;
                 return (int)((x * h01) >> 56);
 #endif
-                }
+            }
         }
 
         private ulong OneMask => (1UL << Length) - 1;

@@ -10,25 +10,26 @@ when_decl           : 'when' (expression | '*') NEWLINE block ;
 
 block               : (statement NEWLINE)* 'end' ;
 
-statement           : assign_statement | expr_statement ;
-assign_statement    : IDENT EQUALS expression ;
-expr_statement      : expression;
+statement           : assign_statement ;
+assign_statement    : reference EQUALS expression ;
 
-expression          : '(' expression ')'                   # exprParen
-                    | NOT expression                       # exprNegate
-                    | expression op=(OR | AND) expression  # exprAndOr
-                    | expression XOR expression            # exprXor
+expression          : '(' expression ')'                  # exprParen
+                    | NOT expression                      # exprNegate
+                    | expression op=(OR | AND) expression # exprAndOr
+                    | expression XOR expression           # exprXor
                     | expression op=(
                         COMPARE_EQUALS
                         | COMPARE_GREATER
                         | COMPARE_LESSER
-                    ) expression  # exprCompare
-                    | atom                                 # exprAtom
+                    ) expression                          # exprCompare
+                    | atom                                # exprAtom
                     ;
 
-atom                : IDENT
+atom                : reference
                     | DEC_NUMBER
                     ;
+
+reference           : IDENT ;
 
 /*
  * Lexer Rules
@@ -45,7 +46,7 @@ TEXT                : '"' .*? '"' ;
 WHITESPACE          : [ \r]+ -> skip ;
 NEWLINE             : [\r\n]+ ;
 
-BIT_SIZE            : '[' DEC_NUMBER ']' ;
+BIT_SIZE            : '\'' DEC_NUMBER ;
 
 EQUALS      : '=' ;
 COMPARE_EQUALS      : '==' ;

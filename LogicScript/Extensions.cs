@@ -16,7 +16,7 @@ namespace LogicScript
             return false;
         }
 
-        public static SourceLocation StartLocation(this ParserRuleContext context)
+        public static SourceLocation Loc(this ParserRuleContext context)
             => new SourceLocation(context.Start);
     }
 }
