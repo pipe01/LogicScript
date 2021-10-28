@@ -4,6 +4,8 @@
     {
         public Reference Target { get; set; }
 
+        public override bool IsConstant => false;
+
         public ReferenceExpression(SourceLocation location, Reference target) : base(location)
         {
             this.Target = target;

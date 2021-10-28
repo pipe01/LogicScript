@@ -4,6 +4,8 @@
     {
         public SourceLocation Location { get; }
 
+        public abstract bool IsConstant { get; }
+
         public Expression(SourceLocation location)
         {
             this.Location = location;

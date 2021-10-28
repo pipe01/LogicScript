@@ -6,6 +6,8 @@
         public Expression Left { get; set; }
         public Expression Right { get; set; }
 
+        public override bool IsConstant => Left.IsConstant && Right.IsConstant;
+
         public BinaryOperatorExpression(SourceLocation location, Operator op, Expression left, Expression right) : base(location)
         {
             this.Operator = op;

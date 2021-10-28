@@ -5,6 +5,8 @@
         public Operator Operator { get; set; }
         public Expression Operand { get; set; }
 
+        public override bool IsConstant => Operand.IsConstant;
+
         public UnaryOperatorExpression(SourceLocation location, Operator op, Expression operand) : base(location)
         {
             this.Operator = op;
