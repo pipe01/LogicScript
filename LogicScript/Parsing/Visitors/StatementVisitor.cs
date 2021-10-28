@@ -6,9 +6,9 @@ namespace LogicScript.Parsing.Visitors
 {
     class StatementVisitor : LogicScriptBaseVisitor<Statement>
     {
-        private readonly VisitContext Context;
+        private readonly BlockContext Context;
 
-        public StatementVisitor(VisitContext context)
+        public StatementVisitor(BlockContext context)
         {
             this.Context = context;
         }

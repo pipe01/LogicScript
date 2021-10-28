@@ -1,5 +1,6 @@
 ﻿using LogicScript.Parsing.Structures.Expressions;
 using LogicScript.Parsing.Structures.Statements;
+using System.Collections.Generic;
 
 namespace LogicScript.Parsing.Structures
 {
@@ -12,6 +13,8 @@ namespace LogicScript.Parsing.Structures
         /// </summary>
         public Expression? Condition { get; }
         public Statement Body { get; }
+
+        public IDictionary<string, PortInfo> Locals { get; } = new Dictionary<string, PortInfo>();
 
         public WhenBlock(SourceLocation location, Expression? condition, Statement body)
         {

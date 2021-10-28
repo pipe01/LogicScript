@@ -13,7 +13,7 @@ port_info           : BIT_SIZE? IDENT ;
 
 block               : (statement NEWLINE)* ;
 
-statement           : if_statement | assign_statement | task_statement ;
+statement           : if_statement | assign_statement | task_statement | vardecl_statement ;
 assign_statement    : reference EQUALS expression ;
 
 if_statement        : 'if' if_body ;
@@ -24,6 +24,8 @@ if_body             : expression NEWLINE block (elseif_statement | else_statemen
 task_statement      : '@' (print_task | printbin_task) ;
 print_task          : 'print' (expression | TEXT) ;
 printbin_task       : 'print.b' expression ;
+
+vardecl_statement   : '$' IDENT BIT_SIZE? '=' expression ;
 
 expression          : '(' expression ')'                        # exprParen
                     | funcName=IDENT '(' expression ')'         # exprCall

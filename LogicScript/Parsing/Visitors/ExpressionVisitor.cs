@@ -9,10 +9,10 @@ namespace LogicScript.Parsing.Visitors
 {
     class ExpressionVisitor : LogicScriptBaseVisitor<Expression>
     {
-        private readonly VisitContext Context;
+        private readonly BlockContext Context;
         private readonly int MaxBitSize;
 
-        public ExpressionVisitor(VisitContext context, int maxBitSize = 0)
+        public ExpressionVisitor(BlockContext context, int maxBitSize = 0)
         {
             this.Context = context;
             this.MaxBitSize = maxBitSize;
@@ -47,7 +47,7 @@ namespace LogicScript.Parsing.Visitors
 
         public override Expression VisitReference([NotNull] LogicScriptParser.ReferenceContext context)
         {
-            if (Context.Constants.TryGetValue(context.GetText(), out var val))
+            if (Context.Outer.Constants.TryGetValue(context.GetText(), out var val))
                 return val;
 
             var @ref = new ReferenceVisitor(Context).Visit(context);

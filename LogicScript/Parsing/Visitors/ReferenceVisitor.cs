@@ -5,9 +5,9 @@ namespace LogicScript.Parsing.Visitors
 {
     internal class ReferenceVisitor : LogicScriptBaseVisitor<Reference>
     {
-        private readonly VisitContext Context;
+        private readonly BlockContext Context;
 
-        public ReferenceVisitor(VisitContext context)
+        public ReferenceVisitor(BlockContext context)
         {
             this.Context = context;
         }
@@ -17,9 +17,9 @@ namespace LogicScript.Parsing.Visitors
             var identName = context.IDENT().GetText();
             PortInfo port;
 
-            var target = Context.Script.Inputs.TryGetValue(identName, out port) ? ReferenceTarget.Input
-                        : Context.Script.Outputs.TryGetValue(identName, out port) ? ReferenceTarget.Output
-                        : Context.Script.Registers.TryGetValue(identName, out port) ? ReferenceTarget.Register
+            var target = Context.Outer.Script.Inputs.TryGetValue(identName, out port) ? ReferenceTarget.Input
+                        : Context.Outer.Script.Outputs.TryGetValue(identName, out port) ? ReferenceTarget.Output
+                        : Context.Outer.Script.Registers.TryGetValue(identName, out port) ? ReferenceTarget.Register
                         : throw new ParseException($"Unknown identifier '{identName}'", new SourceLocation(context.IDENT().Symbol));
 
             return new Reference(target, port.StartIndex, port.BitSize);
