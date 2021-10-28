@@ -2,14 +2,20 @@
 {
     internal enum Operator
     {
+        // Binary operators
         And,
         Or,
         Xor,
 
-        Not,
-
+        // (Binary) comparison operators
         EqualsCompare,
         Greater,
         Lesser,
+
+        // Unary operators
+        Not,
+        Rise,
+        Fall,
+        Change,
     }
 }

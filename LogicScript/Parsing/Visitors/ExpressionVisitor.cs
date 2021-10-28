@@ -82,5 +82,20 @@ namespace LogicScript.Parsing.Visitors
         {
             return new UnaryOperatorExpression(context.Loc(), Operator.Not, Visit(context.expression()));
         }
+
+        public override Expression VisitExprCall([NotNull] LogicScriptParser.ExprCallContext context)
+        {
+            var operand = Visit(context.expression());
+
+            var op = context.funcName.Text switch
+            {
+                "rise" => Operator.Rise,
+                "fall" => Operator.Fall,
+                "change" => Operator.Change,
+                _ => throw new ParseException($"Unknown function '{context.funcName.Text}'", context.Loc())
+            };
+
+            return new UnaryOperatorExpression(context.Loc(), op, operand);
+        }
     }
 }

@@ -18,7 +18,7 @@ const myconst = 123
 
 reg'64 on
 
-when *
+when rise(test)
     on = myconst
 
     if test == 1

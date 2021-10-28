@@ -22,6 +22,7 @@ else_statement      : 'else' NEWLINE block 'end' ;
 if_body             : expression NEWLINE block (elseif_statement | else_statement | 'end') ;
 
 expression          : '(' expression ')'                  # exprParen
+                    | funcName=IDENT '(' expression ')'   # exprCall
                     | NOT expression                      # exprNegate
                     | expression op=(OR | AND) expression # exprAndOr
                     | expression XOR expression           # exprXor
