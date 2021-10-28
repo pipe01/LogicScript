@@ -1,6 +1,7 @@
 ﻿using Antlr4.Runtime.Misc;
-using Antlr4.Runtime.Tree;
+using LogicScript.Data;
 using LogicScript.Parsing.Structures;
+using System.Collections.Generic;
 
 namespace LogicScript.Parsing.Visitors
 {
@@ -15,15 +16,15 @@ namespace LogicScript.Parsing.Visitors
             {
                 if (decl.input_decl() != null)
                 {
-                    script.Inputs.Add(decl.input_decl().IDENT().GetText(), GetPortInfo(decl.input_decl().BIT_SIZE(), script.Inputs.Count));
+                    VisitPortInfo(decl.input_decl().port_info(), script.Inputs);
                 }
                 else if (decl.output_decl() != null)
                 {
-                    script.Outputs.Add(decl.output_decl().IDENT().GetText(), GetPortInfo(decl.output_decl().BIT_SIZE(), script.Outputs.Count));
+                    VisitPortInfo(decl.output_decl().port_info(), script.Outputs);
                 }
                 else if (decl.register_decl() != null)
                 {
-                    script.Registers.Add(decl.register_decl().IDENT().GetText(), GetPortInfo(decl.register_decl().BIT_SIZE(), script.Registers.Count));
+                    VisitPortInfo(decl.register_decl().port_info(), script.Registers);
                 }
                 else if (decl.const_decl() != null)
                 {
@@ -44,9 +45,19 @@ namespace LogicScript.Parsing.Visitors
 
             return script;
 
-            static PortInfo GetPortInfo(ITerminalNode bitSize, int index)
+            static void VisitPortInfo(LogicScriptParser.Port_infoContext context, IDictionary<string, PortInfo> dic)
             {
-                return new PortInfo(index, bitSize == null ? 1 : int.Parse(bitSize.GetText().TrimStart('\'')));
+                var size = context.BIT_SIZE() == null ? 1 : int.Parse(context.BIT_SIZE().GetText().TrimStart('\''));
+
+                if (size > BitsValue.BitSize)
+                    throw new ParseException($"The maximum bit size is {BitsValue.BitSize}", context.Loc());
+
+                var name = context.IDENT().GetText();
+
+                if (dic.ContainsKey(name))
+                    throw new ParseException($"The port '{name}' is already registered", new SourceLocation(context.IDENT().Symbol));
+
+                dic.Add(name, new PortInfo(dic.Count, size));
             }
         }
     }

@@ -16,7 +16,7 @@ output'2 out
 
 const myconst = 123
 
-reg'123 on
+reg'64 on
 
 when *
     on = myconst

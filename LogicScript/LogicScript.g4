@@ -4,10 +4,12 @@ script              : (declaration NEWLINE)* EOF ;
 
 declaration         : const_decl | input_decl | output_decl | register_decl | when_decl ;
 const_decl          : 'const' IDENT '=' expression ;
-input_decl          : 'input' BIT_SIZE?  IDENT ;
-output_decl         : 'output' BIT_SIZE?  IDENT ;
-register_decl       : 'reg' BIT_SIZE? IDENT ;
+input_decl          : 'input' port_info ;
+output_decl         : 'output' port_info ;
+register_decl       : 'reg' port_info ;
 when_decl           : 'when' (expression | '*') NEWLINE block 'end' ;
+
+port_info           : BIT_SIZE? IDENT ;
 
 block               : (statement NEWLINE)* ;
 
@@ -48,8 +50,7 @@ fragment OUTPUT     : 'output' ;
 
 DEC_NUMBER          : DEC_DIGIT+ ;
 IDENT               : (LOWERCASE | UPPERCASE | '_') (LOWERCASE | UPPERCASE | DEC_DIGIT | '_')* ;
-TEXT                : '"' .*? '"' ;
-WHITESPACE          : [ \r]+ -> skip ;
+WHITESPACE          : [ \r]+ -> channel(HIDDEN) ;
 NEWLINE             : [\r\n]+ ;
 
 BIT_SIZE            : '\'' DEC_NUMBER ;
