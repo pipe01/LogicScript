@@ -46,7 +46,7 @@ namespace LogicScript.Parsing.Visitors
 
             return script;
 
-            static void VisitPortInfo(LogicScriptParser.Port_infoContext context, IDictionary<string, PortInfo> dic)
+            void VisitPortInfo(LogicScriptParser.Port_infoContext context, IDictionary<string, PortInfo> dic)
             {
                 var size = context.BIT_SIZE() == null ? 1 : int.Parse(context.BIT_SIZE().GetText().TrimStart('\''));
 
@@ -55,7 +55,7 @@ namespace LogicScript.Parsing.Visitors
 
                 var name = context.IDENT().GetText();
 
-                if (dic.ContainsKey(name))
+                if (script.Inputs.ContainsKey(name) || script.Outputs.ContainsKey(name) || script.Registers.ContainsKey(name))
                     throw new ParseException($"The port '{name}' is already registered", new SourceLocation(context.IDENT().Symbol));
 
                 dic.Add(name, new PortInfo(dic.Count, size));

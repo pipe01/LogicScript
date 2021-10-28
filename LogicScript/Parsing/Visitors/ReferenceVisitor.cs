@@ -15,13 +15,14 @@ namespace LogicScript.Parsing.Visitors
         public override Reference VisitReference([NotNull] LogicScriptParser.ReferenceContext context)
         {
             var identName = context.IDENT().GetText();
+            PortInfo port;
 
-            var target = Context.Script.Inputs.ContainsKey(identName) ? ReferenceTarget.Input
-                        : Context.Script.Outputs.ContainsKey(identName) ? ReferenceTarget.Output
-                        : Context.Script.Registers.ContainsKey(identName) ? ReferenceTarget.Register
+            var target = Context.Script.Inputs.TryGetValue(identName, out port) ? ReferenceTarget.Input
+                        : Context.Script.Outputs.TryGetValue(identName, out port) ? ReferenceTarget.Output
+                        : Context.Script.Registers.TryGetValue(identName, out port) ? ReferenceTarget.Register
                         : throw new ParseException($"Unknown identifier '{identName}'", new SourceLocation(context.IDENT().Symbol));
 
-            return new Reference(target, identName);
+            return new Reference(target, port.Index, port.BitSize);
         }
     }
 }
