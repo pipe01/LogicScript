@@ -1,4 +1,7 @@
-﻿using LogicScript.Parsing.Structures;
+﻿using Antlr4.Runtime;
+using LogicScript.Parsing;
+using LogicScript.Parsing.Structures;
+using LogicScript.Parsing.Visitors;
 using System.Collections.Generic;
 
 namespace LogicScript
@@ -10,5 +13,16 @@ namespace LogicScript
         internal IDictionary<string, PortInfo> Registers { get; } = new Dictionary<string, PortInfo>();
 
         internal IList<WhenBlock> Blocks { get; } = new List<WhenBlock>();
+
+        public static Script Parse(string source)
+        {
+            var input = new AntlrInputStream(source);
+            var lexer = new LogicScriptLexer(input);
+            var stream = new CommonTokenStream(lexer);
+            var parser = new LogicScriptParser(stream);
+            parser.AddErrorListener(new ErrorListener());
+
+            return new ScriptVisitor().Visit(parser.script());
+        }
     }
 }
