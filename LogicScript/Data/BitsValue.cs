@@ -97,6 +97,8 @@ namespace LogicScript.Data
 
         public override string ToString() => Number.ToString();
 
+        public string ToString(bool binary) => binary ? Convert.ToString((long)Number, 2).PadLeft(Length) : Number.ToString();
+
         public override bool Equals(object obj)
         {
             if (!(obj is BitsValue other))

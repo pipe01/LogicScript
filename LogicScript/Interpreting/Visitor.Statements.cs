@@ -67,7 +67,7 @@ namespace LogicScript.Interpreting
             if (stmt is PrintTaskStatement print)
                 Machine.Print(print.Text);
             else if (stmt is ShowTaskStatement show)
-                Machine.Print(Visit(show.Value).ToString());
+                Machine.Print(Visit(show.Value).ToString(show.AsBinary));
             else
                 throw new InterpreterException("Unknown task", stmt.Location);
         }

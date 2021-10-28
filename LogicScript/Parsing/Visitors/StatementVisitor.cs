@@ -59,7 +59,7 @@ namespace LogicScript.Parsing.Visitors
             {
                 var value = new ExpressionVisitor(Context).Visit(context.expression());
 
-                return new ShowTaskStatement(context.Loc(), value);
+                return new ShowTaskStatement(context.Loc(), value, false);
             }
             else if (context.TEXT() != null)
             {
@@ -67,6 +67,13 @@ namespace LogicScript.Parsing.Visitors
             }
 
             throw new ParseException("Invalid print value", context.Loc());
+        }
+
+        public override Statement VisitPrintbin_task([NotNull] LogicScriptParser.Printbin_taskContext context)
+        {
+            var value = new ExpressionVisitor(Context).Visit(context.expression());
+
+            return new ShowTaskStatement(context.Loc(), value, true);
         }
     }
 }

@@ -7,5 +7,5 @@ reg'64 on
 
 when *
     out = 3
-    $print asd
+    $print.b asd
 end
