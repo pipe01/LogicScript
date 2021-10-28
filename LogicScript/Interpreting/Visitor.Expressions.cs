@@ -121,6 +121,8 @@ namespace LogicScript.Interpreting
                     throw new NotImplementedException();
                 case Operator.Change:
                     throw new NotImplementedException();
+                case Operator.Length:
+                    return new BitsValue((ulong)operand.Length, 7);
             }
 
             throw new InterpreterException("Unknown operand", expr.Location);

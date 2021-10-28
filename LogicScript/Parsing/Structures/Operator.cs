@@ -21,5 +21,6 @@
         Rise,
         Fall,
         Change,
+        Length,
     }
 }
