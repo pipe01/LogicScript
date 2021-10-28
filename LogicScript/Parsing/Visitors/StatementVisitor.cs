@@ -28,7 +28,7 @@ namespace LogicScript.Parsing.Visitors
             if (!@ref.IsWritable)
                 throw new ParseException("The left side of an assignment must be writable", context.reference().Loc());
 
-            var value = new ExpressionVisitor(Context, @ref.Length).Visit(context.expression());
+            var value = new ExpressionVisitor(Context, @ref.BitSize).Visit(context.expression());
 
             return new AssignStatement(context.Loc(), @ref, value);
         }

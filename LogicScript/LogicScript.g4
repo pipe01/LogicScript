@@ -28,6 +28,7 @@ printbin_task       : 'print.b' expression ;
 vardecl_statement   : 'local' '$' IDENT BIT_SIZE? ('=' expression)? ;
 
 expression          : '(' expression ')'                        # exprParen
+                    | '(' expression ')\'' DEC_NUMBER           # exprTrunc
                     | funcName=IDENT '(' expression ')'         # exprCall
                     | NOT expression                            # exprNegate
                     | expression op=(OR | AND) expression       # exprAndOr

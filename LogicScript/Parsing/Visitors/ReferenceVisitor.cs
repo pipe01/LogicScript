@@ -22,7 +22,17 @@ namespace LogicScript.Parsing.Visitors
                         : Context.Outer.Script.Registers.TryGetValue(identName, out port) ? ReferenceTarget.Register
                         : throw new ParseException($"Unknown identifier '{identName}'", new SourceLocation(context.IDENT().Symbol));
 
-            return new Reference(target, port.StartIndex, port.BitSize);
+            return new PortReference(target, port.StartIndex, port.BitSize);
+        }
+
+        public override Reference VisitRefLocal([NotNull] LogicScriptParser.RefLocalContext context)
+        {
+            var name = context.IDENT().GetText();
+
+            if (!Context.Locals.TryGetValue(name, out var local))
+                throw new ParseException($"Local variable ${name} is not declared", context.Loc());
+
+            return new LocalReference(name, local.BitSize);
         }
     }
 }

@@ -9,8 +9,10 @@
         public override bool IsConstant => Left.IsConstant && Right.IsConstant;
         public override int BitSize => Operator switch
         {
-            Operator.And or Operator.Or or Operator.Xor => Left.BitSize > Right.BitSize ? Left.BitSize : Right.BitSize,
+            Operator.And or Operator.Or or Operator.Xor or Operator.Subtract or Operator.Divide => Left.BitSize > Right.BitSize ? Left.BitSize : Right.BitSize,
             Operator.EqualsCompare or Operator.Greater or Operator.Lesser => 1,
+            Operator.Add => Left.BitSize > Right.BitSize ? Left.BitSize + 1 : Right.BitSize + 1,
+            Operator.Multiply => Left.BitSize + Right.BitSize,
             _ => throw new ParseException("Unknown operator bitsize", Location)
         };
 

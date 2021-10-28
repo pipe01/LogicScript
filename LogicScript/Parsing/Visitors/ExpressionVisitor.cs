@@ -45,7 +45,17 @@ namespace LogicScript.Parsing.Visitors
             throw new ParseException("Invalid atom", context.Loc());
         }
 
-        public override Expression VisitReference([NotNull] LogicScriptParser.ReferenceContext context)
+        public override Expression VisitRefLocal([NotNull] LogicScriptParser.RefLocalContext context)
+        {
+            if (Context.IsInConstant)
+                throw new ParseException("You can only reference constants from other constants", context.Loc());
+
+            var @ref = new ReferenceVisitor(Context).Visit(context);
+
+            return new ReferenceExpression(context.Loc(), @ref);
+        }
+
+        public override Expression VisitRefPort([NotNull] LogicScriptParser.RefPortContext context)
         {
             if (Context.Outer.Constants.TryGetValue(context.GetText(), out var val))
                 return val;
@@ -147,6 +157,15 @@ namespace LogicScript.Parsing.Visitors
             var ifFalse = Visit(context.ifFalse);
 
             return new TernaryOperatorExpression(context.Loc(), cond, ifTrue, ifFalse);
+        }
+
+        public override Expression VisitExprTrunc([NotNull] LogicScriptParser.ExprTruncContext context)
+        {
+            // Create a new unbounded expression visitor, since we don't care about length
+            var operand = new ExpressionVisitor(Context).Visit(context.expression());
+            var size = int.Parse(context.DEC_NUMBER().GetText());
+
+            return new TruncateExpression(context.Loc(), operand, size);
         }
     }
 }

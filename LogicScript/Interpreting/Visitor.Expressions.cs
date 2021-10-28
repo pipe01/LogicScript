@@ -19,6 +19,8 @@ namespace LogicScript.Interpreting
                 return Visit(tern);
             if (expr is UnaryOperatorExpression unary)
                 return Visit(unary);
+            if (expr is TruncateExpression trunc)
+                return Visit(trunc);
 
             throw new InterpreterException("Unknown expression", expr.Location);
         }
@@ -71,19 +73,28 @@ namespace LogicScript.Interpreting
 
         private BitsValue Visit(ReferenceExpression expr)
         {
-            switch (expr.Reference.Target)
+            if (expr.Reference is PortReference port)
             {
-                case ReferenceTarget.Output:
-                    throw new InterpreterException("Cannot read from output", expr.Location);
+                switch (port.Target)
+                {
+                    case ReferenceTarget.Output:
+                        throw new InterpreterException("Cannot read from output", expr.Location);
 
-                case ReferenceTarget.Input:
-                    return new BitsValue(Input.Slice(expr.Reference.StartIndex, expr.Reference.Length));
+                    case ReferenceTarget.Input:
+                        return new BitsValue(Input.Slice(port.StartIndex, port.BitSize));
 
-                case ReferenceTarget.Register:
-                    return Machine.ReadRegister(expr.Reference.StartIndex);
+                    case ReferenceTarget.Register:
+                        return Machine.ReadRegister(port.StartIndex);
+                }
+
+                throw new InterpreterException("Unknown reference target", expr.Location);
+            }
+            else if (expr.Reference is LocalReference local)
+            {
+                return Locals[local.Name];
             }
 
-            throw new InterpreterException("Unknown reference target", expr.Location);
+            throw new InterpreterException("Unknown reference type", expr.Location);
         }
 
         private BitsValue Visit(TernaryOperatorExpression expr)
@@ -113,6 +124,11 @@ namespace LogicScript.Interpreting
             }
 
             throw new InterpreterException("Unknown operand", expr.Location);
+        }
+
+        private BitsValue Visit(TruncateExpression expr)
+        {
+            return new BitsValue(Visit(expr.Operand), expr.Size);
         }
     }
 }

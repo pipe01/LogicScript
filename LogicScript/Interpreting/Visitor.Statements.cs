@@ -1,5 +1,7 @@
-﻿using LogicScript.Parsing.Structures;
+﻿using LogicScript.Data;
+using LogicScript.Parsing.Structures;
 using LogicScript.Parsing.Structures.Statements;
+using System;
 
 namespace LogicScript.Interpreting
 {
@@ -15,6 +17,8 @@ namespace LogicScript.Interpreting
                 Visit(ifStmt);
             else if (stmt is TaskStatement task)
                 Visit(task);
+            else if (stmt is DeclareLocalStatement local)
+                Visit(local);
             else
                 throw new InterpreterException("Unknown statement", stmt.Location);
         }
@@ -31,24 +35,35 @@ namespace LogicScript.Interpreting
         {
             var value = Visit(stmt.Value);
 
-            switch (stmt.Reference.Target)
+            if (stmt.Reference is PortReference port)
             {
-                case ReferenceTarget.Input:
-                    throw new InterpreterException("Cannot write to input", stmt.Location);
+                switch (port.Target)
+                {
+                    case ReferenceTarget.Input:
+                        throw new InterpreterException("Cannot write to input", stmt.Location);
 
-                case ReferenceTarget.Output:
-                    if (value.Length > stmt.Reference.Length)
-                        throw new InterpreterException("Value is longer than output", stmt.Location);
+                    case ReferenceTarget.Output:
+                        if (value.Length > port.BitSize)
+                            throw new InterpreterException("Value is longer than output", stmt.Location);
 
-                    Machine.WriteOutput(stmt.Reference.StartIndex, value);
-                    break;
+                        Machine.WriteOutput(port.StartIndex, value);
+                        break;
 
-                case ReferenceTarget.Register:
-                    Machine.WriteRegister(stmt.Reference.StartIndex, value);
-                    break;
+                    case ReferenceTarget.Register:
+                        Machine.WriteRegister(port.StartIndex, value);
+                        break;
 
-                default:
-                    throw new InterpreterException("Unknown assignment target", stmt.Location);
+                    default:
+                        throw new InterpreterException("Unknown assignment target", stmt.Location);
+                }
+            }
+            else if (stmt.Reference is LocalReference local)
+            {
+                Locals[local.Name] = value;
+            }
+            else
+            {
+                throw new InterpreterException("Unknown reference type", stmt.Location);
             }
         }
 
@@ -70,6 +85,13 @@ namespace LogicScript.Interpreting
                 Machine.Print(Visit(show.Value).ToString(show.AsBinary));
             else
                 throw new InterpreterException("Unknown task", stmt.Location);
+        }
+
+        private void Visit(DeclareLocalStatement stmt)
+        {
+            var value = stmt.Initializer == null ? new BitsValue(0, stmt.Size) : Visit(stmt.Initializer);
+
+            Locals.Add(stmt.Name, value);
         }
     }
 }

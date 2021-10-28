@@ -27,10 +27,10 @@ namespace LogicScript.Interpreting
             Span<bool> input = stackalloc bool[machine.InputCount];
             machine.ReadInput(input);
 
-            var visitor = new Visitor(machine, input);
-
             foreach (var block in Script.Blocks)
             {
+                var visitor = new Visitor(machine, input);
+
                 visitor.Visit(block);
             }
         }
