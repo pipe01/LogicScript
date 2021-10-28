@@ -35,6 +35,7 @@ expression          : '(' expression ')'                            # exprParen
                     | NOT expression                                # exprNegate
                     | expression op=(OR | AND) expression           # exprAndOr
                     | expression XOR expression                     # exprXor
+                    | expression POW expression                     # exprPower
                     | expression op=(PLUS | MINUS) expression       # exprPlusMinus
                     | expression op=(MULT | DIVIDE) expression      # exprMultDiv
                     | expression op=(LSHIFT | RSHIFT) expression    # exprShift
@@ -96,3 +97,4 @@ PLUS                : '+' ;
 MINUS               : '-' ;
 MULT                : '*' ;
 DIVIDE              : '/' ;
+POW                 : '**' ;

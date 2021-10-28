@@ -61,6 +61,9 @@ namespace LogicScript.Interpreting
                 case Operator.Divide:
                     return new BitsValue(left.Number / right.Number);
 
+                case Operator.Power:
+                    return new BitsValue((ulong)Math.Pow(left.Number, right.Number));
+
 
                 case Operator.EqualsCompare:
                     return new BitsValue(left.Number == right.Number && left.Length == right.Length ? 1ul : 0, 1);

@@ -12,6 +12,7 @@
         Subtract,
         Multiply,
         Divide,
+        Power,
 
         // (Binary) comparison operators
         EqualsCompare,
