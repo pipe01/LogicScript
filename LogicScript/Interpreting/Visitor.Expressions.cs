@@ -25,6 +25,32 @@ namespace LogicScript.Interpreting
             throw new InterpreterException("Unknown expression", expr.Location);
         }
 
+        private BitsValue Visit(ReferenceExpression expr)
+        {
+            if (expr.Reference is PortReference port)
+            {
+                switch (port.Target)
+                {
+                    case ReferenceTarget.Output:
+                        throw new InterpreterException("Cannot read from output", expr.Location);
+
+                    case ReferenceTarget.Input:
+                        return new BitsValue(Input.Slice(port.StartIndex, port.BitSize));
+
+                    case ReferenceTarget.Register:
+                        return Machine.ReadRegister(port.StartIndex);
+                }
+
+                throw new InterpreterException("Unknown reference target", expr.Location);
+            }
+            else if (expr.Reference is LocalReference local)
+            {
+                return Locals[local.Name];
+            }
+
+            throw new InterpreterException("Unknown reference type", expr.Location);
+        }
+
         private BitsValue Visit(BinaryOperatorExpression expr)
         {
             var left = Visit(expr.Left);
@@ -78,32 +104,6 @@ namespace LogicScript.Interpreting
                 default:
                     throw new InterpreterException("Unknown operator", expr.Location);
             }
-        }
-
-        private BitsValue Visit(ReferenceExpression expr)
-        {
-            if (expr.Reference is PortReference port)
-            {
-                switch (port.Target)
-                {
-                    case ReferenceTarget.Output:
-                        throw new InterpreterException("Cannot read from output", expr.Location);
-
-                    case ReferenceTarget.Input:
-                        return new BitsValue(Input.Slice(port.StartIndex, port.BitSize));
-
-                    case ReferenceTarget.Register:
-                        return Machine.ReadRegister(port.StartIndex);
-                }
-
-                throw new InterpreterException("Unknown reference target", expr.Location);
-            }
-            else if (expr.Reference is LocalReference local)
-            {
-                return Locals[local.Name];
-            }
-
-            throw new InterpreterException("Unknown reference type", expr.Location);
         }
 
         private BitsValue Visit(TernaryOperatorExpression expr)
