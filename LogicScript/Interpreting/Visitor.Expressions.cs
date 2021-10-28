@@ -128,7 +128,14 @@ namespace LogicScript.Interpreting
 
         private BitsValue Visit(TruncateExpression expr)
         {
-            return new BitsValue(Visit(expr.Operand), expr.Size);
+            var operand = Visit(expr.Operand);
+
+            if (expr.Size > operand.Length)
+                return new BitsValue(operand.Number & ((1ul << expr.Size) - 1), expr.Size);
+            else if (expr.Size < operand.Length)
+                return new BitsValue(operand >> operand.Length - expr.Size, expr.Size);
+
+            return operand;
         }
     }
 }
