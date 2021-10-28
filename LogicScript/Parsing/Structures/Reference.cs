@@ -7,22 +7,23 @@
         Register
     }
 
-    internal abstract class Reference
-    {
-        public abstract bool IsWritable { get; }
-        public abstract bool IsReadable { get; }
+    internal interface IReference
 
-        public abstract int BitSize { get; }
+    {
+        bool IsWritable { get; }
+        bool IsReadable { get; }
+
+        int BitSize { get; }
     }
 
-    internal sealed class PortReference : Reference
+    internal sealed class PortReference : IReference
     {
         public ReferenceTarget Target { get; }
         public int StartIndex { get; }
-        public override int BitSize { get; }
+        public int BitSize { get; }
 
-        public override bool IsWritable => Target is ReferenceTarget.Output or ReferenceTarget.Register;
-        public override bool IsReadable => Target is ReferenceTarget.Input or ReferenceTarget.Register;
+        public bool IsWritable => Target is ReferenceTarget.Output or ReferenceTarget.Register;
+        public bool IsReadable => Target is ReferenceTarget.Input or ReferenceTarget.Register;
 
         public PortReference(ReferenceTarget target, int startIndex, int length)
         {
@@ -45,13 +46,13 @@
         }
     }
 
-    internal sealed class LocalReference : Reference
+    internal sealed class LocalReference : IReference
     {
         public string Name { get; }
-        public override int BitSize { get; }
+        public int BitSize { get; }
 
-        public override bool IsWritable => true;
-        public override bool IsReadable => true;
+        public bool IsWritable => true;
+        public bool IsReadable => true;
 
         public LocalReference(string name, int bitSize)
         {
@@ -60,5 +61,24 @@
         }
 
         public override string ToString() => $"${Name}'{BitSize}";
+    }
+
+    internal sealed class SliceReference : IReference
+    {
+        public IReference Inner { get; }
+        public int Start { get; }
+        public int Length { get; }
+
+        public bool IsWritable => Inner.IsWritable;
+        public bool IsReadable => Inner.IsReadable;
+
+        int IReference.BitSize => Length;
+
+        public SliceReference(IReference inner, int start, int length)
+        {
+            this.Inner = inner;
+            this.Start = start;
+            this.Length = length;
+        }
     }
 }

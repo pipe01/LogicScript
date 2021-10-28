@@ -3,7 +3,7 @@ using LogicScript.Parsing.Structures;
 
 namespace LogicScript.Parsing.Visitors
 {
-    internal class ReferenceVisitor : LogicScriptBaseVisitor<Reference>
+    internal class ReferenceVisitor : LogicScriptBaseVisitor<IReference>
     {
         private readonly BlockContext Context;
 
@@ -12,7 +12,7 @@ namespace LogicScript.Parsing.Visitors
             this.Context = context;
         }
 
-        public override Reference VisitRefPort([NotNull] LogicScriptParser.RefPortContext context)
+        public override IReference VisitRefPort([NotNull] LogicScriptParser.RefPortContext context)
         {
             var identName = context.IDENT().GetText();
             PortInfo port;
@@ -25,7 +25,7 @@ namespace LogicScript.Parsing.Visitors
             return new PortReference(target, port.StartIndex, port.BitSize);
         }
 
-        public override Reference VisitRefLocal([NotNull] LogicScriptParser.RefLocalContext context)
+        public override IReference VisitRefLocal([NotNull] LogicScriptParser.RefLocalContext context)
         {
             var name = context.VARIABLE().GetText().TrimStart('$');
 
