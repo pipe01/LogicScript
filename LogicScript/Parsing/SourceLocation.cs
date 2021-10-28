@@ -12,7 +12,7 @@ namespace LogicScript.Parsing
             this.Line = line;
             this.Column = column;
         }
-        internal SourceLocation(IToken token) : this(token.Line, token.Column)
+        internal SourceLocation(IToken token) : this(token.Line, token.Column + 1)
         {
         }
 

@@ -14,4 +14,10 @@
     <ProjectReference Include="..\LogicScript\LogicScript.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Update="test.lsx">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>

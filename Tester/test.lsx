@@ -1,0 +1,13 @@
+﻿input asd
+input test
+output'2 out
+
+const myconst = 123
+
+reg'64 on
+
+when *
+    on = asd
+    out = myconst
+    $print on
+end

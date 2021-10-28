@@ -3,6 +3,7 @@ using LogicScript.Data;
 using LogicScript.Interpreting;
 using LogicScript.Parsing;
 using System;
+using System.IO;
 
 namespace Tester
 {
@@ -12,20 +13,7 @@ namespace Tester
         {
             try
             {
-                var script = Script.Parse(@"input asd
-input test
-output'2 out
-
-const myconst = 123
-
-reg'64 on
-
-when *
-    on = asd
-    $print on
-end
-
-");
+                var script = Script.Parse(File.ReadAllText("test.lsx"));
 
                 new Interpreter(script).Run(new MyMachine());
             }
