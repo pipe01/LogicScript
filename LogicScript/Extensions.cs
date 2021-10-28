@@ -1,4 +1,5 @@
 ﻿using Antlr4.Runtime;
+using Antlr4.Runtime.Tree;
 using LogicScript.Parsing;
 
 namespace LogicScript
@@ -18,5 +19,8 @@ namespace LogicScript
 
         public static SourceLocation Loc(this ParserRuleContext context)
             => new SourceLocation(context.Start);
+
+        public static int ParseBitSize(this ITerminalNode node)
+            => int.Parse(node.GetText().TrimStart('\''));
     }
 }

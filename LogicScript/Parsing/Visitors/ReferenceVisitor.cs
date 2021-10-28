@@ -12,7 +12,7 @@ namespace LogicScript.Parsing.Visitors
             this.Context = context;
         }
 
-        public override Reference VisitReference([NotNull] LogicScriptParser.ReferenceContext context)
+        public override Reference VisitRefPort([NotNull] LogicScriptParser.RefPortContext context)
         {
             var identName = context.IDENT().GetText();
             PortInfo port;

@@ -50,6 +50,9 @@ namespace LogicScript.Parsing.Visitors
             if (Context.Outer.Constants.TryGetValue(context.GetText(), out var val))
                 return val;
 
+            if (Context.IsInConstant)
+                throw new ParseException("You can only reference constants from other constants", context.Loc());
+
             var @ref = new ReferenceVisitor(Context).Visit(context);
 
             if (!@ref.IsReadable)

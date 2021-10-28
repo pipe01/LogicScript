@@ -1,6 +1,9 @@
 ﻿using Antlr4.Runtime.Misc;
+using LogicScript.Parsing.Structures;
+using LogicScript.Parsing.Structures.Expressions;
 using LogicScript.Parsing.Structures.Statements;
 using System.Linq;
+using System.Net.Mime;
 
 namespace LogicScript.Parsing.Visitors
 {
@@ -51,6 +54,35 @@ namespace LogicScript.Parsing.Visitors
             }
 
             return new IfStatement(context.Loc(), cond, body, @else);
+        }
+
+        public override Statement VisitVardecl_statement([NotNull] LogicScriptParser.Vardecl_statementContext context)
+        {
+            var name = context.IDENT().GetText();
+
+            if (Context.DoesIdentifierExist(name))
+                throw new ParseException($"Identifier '{name}' already exists", new SourceLocation(context.IDENT().Symbol));
+
+            Expression? value = null;
+
+            // If the variable has a bit size marker, we will use that size. Otherwise, we will later infer it from the value
+            int size = context.BIT_SIZE() != null ? context.BIT_SIZE().ParseBitSize() : 0;
+
+            if (context.expression() != null)
+            {
+                value = new ExpressionVisitor(Context, size).Visit(context.expression());
+
+                if (size == 0)
+                    size = value.BitSize;
+            }
+            else if (size == 0)
+            {
+                throw new ParseException("You must specify a local's size or initialize it", context.Loc());
+            }
+
+            Context.Locals.Add(name, new LocalInfo(size));
+
+            return new DeclareLocalStatement(context.Loc(), name, size, value);
         }
 
         public override Statement VisitPrint_task([NotNull] LogicScriptParser.Print_taskContext context)

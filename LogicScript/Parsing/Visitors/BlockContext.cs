@@ -8,9 +8,16 @@ namespace LogicScript.Parsing.Visitors
         public VisitContext Outer { get; }
         public IDictionary<string, LocalInfo> Locals { get; } = new Dictionary<string, LocalInfo>();
 
-        public BlockContext(VisitContext outer)
+        public bool IsInConstant { get; }
+
+        public BlockContext(VisitContext outer, bool isInConstant)
         {
             this.Outer = outer;
+            this.IsInConstant = isInConstant;
         }
+
+        public bool DoesIdentifierExist(string iden)
+            => Locals.ContainsKey(iden)
+            || Outer.DoesIdentifierExist(iden);
     }
 }

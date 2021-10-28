@@ -25,7 +25,7 @@ task_statement      : '@' (print_task | printbin_task) ;
 print_task          : 'print' (expression | TEXT) ;
 printbin_task       : 'print.b' expression ;
 
-vardecl_statement   : '$' IDENT BIT_SIZE? '=' expression ;
+vardecl_statement   : 'local' '$' IDENT BIT_SIZE? ('=' expression)? ;
 
 expression          : '(' expression ')'                        # exprParen
                     | funcName=IDENT '(' expression ')'         # exprCall
@@ -50,7 +50,8 @@ atom                : reference
                     | DEC_NUMBER
                     ;
 
-reference           : IDENT ;
+reference           : '$' IDENT # refLocal
+                    | IDENT     # refPort;
 
 /*
  * Lexer Rules

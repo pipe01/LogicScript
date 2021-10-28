@@ -12,5 +12,10 @@ namespace LogicScript.Parsing
         {
             this.Script = script;
         }
+
+        public bool DoesIdentifierExist(string iden)
+            => Script.Inputs.ContainsKey(iden)
+            || Script.Outputs.ContainsKey(iden)
+            || Script.Registers.ContainsKey(iden);
     }
 }

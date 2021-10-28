@@ -29,7 +29,7 @@ namespace LogicScript.Parsing.Visitors
                 }
                 else if (decl.const_decl() != null)
                 {
-                    var value = new ExpressionVisitor(ctx).Visit(decl.const_decl().expression());
+                    var value = new ExpressionVisitor(new BlockContext(ctx, true)).Visit(decl.const_decl().expression());
 
                     if (!value.IsConstant)
                         throw new ParseException("Const declarations must have a constant value", decl.const_decl().expression().Loc());
@@ -38,8 +38,9 @@ namespace LogicScript.Parsing.Visitors
                 }
                 else if (decl.when_decl() != null)
                 {
-                    var cond = decl.when_decl().cond == null ? null : new ExpressionVisitor(ctx).Visit(decl.when_decl().cond);
-                    var body = new StatementVisitor(ctx).Visit(decl.when_decl().block());
+                    var blockCtx = new BlockContext(ctx, false);
+                    var cond = decl.when_decl().cond == null ? null : new ExpressionVisitor(blockCtx).Visit(decl.when_decl().cond);
+                    var body = new StatementVisitor(blockCtx).Visit(decl.when_decl().block());
 
                     script.Blocks.Add(new WhenBlock(decl.Loc(), cond, body));
                 }
@@ -49,7 +50,7 @@ namespace LogicScript.Parsing.Visitors
 
             void VisitPortInfo(LogicScriptParser.Port_infoContext context, IDictionary<string, PortInfo> dic)
             {
-                var size = context.BIT_SIZE() == null ? 1 : int.Parse(context.BIT_SIZE().GetText().TrimStart('\''));
+                var size = context.BIT_SIZE() == null ? 1 : context.BIT_SIZE().ParseBitSize();
 
                 if (size > BitsValue.BitSize)
                     throw new ParseException($"The maximum bit size is {BitsValue.BitSize}", context.Loc());
