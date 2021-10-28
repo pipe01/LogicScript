@@ -22,7 +22,7 @@ namespace LogicScript.Parsing.Visitors
                         : Context.Script.Registers.TryGetValue(identName, out port) ? ReferenceTarget.Register
                         : throw new ParseException($"Unknown identifier '{identName}'", new SourceLocation(context.IDENT().Symbol));
 
-            return new Reference(target, port.Index, port.BitSize);
+            return new Reference(target, port.StartIndex, port.BitSize);
         }
     }
 }

@@ -4,6 +4,7 @@ using LogicScript.Parsing.Structures;
 using LogicScript.Parsing.Visitors;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace LogicScript
 {
@@ -12,6 +13,9 @@ namespace LogicScript
         internal IDictionary<string, PortInfo> Inputs { get; } = new Dictionary<string, PortInfo>();
         internal IDictionary<string, PortInfo> Outputs { get; } = new Dictionary<string, PortInfo>();
         internal IDictionary<string, PortInfo> Registers { get; } = new Dictionary<string, PortInfo>();
+
+        internal int RegisteredInputLength => Inputs.Values.Sum(o => o.BitSize);
+        internal int RegisteredOutputLength => Outputs.Values.Sum(o => o.BitSize);
 
         internal IList<WhenBlock> Blocks { get; } = new List<WhenBlock>();
 

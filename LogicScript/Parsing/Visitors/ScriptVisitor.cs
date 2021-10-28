@@ -2,6 +2,7 @@
 using LogicScript.Data;
 using LogicScript.Parsing.Structures;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace LogicScript.Parsing.Visitors
 {
@@ -58,7 +59,9 @@ namespace LogicScript.Parsing.Visitors
                 if (script.Inputs.ContainsKey(name) || script.Outputs.ContainsKey(name) || script.Registers.ContainsKey(name))
                     throw new ParseException($"The port '{name}' is already registered", new SourceLocation(context.IDENT().Symbol));
 
-                dic.Add(name, new PortInfo(dic.Count, size));
+                int startIndex = dic.Values.Sum(o => o.BitSize);
+
+                dic.Add(name, new PortInfo(startIndex, size));
             }
         }
     }

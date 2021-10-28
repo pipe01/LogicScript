@@ -1,5 +1,4 @@
-﻿input asd
-input test
+﻿input'3 asd
 output'2 out
 
 const myconst = 123
@@ -8,5 +7,5 @@ reg'64 on
 
 when *
     out = 3
-    $print on
+    $print asd
 end

@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections;
 
 namespace LogicScript.Interpreting
 {
@@ -12,16 +11,27 @@ namespace LogicScript.Interpreting
             this.Script = script;
         }
 
-        public void Run(IMachine machine)
+        public void Run(IMachine machine, bool checkPortCount = true)
         {
+            if (checkPortCount)
+            {
+                if (machine.InputCount != Script.RegisteredInputLength)
+                    throw new InterpreterException($"Input length mismatch: script requires {Script.RegisteredInputLength} but machine has {machine.InputCount}");
+
+                if (machine.OutputCount != Script.RegisteredOutputLength)
+                    throw new InterpreterException($"Output length mismatch: script requires {Script.RegisteredOutputLength} but machine has {machine.OutputCount}");
+            }
+
             machine.AllocateRegisters(Script.Registers.Count);
 
             Span<bool> input = stackalloc bool[machine.InputCount];
             machine.ReadInput(input);
 
+            var visitor = new Visitor(Script, machine, input);
+
             foreach (var block in Script.Blocks)
             {
-                new Visitor(Script, machine, input).Visit(block);
+                visitor.Visit(block);
             }
         }
     }

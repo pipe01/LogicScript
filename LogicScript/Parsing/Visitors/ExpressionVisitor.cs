@@ -1,4 +1,6 @@
-﻿using Antlr4.Runtime.Misc;
+﻿using Antlr4.Runtime;
+using Antlr4.Runtime.Misc;
+using Antlr4.Runtime.Tree;
 using LogicScript.Data;
 using LogicScript.Parsing.Structures;
 using LogicScript.Parsing.Structures.Expressions;
@@ -8,10 +10,22 @@ namespace LogicScript.Parsing.Visitors
     class ExpressionVisitor : LogicScriptBaseVisitor<Expression>
     {
         private readonly VisitContext Context;
+        private readonly int MaxBitSize;
 
-        public ExpressionVisitor(VisitContext context)
+        public ExpressionVisitor(VisitContext context, int maxBitSize = 0)
         {
             this.Context = context;
+            this.MaxBitSize = maxBitSize;
+        }
+
+        public override Expression Visit([NotNull] IParseTree tree)
+        {
+            var expr = base.Visit(tree);
+
+            if (MaxBitSize != 0 && expr.BitSize > MaxBitSize)
+                throw new ParseException($"Cannot fit number of {expr.BitSize} bits in {MaxBitSize} bits", tree is ParserRuleContext ctx ? ctx.Loc() : default);
+
+            return expr;
         }
 
         public override Expression VisitAtom([NotNull] LogicScriptParser.AtomContext context)
@@ -19,8 +33,9 @@ namespace LogicScript.Parsing.Visitors
             if (context.DEC_NUMBER() != null)
             {
                 var n = ulong.Parse(context.GetText());
+                var length = BitsValue.BitsToFit(n);
 
-                return new NumberLiteralExpression(context.Loc(), new BitsValue(n));
+                return new NumberLiteralExpression(context.Loc(), new BitsValue(n, length));
             }
             else if (context.reference() != null)
             {

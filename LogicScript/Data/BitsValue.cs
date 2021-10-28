@@ -133,6 +133,8 @@ namespace LogicScript.Data
             return new BitsValue(Number & mask, length);
         }
 
+        public static int BitsToFit(ulong n) => (int)Math.Ceiling(Math.Log(n, 2));
+
         public static BitsValue FromBool(bool b) => b ? One : Zero;
 
         public static implicit operator BitsValue(ulong n) => new BitsValue(n);
