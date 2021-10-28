@@ -1,4 +1,5 @@
 ﻿using LogicScript.Data;
+using System;
 
 namespace LogicScript.Parsing.Structures.Expressions
 {
@@ -12,11 +13,12 @@ namespace LogicScript.Parsing.Structures.Expressions
         public override int BitSize => Operator switch
         {
             Operator.And or Operator.Or or Operator.Xor or Operator.Subtract or Operator.Divide => Left.BitSize > Right.BitSize ? Left.BitSize : Right.BitSize,
-            Operator.ShiftLeft => BitsValue.BitSize, //TODO Find a better way
+            Operator.ShiftLeft => Left.BitSize + ((1 << Right.BitSize) - 1),
             Operator.ShiftRight => Left.BitSize,
             Operator.EqualsCompare or Operator.Greater or Operator.Lesser => 1,
             Operator.Add => Left.BitSize > Right.BitSize ? Left.BitSize + 1 : Right.BitSize + 1,
             Operator.Multiply => Left.BitSize + Right.BitSize,
+            Operator.Power => Left.BitSize * ((1 << Right.BitSize) - 1),
             _ => throw new ParseException("Unknown operator bitsize", Location)
         };
 
