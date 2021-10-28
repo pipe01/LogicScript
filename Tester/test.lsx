@@ -7,7 +7,6 @@ const myconst = 123
 reg'64 on
 
 when *
-    on = asd
-    out = myconst
+    out = 3
     $print on
 end

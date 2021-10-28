@@ -11,6 +11,10 @@
         // used as parameters.
         public override bool IsConstant => Condition.IsConstant && IfTrue.IsConstant && IfFalse.IsConstant;
 
+        // Ideally this would be calculated at runtime after knowing which branch we are going down on,
+        // but the best we can do at parse time is to get the length of whichever is longest.
+        public override int BitSize => IfTrue.BitSize > IfFalse.BitSize ? IfTrue.BitSize : IfFalse.BitSize;
+
         public TernaryOperatorExpression(SourceLocation location, Expression condition, Expression ifTrue, Expression ifFalse) : base(location)
         {
             this.Condition = condition;

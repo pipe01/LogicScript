@@ -48,7 +48,7 @@ namespace Tester
                 }
             }
 
-            public void WriteOutput(int index, bool value)
+            public void WriteOutput(int startIndex, BitsValue value)
             {
             }
 

@@ -62,10 +62,10 @@ namespace LogicScript.Interpreting
                     throw new InterpreterException("Cannot read from output", expr.Location);
 
                 case ReferenceTarget.Input:
-                    return Input[Script.Inputs[expr.Reference.Name].Index] ? BitsValue.One : BitsValue.Zero;
+                    return new BitsValue(Input.Slice(expr.Reference.StartIndex, expr.Reference.Length));
 
                 case ReferenceTarget.Register:
-                    return Machine.ReadRegister(Script.Registers[expr.Reference.Name].Index);
+                    return Machine.ReadRegister(expr.Reference.StartIndex);
             }
 
             throw new InterpreterException("Unknown reference target", expr.Location);

@@ -7,6 +7,12 @@
         public Expression Right { get; set; }
 
         public override bool IsConstant => Left.IsConstant && Right.IsConstant;
+        public override int BitSize => Operator switch
+        {
+            Operator.And or Operator.Or or Operator.Xor => Left.BitSize > Right.BitSize ? Left.BitSize : Right.BitSize,
+            Operator.EqualsCompare or Operator.Greater or Operator.Lesser => 1,
+            _ => throw new ParseException("Unknown operator bitsize", Location)
+        };
 
         public BinaryOperatorExpression(SourceLocation location, Operator op, Expression left, Expression right) : base(location)
         {

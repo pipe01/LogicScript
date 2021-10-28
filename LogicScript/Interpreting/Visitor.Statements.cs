@@ -37,14 +37,14 @@ namespace LogicScript.Interpreting
                     throw new InterpreterException("Cannot write to input", stmt.Location);
 
                 case ReferenceTarget.Output:
-                    if (value.Length != 1)
-                        throw new InterpreterException("Value must be a single bit to be written to output", stmt.Location);
+                    if (value.Length > stmt.Reference.Length)
+                        throw new InterpreterException("Value is longer than output", stmt.Location);
 
-                    Machine.WriteOutput(Script.Outputs[stmt.Reference.Name].Index, value.IsOne);
+                    Machine.WriteOutput(stmt.Reference.StartIndex, value);
                     break;
 
                 case ReferenceTarget.Register:
-                    Machine.WriteRegister(Script.Registers[stmt.Reference.Name].Index, value.IsOne);
+                    Machine.WriteRegister(stmt.Reference.StartIndex, value);
                     break;
 
                 default:

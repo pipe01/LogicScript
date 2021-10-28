@@ -9,7 +9,7 @@ namespace LogicScript.Interpreting
         int OutputCount { get; }
 
         void ReadInput(Span<bool> values);
-        void WriteOutput(int index, bool value);
+        void WriteOutput(int startIndex, BitsValue value);
 
         void AllocateRegisters(int count);
         BitsValue ReadRegister(int index);

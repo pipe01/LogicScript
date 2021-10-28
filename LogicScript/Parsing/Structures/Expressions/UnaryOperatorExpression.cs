@@ -1,4 +1,6 @@
-﻿namespace LogicScript.Parsing.Structures.Expressions
+﻿using System;
+
+namespace LogicScript.Parsing.Structures.Expressions
 {
     internal sealed class UnaryOperatorExpression : Expression
     {
@@ -6,6 +8,11 @@
         public Expression Operand { get; set; }
 
         public override bool IsConstant => Operand.IsConstant;
+        public override int BitSize => Operator switch
+        {
+            Operator.Not or Operator.Rise or Operator.Fall or Operator.Change => Operand.BitSize,
+            _ => throw new ParseException("Unknown unary operator bitsize", Location)
+        };
 
         public UnaryOperatorExpression(SourceLocation location, Operator op, Expression operand) : base(location)
         {

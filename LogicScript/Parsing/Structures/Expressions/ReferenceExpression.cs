@@ -5,6 +5,7 @@
         public Reference Reference { get; set; }
 
         public override bool IsConstant => false;
+        public override int BitSize => Reference.Length;
 
         public ReferenceExpression(SourceLocation location, Reference target) : base(location)
         {

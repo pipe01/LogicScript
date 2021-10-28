@@ -5,6 +5,7 @@
         public SourceLocation Location { get; }
 
         public abstract bool IsConstant { get; }
+        public abstract int BitSize { get; }
 
         public Expression(SourceLocation location)
         {
