@@ -23,7 +23,7 @@ namespace LogicScript.Parsing.Visitors
             var expr = base.Visit(tree);
 
             if (MaxBitSize != 0 && expr.BitSize > MaxBitSize)
-                throw new ParseException($"Cannot fit number of {expr.BitSize} bits in {MaxBitSize} bits", tree is ParserRuleContext ctx ? ctx.Loc() : default);
+                throw new ParseException($"Cannot fit a {expr.BitSize} bits long number into {MaxBitSize} bits", tree is ParserRuleContext ctx ? ctx.Loc() : default);
 
             return expr;
         }

@@ -39,6 +39,7 @@ expression          : '(' expression ')'                  # exprParen
                       ifTrue=expression ':'
                       ifFalse=expression                  # exprTernary
                     | atom                                # exprAtom
+                    | '\\' NEWLINE expression             #exprLineBreak
                     ;
 
 atom                : reference
