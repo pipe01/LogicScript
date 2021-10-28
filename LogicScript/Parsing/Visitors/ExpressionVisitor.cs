@@ -30,12 +30,11 @@ namespace LogicScript.Parsing.Visitors
 
         public override Expression VisitAtom([NotNull] LogicScriptParser.AtomContext context)
         {
-            if (context.DEC_NUMBER() != null)
+            if (context.number() != null)
             {
-                var n = ulong.Parse(context.GetText());
-                var length = BitsValue.BitsToFit(n);
+                var n = new NumberVisitor().Visit(context.number());
 
-                return new NumberLiteralExpression(context.Loc(), new BitsValue(n, length));
+                return new NumberLiteralExpression(context.Loc(), n);
             }
             else if (context.reference() != null)
             {

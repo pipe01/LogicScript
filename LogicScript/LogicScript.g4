@@ -50,8 +50,10 @@ expression          : '(' expression ')'                        # exprParen
                     ;
 
 atom                : reference
-                    | DEC_NUMBER
+                    | number
                     ;
+
+number              : DEC_NUMBER | BIN_NUMBER | HEX_NUMBER ;
 
 reference           : '$' IDENT # refLocal
                     | IDENT     # refPort;
@@ -62,10 +64,14 @@ reference           : '$' IDENT # refLocal
 fragment LOWERCASE  : [a-z] ;
 fragment UPPERCASE  : [A-Z] ;
 fragment DEC_DIGIT  : [0-9] ;
+fragment BIN_DIGIT  : [01] ;
+fragment HEX_DIGIT  : [a-fA-F0-9] ;
 fragment INPUT      : 'input' ;
 fragment OUTPUT     : 'output' ;
 
 DEC_NUMBER          : DEC_DIGIT+ ;
+BIN_NUMBER          : BIN_DIGIT+ 'b' ;
+HEX_NUMBER          : '0x' HEX_DIGIT+ ;
 IDENT               : (LOWERCASE | UPPERCASE | '_') (LOWERCASE | UPPERCASE | DEC_DIGIT | '_')* ;
 WHITESPACE          : [ \r]+ -> channel(HIDDEN) ;
 NEWLINE             : [ \r\n]+ ;
