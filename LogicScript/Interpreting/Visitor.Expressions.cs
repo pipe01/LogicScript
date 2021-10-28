@@ -42,6 +42,12 @@ namespace LogicScript.Interpreting
                 case Operator.Xor:
                     return new BitsValue(left.Number ^ right.Number, maxLen);
 
+                case Operator.ShiftLeft:
+                    return new BitsValue(left.Number << (int)right.Number, left.Length + (int)right.Number);
+
+                case Operator.ShiftRight:
+                    return new BitsValue(left.Number >> (int)right.Number, left.Length - (int)right.Number);
+
 
                 case Operator.Add:
                     return new BitsValue(left.Number + right.Number);

@@ -29,24 +29,25 @@ task_printbin       : 'print.b' expression ;
 
 stmt_vardecl        : 'local' '$' IDENT BIT_SIZE? ('=' expression)? ;
 
-expression          : '(' expression ')'                        # exprParen
-                    | '(' expression ')\'' DEC_NUMBER           # exprTrunc
-                    | funcName=IDENT '(' expression ')'         # exprCall
-                    | NOT expression                            # exprNegate
-                    | expression op=(OR | AND) expression       # exprAndOr
-                    | expression op=(PLUS | MINUS) expression   # exprPlusMinus
-                    | expression op=(MULT | DIVIDE) expression  # exprMultDiv
-                    | expression XOR expression                 # exprXor
+expression          : '(' expression ')'                            # exprParen
+                    | '(' expression ')\'' DEC_NUMBER               # exprTrunc
+                    | funcName=IDENT '(' expression ')'             # exprCall
+                    | NOT expression                                # exprNegate
+                    | expression op=(OR | AND) expression           # exprAndOr
+                    | expression XOR expression                     # exprXor
+                    | expression op=(PLUS | MINUS) expression       # exprPlusMinus
+                    | expression op=(MULT | DIVIDE) expression      # exprMultDiv
+                    | expression op=(LSHIFT | RSHIFT) expression    # exprShift
                     | expression op=(
                         COMPARE_EQUALS
-                        | COMPARE_GREATER
-                        | COMPARE_LESSER
-                    ) expression                                # exprCompare
+                      | COMPARE_GREATER
+                      | COMPARE_LESSER
+                    ) expression                                    # exprCompare
                     | cond=expression '?'
                       ifTrue=expression ':'
-                      ifFalse=expression                        # exprTernary
-                    | atom                                      # exprAtom
-                    | '\\' NEWLINE expression                   # exprLineBreak
+                      ifFalse=expression                            # exprTernary
+                    | atom                                          # exprAtom
+                    | '\\' NEWLINE expression                       # exprLineBreak
                     ;
 
 atom                : reference
@@ -88,6 +89,8 @@ COMPARE_LESSER      : '<' ;
 AND                 : '&' ;
 OR                  : '|' ;
 XOR                 : '^' ;
+LSHIFT              : '<<' ;
+RSHIFT              : '>>' ;
 NOT                 : '!' | '~' ;
 PLUS                : '+' ;
 MINUS               : '-' ;

@@ -129,6 +129,18 @@ namespace LogicScript.Parsing.Visitors
             return new BinaryOperatorExpression(context.Loc(), op, Visit(context.expression(0)), Visit(context.expression(1)));
         }
 
+        public override Expression VisitExprShift([NotNull] LogicScriptParser.ExprShiftContext context)
+        {
+            var op = context.op.Type switch
+            {
+                LogicScriptParser.LSHIFT => Operator.ShiftLeft,
+                LogicScriptParser.RSHIFT => Operator.ShiftRight,
+                _ => throw new ParseException("Unknown operator", context.Loc())
+            };
+
+            return new BinaryOperatorExpression(context.Loc(), op, Visit(context.expression(0)), Visit(context.expression(1)));
+        }
+
         public override Expression VisitExprNegate([NotNull] LogicScriptParser.ExprNegateContext context)
         {
             return new UnaryOperatorExpression(context.Loc(), Operator.Not, Visit(context.expression()));

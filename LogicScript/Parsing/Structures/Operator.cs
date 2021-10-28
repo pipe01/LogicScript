@@ -7,6 +7,8 @@
         Or,
         Xor,
         Add,
+        ShiftLeft,
+        ShiftRight,
         Subtract,
         Multiply,
         Divide,
