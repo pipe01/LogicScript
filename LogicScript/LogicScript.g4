@@ -25,21 +25,23 @@ task_statement      : '$' (print_task | printbin_task) ;
 print_task          : 'print' (expression | TEXT) ;
 printbin_task       : 'print.b' expression ;
 
-expression          : '(' expression ')'                  # exprParen
-                    | funcName=IDENT '(' expression ')'   # exprCall
-                    | NOT expression                      # exprNegate
-                    | expression op=(OR | AND) expression # exprAndOr
-                    | expression XOR expression           # exprXor
+expression          : '(' expression ')'                        # exprParen
+                    | funcName=IDENT '(' expression ')'         # exprCall
+                    | NOT expression                            # exprNegate
+                    | expression op=(OR | AND) expression       # exprAndOr
+                    | expression op=(PLUS | MINUS) expression   # exprPlusMinus
+                    | expression op=(MULT | DIVIDE) expression  # exprMultDiv
+                    | expression XOR expression                 # exprXor
                     | expression op=(
                         COMPARE_EQUALS
                         | COMPARE_GREATER
                         | COMPARE_LESSER
-                    ) expression                          # exprCompare
+                    ) expression                                # exprCompare
                     | cond=expression '?'
                       ifTrue=expression ':'
-                      ifFalse=expression                  # exprTernary
-                    | atom                                # exprAtom
-                    | '\\' NEWLINE expression             #exprLineBreak
+                      ifFalse=expression                        # exprTernary
+                    | atom                                      # exprAtom
+                    | '\\' NEWLINE expression                   # exprLineBreak
                     ;
 
 atom                : reference
@@ -74,3 +76,7 @@ AND                 : '&' ;
 OR                  : '|' ;
 XOR                 : '^' ;
 NOT                 : '!' | '~' ;
+PLUS                : '+' ;
+MINUS               : '-' ;
+MULT                : '*' ;
+DIVIDE              : '/' ;

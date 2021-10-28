@@ -80,6 +80,30 @@ namespace LogicScript.Parsing.Visitors
             return new BinaryOperatorExpression(context.Loc(), op, Visit(context.expression(0)), Visit(context.expression(1)));
         }
 
+        public override Expression VisitExprPlusMinus([NotNull] LogicScriptParser.ExprPlusMinusContext context)
+        {
+            var op = context.op.Type switch
+            {
+                LogicScriptParser.PLUS => Operator.Add,
+                LogicScriptParser.MINUS => Operator.Subtract,
+                _ => throw new ParseException("Unknown operator", context.Loc())
+            };
+
+            return new BinaryOperatorExpression(context.Loc(), op, Visit(context.expression(0)), Visit(context.expression(1)));
+        }
+
+        public override Expression VisitExprMultDiv([NotNull] LogicScriptParser.ExprMultDivContext context)
+        {
+            var op = context.op.Type switch
+            {
+                LogicScriptParser.MULT => Operator.Multiply,
+                LogicScriptParser.DIVIDE => Operator.Divide,
+                _ => throw new ParseException("Unknown operator", context.Loc())
+            };
+
+            return new BinaryOperatorExpression(context.Loc(), op, Visit(context.expression(0)), Visit(context.expression(1)));
+        }
+
         public override Expression VisitExprCompare([NotNull] LogicScriptParser.ExprCompareContext context)
         {
             var op = context.op.Type switch

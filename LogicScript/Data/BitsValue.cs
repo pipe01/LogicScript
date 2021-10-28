@@ -74,7 +74,7 @@ namespace LogicScript.Data
             this.Length = length;
         }
 
-        public BitsValue(ulong number) : this(number, BitSize)
+        public BitsValue(ulong number) : this(number, BitsToFit(number))
         {
         }
 

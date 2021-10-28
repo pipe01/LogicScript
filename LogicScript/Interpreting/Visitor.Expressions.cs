@@ -40,6 +40,20 @@ namespace LogicScript.Interpreting
                 case Operator.Xor:
                     return new BitsValue(left.Number ^ right.Number, maxLen);
 
+
+                case Operator.Add:
+                    return new BitsValue(left.Number + right.Number);
+
+                case Operator.Subtract:
+                    return new BitsValue(left.Number - right.Number);
+
+                case Operator.Multiply:
+                    return new BitsValue(left.Number * right.Number);
+
+                case Operator.Divide:
+                    return new BitsValue(left.Number / right.Number);
+
+
                 case Operator.EqualsCompare:
                     return new BitsValue(left.Number == right.Number && left.Length == right.Length ? 1ul : 0, 1);
 
@@ -48,6 +62,7 @@ namespace LogicScript.Interpreting
 
                 case Operator.Lesser:
                     return new BitsValue(left.Number < right.Number && left.Length == right.Length ? 1ul : 0, 1);
+
 
                 default:
                     throw new InterpreterException("Unknown operator", expr.Location);

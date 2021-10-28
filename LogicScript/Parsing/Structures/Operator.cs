@@ -6,6 +6,10 @@
         And,
         Or,
         Xor,
+        Add,
+        Subtract,
+        Multiply,
+        Divide,
 
         // (Binary) comparison operators
         EqualsCompare,
