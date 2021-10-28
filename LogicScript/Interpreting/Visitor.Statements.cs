@@ -98,15 +98,30 @@ namespace LogicScript.Interpreting
 
         private void Visit(ForStatement stmt)
         {
-            var from = stmt.From == null ? 0 : Visit(stmt.From).Number;
+            var from = stmt.From == null ? 0 : Visit(stmt.From);
             var to = Visit(stmt.To);
-            var size = to.Length;
 
-            for (ulong i = from; i < to.Number; i++)
+            if (from > to)
             {
-                Locals[stmt.VariableName] = new BitsValue(i, size);
+                int size = from.Length;
 
-                Visit(stmt.Body);
+                for (ulong i = from; i > to.Number; i--)
+                {
+                    Locals[stmt.VariableName] = new BitsValue(i, size);
+
+                    Visit(stmt.Body);
+                }
+            }
+            else
+            {
+                int size = to.Length;
+
+                for (ulong i = from; i < to.Number; i++)
+                {
+                    Locals[stmt.VariableName] = new BitsValue(i, size);
+
+                    Visit(stmt.Body);
+                }
             }
         }
     }
