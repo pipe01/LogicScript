@@ -62,7 +62,7 @@ fragment OUTPUT     : 'output' ;
 DEC_NUMBER          : DEC_DIGIT+ ;
 IDENT               : (LOWERCASE | UPPERCASE | '_') (LOWERCASE | UPPERCASE | DEC_DIGIT | '_')* ;
 WHITESPACE          : [ \r]+ -> channel(HIDDEN) ;
-NEWLINE             : [\r\n]+ ;
+NEWLINE             : [ \r\n]+ ;
 TEXT                : '"' .*? '"' ;
 
 BIT_SIZE            : '\'' DEC_NUMBER ;
