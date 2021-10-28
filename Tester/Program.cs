@@ -1,8 +1,5 @@
-﻿using Antlr4.Runtime;
-using Antlr4.Runtime.Misc;
-using LogicScript;
+﻿using LogicScript;
 using LogicScript.Parsing;
-using LogicScript.Parsing.Visitors;
 using System;
 
 namespace Tester
@@ -17,10 +14,12 @@ namespace Tester
 input test
 output'2 out
 
+const myconst = test
+
 reg'123 on
 
 when *
-    on = test
+    on = myconst
 
     if test == 1
         on = 1

@@ -2,17 +2,16 @@
 using LogicScript.Data;
 using LogicScript.Parsing.Structures;
 using LogicScript.Parsing.Structures.Expressions;
-using System;
 
 namespace LogicScript.Parsing.Visitors
 {
     class ExpressionVisitor : LogicScriptBaseVisitor<Expression>
     {
-        private readonly Script Script;
+        private readonly VisitContext Context;
 
-        public ExpressionVisitor(Script script)
+        public ExpressionVisitor(VisitContext context)
         {
-            this.Script = script;
+            this.Context = context;
         }
 
         public override Expression VisitAtom([NotNull] LogicScriptParser.AtomContext context)
@@ -25,15 +24,23 @@ namespace LogicScript.Parsing.Visitors
             }
             else if (context.reference() != null)
             {
-                var @ref = new ReferenceVisitor(Script).Visit(context.reference());
-
-                if (!@ref.IsReadable)
-                    throw new ParseException("An identifier in an expression must be readable", context.reference().Loc());
-
-                return new ReferenceExpression(context.Loc(), @ref);
+                return Visit(context.reference());
             }
 
             throw new ParseException("Invalid atom", context.Loc());
+        }
+
+        public override Expression VisitReference([NotNull] LogicScriptParser.ReferenceContext context)
+        {
+            if (Context.Constants.TryGetValue(context.GetText(), out var val))
+                return val;
+
+            var @ref = new ReferenceVisitor(Context).Visit(context);
+
+            if (!@ref.IsReadable)
+                throw new ParseException("An identifier in an expression must be readable", context.Loc());
+
+            return new ReferenceExpression(context.Loc(), @ref);
         }
 
         public override Expression VisitExprParen([NotNull] LogicScriptParser.ExprParenContext context)

@@ -6,11 +6,11 @@ namespace LogicScript.Parsing.Visitors
 {
     class StatementVisitor : LogicScriptBaseVisitor<Statement>
     {
-        private readonly Script Script;
+        private readonly VisitContext Context;
 
-        public StatementVisitor(Script script)
+        public StatementVisitor(VisitContext context)
         {
-            this.Script = script;
+            this.Context = context;
         }
 
         public override Statement VisitBlock([NotNull] LogicScriptParser.BlockContext context)
@@ -20,12 +20,12 @@ namespace LogicScript.Parsing.Visitors
 
         public override Statement VisitAssign_statement([NotNull] LogicScriptParser.Assign_statementContext context)
         {
-            var @ref = new ReferenceVisitor(Script).Visit(context.reference());
+            var @ref = new ReferenceVisitor(Context).Visit(context.reference());
 
             if (!@ref.IsWritable)
                 throw new ParseException("The left side of an assignment must be writable", context.reference().Loc());
 
-            var value = new ExpressionVisitor(Script).Visit(context.expression());
+            var value = new ExpressionVisitor(Context).Visit(context.expression());
 
             return new AssignStatement(context.Loc(), @ref, value);
         }
@@ -37,7 +37,7 @@ namespace LogicScript.Parsing.Visitors
 
         private IfStatement VisitIfBody(LogicScriptParser.If_bodyContext context)
         {
-            var cond = new ExpressionVisitor(Script).Visit(context.expression());
+            var cond = new ExpressionVisitor(Context).Visit(context.expression());
             var body = Visit(context.block());
             Statement? @else = null;
 

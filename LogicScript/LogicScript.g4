@@ -2,7 +2,8 @@ grammar LogicScript;
 
 script              : (declaration NEWLINE)* EOF ;
 
-declaration         : input_decl | output_decl | register_decl | when_decl ;
+declaration         : const_decl | input_decl | output_decl | register_decl | when_decl ;
+const_decl          : 'const' IDENT '=' expression ;
 input_decl          : 'input' BIT_SIZE?  IDENT ;
 output_decl         : 'output' BIT_SIZE?  IDENT ;
 register_decl       : 'reg' BIT_SIZE? IDENT ;
