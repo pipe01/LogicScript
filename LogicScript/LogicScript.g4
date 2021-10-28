@@ -58,7 +58,8 @@ atom                : reference
 number              : DEC_NUMBER | BIN_NUMBER | HEX_NUMBER ;
 
 reference           : '$' IDENT # refLocal
-                    | IDENT     # refPort;
+                    | IDENT     # refPort
+                    ;
 
 /*
  * Lexer Rules
