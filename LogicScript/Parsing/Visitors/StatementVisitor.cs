@@ -18,7 +18,7 @@ namespace LogicScript.Parsing.Visitors
 
         public override Statement VisitBlock([NotNull] LogicScriptParser.BlockContext context)
         {
-            return new BlockStatement(context.Loc(), context.statement().Select(Visit).ToArray());
+            return new BlockStatement(context.Loc(), context.stmt().Select(Visit).ToArray());
         }
 
         public override Statement VisitAssignRegular([NotNull] LogicScriptParser.AssignRegularContext context)
@@ -45,7 +45,7 @@ namespace LogicScript.Parsing.Visitors
             return new AssignStatement(context.Loc(), @ref, new TruncateExpression(context.Loc(), value, @ref.BitSize));
         }
 
-        public override Statement VisitIf_statement([NotNull] LogicScriptParser.If_statementContext context)
+        public override Statement VisitStmt_if([NotNull] LogicScriptParser.Stmt_ifContext context)
         {
             return VisitIfBody(context.if_body());
         }
@@ -56,19 +56,19 @@ namespace LogicScript.Parsing.Visitors
             var body = Visit(context.block());
             Statement? @else = null;
 
-            if (context.else_statement() != null)
+            if (context.stmt_else() != null)
             {
-                @else = Visit(context.else_statement().block());
+                @else = Visit(context.stmt_else().block());
             }
-            else if (context.elseif_statement() != null)
+            else if (context.stmt_elseif() != null)
             {
-                @else = VisitIfBody(context.elseif_statement().if_body());
+                @else = VisitIfBody(context.stmt_elseif().if_body());
             }
 
             return new IfStatement(context.Loc(), cond, body, @else);
         }
 
-        public override Statement VisitVardecl_statement([NotNull] LogicScriptParser.Vardecl_statementContext context)
+        public override Statement VisitStmt_vardecl([NotNull] LogicScriptParser.Stmt_vardeclContext context)
         {
             var name = context.IDENT().GetText();
 
@@ -97,7 +97,7 @@ namespace LogicScript.Parsing.Visitors
             return new DeclareLocalStatement(context.Loc(), name, size, value);
         }
 
-        public override Statement VisitPrint_task([NotNull] LogicScriptParser.Print_taskContext context)
+        public override Statement VisitTask_print([NotNull] LogicScriptParser.Task_printContext context)
         {
             if (context.expression() != null)
             {
@@ -113,7 +113,7 @@ namespace LogicScript.Parsing.Visitors
             throw new ParseException("Invalid print value", context.Loc());
         }
 
-        public override Statement VisitPrintbin_task([NotNull] LogicScriptParser.Printbin_taskContext context)
+        public override Statement VisitTask_printbin([NotNull] LogicScriptParser.Task_printbinContext context)
         {
             var value = new ExpressionVisitor(Context).Visit(context.expression());
 

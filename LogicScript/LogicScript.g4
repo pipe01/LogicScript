@@ -2,32 +2,32 @@ grammar LogicScript;
 
 script              : (declaration NEWLINE)* EOF ;
 
-declaration         : const_decl | input_decl | output_decl | register_decl | when_decl ;
-const_decl          : 'const' IDENT '=' expression ;
-input_decl          : 'input' port_info ;
-output_decl         : 'output' port_info ;
-register_decl       : 'reg' port_info ;
-when_decl           : 'when' (cond=expression | '*') NEWLINE block 'end' ;
+declaration         : decl_const | decl_input | decl_output | decl_register | decl_when ;
+decl_const          : 'const' IDENT '=' expression ;
+decl_input          : 'input' port_info ;
+decl_output         : 'output' port_info ;
+decl_register       : 'reg' port_info ;
+decl_when           : 'when' (cond=expression | '*') NEWLINE block 'end' ;
 
 port_info           : BIT_SIZE? IDENT ;
 
-block               : (statement NEWLINE)* ;
+block               : (stmt NEWLINE)* ;
 
-statement           : if_statement | assign_statement | task_statement | vardecl_statement ;
-assign_statement    : reference EQUALS expression       # assignRegular
+stmt                : stmt_if | stmt_assign | stmt_task | stmt_vardecl ;
+stmt_assign         : reference EQUALS expression       # assignRegular
                     | reference TRUNC_EQUALS expression # assignTruncate
                     ;
 
-if_statement        : 'if' if_body ;
-elseif_statement    : 'else if' if_body ;
-else_statement      : 'else' NEWLINE block 'end' ;
-if_body             : expression NEWLINE block (elseif_statement | else_statement | 'end') ;
+stmt_if             : 'if' if_body ;
+stmt_elseif         : 'else if' if_body ;
+stmt_else           : 'else' NEWLINE block 'end' ;
+if_body             : expression NEWLINE block (stmt_elseif | stmt_else | 'end') ;
 
-task_statement      : '@' (print_task | printbin_task) ;
-print_task          : 'print' (expression | TEXT) ;
-printbin_task       : 'print.b' expression ;
+stmt_task           : '@' (task_print | task_printbin) ;
+task_print          : 'print' (expression | TEXT) ;
+task_printbin       : 'print.b' expression ;
 
-vardecl_statement   : 'local' '$' IDENT BIT_SIZE? ('=' expression)? ;
+stmt_vardecl        : 'local' '$' IDENT BIT_SIZE? ('=' expression)? ;
 
 expression          : '(' expression ')'                        # exprParen
                     | '(' expression ')\'' DEC_NUMBER           # exprTrunc

@@ -15,32 +15,32 @@ namespace LogicScript.Parsing.Visitors
 
             foreach (var decl in context.declaration())
             {
-                if (decl.input_decl() != null)
+                if (decl.decl_input() != null)
                 {
-                    VisitPortInfo(decl.input_decl().port_info(), script.Inputs);
+                    VisitPortInfo(decl.decl_input().port_info(), script.Inputs);
                 }
-                else if (decl.output_decl() != null)
+                else if (decl.decl_output() != null)
                 {
-                    VisitPortInfo(decl.output_decl().port_info(), script.Outputs);
+                    VisitPortInfo(decl.decl_output().port_info(), script.Outputs);
                 }
-                else if (decl.register_decl() != null)
+                else if (decl.decl_register() != null)
                 {
-                    VisitPortInfo(decl.register_decl().port_info(), script.Registers);
+                    VisitPortInfo(decl.decl_register().port_info(), script.Registers);
                 }
-                else if (decl.const_decl() != null)
+                else if (decl.decl_const() != null)
                 {
-                    var value = new ExpressionVisitor(new BlockContext(ctx, true)).Visit(decl.const_decl().expression());
+                    var value = new ExpressionVisitor(new BlockContext(ctx, true)).Visit(decl.decl_const().expression());
 
                     if (!value.IsConstant)
-                        throw new ParseException("Const declarations must have a constant value", decl.const_decl().expression().Loc());
+                        throw new ParseException("Const declarations must have a constant value", decl.decl_const().expression().Loc());
 
-                    ctx.Constants.Add(decl.const_decl().IDENT().GetText(), value);
+                    ctx.Constants.Add(decl.decl_const().IDENT().GetText(), value);
                 }
-                else if (decl.when_decl() != null)
+                else if (decl.decl_when() != null)
                 {
                     var blockCtx = new BlockContext(ctx, false);
-                    var cond = decl.when_decl().cond == null ? null : new ExpressionVisitor(blockCtx).Visit(decl.when_decl().cond);
-                    var body = new StatementVisitor(blockCtx).Visit(decl.when_decl().block());
+                    var cond = decl.decl_when().cond == null ? null : new ExpressionVisitor(blockCtx).Visit(decl.decl_when().cond);
+                    var body = new StatementVisitor(blockCtx).Visit(decl.decl_when().block());
 
                     script.Blocks.Add(new WhenBlock(decl.Loc(), cond, body));
                 }
