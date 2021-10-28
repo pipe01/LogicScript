@@ -7,7 +7,7 @@ const_decl          : 'const' IDENT '=' expression ;
 input_decl          : 'input' port_info ;
 output_decl         : 'output' port_info ;
 register_decl       : 'reg' port_info ;
-when_decl           : 'when' (expression | '*') NEWLINE block 'end' ;
+when_decl           : 'when' (cond=expression | '*') NEWLINE block 'end' ;
 
 port_info           : BIT_SIZE? IDENT ;
 

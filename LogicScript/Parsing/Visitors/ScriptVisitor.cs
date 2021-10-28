@@ -37,9 +37,10 @@ namespace LogicScript.Parsing.Visitors
                 }
                 else if (decl.when_decl() != null)
                 {
+                    var cond = decl.when_decl().cond == null ? null : new ExpressionVisitor(ctx).Visit(decl.when_decl().cond);
                     var body = new StatementVisitor(ctx).Visit(decl.when_decl().block());
 
-                    script.Blocks.Add(new WhenBlock(decl.Loc(), body));
+                    script.Blocks.Add(new WhenBlock(decl.Loc(), cond, body));
                 }
             }
 
