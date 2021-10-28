@@ -24,7 +24,7 @@ when rise(test)
     $print ""nice cock""
     $print on
 
-    if test == 1
+    if test == 2 ? 2 : 3
         on = 1
     else if test == 2
         on = 2

@@ -34,6 +34,9 @@ expression          : '(' expression ')'                  # exprParen
                         | COMPARE_GREATER
                         | COMPARE_LESSER
                     ) expression                          # exprCompare
+                    | cond=expression '?'
+                      ifTrue=expression ':'
+                      ifFalse=expression                  # exprTernary
                     | atom                                # exprAtom
                     ;
 

@@ -97,5 +97,14 @@ namespace LogicScript.Parsing.Visitors
 
             return new UnaryOperatorExpression(context.Loc(), op, operand);
         }
+
+        public override Expression VisitExprTernary([NotNull] LogicScriptParser.ExprTernaryContext context)
+        {
+            var cond = Visit(context.cond);
+            var ifTrue = Visit(context.ifTrue);
+            var ifFalse = Visit(context.ifFalse);
+
+            return new TernaryOperatorExpression(context.Loc(), cond, ifTrue, ifFalse);
+        }
     }
 }
