@@ -1,4 +1,5 @@
 ﻿using Antlr4.Runtime;
+using LogicScript.Interpreting;
 using LogicScript.Parsing;
 using LogicScript.Parsing.Structures;
 using LogicScript.Parsing.Visitors;
@@ -18,6 +19,11 @@ namespace LogicScript
         internal int RegisteredOutputLength => Outputs.Values.Sum(o => o.BitSize);
 
         internal IList<WhenBlock> Blocks { get; } = new List<WhenBlock>();
+
+        public void Run(IMachine machine, bool checkPortCount = true)
+        {
+            Interpreter.Run(this, machine, checkPortCount);
+        }
 
         public static Script Parse(string source)
         {

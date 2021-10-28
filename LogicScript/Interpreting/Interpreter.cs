@@ -2,32 +2,25 @@
 
 namespace LogicScript.Interpreting
 {
-    public class Interpreter
+    internal static class Interpreter
     {
-        private readonly Script Script;
-
-        public Interpreter(Script script)
-        {
-            this.Script = script;
-        }
-
-        public void Run(IMachine machine, bool checkPortCount = true)
+        public static void Run(Script script, IMachine machine, bool checkPortCount = true)
         {
             if (checkPortCount)
             {
-                if (machine.InputCount != Script.RegisteredInputLength)
-                    throw new InterpreterException($"Input length mismatch: script requires {Script.RegisteredInputLength} but machine has {machine.InputCount}");
+                if (machine.InputCount != script.RegisteredInputLength)
+                    throw new InterpreterException($"Input length mismatch: script requires {script.RegisteredInputLength} but machine has {machine.InputCount}");
 
-                if (machine.OutputCount != Script.RegisteredOutputLength)
-                    throw new InterpreterException($"Output length mismatch: script requires {Script.RegisteredOutputLength} but machine has {machine.OutputCount}");
+                if (machine.OutputCount != script.RegisteredOutputLength)
+                    throw new InterpreterException($"Output length mismatch: script requires {script.RegisteredOutputLength} but machine has {machine.OutputCount}");
             }
 
-            machine.AllocateRegisters(Script.Registers.Count);
+            machine.AllocateRegisters(script.Registers.Count);
 
             Span<bool> input = stackalloc bool[machine.InputCount];
             machine.ReadInput(input);
 
-            foreach (var block in Script.Blocks)
+            foreach (var block in script.Blocks)
             {
                 var visitor = new Visitor(machine, input);
 
