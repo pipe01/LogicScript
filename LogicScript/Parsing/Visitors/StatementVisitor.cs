@@ -74,15 +74,12 @@ namespace LogicScript.Parsing.Visitors
             var from = context.from == null ? null : new ExpressionVisitor(Context).Visit(context.from);
             var to = new ExpressionVisitor(Context).Visit(context.to);
 
-            var mustCreateLocal = !Context.Locals.ContainsKey(varName);
-
-            if (mustCreateLocal)
+            if (!Context.Locals.ContainsKey(varName))
                 Context.Locals.Add(varName, new LocalInfo(to.BitSize));
 
             var body = Visit(context.block());
-            var forStmt = new ForStatement(context.Loc(), varName, from, to, body);
 
-            return forStmt;
+            return new ForStatement(context.Loc(), varName, from, to, body);
         }
 
         public override Statement VisitStmt_vardecl([NotNull] LogicScriptParser.Stmt_vardeclContext context)
