@@ -97,7 +97,7 @@ namespace LogicScript.Data
 
         public override string ToString() => Number.ToString();
 
-        public string ToString(bool binary) => binary ? Convert.ToString((long)Number, 2).PadLeft(Length) : Number.ToString();
+        public string ToString(bool binary) => binary ? Convert.ToString((long)Number, 2).PadLeft(Length, '0') : Number.ToString();
 
         public override bool Equals(object obj)
         {
