@@ -82,15 +82,6 @@ namespace LogicScript.Parsing.Visitors
             var body = Visit(context.block());
             var forStmt = new ForStatement(context.Loc(), varName, from, to, body);
 
-            if (mustCreateLocal)
-            {
-                return new BlockStatement(context.Loc(), new Statement[]
-                {
-                    new DeclareLocalStatement(new SourceLocation(context.VARIABLE().Symbol), varName, to.BitSize, null),
-                    forStmt
-                });
-            }
-
             return forStmt;
         }
 
