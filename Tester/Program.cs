@@ -1,4 +1,5 @@
 ﻿using LogicScript;
+using LogicScript.Interpreting;
 using LogicScript.Parsing;
 using System;
 
@@ -18,31 +19,41 @@ const myconst = 123
 
 reg'64 on
 
-when rise(test)
-    on = myconst
-
-    $print ""nice cock""
-    $print on
-
-    if test == 2 ? 2 : 3
-        on = 1
-    else if test == 2
-        on = 2
-    else
-        on = 3
-    end
-end
-
 when *
-    on = test
+    $print ""Nice""
 end
 
 ");
+
+                new Interpreter(script).Run(new MyMachine());
             }
             catch (ParseException ex)
             {
                 Console.WriteLine($"{ex.Message} at {ex.Location}");
                 Console.ReadKey();
+                return;
+            }
+
+            Console.ReadKey();
+        }
+
+        class MyMachine : IMachine
+        {
+            public int InputCount => 3;
+
+            public int OutputCount => 2;
+
+            public void Print(string msg)
+            {
+                Console.WriteLine(msg);
+            }
+
+            public void ReadInput(Span<bool> values)
+            {
+            }
+
+            public void WriteOutput(Span<bool> values)
+            {
             }
         }
     }
