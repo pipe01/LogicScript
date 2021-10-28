@@ -30,9 +30,8 @@ stmt_for            :
                     NEWLINE block 'end'
                     ;
 
-stmt_task           : '@' (task_print | task_printbin) ;
+stmt_task           : '@' task_print ;
 task_print          : 'print' (expression | TEXT) ;
-task_printbin       : 'print.b' expression ;
 
 stmt_vardecl        : 'local' VARIABLE BIT_SIZE? ('=' expression)? ;
 

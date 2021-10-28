@@ -22,12 +22,10 @@ namespace LogicScript.Parsing.Structures.Statements
     internal sealed class ShowTaskStatement : TaskStatement
     {
         public Expression Value { get; set; }
-        public bool AsBinary { get; set; }
 
-        public ShowTaskStatement(SourceLocation location, Expression value, bool asBinary) : base(location)
+        public ShowTaskStatement(SourceLocation location, Expression value) : base(location)
         {
             this.Value = value;
-            this.AsBinary = asBinary;
         }
     }
 }

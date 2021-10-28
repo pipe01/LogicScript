@@ -2,6 +2,9 @@
 using LogicScript.Parsing.Structures;
 using LogicScript.Parsing.Structures.Statements;
 using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Text.RegularExpressions;
 
 namespace LogicScript.Interpreting
 {
@@ -82,11 +85,26 @@ namespace LogicScript.Interpreting
         private void Visit(TaskStatement stmt)
         {
             if (stmt is PrintTaskStatement print)
-                Machine.Print(print.Text);
+                Machine.Print(FormatString(print.Text, Locals));
             else if (stmt is ShowTaskStatement show)
-                Machine.Print(Visit(show.Value).ToString(show.AsBinary));
+                Machine.Print(Visit(show.Value).ToString());
             else
                 throw new InterpreterException("Unknown task", stmt.Location);
+
+            string FormatString(string str, IDictionary<string, BitsValue> locals)
+            {
+                return Regex.Replace(str, @"\$([a-zA-Z_][a-zA-Z0-9_]*)(:(?<base>b|x))?", m =>
+                {
+                    if (!locals.TryGetValue(m.Groups[1].Value, out var value))
+                        throw new InterpreterException($"Local variable ${m.Value} not found in string interpolation", stmt.Location);
+
+                    var nBase = m.Groups["base"].Success ? m.Groups["base"].Value : null;
+
+                    return nBase == "x" ? value.ToStringHex()
+                        : nBase == "b" ? value.ToStringBinary()
+                        : value.ToString();
+                });
+            }
         }
 
         private void Visit(DeclareLocalStatement stmt)
