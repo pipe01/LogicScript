@@ -14,7 +14,9 @@ port_info           : BIT_SIZE? IDENT ;
 block               : (statement NEWLINE)* ;
 
 statement           : if_statement | assign_statement | task_statement | vardecl_statement ;
-assign_statement    : reference EQUALS expression ;
+assign_statement    : reference EQUALS expression       # assignRegular
+                    | reference TRUNC_EQUALS expression # assignTruncate
+                    ;
 
 if_statement        : 'if' if_body ;
 elseif_statement    : 'else if' if_body ;
@@ -72,6 +74,7 @@ TEXT                : '"' .*? '"' ;
 BIT_SIZE            : '\'' DEC_NUMBER ;
 
 EQUALS              : '=' ;
+TRUNC_EQUALS        : '\'=' ;
 COMPARE_EQUALS      : '==' ;
 COMPARE_GREATER     : '>' ;
 COMPARE_LESSER      : '<' ;

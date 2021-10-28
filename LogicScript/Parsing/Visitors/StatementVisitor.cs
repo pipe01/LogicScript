@@ -21,7 +21,7 @@ namespace LogicScript.Parsing.Visitors
             return new BlockStatement(context.Loc(), context.statement().Select(Visit).ToArray());
         }
 
-        public override Statement VisitAssign_statement([NotNull] LogicScriptParser.Assign_statementContext context)
+        public override Statement VisitAssignRegular([NotNull] LogicScriptParser.AssignRegularContext context)
         {
             var @ref = new ReferenceVisitor(Context).Visit(context.reference());
 
@@ -31,6 +31,18 @@ namespace LogicScript.Parsing.Visitors
             var value = new ExpressionVisitor(Context, @ref.BitSize).Visit(context.expression());
 
             return new AssignStatement(context.Loc(), @ref, value);
+        }
+
+        public override Statement VisitAssignTruncate([NotNull] LogicScriptParser.AssignTruncateContext context)
+        {
+            var @ref = new ReferenceVisitor(Context).Visit(context.reference());
+
+            if (!@ref.IsWritable)
+                throw new ParseException("The left side of an assignment must be writable", context.reference().Loc());
+
+            var value = new ExpressionVisitor(Context).Visit(context.expression());
+
+            return new AssignStatement(context.Loc(), @ref, new TruncateExpression(context.Loc(), value, @ref.BitSize));
         }
 
         public override Statement VisitIf_statement([NotNull] LogicScriptParser.If_statementContext context)
