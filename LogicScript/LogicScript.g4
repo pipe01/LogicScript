@@ -21,7 +21,7 @@ elseif_statement    : 'else if' if_body ;
 else_statement      : 'else' NEWLINE block 'end' ;
 if_body             : expression NEWLINE block (elseif_statement | else_statement | 'end') ;
 
-task_statement      : '$' (print_task | printbin_task) ;
+task_statement      : '@' (print_task | printbin_task) ;
 print_task          : 'print' (expression | TEXT) ;
 printbin_task       : 'print.b' expression ;
 
