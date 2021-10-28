@@ -11,6 +11,7 @@ namespace LogicScript.Interpreting
         void ReadInput(Span<bool> values);
         void WriteOutput(int index, bool value);
 
+        void AllocateRegisters(int count);
         BitsValue ReadRegister(int index);
         void WriteRegister(int index, BitsValue value);
 

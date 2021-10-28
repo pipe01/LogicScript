@@ -14,6 +14,8 @@ namespace LogicScript.Interpreting
 
         public void Run(IMachine machine)
         {
+            machine.AllocateRegisters(Script.Registers.Count);
+
             Span<bool> input = stackalloc bool[machine.InputCount];
             machine.ReadInput(input);
 
