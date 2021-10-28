@@ -11,17 +11,37 @@ namespace Tester
     {
         static void Main(string[] args)
         {
-            var script = Script.Parse(@"input asd
+            try
+            {
+                var script = Script.Parse(@"input asd
 input test
 output'2 out
-asd
+
 reg'123 on
 
 when *
-    on = out
+    on = test
+
+    if test == 1
+        on = 1
+    else if test == 2
+        on = 2
+    else
+        on = 3
+    end
+end
+
+when *
+    on = test
 end
 
 ");
+            }
+            catch (ParseException ex)
+            {
+                Console.WriteLine($"{ex.Message} at {ex.Location}");
+                Console.ReadKey();
+            }
         }
     }
 }

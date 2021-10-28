@@ -2,6 +2,7 @@
 using LogicScript.Parsing;
 using LogicScript.Parsing.Structures;
 using LogicScript.Parsing.Visitors;
+using System;
 using System.Collections.Generic;
 
 namespace LogicScript
@@ -16,7 +17,7 @@ namespace LogicScript
 
         public static Script Parse(string source)
         {
-            var input = new AntlrInputStream(source);
+            var input = new AntlrInputStream(source + Environment.NewLine);
             var lexer = new LogicScriptLexer(input);
             var stream = new CommonTokenStream(lexer);
             var parser = new LogicScriptParser(stream);

@@ -33,7 +33,7 @@ namespace LogicScript.Parsing.Visitors
                 return new ReferenceExpression(context.Loc(), @ref);
             }
 
-            throw null;
+            throw new ParseException("Invalid atom", context.Loc());
         }
 
         public override Expression VisitExprParen([NotNull] LogicScriptParser.ExprParenContext context)
@@ -52,7 +52,7 @@ namespace LogicScript.Parsing.Visitors
             {
                 LogicScriptParser.AND => Operator.And,
                 LogicScriptParser.OR => Operator.Or,
-                _ => throw new Exception("Unknown operator")
+                _ => throw new ParseException("Unknown operator", context.Loc())
             };
 
             return new BinaryOperatorExpression(context.Loc(), op, Visit(context.expression(0)), Visit(context.expression(1)));
@@ -65,7 +65,7 @@ namespace LogicScript.Parsing.Visitors
                 LogicScriptParser.COMPARE_EQUALS => Operator.EqualsCompare,
                 LogicScriptParser.COMPARE_GREATER => Operator.Greater,
                 LogicScriptParser.COMPARE_LESSER => Operator.Lesser,
-                _ => throw new Exception("Unknown operator")
+                _ => throw new ParseException("Unknown operator", context.Loc())
             };
 
             return new BinaryOperatorExpression(context.Loc(), op, Visit(context.expression(0)), Visit(context.expression(1)));

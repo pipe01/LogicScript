@@ -6,12 +6,17 @@ declaration         : input_decl | output_decl | register_decl | when_decl ;
 input_decl          : 'input' BIT_SIZE?  IDENT ;
 output_decl         : 'output' BIT_SIZE?  IDENT ;
 register_decl       : 'reg' BIT_SIZE? IDENT ;
-when_decl           : 'when' (expression | '*') NEWLINE block ;
+when_decl           : 'when' (expression | '*') NEWLINE block 'end' ;
 
-block               : (statement NEWLINE)* 'end' ;
+block               : (statement NEWLINE)* ;
 
-statement           : assign_statement ;
+statement           : if_statement | assign_statement ;
 assign_statement    : reference EQUALS expression ;
+if_statement        : 'if' if_body ;
+elseif_statement    : 'else if' if_body ;
+else_statement      : 'else' NEWLINE block 'end' ;
+
+if_body             : expression NEWLINE block (elseif_statement | else_statement | 'end') ;
 
 expression          : '(' expression ')'                  # exprParen
                     | NOT expression                      # exprNegate
