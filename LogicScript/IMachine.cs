@@ -1,7 +1,7 @@
 ﻿using LogicScript.Data;
 using System;
 
-namespace LogicScript.Interpreting
+namespace LogicScript
 {
     public interface IMachine
     {
