@@ -51,7 +51,7 @@ namespace LogicScript.Interpreting
                         if (value.Length > port.BitSize)
                             throw new InterpreterException("Value is longer than output", stmt.Location);
 
-                        Machine.WriteOutput(port.StartIndex, value);
+                        Machine.WriteOutput(port.StartIndex, value.Bits);
                         break;
 
                     case ReferenceTarget.Register:

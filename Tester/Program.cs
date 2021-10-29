@@ -48,7 +48,7 @@ namespace Tester
                 }
             }
 
-            public void WriteOutput(int startIndex, BitsValue value)
+            public void WriteOutput(int startIndex, Span<bool> value)
             {
             }
 
