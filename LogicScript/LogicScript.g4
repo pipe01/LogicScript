@@ -37,26 +37,26 @@ task_print          : 'print' wsnl_req (expression | TEXT) ;
 
 stmt_vardecl        : 'local' WS+ VARIABLE BIT_SIZE? (wsnl '=' wsnl expression)? ;
 
-expression          : '(' wsnl expression wsnl ')'                            # exprParen
-                    | '(' wsnl expression wsnl ')\'' DEC_NUMBER               # exprTrunc
-                    | funcName=IDENT '(' wsnl expression wsnl ')'             # exprCall
-                    | expression indexer                            # exprSlice
-                    | NOT expression                                # exprNegate
-                    | expression wsnl op=(OR | AND) wsnl expression           # exprAndOr
-                    | expression wsnl XOR wsnl expression                     # exprXor
-                    | expression wsnl POW wsnl expression                     # exprPower
-                    | expression wsnl op=(PLUS | MINUS) wsnl expression       # exprPlusMinus
-                    | expression wsnl op=(MULT | DIVIDE) wsnl expression      # exprMultDiv
-                    | expression wsnl op=(LSHIFT | RSHIFT) wsnl expression    # exprShift
+expression          : '(' wsnl expression wsnl ')'                              # exprParen
+                    | '(' wsnl expression wsnl ')\'' DEC_NUMBER                 # exprTrunc
+                    | funcName=IDENT '(' wsnl expression wsnl ')'               # exprCall
+                    | expression indexer                                        # exprSlice
+                    | NOT expression                                            # exprNegate
+                    | expression wsnl op=(OR | AND) wsnl expression             # exprAndOr
+                    | expression wsnl XOR wsnl expression                       # exprXor
+                    | expression wsnl POW wsnl expression                       # exprPower
+                    | expression wsnl op=(PLUS | MINUS) wsnl expression         # exprPlusMinus
+                    | expression wsnl op=(MULT | DIVIDE) wsnl expression        # exprMultDiv
+                    | expression wsnl op=(LSHIFT | RSHIFT) wsnl expression      # exprShift
                     | expression wsnl op=(
                         COMPARE_EQUALS
                       | COMPARE_GREATER
                       | COMPARE_LESSER
-                    ) wsnl expression                                    # exprCompare
-                    | cond=expression wsnl '?'
+                    ) wsnl expression                                           # exprCompare
+                    | cond=expression wsnl '?' wsnl
                       ifTrue=expression wsnl ':' wsnl
-                      ifFalse=expression                            # exprTernary
-                    | atom                                          # exprAtom
+                      ifFalse=expression                                        # exprTernary
+                    | atom                                                      # exprAtom
                     ;
 
 atom                : reference
