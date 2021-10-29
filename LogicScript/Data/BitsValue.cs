@@ -139,7 +139,7 @@ namespace LogicScript.Data
             return this;
         }
 
-        public static int BitsToFit(ulong n) => n == 0 ? 1 : (int)Math.Ceiling(Math.Log(n, 2));
+        public static int BitsToFit(ulong n) => n is 0 or 1 ? 1 : (int)Math.Floor(Math.Log(n, 2) + 1);
 
         public static BitsValue FromBool(bool b) => b ? One : Zero;
 
