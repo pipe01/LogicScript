@@ -1,5 +1,5 @@
 ﻿using LogicScript.Data;
-using LogicScript.Parsing.Structures;
+using LogicScript.Parsing.Structures.Blocks;
 using System;
 using System.Collections.Generic;
 
@@ -17,14 +17,6 @@ namespace LogicScript.Interpreting
             this.Machine = machine;
             this.Input = input;
             this.Locals = new Dictionary<string, BitsValue>();
-        }
-
-        public void Visit(WhenBlock block)
-        {
-            if (block.Condition != null && Visit(block.Condition).Number == 0)
-                return;
-
-            Visit(block.Body);
         }
     }
 }

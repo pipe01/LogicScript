@@ -2,12 +2,13 @@ grammar LogicScript;
 
 script              : (declaration NEWLINE)* EOF ;
 
-declaration         : decl_const | decl_input | decl_output | decl_register | decl_when ;
+declaration         : decl_const | decl_input | decl_output | decl_register | decl_when | decl_assign ;
 decl_const          : 'const' IDENT '=' expression ;
 decl_input          : 'input' port_info ;
 decl_output         : 'output' port_info ;
 decl_register       : 'reg' port_info ;
 decl_when           : 'when' (cond=expression | '*') NEWLINE block 'end' ;
+decl_assign         : 'assign' stmt_assign ;
 
 port_info           : BIT_SIZE? IDENT ;
 
@@ -69,7 +70,7 @@ reference           : VARIABLE                      # refLocal
                     // | reference indexer             # refSlice
                     ;
 
-indexer             : '[' start=('>' | '<')? offset=number (',' len=number)? ']' ;
+indexer             : '[' lr=('>' | '<')? offset=number (',' len=number)? ']' ;
 
 /*
  * Lexer Rules

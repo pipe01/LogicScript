@@ -2,12 +2,10 @@
 using LogicScript.Parsing.Structures.Statements;
 using System.Collections.Generic;
 
-namespace LogicScript.Parsing.Structures
+namespace LogicScript.Parsing.Structures.Blocks
 {
-    internal class WhenBlock : ICodeNode
+    internal class WhenBlock : Block
     {
-        public SourceLocation Location { get; }
-
         /// <summary>
         /// If null, the block will be run unconditionally.
         /// </summary>
@@ -16,9 +14,8 @@ namespace LogicScript.Parsing.Structures
 
         public IDictionary<string, PortInfo> Locals { get; } = new Dictionary<string, PortInfo>();
 
-        public WhenBlock(SourceLocation location, Expression? condition, Statement body)
+        public WhenBlock(SourceLocation location, Expression? condition, Statement body) : base(location)
         {
-            this.Location = location;
             this.Body = body;
             this.Condition = condition;
         }

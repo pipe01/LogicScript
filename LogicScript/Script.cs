@@ -2,6 +2,7 @@
 using LogicScript.Interpreting;
 using LogicScript.Parsing;
 using LogicScript.Parsing.Structures;
+using LogicScript.Parsing.Structures.Blocks;
 using LogicScript.Parsing.Visitors;
 using System;
 using System.Collections.Generic;
@@ -18,7 +19,7 @@ namespace LogicScript
         internal int RegisteredInputLength => Inputs.Values.Sum(o => o.BitSize);
         internal int RegisteredOutputLength => Outputs.Values.Sum(o => o.BitSize);
 
-        internal IList<WhenBlock> Blocks { get; } = new List<WhenBlock>();
+        internal IList<Block> Blocks { get; } = new List<Block>();
 
         public void Run(IMachine machine, bool checkPortCount = true)
         {

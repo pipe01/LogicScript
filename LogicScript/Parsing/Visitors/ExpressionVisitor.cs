@@ -78,10 +78,10 @@ namespace LogicScript.Parsing.Visitors
         public override Expression VisitExprSlice([NotNull] LogicScriptParser.ExprSliceContext context)
         {
             var operand = Visit(context.expression());
-            var start = context.indexer().start.Text switch
+            var start = context.indexer().lr?.Text switch
             {
                 ">" => IndexStart.Right,
-                "<" or "" => IndexStart.Left,
+                "<" or null => IndexStart.Left,
                 _ => throw new ParseException("Unknown index start position", context.indexer().Loc())
             };
             var offset = new NumberVisitor().Visit(context.indexer().offset).Number;

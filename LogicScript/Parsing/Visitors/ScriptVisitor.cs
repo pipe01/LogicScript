@@ -1,6 +1,8 @@
 ﻿using Antlr4.Runtime.Misc;
 using LogicScript.Data;
 using LogicScript.Parsing.Structures;
+using LogicScript.Parsing.Structures.Blocks;
+using LogicScript.Parsing.Structures.Statements;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -43,6 +45,15 @@ namespace LogicScript.Parsing.Visitors
                     var body = new StatementVisitor(blockCtx).Visit(decl.decl_when().block());
 
                     script.Blocks.Add(new WhenBlock(decl.Loc(), cond, body));
+                }
+                else if (decl.decl_assign() != null)
+                {
+                    var body = new StatementVisitor(new BlockContext(ctx, false)).Visit(decl.decl_assign().stmt_assign());
+
+                    if (body is not AssignStatement assign)
+                        throw new ParseException("Assignment block must contain an assignment", decl.decl_assign().stmt_assign().Loc());
+
+                    script.Blocks.Add(new AssignBlock(decl.Loc(), assign));
                 }
             }
 
