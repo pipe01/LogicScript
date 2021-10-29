@@ -28,7 +28,7 @@ namespace LogicScript
 
         public static Script Parse(string source)
         {
-            var input = new AntlrInputStream(source + Environment.NewLine);
+            var input = new AntlrInputStream(source.Replace("\r\n", "\n") + "\n");
             var lexer = new LogicScriptLexer(input);
             var stream = new CommonTokenStream(lexer);
             var parser = new LogicScriptParser(stream);
