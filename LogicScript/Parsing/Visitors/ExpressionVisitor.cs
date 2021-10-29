@@ -77,7 +77,8 @@ namespace LogicScript.Parsing.Visitors
 
         public override Expression VisitExprSlice([NotNull] LogicScriptParser.ExprSliceContext context)
         {
-            var operand = Visit(context.expression());
+            // Create a new unbounded expression visitor, since we only care about the slice length, not the operand's
+            var operand = new ExpressionVisitor(Context).Visit(context.expression());
             var start = context.indexer().lr?.Text switch
             {
                 ">" => IndexStart.Right,
@@ -86,6 +87,9 @@ namespace LogicScript.Parsing.Visitors
             };
             var offset = new NumberVisitor().Visit(context.indexer().offset).Number;
             var length = context.indexer().len == null ? 1 : new NumberVisitor().Visit(context.indexer().len).Number;
+
+            if (MaxBitSize != 0 && (int)length > MaxBitSize)
+                throw new ParseException($"Cannot fit a {length} bits long number into {MaxBitSize} bits", context.Loc());
 
             return new SliceExpression(context.Loc(), operand, start, (int)offset, (int)length);
         }
