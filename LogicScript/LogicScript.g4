@@ -12,7 +12,7 @@ decl_assign         : 'assign' WS+ stmt_assign ;
 
 port_info           : BIT_SIZE? WS+ IDENT ;
 
-block               : (wsnl stmt NL+)* ;
+block               : (wsnl stmt WS* NL+ WS*)* ;
 
 stmt                : stmt_if | stmt_for | stmt_assign | stmt_task | stmt_vardecl ;
 stmt_assign         : reference wsnl EQUALS wsnl expression       # assignRegular
@@ -21,13 +21,13 @@ stmt_assign         : reference wsnl EQUALS wsnl expression       # assignRegula
 
 stmt_if             : 'if' WS+ if_body ;
 stmt_elseif         : 'else if' WS+ if_body ;
-stmt_else           : 'else' NL+ block 'end' ;
-if_body             : expression NL+ block (stmt_elseif | stmt_else | 'end') ;
+stmt_else           : 'else' WS* NL+ WS* block 'end' ;
+if_body             : expression WS* NL+ block WS* (stmt_elseif | stmt_else | 'end') ;
 
 stmt_for            :
                     'for' WS+ VARIABLE wsnl_req
                     ('from' WS+ from=expression wsnl_req)?
-                    'to' WS+ to=expression NL+
+                    'to' WS+ to=expression WS* NL+
                     block
                     'end'
                     ;
@@ -94,7 +94,7 @@ BIN_NUMBER          : BIN_DIGIT+ 'b' ;
 HEX_NUMBER          : '0x' HEX_DIGIT+ ;
 IDENT               : (LOWERCASE | UPPERCASE | '_') (LOWERCASE | UPPERCASE | DEC_DIGIT | '_')* ;
 WS                  : ' ' ;
-NL                  : '\n' ;
+NL                  : [\n;] ;
 TEXT                : '"' .*? '"' ;
 
 VARIABLE            : '$' IDENT ;
