@@ -1,4 +1,6 @@
-﻿namespace LogicScript.Parsing.Structures
+﻿using LogicScript.Parsing.Structures.Expressions;
+
+namespace LogicScript.Parsing.Structures
 {
     internal enum ReferenceTarget
     {
@@ -61,24 +63,5 @@
         }
 
         public override string ToString() => $"${Name}'{BitSize}";
-    }
-
-    internal sealed class SliceReference : IReference
-    {
-        public IReference Inner { get; }
-        public int Start { get; }
-        public int Length { get; }
-
-        public bool IsWritable => Inner.IsWritable;
-        public bool IsReadable => Inner.IsReadable;
-
-        int IReference.BitSize => Length;
-
-        public SliceReference(IReference inner, int start, int length)
-        {
-            this.Inner = inner;
-            this.Start = start;
-            this.Length = length;
-        }
     }
 }

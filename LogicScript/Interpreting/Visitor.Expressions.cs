@@ -9,20 +9,17 @@ namespace LogicScript.Interpreting
     {
         public BitsValue Visit(Expression expr)
         {
-            if (expr is NumberLiteralExpression lit)
-                return lit.Value;
-            if (expr is BinaryOperatorExpression binOp)
-                return Visit(binOp);
-            if (expr is ReferenceExpression refExpr)
-                return Visit(refExpr);
-            if (expr is TernaryOperatorExpression tern)
-                return Visit(tern);
-            if (expr is UnaryOperatorExpression unary)
-                return Visit(unary);
-            if (expr is TruncateExpression trunc)
-                return Visit(trunc);
-
-            throw new InterpreterException("Unknown expression", expr.Location);
+            return expr switch
+            {
+                NumberLiteralExpression lit => lit.Value,
+                BinaryOperatorExpression binOp => Visit(binOp),
+                ReferenceExpression refExpr => Visit(refExpr),
+                TernaryOperatorExpression tern => Visit(tern),
+                UnaryOperatorExpression unary => Visit(unary),
+                TruncateExpression trunc => Visit(trunc),
+                SliceExpression slice => Visit(slice),
+                _ => throw new InterpreterException("Unknown expression", expr.Location),
+            };
         }
 
         private BitsValue Visit(ReferenceExpression expr)
@@ -142,6 +139,25 @@ namespace LogicScript.Interpreting
             var operand = Visit(expr.Operand);
 
             return operand.Resize(expr.Size);
+        }
+
+        private BitsValue Visit(SliceExpression expr)
+        {
+            var operand = Visit(expr.Operand);
+            var startIndex = expr.Start switch
+            {
+                IndexStart.Left => expr.Offset,
+                IndexStart.Right => operand.Length - expr.Offset - 1,
+                _ => throw new InterpreterException("Unknown slice start", expr.Location)
+            };
+
+            if (startIndex < 0 || startIndex >= operand.Length)
+                throw new InterpreterException($"Index {startIndex} out of bounds for {operand.Length} bits", expr.Location);
+
+            if (expr.Length == 1)
+                return operand[startIndex] ? BitsValue.One : BitsValue.Zero;
+
+            return new BitsValue(operand.Bits.AsSpan().Slice(startIndex, expr.Length));
         }
     }
 }

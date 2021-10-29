@@ -75,6 +75,21 @@ namespace LogicScript.Parsing.Visitors
             return Visit(context.expression());
         }
 
+        public override Expression VisitExprSlice([NotNull] LogicScriptParser.ExprSliceContext context)
+        {
+            var operand = Visit(context.expression());
+            var start = context.indexer().start.Text switch
+            {
+                ">" => IndexStart.Right,
+                "<" or "" => IndexStart.Left,
+                _ => throw new ParseException("Unknown index start position", context.indexer().Loc())
+            };
+            var offset = new NumberVisitor().Visit(context.indexer().offset).Number;
+            var length = context.indexer().len == null ? 1 : new NumberVisitor().Visit(context.indexer().len).Number;
+
+            return new SliceExpression(context.Loc(), operand, start, (int)offset, (int)length);
+        }
+
         public override Expression VisitExprXor([NotNull] LogicScriptParser.ExprXorContext context)
         {
             return new BinaryOperatorExpression(context.Loc(), Operator.Xor, Visit(context.expression(0)), Visit(context.expression(1)));

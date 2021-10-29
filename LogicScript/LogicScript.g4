@@ -38,6 +38,7 @@ stmt_vardecl        : 'local' VARIABLE BIT_SIZE? ('=' expression)? ;
 expression          : '(' expression ')'                            # exprParen
                     | '(' expression ')\'' DEC_NUMBER               # exprTrunc
                     | funcName=IDENT '(' expression ')'             # exprCall
+                    | expression indexer                            # exprSlice
                     | NOT expression                                # exprNegate
                     | expression op=(OR | AND) expression           # exprAndOr
                     | expression XOR expression                     # exprXor
@@ -63,9 +64,12 @@ atom                : reference
 
 number              : DEC_NUMBER | BIN_NUMBER | HEX_NUMBER ;
 
-reference           : VARIABLE  # refLocal
-                    | IDENT     # refPort
+reference           : VARIABLE                      # refLocal
+                    | IDENT                         # refPort
+                    // | reference indexer             # refSlice
                     ;
+
+indexer             : '[' start=('>' | '<')? offset=number (',' len=number)? ']' ;
 
 /*
  * Lexer Rules
