@@ -18,9 +18,15 @@ namespace LogicScript
         }
 
         public static SourceLocation Loc(this ParserRuleContext context)
-            => new SourceLocation(context.Start);
+            => new(context.Start);
 
         public static int ParseBitSize(this ITerminalNode node)
-            => int.Parse(node.GetText().TrimStart('\''));
+        {
+            var size = int.Parse(node.GetText().TrimStart('\''));
+            if (size == 0)
+                throw new ParseException("Bit size must be greater than 0", new SourceLocation(node.Symbol));
+
+            return size;
+        }
     }
 }
