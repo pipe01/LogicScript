@@ -1,10 +1,11 @@
-﻿using System;
+﻿using LogicScript.Parsing.Structures.Blocks;
+using System;
 
 namespace LogicScript.Interpreting
 {
     internal static class Interpreter
     {
-        public static void Run(Script script, IMachine machine, bool checkPortCount = true)
+        public static void Run(Script script, IMachine machine, bool runStartup, bool checkPortCount = true)
         {
             if (checkPortCount)
             {
@@ -22,6 +23,9 @@ namespace LogicScript.Interpreting
 
             foreach (var block in script.Blocks)
             {
+                if (block is StartupBlock && !runStartup)
+                    continue;
+
                 var visitor = new Visitor(machine, input);
 
                 visitor.Visit(block);

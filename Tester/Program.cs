@@ -14,7 +14,7 @@ namespace Tester
             {
                 var script = Script.Parse(File.ReadAllText("test.lsx"));
 
-                script.Run(new MyMachine());
+                script.Run(new MyMachine(), true);
             }
             catch (ParseException ex)
             {

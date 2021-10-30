@@ -6,25 +6,36 @@ namespace LogicScript.Interpreting
     {
         public void Visit(Block block)
         {
-            if (block is WhenBlock when)
-                Visit(when);
-            else if (block is AssignBlock assign)
-                Visit(assign);
-            else
-                throw new InterpreterException("Unknown block type", block.Location);
+            switch (block)
+            {
+                case WhenBlock @when:
+                    Visit(@when);
+                    break;
+                case AssignBlock assign:
+                    Visit(assign);
+                    break;
+                case StartupBlock startup:
+                    Visit(startup);
+                    break;
+                default:
+                    throw new InterpreterException("Unknown block type", block.Location);
+            }
         }
 
         public void Visit(WhenBlock block)
         {
-            if (block.Condition != null && Visit(block.Condition).Number == 0)
-                return;
-
-            Visit(block.Body);
+            if (block.Condition == null || Visit(block.Condition).Number != 0)
+                Visit(block.Body);
         }
 
         public void Visit(AssignBlock block)
         {
             Visit(block.Assignment);
+        }
+
+        public void Visit(StartupBlock block)
+        {
+            Visit(block.Body);
         }
     }
 }

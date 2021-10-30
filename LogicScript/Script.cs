@@ -21,9 +21,9 @@ namespace LogicScript
 
         internal IList<Block> Blocks { get; } = new List<Block>();
 
-        public void Run(IMachine machine, bool checkPortCount = true)
+        public void Run(IMachine machine, bool runStartup, bool checkPortCount = true)
         {
-            Interpreter.Run(this, machine, checkPortCount);
+            Interpreter.Run(this, machine, runStartup, checkPortCount);
         }
 
         public static Script Parse(string source)

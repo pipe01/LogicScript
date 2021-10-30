@@ -2,12 +2,13 @@ grammar LogicScript;
 
 script              : (declaration NL+)* EOF ;
 
-declaration         : decl_const | decl_input | decl_output | decl_register | decl_when | decl_assign ;
+declaration         : decl_const | decl_input | decl_output | decl_register | decl_when | decl_startup | decl_assign ;
 decl_const          : 'const' WS+ IDENT WS+ '=' WS+ expression ;
 decl_input          : 'input' port_info ;
 decl_output         : 'output' port_info ;
 decl_register       : 'reg' port_info ;
 decl_when           : 'when' WS+ (cond=expression | '*') NL+ block 'end' ;
+decl_startup        : 'startup' WS* NL+ block 'end' ;
 decl_assign         : 'assign' WS+ stmt_assign ;
 
 port_info           : BIT_SIZE? WS+ IDENT ;

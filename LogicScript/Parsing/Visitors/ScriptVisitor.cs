@@ -55,6 +55,13 @@ namespace LogicScript.Parsing.Visitors
 
                     script.Blocks.Add(new AssignBlock(decl.Loc(), assign));
                 }
+                else if (decl.decl_startup() != null)
+                {
+                    var blockCtx = new BlockContext(ctx, false);
+                    var body = new StatementVisitor(blockCtx).Visit(decl.decl_startup().block());
+
+                    script.Blocks.Add(new StartupBlock(decl.Loc(), body));
+                }
             }
 
             return script;
