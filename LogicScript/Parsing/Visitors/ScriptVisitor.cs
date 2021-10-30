@@ -13,7 +13,7 @@ namespace LogicScript.Parsing.Visitors
         public override Script VisitScript([NotNull] LogicScriptParser.ScriptContext context)
         {
             var script = new Script();
-            var ctx = new VisitContext(script);
+            var ctx = new ScriptContext(script);
 
             foreach (var decl in context.declaration())
             {

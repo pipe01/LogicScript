@@ -30,7 +30,7 @@ namespace Tester
         {
             public int InputCount => 3;
 
-            public int OutputCount => 2;
+            public int OutputCount => 1;
 
             private BitsValue[] Registers;
 

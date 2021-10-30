@@ -3,12 +3,12 @@ using System.Collections.Generic;
 
 namespace LogicScript.Parsing
 {
-    internal sealed class VisitContext
+    internal sealed class ScriptContext
     {
         public Script Script { get; }
         public IDictionary<string, Expression> Constants { get; } = new Dictionary<string, Expression>();
 
-        public VisitContext(Script script)
+        public ScriptContext(Script script)
         {
             this.Script = script;
         }

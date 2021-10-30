@@ -5,12 +5,12 @@ namespace LogicScript.Parsing.Visitors
 {
     internal sealed class BlockContext
     {
-        public VisitContext Outer { get; }
+        public ScriptContext Outer { get; }
         public IDictionary<string, LocalInfo> Locals { get; } = new Dictionary<string, LocalInfo>();
 
         public bool IsInConstant { get; }
 
-        public BlockContext(VisitContext outer, bool isInConstant)
+        public BlockContext(ScriptContext outer, bool isInConstant)
         {
             this.Outer = outer;
             this.IsInConstant = isInConstant;
