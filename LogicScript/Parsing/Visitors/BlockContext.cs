@@ -8,6 +8,8 @@ namespace LogicScript.Parsing.Visitors
         public ScriptContext Outer { get; }
         public IDictionary<string, LocalInfo> Locals { get; } = new Dictionary<string, LocalInfo>();
 
+        public ErrorSink Errors => Outer.Errors;
+
         public bool IsInConstant { get; }
 
         public BlockContext(ScriptContext outer, bool isInConstant)

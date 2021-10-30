@@ -23,7 +23,7 @@ namespace LogicScript.Parsing.Visitors
             var expr = base.Visit(tree);
 
             if (MaxBitSize != 0 && expr.BitSize > MaxBitSize)
-                throw new ParseException($"Cannot fit a {expr.BitSize} bits long number into {MaxBitSize} bits", tree is ParserRuleContext ctx ? ctx.Loc() : default);
+                Context.Errors.AddError($"Cannot fit a {expr.BitSize} bits long number into {MaxBitSize} bits", tree is ParserRuleContext ctx ? ctx.Loc() : default);
 
             return expr;
         }
@@ -47,7 +47,7 @@ namespace LogicScript.Parsing.Visitors
         public override Expression VisitRefLocal([NotNull] LogicScriptParser.RefLocalContext context)
         {
             if (Context.IsInConstant)
-                throw new ParseException("You can only reference constants from other constants", context.Loc());
+                Context.Errors.AddError("You can only reference constants from other constants", context.Loc(), true);
 
             var @ref = new ReferenceVisitor(Context).Visit(context);
 
@@ -60,12 +60,12 @@ namespace LogicScript.Parsing.Visitors
                 return val;
 
             if (Context.IsInConstant)
-                throw new ParseException("You can only reference constants from other constants", context.Loc());
+                Context.Errors.AddError("You can only reference constants from other constants", context.Loc(), true);
 
             var @ref = new ReferenceVisitor(Context).Visit(context);
 
             if (!@ref.IsReadable)
-                throw new ParseException("An identifier in an expression must be readable", context.Loc());
+                Context.Errors.AddError("An identifier in an expression must be readable", context.Loc());
 
             return new ReferenceExpression(context.Loc(), @ref);
         }
@@ -89,7 +89,7 @@ namespace LogicScript.Parsing.Visitors
             var length = context.indexer().len == null ? 1 : new NumberVisitor().Visit(context.indexer().len).Number;
 
             if (MaxBitSize != 0 && (int)length > MaxBitSize)
-                throw new ParseException($"Cannot fit a {length} bits long number into {MaxBitSize} bits", context.Loc());
+                Context.Errors.AddError($"Cannot fit a {length} bits long number into {MaxBitSize} bits", context.Loc());
 
             return new SliceExpression(context.Loc(), operand, start, (int)offset, (int)length);
         }

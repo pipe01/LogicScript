@@ -1,4 +1,5 @@
 ﻿using Antlr4.Runtime;
+using Antlr4.Runtime.Misc;
 using LogicScript.Interpreting;
 using LogicScript.Parsing;
 using LogicScript.Parsing.Structures;
@@ -26,15 +27,27 @@ namespace LogicScript
             Interpreter.Run(this, machine, runStartup, checkPortCount);
         }
 
-        public static Script Parse(string source)
+        public static (Script? Script, IReadOnlyList<Error> Errors) Parse(string source)
         {
+            var errors = new ErrorSink();
+
             var input = new AntlrInputStream(source.Replace("\r\n", "\n") + "\n");
             var lexer = new LogicScriptLexer(input);
             var stream = new CommonTokenStream(lexer);
             var parser = new LogicScriptParser(stream);
-            parser.AddErrorListener(new ErrorListener());
+            parser.AddErrorListener(new ErrorListener(errors));
 
-            return new ScriptVisitor().Visit(parser.script());
+            Script? script = null;
+
+            try
+            {
+                script = new ScriptVisitor(errors).Visit(parser.script());
+            }
+            catch (ParseCanceledException)
+            {
+            }
+
+            return (script, errors);
         }
     }
 }

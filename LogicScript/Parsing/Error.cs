@@ -1,12 +1,12 @@
 ﻿namespace LogicScript.Parsing
 {
-    internal enum Severity
+    public enum Severity
     {
         Warning,
         Error
     }
 
-    internal class Error
+    public class Error
     {
         public string Message { get; }
         public SourceLocation Location { get; }
@@ -18,5 +18,7 @@
             this.Location = location;
             this.Severity = severity;
         }
+
+        public override string ToString() => $"{Message} at {Location}";
     }
 }

@@ -26,7 +26,7 @@ namespace LogicScript.Parsing.Visitors
             var @ref = new ReferenceVisitor(Context).Visit(context.reference());
 
             if (!@ref.IsWritable)
-                throw new ParseException("The left side of an assignment must be writable", context.reference().Loc());
+                Context.Errors.AddError("The left hand side of an assignment must be writable", context.reference().Loc());
 
             var value = new ExpressionVisitor(Context, @ref.BitSize).Visit(context.expression());
 
@@ -38,7 +38,7 @@ namespace LogicScript.Parsing.Visitors
             var @ref = new ReferenceVisitor(Context).Visit(context.reference());
 
             if (!@ref.IsWritable)
-                throw new ParseException("The left side of an assignment must be writable", context.reference().Loc());
+                Context.Errors.AddError("The left hand side of an assignment must be writable", context.reference().Loc());
 
             var value = new ExpressionVisitor(Context).Visit(context.expression());
 
@@ -87,7 +87,7 @@ namespace LogicScript.Parsing.Visitors
             var name = context.VARIABLE().GetText().TrimStart('$');
 
             if (Context.DoesIdentifierExist(name))
-                throw new ParseException($"Identifier '{name}' already exists", new SourceLocation(context.VARIABLE().Symbol));
+                Context.Errors.AddError($"Identifier '{name}' already exists", new SourceLocation(context.VARIABLE().Symbol), true);
 
             Expression? value = null;
 
@@ -103,7 +103,7 @@ namespace LogicScript.Parsing.Visitors
             }
             else if (size == 0)
             {
-                throw new ParseException("You must specify a local's size or initialize it", context.Loc());
+                Context.Errors.AddError("You must specify a local's size or initialize it", context.Loc(), true);
             }
 
             Context.Locals.Add(name, new LocalInfo(size));

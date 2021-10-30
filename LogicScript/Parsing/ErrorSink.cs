@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using Antlr4.Runtime.Misc;
+using System.Collections;
 using System.Collections.Generic;
 
 namespace LogicScript.Parsing
@@ -11,9 +12,12 @@ namespace LogicScript.Parsing
 
         private readonly IList<Error> Errors = new List<Error>();
 
-        public void AddError(string msg, SourceLocation location, Severity severity = Severity.Error)
+        public void AddError(string msg, SourceLocation location, bool isFatal = false, Severity severity = Severity.Error)
         {
             Errors.Add(new Error(msg, location, severity));
+
+            if (isFatal)
+                throw new ParseCanceledException();
         }
 
         public IEnumerator<Error> GetEnumerator() => Errors.GetEnumerator();

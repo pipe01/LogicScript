@@ -1,16 +1,18 @@
 ﻿using LogicScript.Parsing.Structures.Expressions;
 using System.Collections.Generic;
 
-namespace LogicScript.Parsing
+namespace LogicScript.Parsing.Visitors
 {
     internal sealed class ScriptContext
     {
         public Script Script { get; }
+        public ErrorSink Errors { get; }
         public IDictionary<string, Expression> Constants { get; } = new Dictionary<string, Expression>();
 
-        public ScriptContext(Script script)
+        public ScriptContext(Script script, ErrorSink errors)
         {
             this.Script = script;
+            this.Errors = errors;
         }
 
         public bool DoesIdentifierExist(string iden)

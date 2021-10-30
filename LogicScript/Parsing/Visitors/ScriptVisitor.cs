@@ -10,10 +10,17 @@ namespace LogicScript.Parsing.Visitors
 {
     class ScriptVisitor : LogicScriptBaseVisitor<Script>
     {
+        private readonly ErrorSink Errors;
+
+        public ScriptVisitor(ErrorSink errors)
+        {
+            this.Errors = errors;
+        }
+
         public override Script VisitScript([NotNull] LogicScriptParser.ScriptContext context)
         {
             var script = new Script();
-            var ctx = new ScriptContext(script);
+            var ctx = new ScriptContext(script, Errors);
 
             foreach (var decl in context.declaration())
             {
@@ -34,7 +41,7 @@ namespace LogicScript.Parsing.Visitors
                     var value = new ExpressionVisitor(new BlockContext(ctx, true)).Visit(decl.decl_const().expression());
 
                     if (!value.IsConstant)
-                        throw new ParseException("Const declarations must have a constant value", decl.decl_const().expression().Loc());
+                        Errors.AddError("Const declarations must have a constant value", decl.decl_const().expression().Loc());
 
                     ctx.Constants.Add(decl.decl_const().IDENT().GetText(), value);
                 }
@@ -50,10 +57,10 @@ namespace LogicScript.Parsing.Visitors
                 {
                     var body = new StatementVisitor(new BlockContext(ctx, false)).Visit(decl.decl_assign().stmt_assign());
 
-                    if (body is not AssignStatement assign)
-                        throw new ParseException("Assignment block must contain an assignment", decl.decl_assign().stmt_assign().Loc());
-
-                    script.Blocks.Add(new AssignBlock(decl.Loc(), assign));
+                    if (body is AssignStatement assign)
+                        script.Blocks.Add(new AssignBlock(decl.Loc(), assign));
+                    else
+                        Errors.AddError("Assignment block must contain an assignment", decl.decl_assign().stmt_assign().Loc());
                 }
                 else if (decl.decl_startup() != null)
                 {
@@ -71,12 +78,15 @@ namespace LogicScript.Parsing.Visitors
                 var size = context.BIT_SIZE() == null ? 1 : context.BIT_SIZE().ParseBitSize();
 
                 if (size > BitsValue.BitSize)
-                    throw new ParseException($"The maximum bit size is {BitsValue.BitSize}", context.Loc());
+                    Errors.AddError($"The maximum bit size is {BitsValue.BitSize}", context.Loc());
 
                 var name = context.IDENT().GetText();
 
                 if (script.Inputs.ContainsKey(name) || script.Outputs.ContainsKey(name) || script.Registers.ContainsKey(name))
-                    throw new ParseException($"The port '{name}' is already registered", new SourceLocation(context.IDENT().Symbol));
+                {
+                    Errors.AddError($"The port '{name}' is already registered", new SourceLocation(context.IDENT().Symbol));
+                    return;
+                }
 
                 int startIndex = dic.Values.Sum(o => o.BitSize);
 

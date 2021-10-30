@@ -6,9 +6,16 @@ namespace LogicScript.Parsing
 {
     internal class ErrorListener : IAntlrErrorListener<IToken>
     {
+        private readonly ErrorSink Errors;
+
+        public ErrorListener(ErrorSink errors)
+        {
+            this.Errors = errors;
+        }
+
         public void SyntaxError([NotNull] IRecognizer recognizer, [Nullable] IToken offendingSymbol, int line, int charPositionInLine, [NotNull] string msg, [Nullable] RecognitionException e)
         {
-            throw new ParseException(msg, new SourceLocation(line, charPositionInLine), e);
+            Errors.AddError(msg, new SourceLocation(line, charPositionInLine));
         }
     }
 }
