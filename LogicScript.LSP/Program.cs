@@ -40,6 +40,7 @@ namespace LogicScript.LSP
                 opts.WithInput(Console.OpenStandardInput());
                 opts.WithHandler<DocumentHandler>();
                 opts.WithHandler<HoverHandler>();
+                opts.WithHandler<DefinitionHandler>();
             });
 
             await server.Initialize(CancellationToken.None);
@@ -118,7 +119,7 @@ namespace LogicScript.LSP
 
         public override Task<Hover?> Handle(HoverParams request, CancellationToken cancellationToken)
         {
-            var node = Workspace.GetNodeAt(request.TextDocument.Uri, new(request.Position.Line + 1, request.Position.Character + 1));
+            var node = Workspace.GetNodeAt(request.TextDocument.Uri, request.Position);
             MarkupContent content;
 
             switch (node)
@@ -138,6 +139,42 @@ namespace LogicScript.LSP
             {
                 Contents = new MarkedStringsOrMarkupContent(content)
             });
+        }
+    }
+
+    class DefinitionHandler : DefinitionHandlerBase
+    {
+        private readonly Workspace Workspace;
+
+        public DefinitionHandler(Workspace workspace)
+        {
+            this.Workspace = workspace;
+        }
+
+        protected override DefinitionRegistrationOptions CreateRegistrationOptions(DefinitionCapability capability, ClientCapabilities clientCapabilities)
+        {
+            return new()
+            {
+                DocumentSelector = Program.Selector
+            };
+        }
+
+        public override Task<LocationOrLocationLinks> Handle(DefinitionParams request, CancellationToken cancellationToken)
+        {
+            var node = Workspace.GetNodeAt(request.TextDocument.Uri, request.Position);
+
+            if (node is ReferenceExpression refExpr)
+            {
+                var decl = refExpr.Reference.Declaration;
+
+                return Task.FromResult(new LocationOrLocationLinks(new LocationOrLocationLink(new Location
+                {
+                    Uri = request.TextDocument.Uri,
+                    Range = new(decl.Span.Start.Line - 1, decl.Span.Start.Column - 1, decl.Span.End.Line - 1, decl.Span.End.Column - 1)
+                })));
+            }
+
+            return Task.FromResult(new LocationOrLocationLinks());
         }
     }
 }

@@ -31,7 +31,7 @@ namespace LogicScript.Parsing.Structures.Expressions
             this.Right = right;
         }
 
-        protected override IEnumerator<ICodeNode> GetChildren()
+        public override IEnumerable<ICodeNode> GetChildren()
         {
             yield return Left;
             yield return Right;

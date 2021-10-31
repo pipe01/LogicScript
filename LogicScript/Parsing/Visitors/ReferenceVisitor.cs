@@ -26,10 +26,10 @@ namespace LogicScript.Parsing.Visitors
             if (target == null)
             {
                 Context.Errors.AddError($"Unknown identifier '{identName}'", new SourceSpan(context.IDENT().Symbol));
-                return new PortReference(ReferenceTarget.Register, 0, 0);
+                return new PortReference(ReferenceTarget.Register, port);
             }
 
-            return new PortReference(target.Value, port.StartIndex, port.BitSize);
+            return new PortReference(target.Value, port);
         }
 
         public override IReference VisitRefLocal([NotNull] LogicScriptParser.RefLocalContext context)
@@ -39,10 +39,10 @@ namespace LogicScript.Parsing.Visitors
             if (!Context.Locals.TryGetValue(name, out var local))
             {
                 Context.Errors.AddError($"Local variable ${name} is not declared", context.Span());
-                return new LocalReference(name, 0);
+                return new LocalReference(name, default);
             }
 
-            return new LocalReference(name, local.BitSize);
+            return new LocalReference(name, local);
         }
     }
 }

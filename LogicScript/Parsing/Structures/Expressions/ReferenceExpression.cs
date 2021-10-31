@@ -1,4 +1,6 @@
-﻿namespace LogicScript.Parsing.Structures.Expressions
+﻿using System.Collections.Generic;
+
+namespace LogicScript.Parsing.Structures.Expressions
 {
     internal sealed class ReferenceExpression : Expression
     {

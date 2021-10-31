@@ -11,6 +11,8 @@ namespace LogicScript.Parsing.Structures
 
     internal interface IReference
     {
+        ICodeNode Declaration { get; }
+
         bool IsWritable { get; }
         bool IsReadable { get; }
 
@@ -20,17 +22,20 @@ namespace LogicScript.Parsing.Structures
     internal sealed class PortReference : IReference
     {
         public ReferenceTarget Target { get; }
-        public int StartIndex { get; }
-        public int BitSize { get; }
+        public PortInfo Port { get; }
+
+        public int StartIndex => Port.StartIndex;
+        public int BitSize => Port.BitSize;
+
+        public ICodeNode Declaration => Port;
 
         public bool IsWritable => Target is ReferenceTarget.Output or ReferenceTarget.Register;
         public bool IsReadable => Target is ReferenceTarget.Input or ReferenceTarget.Register;
 
-        public PortReference(ReferenceTarget target, int startIndex, int length)
+        public PortReference(ReferenceTarget target, PortInfo port)
         {
             this.Target = target;
-            this.StartIndex = startIndex;
-            this.BitSize = length;
+            this.Port = port;
         }
 
         public override string ToString()
@@ -50,15 +55,18 @@ namespace LogicScript.Parsing.Structures
     internal sealed class LocalReference : IReference
     {
         public string Name { get; }
-        public int BitSize { get; }
+        public LocalInfo Local { get; }
+
+        public ICodeNode Declaration => Local;
+        public int BitSize => Local.BitSize;
 
         public bool IsWritable => true;
         public bool IsReadable => true;
 
-        public LocalReference(string name, int bitSize)
+        public LocalReference(string name, LocalInfo local)
         {
             this.Name = name;
-            this.BitSize = bitSize;
+            this.Local = local;
         }
 
         public override string ToString() => $"${Name}'{BitSize}";

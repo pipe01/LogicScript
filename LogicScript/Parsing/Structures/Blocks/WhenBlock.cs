@@ -20,7 +20,7 @@ namespace LogicScript.Parsing.Structures.Blocks
             this.Condition = condition;
         }
 
-        protected override IEnumerator<ICodeNode> GetChildren()
+        public override IEnumerable<ICodeNode> GetChildren()
         {
             if (Condition != null)
                 yield return Condition;

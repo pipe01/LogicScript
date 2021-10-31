@@ -16,7 +16,7 @@ namespace LogicScript.Parsing.Structures.Statements
             this.Initializer = initializer;
         }
 
-        protected override IEnumerator<ICodeNode> GetChildren()
+        public override IEnumerable<ICodeNode> GetChildren()
         {
             if (Initializer != null)
                 yield return Initializer;

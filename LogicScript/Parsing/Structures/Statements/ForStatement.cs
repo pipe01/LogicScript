@@ -19,7 +19,7 @@ namespace LogicScript.Parsing.Structures.Statements
             this.Body = body;
         }
 
-        protected override IEnumerator<ICodeNode> GetChildren()
+        public override IEnumerable<ICodeNode> GetChildren()
         {
             if (From != null)
                 yield return From;

@@ -16,7 +16,7 @@ namespace LogicScript.Parsing.Structures.Statements
             this.Else = @else;
         }
 
-        protected override IEnumerator<ICodeNode> GetChildren()
+        public override IEnumerable<ICodeNode> GetChildren()
         {
             yield return Condition;
             yield return Body;

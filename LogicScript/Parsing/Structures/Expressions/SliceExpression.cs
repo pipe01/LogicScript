@@ -27,7 +27,7 @@ namespace LogicScript.Parsing.Structures.Expressions
             this.Start = start;
         }
 
-        protected override IEnumerator<ICodeNode> GetChildren()
+        public override IEnumerable<ICodeNode> GetChildren()
         {
             yield return Operand;
         }

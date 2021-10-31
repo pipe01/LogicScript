@@ -24,7 +24,7 @@ namespace LogicScript.Parsing.Structures.Expressions
             this.IfFalse = ifFalse;
         }
 
-        protected override IEnumerator<ICodeNode> GetChildren()
+        public override IEnumerable<ICodeNode> GetChildren()
         {
             yield return Condition;
             yield return IfTrue;

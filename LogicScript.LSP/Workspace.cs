@@ -46,5 +46,7 @@ namespace LogicScript.LSP
 
             return script.GetNodeAt(location);
         }
+        public ICodeNode? GetNodeAt(DocumentUri uri, Position position)
+            => GetNodeAt(uri, new SourceLocation(position.Line + 1, position.Character + 1));
     }
 }

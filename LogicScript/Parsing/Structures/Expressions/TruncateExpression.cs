@@ -16,7 +16,7 @@ namespace LogicScript.Parsing.Structures.Expressions
             this.Size = size;
         }
 
-        protected override IEnumerator<ICodeNode> GetChildren()
+        public override IEnumerable<ICodeNode> GetChildren()
         {
             yield return Operand;
         }

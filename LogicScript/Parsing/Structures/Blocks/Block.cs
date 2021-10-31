@@ -1,5 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
 namespace LogicScript.Parsing.Structures.Blocks
 {
@@ -12,13 +11,9 @@ namespace LogicScript.Parsing.Structures.Blocks
             this.Span = span;
         }
 
-        protected virtual IEnumerator<ICodeNode> GetChildren()
+        public virtual IEnumerable<ICodeNode> GetChildren()
         {
             yield break;
         }
-
-        IEnumerator<ICodeNode> IEnumerable<ICodeNode>.GetEnumerator() => GetChildren();
-
-        IEnumerator IEnumerable.GetEnumerator() => GetChildren();
     }
 }

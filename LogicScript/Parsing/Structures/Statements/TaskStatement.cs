@@ -29,7 +29,7 @@ namespace LogicScript.Parsing.Structures.Statements
             this.Value = value;
         }
 
-        protected override IEnumerator<ICodeNode> GetChildren()
+        public override IEnumerable<ICodeNode> GetChildren()
         {
             yield return Value;
         }

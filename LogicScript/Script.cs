@@ -42,7 +42,7 @@ namespace LogicScript
 
             static ICodeNode? Inner(SourceLocation loc, ICodeNode node)
             {
-                foreach (var child in node)
+                foreach (var child in node.GetChildren())
                 {
                     var childNode = Inner(loc, child);
 

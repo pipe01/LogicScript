@@ -11,7 +11,7 @@ namespace LogicScript.Parsing.Structures.Statements
             this.Statements = statements;
         }
 
-        protected override IEnumerator<ICodeNode> GetChildren()
+        public override IEnumerable<ICodeNode> GetChildren()
         {
             foreach (var item in Statements)
             {

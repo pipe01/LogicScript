@@ -17,7 +17,7 @@ namespace LogicScript.Parsing
         {
         }
 
-        internal SourceSpan(IToken start, IToken end) : this(new SourceLocation(start), new SourceLocation(end))
+        internal SourceSpan(IToken start, IToken end) : this(new SourceLocation(start), new SourceLocation(end.Line, end.Column + end.Text.Length + 1))
         {
         }
 
@@ -27,5 +27,7 @@ namespace LogicScript.Parsing
 
         public bool Contains(SourceLocation loc)
             => loc.Line >= Start.Line && loc.Line <= End.Line && loc.Column >= Start.Column && loc.Column <= End.Column;
+
+        public override string ToString() => $"{Start} to {End}";
     }
 }

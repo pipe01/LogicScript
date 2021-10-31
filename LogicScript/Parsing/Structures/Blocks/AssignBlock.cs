@@ -12,7 +12,7 @@ namespace LogicScript.Parsing.Structures.Blocks
             this.Assignment = assignment;
         }
 
-        protected override IEnumerator<ICodeNode> GetChildren()
+        public override IEnumerable<ICodeNode> GetChildren()
         {
             yield return Assignment;
         }

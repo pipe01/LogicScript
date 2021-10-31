@@ -2,8 +2,10 @@
 
 namespace LogicScript.Parsing.Structures
 {
-    internal interface ICodeNode : IEnumerable<ICodeNode>
+    internal interface ICodeNode
     {
         SourceSpan Span { get; }
+
+        IEnumerable<ICodeNode> GetChildren();
     }
 }

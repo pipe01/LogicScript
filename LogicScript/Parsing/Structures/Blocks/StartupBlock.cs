@@ -12,7 +12,7 @@ namespace LogicScript.Parsing.Structures.Blocks
             this.Body = body;
         }
 
-        protected override IEnumerator<ICodeNode> GetChildren()
+        public override IEnumerable<ICodeNode> GetChildren()
         {
             yield return Body;
         }
