@@ -1,4 +1,5 @@
 ﻿using LogicScript.Parsing.Structures.Expressions;
+using LogicScript.Parsing.Structures.Statements;
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
 using OmniSharp.Extensions.JsonRpc;
@@ -15,6 +16,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Range = OmniSharp.Extensions.LanguageServer.Protocol.Models.Range;
 
 namespace LogicScript.LSP
 {
@@ -163,18 +165,27 @@ namespace LogicScript.LSP
         {
             var node = Workspace.GetNodeAt(request.TextDocument.Uri, request.Position);
 
-            if (node is ReferenceExpression refExpr)
-            {
-                var decl = refExpr.Reference.Declaration;
+            Range range;
 
-                return Task.FromResult(new LocationOrLocationLinks(new LocationOrLocationLink(new Location
-                {
-                    Uri = request.TextDocument.Uri,
-                    Range = new(decl.Span.Start.Line - 1, decl.Span.Start.Column - 1, decl.Span.End.Line - 1, decl.Span.End.Column - 1)
-                })));
+            switch (node)
+            {
+                case ReferenceExpression refExpr:
+                    range = refExpr.Reference.Declaration.Span.GetRange();
+                    break;
+
+                case AssignStatement assign:
+                    range = assign.Reference.Declaration.Span.GetRange();
+                    break;
+
+                default:
+                    return Task.FromResult(new LocationOrLocationLinks());
             }
 
-            return Task.FromResult(new LocationOrLocationLinks());
+            return Task.FromResult(new LocationOrLocationLinks(new LocationOrLocationLink(new Location
+            {
+                Uri = request.TextDocument.Uri,
+                Range = range
+            })));
         }
     }
 }
