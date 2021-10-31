@@ -15,7 +15,7 @@ namespace LogicScript.Parsing
 
         public void SyntaxError([NotNull] IRecognizer recognizer, [Nullable] IToken offendingSymbol, int line, int charPositionInLine, [NotNull] string msg, [Nullable] RecognitionException e)
         {
-            Errors.AddError(msg, new SourceLocation(line, charPositionInLine + 1));
+            Errors.AddError(msg, new SourceLocation(line, charPositionInLine + 1), isANTLR: true);
         }
     }
 }
