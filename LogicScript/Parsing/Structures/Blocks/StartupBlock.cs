@@ -6,7 +6,7 @@ namespace LogicScript.Parsing.Structures.Blocks
     {
         public Statement Body { get; set; }
 
-        public StartupBlock(SourceLocation location, Statement body) : base(location)
+        public StartupBlock(SourceSpan span, Statement body) : base(span)
         {
             this.Body = body;
         }

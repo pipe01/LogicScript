@@ -18,7 +18,7 @@ namespace LogicScript.Interpreting
                 UnaryOperatorExpression unary => Visit(unary),
                 TruncateExpression trunc => Visit(trunc),
                 SliceExpression slice => Visit(slice),
-                _ => throw new InterpreterException("Unknown expression", expr.Location),
+                _ => throw new InterpreterException("Unknown expression", expr.Span.Start),
             };
         }
 
@@ -29,7 +29,7 @@ namespace LogicScript.Interpreting
                 switch (port.Target)
                 {
                     case ReferenceTarget.Output:
-                        throw new InterpreterException("Cannot read from output", expr.Location);
+                        throw new InterpreterException("Cannot read from output", expr.Span);
 
                     case ReferenceTarget.Input:
                         return new BitsValue(Input.Slice(port.StartIndex, port.BitSize));
@@ -38,14 +38,14 @@ namespace LogicScript.Interpreting
                         return Machine.ReadRegister(port.StartIndex);
                 }
 
-                throw new InterpreterException("Unknown reference target", expr.Location);
+                throw new InterpreterException("Unknown reference target", expr.Span);
             }
             else if (expr.Reference is LocalReference local)
             {
                 return Locals[local.Name];
             }
 
-            throw new InterpreterException("Unknown reference type", expr.Location);
+            throw new InterpreterException("Unknown reference type", expr.Span);
         }
 
         private BitsValue Visit(BinaryOperatorExpression expr)
@@ -99,7 +99,7 @@ namespace LogicScript.Interpreting
 
 
                 default:
-                    throw new InterpreterException("Unknown operator", expr.Location);
+                    throw new InterpreterException("Unknown operator", expr.Span);
             }
         }
 
@@ -131,7 +131,7 @@ namespace LogicScript.Interpreting
                     return new BitsValue((ulong)operand.Length, 7);
             }
 
-            throw new InterpreterException("Unknown operand", expr.Location);
+            throw new InterpreterException("Unknown operand", expr.Span);
         }
 
         private BitsValue Visit(TruncateExpression expr)
@@ -148,11 +148,11 @@ namespace LogicScript.Interpreting
             {
                 IndexStart.Left => expr.Offset,
                 IndexStart.Right => operand.Length - expr.Offset - 1,
-                _ => throw new InterpreterException("Unknown slice start", expr.Location)
+                _ => throw new InterpreterException("Unknown slice start", expr.Span)
             };
 
             if (startIndex < 0 || startIndex >= operand.Length)
-                throw new InterpreterException($"Index {startIndex} out of bounds for {operand.Length} bits", expr.Location);
+                throw new InterpreterException($"Index {startIndex} out of bounds for {operand.Length} bits", expr.Span);
 
             if (expr.Length == 1)
                 return operand[startIndex] ? BitsValue.One : BitsValue.Zero;

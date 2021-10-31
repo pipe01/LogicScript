@@ -14,7 +14,7 @@ namespace LogicScript.Parsing.Structures.Blocks
 
         public IDictionary<string, PortInfo> Locals { get; } = new Dictionary<string, PortInfo>();
 
-        public WhenBlock(SourceLocation location, Expression? condition, Statement body) : base(location)
+        public WhenBlock(SourceSpan span, Expression? condition, Statement body) : base(span)
         {
             this.Body = body;
             this.Condition = condition;

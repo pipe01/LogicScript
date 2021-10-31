@@ -6,7 +6,7 @@ namespace LogicScript.Parsing.Structures.Blocks
     {
         public AssignStatement Assignment { get; set; }
 
-        public AssignBlock(SourceLocation location, AssignStatement assignment) : base(location)
+        public AssignBlock(SourceSpan span, AssignStatement assignment) : base(span)
         {
             this.Assignment = assignment;
         }

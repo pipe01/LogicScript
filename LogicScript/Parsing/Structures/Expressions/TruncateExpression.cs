@@ -8,7 +8,7 @@
         public override bool IsConstant => Operand.IsConstant;
         public override int BitSize => Size;
 
-        public TruncateExpression(SourceLocation location, Expression operand, int size) : base(location)
+        public TruncateExpression(SourceSpan span, Expression operand, int size) : base(span)
         {
             this.Operand = operand;
             this.Size = size;

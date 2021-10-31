@@ -17,7 +17,7 @@
 
         public override int BitSize => Length;
 
-        public SliceExpression(SourceLocation location, Expression operand, IndexStart start, int offset, int length) : base(location)
+        public SliceExpression(SourceSpan span, Expression operand, IndexStart start, int offset, int length) : base(span)
         {
             this.Operand = operand;
             this.Offset = offset;

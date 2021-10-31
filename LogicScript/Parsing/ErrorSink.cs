@@ -16,7 +16,7 @@ namespace LogicScript.Parsing
 
         private readonly IList<Error> Errors = new List<Error>();
 
-        public void AddError(string msg, SourceLocation location, bool isFatal = false, bool isANTLR = false, Severity severity = Severity.Error)
+        public void AddError(string msg, SourceSpan span, bool isFatal = false, bool isANTLR = false, Severity severity = Severity.Error)
         {
             if (isANTLR)
             {
@@ -26,12 +26,13 @@ namespace LogicScript.Parsing
                     goto exit;
             }
 
-            Errors.Add(new Error(msg, location, severity, isANTLR));
+            Errors.Add(new Error(msg, span, severity, isANTLR));
 
         exit:
             if (isFatal)
                 throw new ParseCanceledException();
         }
+
         public void AddError(string msg, ICodeNode node, bool isFatal = false, bool isANTLR = false, Severity severity = Severity.Error)
         {
             if (isANTLR)

@@ -25,7 +25,7 @@ namespace LogicScript.Interpreting
             else if (stmt is ForStatement forStmt)
                 Visit(forStmt);
             else
-                throw new InterpreterException("Unknown statement", stmt.Location);
+                throw new InterpreterException("Unknown statement", stmt.Span);
         }
 
         private void Visit(BlockStatement stmt)
@@ -45,11 +45,11 @@ namespace LogicScript.Interpreting
                 switch (port.Target)
                 {
                     case ReferenceTarget.Input:
-                        throw new InterpreterException("Cannot write to input", stmt.Location);
+                        throw new InterpreterException("Cannot write to input", stmt.Span);
 
                     case ReferenceTarget.Output:
                         if (value.Length > port.BitSize)
-                            throw new InterpreterException("Value is longer than output", stmt.Location);
+                            throw new InterpreterException("Value is longer than output", stmt.Span);
 
                         Machine.WriteOutput(port.StartIndex, value.Bits);
                         break;
@@ -59,7 +59,7 @@ namespace LogicScript.Interpreting
                         break;
 
                     default:
-                        throw new InterpreterException("Unknown assignment target", stmt.Location);
+                        throw new InterpreterException("Unknown assignment target", stmt.Span);
                 }
             }
             else if (stmt.Reference is LocalReference local)
@@ -68,7 +68,7 @@ namespace LogicScript.Interpreting
             }
             else
             {
-                throw new InterpreterException("Unknown reference type", stmt.Location);
+                throw new InterpreterException("Unknown reference type", stmt.Span);
             }
         }
 
@@ -89,14 +89,14 @@ namespace LogicScript.Interpreting
             else if (stmt is ShowTaskStatement show)
                 Machine.Print(Visit(show.Value).ToString());
             else
-                throw new InterpreterException("Unknown task", stmt.Location);
+                throw new InterpreterException("Unknown task", stmt.Span);
 
             string FormatString(string str, IDictionary<string, BitsValue> locals)
             {
                 return Regex.Replace(str, @"\$([a-zA-Z_][a-zA-Z0-9_]*)(:(?<base>b|x))?", m =>
                 {
                     if (!locals.TryGetValue(m.Groups[1].Value, out var value))
-                        throw new InterpreterException($"Local variable ${m.Value} not found in string interpolation", stmt.Location);
+                        throw new InterpreterException($"Local variable ${m.Value} not found in string interpolation", stmt.Span);
 
                     var nBase = m.Groups["base"].Success ? m.Groups["base"].Value : null;
 

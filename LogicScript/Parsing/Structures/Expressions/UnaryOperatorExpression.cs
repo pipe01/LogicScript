@@ -12,10 +12,10 @@ namespace LogicScript.Parsing.Structures.Expressions
         {
             Operator.Not or Operator.Rise or Operator.Fall or Operator.Change => Operand.BitSize,
             Operator.Length => 7,
-            _ => throw new ParseException("Unknown unary operator bitsize", Location)
+            _ => throw new ParseException("Unknown unary operator bitsize", Span)
         };
 
-        public UnaryOperatorExpression(SourceLocation location, Operator op, Expression operand) : base(location)
+        public UnaryOperatorExpression(SourceSpan span, Operator op, Expression operand) : base(span)
         {
             this.Operator = op;
             this.Operand = operand;

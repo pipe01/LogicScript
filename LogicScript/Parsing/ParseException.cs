@@ -4,16 +4,16 @@ namespace LogicScript.Parsing
 {
     public class ParseException : Exception
     {
-        public SourceLocation Location { get; }
+        public SourceSpan Span { get; }
 
-        public ParseException(string message, SourceLocation location) : base(message)
+        public ParseException(string message, SourceSpan span) : base(message)
         {
-            this.Location = location;
+            this.Span = span;
         }
 
-        public ParseException(string message, SourceLocation location, Exception innerException) : base(message, innerException)
+        public ParseException(string message, SourceSpan span, Exception innerException) : base(message, innerException)
         {
-            this.Location = location;
+            this.Span = span;
         }
     }
 }

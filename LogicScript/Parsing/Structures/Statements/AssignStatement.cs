@@ -7,7 +7,7 @@ namespace LogicScript.Parsing.Structures.Statements
         public IReference Reference { get; set; }
         public Expression Value { get; set; }
 
-        public AssignStatement(SourceLocation location, IReference target, Expression value) : base(location)
+        public AssignStatement(SourceSpan span, IReference target, Expression value) : base(span)
         {
             this.Reference = target;
             this.Value = value;

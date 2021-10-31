@@ -9,7 +9,7 @@ namespace LogicScript.Parsing.Structures.Expressions
         public override bool IsConstant => true;
         public override int BitSize => Value.Length;
 
-        public NumberLiteralExpression(SourceLocation location, BitsValue value) : base(location)
+        public NumberLiteralExpression(SourceSpan span, BitsValue value) : base(span)
         {
             this.Value = value;
         }

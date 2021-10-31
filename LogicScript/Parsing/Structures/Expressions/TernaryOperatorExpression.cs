@@ -15,7 +15,7 @@
         // but the best we can do at parse time is to get the length of whichever is longest.
         public override int BitSize => IfTrue.BitSize > IfFalse.BitSize ? IfTrue.BitSize : IfFalse.BitSize;
 
-        public TernaryOperatorExpression(SourceLocation location, Expression condition, Expression ifTrue, Expression ifFalse) : base(location)
+        public TernaryOperatorExpression(SourceSpan span, Expression condition, Expression ifTrue, Expression ifFalse) : base(span)
         {
             this.Condition = condition;
             this.IfTrue = ifTrue;

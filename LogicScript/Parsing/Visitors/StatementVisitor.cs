@@ -18,7 +18,7 @@ namespace LogicScript.Parsing.Visitors
 
         public override Statement VisitBlock([NotNull] LogicScriptParser.BlockContext context)
         {
-            return new BlockStatement(context.Loc(), context.stmt().Select(Visit).ToArray());
+            return new BlockStatement(context.Span(), context.stmt().Select(Visit).ToArray());
         }
 
         public override Statement VisitAssignRegular([NotNull] LogicScriptParser.AssignRegularContext context)
@@ -26,11 +26,11 @@ namespace LogicScript.Parsing.Visitors
             var @ref = new ReferenceVisitor(Context).Visit(context.reference());
 
             if (!@ref.IsWritable)
-                Context.Errors.AddError("The left hand side of an assignment must be writable", context.reference().Loc());
+                Context.Errors.AddError("The left hand side of an assignment must be writable", context.reference().Span());
 
             var value = new ExpressionVisitor(Context, @ref.BitSize).Visit(context.expression());
 
-            return new AssignStatement(context.Loc(), @ref, value);
+            return new AssignStatement(context.Span(), @ref, value);
         }
 
         public override Statement VisitAssignTruncate([NotNull] LogicScriptParser.AssignTruncateContext context)
@@ -38,11 +38,11 @@ namespace LogicScript.Parsing.Visitors
             var @ref = new ReferenceVisitor(Context).Visit(context.reference());
 
             if (!@ref.IsWritable)
-                Context.Errors.AddError("The left hand side of an assignment must be writable", context.reference().Loc());
+                Context.Errors.AddError("The left hand side of an assignment must be writable", context.reference().Span());
 
             var value = new ExpressionVisitor(Context).Visit(context.expression());
 
-            return new AssignStatement(context.Loc(), @ref, new TruncateExpression(context.Loc(), value, @ref.BitSize));
+            return new AssignStatement(context.Span(), @ref, new TruncateExpression(context.Span(), value, @ref.BitSize));
         }
 
         public override Statement VisitStmt_if([NotNull] LogicScriptParser.Stmt_ifContext context)
@@ -65,7 +65,7 @@ namespace LogicScript.Parsing.Visitors
                 @else = VisitIfBody(context.stmt_elseif().if_body());
             }
 
-            return new IfStatement(context.Loc(), cond, body, @else);
+            return new IfStatement(context.Span(), cond, body, @else);
         }
 
         public override Statement VisitStmt_for([NotNull] LogicScriptParser.Stmt_forContext context)
@@ -79,7 +79,7 @@ namespace LogicScript.Parsing.Visitors
 
             var body = Visit(context.block());
 
-            return new ForStatement(context.Loc(), varName, from, to, body);
+            return new ForStatement(context.Span(), varName, from, to, body);
         }
 
         public override Statement VisitStmt_vardecl([NotNull] LogicScriptParser.Stmt_vardeclContext context)
@@ -87,7 +87,7 @@ namespace LogicScript.Parsing.Visitors
             var name = context.VARIABLE().GetText().TrimStart('$');
 
             if (Context.DoesIdentifierExist(name))
-                Context.Errors.AddError($"Identifier '{name}' already exists", new SourceLocation(context.VARIABLE().Symbol), true);
+                Context.Errors.AddError($"Identifier '{name}' already exists", new SourceSpan(context.VARIABLE().Symbol), true);
 
             Expression? value = null;
 
@@ -103,12 +103,12 @@ namespace LogicScript.Parsing.Visitors
             }
             else if (size == 0)
             {
-                Context.Errors.AddError("You must specify a local's size or initialize it", context.Loc(), true);
+                Context.Errors.AddError("You must specify a local's size or initialize it", context.Span(), true);
             }
 
             Context.Locals.Add(name, new LocalInfo(size));
 
-            return new DeclareLocalStatement(context.Loc(), name, size, value);
+            return new DeclareLocalStatement(context.Span(), name, size, value);
         }
 
         public override Statement VisitTask_print([NotNull] LogicScriptParser.Task_printContext context)
@@ -117,14 +117,14 @@ namespace LogicScript.Parsing.Visitors
             {
                 var value = new ExpressionVisitor(Context).Visit(context.expression());
 
-                return new ShowTaskStatement(context.Loc(), value);
+                return new ShowTaskStatement(context.Span(), value);
             }
             else if (context.TEXT() != null)
             {
-                return new PrintTaskStatement(context.Loc(), context.TEXT().GetText().Trim('"'));
+                return new PrintTaskStatement(context.Span(), context.TEXT().GetText().Trim('"'));
             }
 
-            throw new ParseException("Invalid print value", context.Loc());
+            throw new ParseException("Invalid print value", context.Span());
         }
     }
 }

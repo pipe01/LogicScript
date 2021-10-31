@@ -18,7 +18,7 @@ namespace LogicScript.Interpreting
                     Visit(startup);
                     break;
                 default:
-                    throw new InterpreterException("Unknown block type", block.Location);
+                    throw new InterpreterException("Unknown block type", block.Span.Start);
             }
         }
 

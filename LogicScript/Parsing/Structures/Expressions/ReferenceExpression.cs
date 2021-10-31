@@ -7,7 +7,7 @@
         public override bool IsConstant => false;
         public override int BitSize => Reference.BitSize;
 
-        public ReferenceExpression(SourceLocation location, IReference target) : base(location)
+        public ReferenceExpression(SourceSpan span, IReference target) : base(span)
         {
             this.Reference = target;
         }

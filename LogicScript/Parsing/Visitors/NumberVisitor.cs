@@ -23,7 +23,7 @@ namespace LogicScript.Parsing.Visitors
                 return Convert.ToUInt64(context.HEX_NUMBER().GetText(), 16);
             }
 
-            throw new ParseException("Unknown number type", context.Loc());
+            throw new ParseException("Unknown number type", context.Span());
         }
     }
 }

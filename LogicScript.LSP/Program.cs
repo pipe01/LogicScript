@@ -18,6 +18,11 @@ namespace LogicScript.LSP
 {
     class Program
     {
+        public static readonly DocumentSelector Selector = new(new DocumentFilter
+        {
+            Language = "logicscript"
+        });
+
         static async Task Main(string[] args)
         {
             Debugger.Launch();
@@ -27,6 +32,7 @@ namespace LogicScript.LSP
                 opts.WithOutput(Console.OpenStandardOutput());
                 opts.WithInput(Console.OpenStandardInput());
                 opts.WithHandler<DocumentHandler>();
+                opts.WithHandler<HoverHandler>();
             });
 
             await server.Initialize(CancellationToken.None);
@@ -36,11 +42,6 @@ namespace LogicScript.LSP
 
     class DocumentHandler : IDidChangeTextDocumentHandler, IDidOpenTextDocumentHandler
     {
-        private static readonly DocumentSelector Selector = new(new DocumentFilter
-        {
-            Language = "logicscript"
-        });
-
         private readonly ILanguageServerFacade Server;
 
         public DocumentHandler(ILanguageServerFacade server)
@@ -52,7 +53,7 @@ namespace LogicScript.LSP
         {
             return new()
             {
-                DocumentSelector = Selector
+                DocumentSelector = Program.Selector
             };
         }
 
@@ -60,7 +61,7 @@ namespace LogicScript.LSP
         {
             return new()
             {
-                DocumentSelector = Selector,
+                DocumentSelector = Program.Selector,
                 SyncKind = TextDocumentSyncKind.Full
             };
         }
@@ -85,6 +86,29 @@ namespace LogicScript.LSP
             {
                 Diagnostics = Container<Diagnostic>.From(diag),
                 Uri = uri
+            });
+        }
+    }
+
+    class HoverHandler : HoverHandlerBase
+    {
+        protected override HoverRegistrationOptions CreateRegistrationOptions(HoverCapability capability, ClientCapabilities clientCapabilities)
+        {
+            return new()
+            {
+                DocumentSelector = Program.Selector,
+            };
+        }
+
+        public override Task<Hover> Handle(HoverParams request, CancellationToken cancellationToken)
+        {
+            return Task.FromResult(new Hover
+            {
+                Contents = new MarkedStringsOrMarkupContent(new MarkupContent
+                {
+                    Kind = MarkupKind.PlainText,
+                    Value = "Nice"
+                })
             });
         }
     }

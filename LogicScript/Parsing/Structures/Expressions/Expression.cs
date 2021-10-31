@@ -2,14 +2,14 @@
 {
     internal abstract class Expression : ICodeNode
     {
-        public SourceLocation Location { get; }
+        public SourceSpan Span { get; }
 
         public abstract bool IsConstant { get; }
         public abstract int BitSize { get; }
 
-        public Expression(SourceLocation location)
+        public Expression(SourceSpan span)
         {
-            this.Location = location;
+            this.Span = span;
         }
     }
 }

@@ -2,11 +2,11 @@
 {
     internal abstract class Statement : ICodeNode
     {
-        public SourceLocation Location { get; }
+        public SourceSpan Span { get; }
 
-        protected Statement(SourceLocation location)
+        protected Statement(SourceSpan span)
         {
-            this.Location = location;
+            this.Span = span;
         }
     }
 }

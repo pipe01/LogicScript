@@ -10,7 +10,7 @@ namespace LogicScript.Parsing.Structures.Statements
 
         public Statement Body { get; set; }
 
-        public ForStatement(SourceLocation location, string variableName, Expression? from, Expression to, Statement body) : base(location)
+        public ForStatement(SourceSpan span, string variableName, Expression? from, Expression to, Statement body) : base(span)
         {
             this.VariableName = variableName;
             this.From = from;

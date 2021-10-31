@@ -19,10 +19,10 @@ namespace LogicScript.Parsing.Structures.Expressions
             Operator.Add => Left.BitSize > Right.BitSize ? Left.BitSize + 1 : Right.BitSize + 1,
             Operator.Multiply => Left.BitSize + Right.BitSize,
             Operator.Power => Left.BitSize * ((1 << Right.BitSize) - 1),
-            _ => throw new ParseException("Unknown operator bitsize", Location)
+            _ => throw new ParseException("Unknown operator bitsize", Span)
         };
 
-        public BinaryOperatorExpression(SourceLocation location, Operator op, Expression left, Expression right) : base(location)
+        public BinaryOperatorExpression(SourceSpan span, Operator op, Expression left, Expression right) : base(span)
         {
             this.Operator = op;
             this.Left = left;

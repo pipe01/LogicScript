@@ -66,13 +66,13 @@ namespace LogicScript.Parsing.Visitors
             }
             else
             {
-                Context.Errors.AddError("Missing 'when' condition", context.Loc());
+                Context.Errors.AddError("Missing 'when' condition", context.Span());
                 return null;
             }
 
             var body = new StatementVisitor(blockCtx).Visit(context.block());
 
-            Script.Blocks.Add(new WhenBlock(context.Loc(), cond, body));
+            Script.Blocks.Add(new WhenBlock(context.Span(), cond, body));
             return null;
         }
 
@@ -81,7 +81,7 @@ namespace LogicScript.Parsing.Visitors
             var body = new StatementVisitor(new BlockContext(Context, false)).Visit(context.stmt_assign());
 
             if (body is AssignStatement assign)
-                Script.Blocks.Add(new AssignBlock(context.Loc(), assign));
+                Script.Blocks.Add(new AssignBlock(context.Span(), assign));
             else
                 Errors.AddError("Assignment block must contain an assignment", body);
 
@@ -93,7 +93,7 @@ namespace LogicScript.Parsing.Visitors
             var blockCtx = new BlockContext(Context, false);
             var body = new StatementVisitor(blockCtx).Visit(context.block());
 
-            Script.Blocks.Add(new StartupBlock(context.Loc(), body));
+            Script.Blocks.Add(new StartupBlock(context.Span(), body));
             return null;
         }
 
@@ -102,13 +102,13 @@ namespace LogicScript.Parsing.Visitors
             var size = context.BIT_SIZE() == null ? 1 : context.BIT_SIZE().ParseBitSize();
 
             if (size > BitsValue.BitSize)
-                Errors.AddError($"The maximum bit size is {BitsValue.BitSize}", context.Loc());
+                Errors.AddError($"The maximum bit size is {BitsValue.BitSize}", context.Span());
 
             var name = context.IDENT().GetText();
 
             if (Script.Inputs.ContainsKey(name) || Script.Outputs.ContainsKey(name) || Script.Registers.ContainsKey(name))
             {
-                Errors.AddError($"The port '{name}' is already registered", new SourceLocation(context.IDENT().Symbol));
+                Errors.AddError($"The port '{name}' is already registered", new SourceSpan(context.IDENT().Symbol));
                 return;
             }
 

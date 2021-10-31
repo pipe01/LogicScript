@@ -46,7 +46,7 @@ namespace LogicScript
             }
             catch (ParseException ex)
             {
-                errors.AddError(ex.Message, ex.Location);
+                errors.AddError(ex.Message, ex.Span);
             }
             catch (ParseCanceledException)
             {

@@ -4,7 +4,7 @@ namespace LogicScript.Parsing.Structures.Statements
 {
     internal abstract class TaskStatement : Statement
     {
-        public TaskStatement(SourceLocation location) : base(location)
+        protected TaskStatement(SourceSpan span) : base(span)
         {
         }
     }
@@ -13,7 +13,7 @@ namespace LogicScript.Parsing.Structures.Statements
     {
         public string Text { get; set; }
 
-        public PrintTaskStatement(SourceLocation location, string text) : base(location)
+        public PrintTaskStatement(SourceSpan span, string text) : base(span)
         {
             this.Text = text;
         }
@@ -23,7 +23,7 @@ namespace LogicScript.Parsing.Structures.Statements
     {
         public Expression Value { get; set; }
 
-        public ShowTaskStatement(SourceLocation location, Expression value) : base(location)
+        public ShowTaskStatement(SourceSpan span, Expression value) : base(span)
         {
             this.Value = value;
         }

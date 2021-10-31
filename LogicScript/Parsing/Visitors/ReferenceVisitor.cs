@@ -25,7 +25,7 @@ namespace LogicScript.Parsing.Visitors
 
             if (target == null)
             {
-                Context.Errors.AddError($"Unknown identifier '{identName}'", new SourceLocation(context.IDENT().Symbol));
+                Context.Errors.AddError($"Unknown identifier '{identName}'", new SourceSpan(context.IDENT().Symbol));
                 return new PortReference(ReferenceTarget.Register, 0, 0);
             }
 
@@ -38,7 +38,7 @@ namespace LogicScript.Parsing.Visitors
 
             if (!Context.Locals.TryGetValue(name, out var local))
             {
-                Context.Errors.AddError($"Local variable ${name} is not declared", context.Loc());
+                Context.Errors.AddError($"Local variable ${name} is not declared", context.Span());
                 return new LocalReference(name, 0);
             }
 

@@ -16,6 +16,10 @@ namespace LogicScript.Interpreting
             this.Location = location;
         }
 
+        public InterpreterException(string message, SourceSpan span) : this(message, span.Start)
+        {
+        }
+
         public InterpreterException(string message, Exception innerException) : base(message, innerException)
         {
         }
@@ -23,6 +27,10 @@ namespace LogicScript.Interpreting
         public InterpreterException(string message, SourceLocation location, Exception innerException) : base(message, innerException)
         {
             this.Location = location;
+        }
+
+        public InterpreterException(string message, SourceSpan span, Exception innerException) : this(message, span.Start, innerException)
+        {
         }
     }
 }

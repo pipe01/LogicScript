@@ -2,11 +2,11 @@
 {
     internal abstract class Block : ICodeNode
     {
-        public SourceLocation Location { get; }
+        public SourceSpan Span { get; }
 
-        protected Block(SourceLocation location)
+        protected Block(SourceSpan span)
         {
-            this.Location = location;
+            this.Span = span;
         }
     }
 }

@@ -2,6 +2,6 @@
 {
     internal interface ICodeNode
     {
-        SourceLocation Location { get; }
+        SourceSpan Span { get; }
     }
 }

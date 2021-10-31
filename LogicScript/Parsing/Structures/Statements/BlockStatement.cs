@@ -6,7 +6,7 @@ namespace LogicScript.Parsing.Structures.Statements
     {
         public IReadOnlyList<Statement> Statements { get; set; }
 
-        public BlockStatement(SourceLocation location, IReadOnlyList<Statement> statements) : base(location)
+        public BlockStatement(SourceSpan span, IReadOnlyList<Statement> statements) : base(span)
         {
             this.Statements = statements;
         }

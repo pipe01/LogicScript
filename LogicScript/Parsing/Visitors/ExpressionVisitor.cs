@@ -37,24 +37,24 @@ namespace LogicScript.Parsing.Visitors
             {
                 var n = new NumberVisitor().Visit(context.number());
 
-                return new NumberLiteralExpression(context.Loc(), n);
+                return new NumberLiteralExpression(context.Span(), n);
             }
             else if (context.reference() != null)
             {
                 return Visit(context.reference());
             }
 
-            throw new ParseException("Invalid atom", context.Loc());
+            throw new ParseException("Invalid atom", context.Span());
         }
 
         public override Expression VisitRefLocal([NotNull] LogicScriptParser.RefLocalContext context)
         {
             if (Context.IsInConstant)
-                Context.Errors.AddError("You can only reference constants from other constants", context.Loc(), true);
+                Context.Errors.AddError("You can only reference constants from other constants", context.Span(), true);
 
             var @ref = new ReferenceVisitor(Context).Visit(context);
 
-            return new ReferenceExpression(context.Loc(), @ref);
+            return new ReferenceExpression(context.Span(), @ref);
         }
 
         public override Expression VisitRefPort([NotNull] LogicScriptParser.RefPortContext context)
@@ -63,14 +63,14 @@ namespace LogicScript.Parsing.Visitors
                 return val;
 
             if (Context.IsInConstant)
-                Context.Errors.AddError("You can only reference constants from other constants", context.Loc(), true);
+                Context.Errors.AddError("You can only reference constants from other constants", context.Span(), true);
 
             var @ref = new ReferenceVisitor(Context).Visit(context);
 
             if (!@ref.IsReadable)
-                Context.Errors.AddError("An identifier in an expression must be readable", context.Loc());
+                Context.Errors.AddError("An identifier in an expression must be readable", context.Span());
 
-            return new ReferenceExpression(context.Loc(), @ref);
+            return new ReferenceExpression(context.Span(), @ref);
         }
 
         public override Expression VisitExprParen([NotNull] LogicScriptParser.ExprParenContext context)
@@ -86,14 +86,14 @@ namespace LogicScript.Parsing.Visitors
             {
                 ">" => IndexStart.Right,
                 "<" or null => IndexStart.Left,
-                _ => throw new ParseException("Unknown index start position", context.indexer().Loc())
+                _ => throw new ParseException("Unknown index start position", context.indexer().Span())
             };
 
             ulong offset;
 
             if (context.indexer().offset == null)
             {
-                Context.Errors.AddError("Missing indexer offset", context.indexer().Loc());
+                Context.Errors.AddError("Missing indexer offset", context.indexer().Span());
                 offset = 0;
             }
             else
@@ -102,10 +102,10 @@ namespace LogicScript.Parsing.Visitors
             }
 
             var length = context.indexer().len == null ? 1 : new NumberVisitor().Visit(context.indexer().len).Number;
-            var sliceExpr = new SliceExpression(context.Loc(), operand, start, (int)offset, (int)length);
+            var sliceExpr = new SliceExpression(context.Span(), operand, start, (int)offset, (int)length);
 
             if (length == 0)
-                Context.Errors.AddError("Slice length cannot be zero", context.indexer().len.Loc());
+                Context.Errors.AddError("Slice length cannot be zero", context.indexer().len.Span());
 
             if (MaxBitSize != 0 && (int)length > MaxBitSize)
                 Context.Errors.AddError($"Cannot fit a {length} bits long number into {MaxBitSize} bits", sliceExpr);
@@ -115,7 +115,7 @@ namespace LogicScript.Parsing.Visitors
 
         public override Expression VisitExprXor([NotNull] LogicScriptParser.ExprXorContext context)
         {
-            return new BinaryOperatorExpression(context.Loc(), Operator.Xor, Visit(context.expression(0)), Visit(context.expression(1)));
+            return new BinaryOperatorExpression(context.Span(), Operator.Xor, Visit(context.expression(0)), Visit(context.expression(1)));
         }
 
         public override Expression VisitExprAndOr([NotNull] LogicScriptParser.ExprAndOrContext context)
@@ -124,15 +124,15 @@ namespace LogicScript.Parsing.Visitors
             {
                 LogicScriptParser.AND => Operator.And,
                 LogicScriptParser.OR => Operator.Or,
-                _ => throw new ParseException("Unknown operator", context.Loc())
+                _ => throw new ParseException("Unknown operator", context.Span())
             };
 
-            return new BinaryOperatorExpression(context.Loc(), op, Visit(context.expression(0)), Visit(context.expression(1)));
+            return new BinaryOperatorExpression(context.Span(), op, Visit(context.expression(0)), Visit(context.expression(1)));
         }
 
         public override Expression VisitExprPower([NotNull] LogicScriptParser.ExprPowerContext context)
         {
-            return new BinaryOperatorExpression(context.Loc(), Operator.Power, Visit(context.expression(0)), Visit(context.expression(1)));
+            return new BinaryOperatorExpression(context.Span(), Operator.Power, Visit(context.expression(0)), Visit(context.expression(1)));
         }
 
         public override Expression VisitExprPlusMinus([NotNull] LogicScriptParser.ExprPlusMinusContext context)
@@ -141,10 +141,10 @@ namespace LogicScript.Parsing.Visitors
             {
                 LogicScriptParser.PLUS => Operator.Add,
                 LogicScriptParser.MINUS => Operator.Subtract,
-                _ => throw new ParseException("Unknown operator", context.Loc())
+                _ => throw new ParseException("Unknown operator", context.Span())
             };
 
-            return new BinaryOperatorExpression(context.Loc(), op, Visit(context.expression(0)), Visit(context.expression(1)));
+            return new BinaryOperatorExpression(context.Span(), op, Visit(context.expression(0)), Visit(context.expression(1)));
         }
 
         public override Expression VisitExprMultDiv([NotNull] LogicScriptParser.ExprMultDivContext context)
@@ -153,10 +153,10 @@ namespace LogicScript.Parsing.Visitors
             {
                 LogicScriptParser.MULT => Operator.Multiply,
                 LogicScriptParser.DIVIDE => Operator.Divide,
-                _ => throw new ParseException("Unknown operator", context.Loc())
+                _ => throw new ParseException("Unknown operator", context.Span())
             };
 
-            return new BinaryOperatorExpression(context.Loc(), op, Visit(context.expression(0)), Visit(context.expression(1)));
+            return new BinaryOperatorExpression(context.Span(), op, Visit(context.expression(0)), Visit(context.expression(1)));
         }
 
         public override Expression VisitExprCompare([NotNull] LogicScriptParser.ExprCompareContext context)
@@ -166,10 +166,10 @@ namespace LogicScript.Parsing.Visitors
                 LogicScriptParser.COMPARE_EQUALS => Operator.EqualsCompare,
                 LogicScriptParser.COMPARE_GREATER => Operator.Greater,
                 LogicScriptParser.COMPARE_LESSER => Operator.Lesser,
-                _ => throw new ParseException("Unknown operator", context.Loc())
+                _ => throw new ParseException("Unknown operator", context.Span())
             };
 
-            return new BinaryOperatorExpression(context.Loc(), op, Visit(context.expression(0)), Visit(context.expression(1)));
+            return new BinaryOperatorExpression(context.Span(), op, Visit(context.expression(0)), Visit(context.expression(1)));
         }
 
         public override Expression VisitExprShift([NotNull] LogicScriptParser.ExprShiftContext context)
@@ -178,15 +178,15 @@ namespace LogicScript.Parsing.Visitors
             {
                 LogicScriptParser.LSHIFT => Operator.ShiftLeft,
                 LogicScriptParser.RSHIFT => Operator.ShiftRight,
-                _ => throw new ParseException("Unknown operator", context.Loc())
+                _ => throw new ParseException("Unknown operator", context.Span())
             };
 
-            return new BinaryOperatorExpression(context.Loc(), op, Visit(context.expression(0)), Visit(context.expression(1)));
+            return new BinaryOperatorExpression(context.Span(), op, Visit(context.expression(0)), Visit(context.expression(1)));
         }
 
         public override Expression VisitExprNegate([NotNull] LogicScriptParser.ExprNegateContext context)
         {
-            return new UnaryOperatorExpression(context.Loc(), Operator.Not, Visit(context.expression()));
+            return new UnaryOperatorExpression(context.Span(), Operator.Not, Visit(context.expression()));
         }
 
         public override Expression VisitExprCall([NotNull] LogicScriptParser.ExprCallContext context)
@@ -199,10 +199,10 @@ namespace LogicScript.Parsing.Visitors
                 "fall" => Operator.Fall,
                 "change" => Operator.Change,
                 "len" => Operator.Length,
-                _ => throw new ParseException($"Unknown function '{context.funcName.Text}'", context.Loc())
+                _ => throw new ParseException($"Unknown function '{context.funcName.Text}'", context.Span())
             };
 
-            return new UnaryOperatorExpression(context.Loc(), op, operand);
+            return new UnaryOperatorExpression(context.Span(), op, operand);
         }
 
         public override Expression VisitExprTernary([NotNull] LogicScriptParser.ExprTernaryContext context)
@@ -211,7 +211,7 @@ namespace LogicScript.Parsing.Visitors
             var ifTrue = Visit(context.ifTrue);
             var ifFalse = Visit(context.ifFalse);
 
-            return new TernaryOperatorExpression(context.Loc(), cond, ifTrue, ifFalse);
+            return new TernaryOperatorExpression(context.Span(), cond, ifTrue, ifFalse);
         }
 
         public override Expression VisitExprTrunc([NotNull] LogicScriptParser.ExprTruncContext context)
@@ -220,7 +220,7 @@ namespace LogicScript.Parsing.Visitors
             var operand = new ExpressionVisitor(Context).Visit(context.expression());
             var size = int.Parse(context.DEC_NUMBER().GetText());
 
-            return new TruncateExpression(context.Loc(), operand, size);
+            return new TruncateExpression(context.Span(), operand, size);
         }
     }
 }
