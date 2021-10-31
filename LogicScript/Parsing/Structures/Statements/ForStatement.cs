@@ -1,4 +1,5 @@
 ﻿using LogicScript.Parsing.Structures.Expressions;
+using System.Collections.Generic;
 
 namespace LogicScript.Parsing.Structures.Statements
 {
@@ -16,6 +17,14 @@ namespace LogicScript.Parsing.Structures.Statements
             this.From = from;
             this.To = to;
             this.Body = body;
+        }
+
+        protected override IEnumerator<ICodeNode> GetChildren()
+        {
+            if (From != null)
+                yield return From;
+            yield return To;
+            yield return Body;
         }
     }
 }

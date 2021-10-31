@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace LogicScript.Parsing.Structures.Expressions
 {
@@ -19,6 +20,11 @@ namespace LogicScript.Parsing.Structures.Expressions
         {
             this.Operator = op;
             this.Operand = operand;
+        }
+
+        protected override IEnumerator<ICodeNode> GetChildren()
+        {
+            yield return Operand;
         }
 
         public override string ToString() => $"{Operator}({Operand})";

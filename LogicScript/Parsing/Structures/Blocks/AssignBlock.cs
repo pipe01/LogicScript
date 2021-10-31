@@ -1,4 +1,5 @@
 ﻿using LogicScript.Parsing.Structures.Statements;
+using System.Collections.Generic;
 
 namespace LogicScript.Parsing.Structures.Blocks
 {
@@ -9,6 +10,11 @@ namespace LogicScript.Parsing.Structures.Blocks
         public AssignBlock(SourceSpan span, AssignStatement assignment) : base(span)
         {
             this.Assignment = assignment;
+        }
+
+        protected override IEnumerator<ICodeNode> GetChildren()
+        {
+            yield return Assignment;
         }
     }
 }

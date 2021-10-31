@@ -1,5 +1,7 @@
 ﻿using LogicScript.Data;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace LogicScript.Parsing.Structures.Expressions
 {
@@ -27,6 +29,12 @@ namespace LogicScript.Parsing.Structures.Expressions
             this.Operator = op;
             this.Left = left;
             this.Right = right;
+        }
+
+        protected override IEnumerator<ICodeNode> GetChildren()
+        {
+            yield return Left;
+            yield return Right;
         }
 
         public override string ToString() => $"{Operator}({Left}, {Right})";

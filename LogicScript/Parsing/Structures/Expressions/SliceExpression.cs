@@ -1,4 +1,6 @@
-﻿namespace LogicScript.Parsing.Structures.Expressions
+﻿using System.Collections.Generic;
+
+namespace LogicScript.Parsing.Structures.Expressions
 {
     internal enum IndexStart
     {
@@ -23,6 +25,11 @@
             this.Offset = offset;
             this.Length = length;
             this.Start = start;
+        }
+
+        protected override IEnumerator<ICodeNode> GetChildren()
+        {
+            yield return Operand;
         }
     }
 }

@@ -24,5 +24,8 @@ namespace LogicScript.Parsing
         internal SourceSpan(IToken token) : this(token, token)
         {
         }
+
+        public bool Contains(SourceLocation loc)
+            => loc.Line >= Start.Line && loc.Line <= End.Line && loc.Column >= Start.Column && loc.Column <= End.Column;
     }
 }

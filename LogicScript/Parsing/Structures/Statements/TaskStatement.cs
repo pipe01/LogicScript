@@ -1,4 +1,5 @@
 ﻿using LogicScript.Parsing.Structures.Expressions;
+using System.Collections.Generic;
 
 namespace LogicScript.Parsing.Structures.Statements
 {
@@ -26,6 +27,11 @@ namespace LogicScript.Parsing.Structures.Statements
         public ShowTaskStatement(SourceSpan span, Expression value) : base(span)
         {
             this.Value = value;
+        }
+
+        protected override IEnumerator<ICodeNode> GetChildren()
+        {
+            yield return Value;
         }
     }
 }

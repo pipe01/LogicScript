@@ -1,4 +1,7 @@
-﻿namespace LogicScript.Parsing.Structures.Statements
+﻿using System.Collections;
+using System.Collections.Generic;
+
+namespace LogicScript.Parsing.Structures.Statements
 {
     internal abstract class Statement : ICodeNode
     {
@@ -8,5 +11,14 @@
         {
             this.Span = span;
         }
+
+        protected virtual IEnumerator<ICodeNode> GetChildren()
+        {
+            yield break;
+        }
+
+        IEnumerator<ICodeNode> IEnumerable<ICodeNode>.GetEnumerator() => GetChildren();
+
+        IEnumerator IEnumerable.GetEnumerator() => GetChildren();
     }
 }

@@ -19,5 +19,12 @@ namespace LogicScript.Parsing.Structures.Blocks
             this.Body = body;
             this.Condition = condition;
         }
+
+        protected override IEnumerator<ICodeNode> GetChildren()
+        {
+            if (Condition != null)
+                yield return Condition;
+            yield return Body;
+        }
     }
 }

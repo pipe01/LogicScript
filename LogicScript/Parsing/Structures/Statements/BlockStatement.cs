@@ -10,5 +10,13 @@ namespace LogicScript.Parsing.Structures.Statements
         {
             this.Statements = statements;
         }
+
+        protected override IEnumerator<ICodeNode> GetChildren()
+        {
+            foreach (var item in Statements)
+            {
+                yield return item;
+            }
+        }
     }
 }

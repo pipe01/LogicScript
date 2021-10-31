@@ -1,4 +1,6 @@
-﻿namespace LogicScript.Parsing.Structures.Expressions
+﻿using System.Collections.Generic;
+
+namespace LogicScript.Parsing.Structures.Expressions
 {
     internal class TernaryOperatorExpression : Expression
     {
@@ -20,6 +22,13 @@
             this.Condition = condition;
             this.IfTrue = ifTrue;
             this.IfFalse = ifFalse;
+        }
+
+        protected override IEnumerator<ICodeNode> GetChildren()
+        {
+            yield return Condition;
+            yield return IfTrue;
+            yield return IfFalse;
         }
 
         public override string ToString() => $"If({Condition}, {IfTrue}, {IfFalse})";

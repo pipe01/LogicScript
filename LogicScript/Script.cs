@@ -28,6 +28,35 @@ namespace LogicScript
             Interpreter.Run(this, machine, runStartup, checkPortCount);
         }
 
+        internal ICodeNode? GetNodeAt(SourceLocation loc)
+        {
+            foreach (var item in Blocks)
+            {
+                var node = Inner(loc, item);
+
+                if (node != null)
+                    return node;
+            }
+
+            return null;
+
+            static ICodeNode? Inner(SourceLocation loc, ICodeNode node)
+            {
+                foreach (var child in node)
+                {
+                    var childNode = Inner(loc, child);
+
+                    if (childNode != null)
+                        return childNode;
+                }
+
+                if (node.Span.Contains(loc))
+                    return node;
+
+                return null;
+            }
+        }
+
         public static (Script? Script, IReadOnlyList<Error> Errors) Parse(string source)
         {
             var errors = new ErrorSink();

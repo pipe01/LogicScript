@@ -1,4 +1,6 @@
-﻿using MediatR;
+﻿using LogicScript.Parsing.Structures.Expressions;
+using MediatR;
+using Microsoft.Extensions.DependencyInjection;
 using OmniSharp.Extensions.JsonRpc;
 using OmniSharp.Extensions.LanguageServer.Protocol;
 using OmniSharp.Extensions.LanguageServer.Protocol.Client;
@@ -29,6 +31,11 @@ namespace LogicScript.LSP
 
             var server = LanguageServer.Create(opts =>
             {
+                opts.WithServices(o =>
+                {
+                    o.AddSingleton(new Workspace());
+                });
+
                 opts.WithOutput(Console.OpenStandardOutput());
                 opts.WithInput(Console.OpenStandardInput());
                 opts.WithHandler<DocumentHandler>();
@@ -43,10 +50,12 @@ namespace LogicScript.LSP
     class DocumentHandler : IDidChangeTextDocumentHandler, IDidOpenTextDocumentHandler
     {
         private readonly ILanguageServerFacade Server;
+        private readonly Workspace Workspace;
 
-        public DocumentHandler(ILanguageServerFacade server)
+        public DocumentHandler(ILanguageServerFacade server, Workspace workspace)
         {
             this.Server = server;
+            this.Workspace = workspace;
         }
 
         TextDocumentOpenRegistrationOptions IRegistration<TextDocumentOpenRegistrationOptions, SynchronizationCapability>.GetRegistrationOptions(SynchronizationCapability capability, ClientCapabilities clientCapabilities)
@@ -66,25 +75,25 @@ namespace LogicScript.LSP
             };
         }
 
-        public async Task<Unit> Handle(DidOpenTextDocumentParams request, CancellationToken cancellationToken)
+        public Task<Unit> Handle(DidOpenTextDocumentParams request, CancellationToken cancellationToken)
         {
             SendDiagnostics(request.TextDocument.Text, request.TextDocument.Uri);
-            return Unit.Value;
+            return Unit.Task;
         }
 
-        public async Task<Unit> Handle(DidChangeTextDocumentParams request, CancellationToken cancellationToken)
+        public Task<Unit> Handle(DidChangeTextDocumentParams request, CancellationToken cancellationToken)
         {
             SendDiagnostics(request.ContentChanges.First().Text, request.TextDocument.Uri);
-            return Unit.Value;
+            return Unit.Task;
         }
 
         private void SendDiagnostics(string script, DocumentUri uri)
         {
-            var diag = ScriptDiagnostics.ForText(script);
+            var diag = Workspace.LoadScript(uri, script);
 
             Server.Client.SendNotification(new PublishDiagnosticsParams
             {
-                Diagnostics = Container<Diagnostic>.From(diag),
+                Diagnostics = Container<Diagnostic>.From(diag ?? Array.Empty<Diagnostic>()),
                 Uri = uri
             });
         }
@@ -92,6 +101,13 @@ namespace LogicScript.LSP
 
     class HoverHandler : HoverHandlerBase
     {
+        private readonly Workspace Workspace;
+
+        public HoverHandler(Workspace workspace)
+        {
+            this.Workspace = workspace;
+        }
+
         protected override HoverRegistrationOptions CreateRegistrationOptions(HoverCapability capability, ClientCapabilities clientCapabilities)
         {
             return new()
@@ -100,15 +116,27 @@ namespace LogicScript.LSP
             };
         }
 
-        public override Task<Hover> Handle(HoverParams request, CancellationToken cancellationToken)
+        public override Task<Hover?> Handle(HoverParams request, CancellationToken cancellationToken)
         {
-            return Task.FromResult(new Hover
+            var node = Workspace.GetNodeAt(request.TextDocument.Uri, new(request.Position.Line + 1, request.Position.Character + 1));
+            MarkupContent content;
+
+            switch (node)
             {
-                Contents = new MarkedStringsOrMarkupContent(new MarkupContent
-                {
-                    Kind = MarkupKind.PlainText,
-                    Value = "Nice"
-                })
+                case Expression expr:
+                    content = new MarkupContent
+                    {
+                        Kind = MarkupKind.Markdown,
+                        Value = $"Size: `{expr.BitSize}` bits"
+                    };
+                    break;
+                default:
+                    return Task.FromResult(null as Hover);
+            }
+
+            return Task.FromResult<Hover?>(new Hover
+            {
+                Contents = new MarkedStringsOrMarkupContent(content)
             });
         }
     }
