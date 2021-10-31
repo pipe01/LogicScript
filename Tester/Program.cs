@@ -10,23 +10,14 @@ namespace Tester
     {
         static void Main(string[] args)
         {
-            try
-            {
-                var (script, errors) = Script.Parse(File.ReadAllText("test.lsx"));
+            var (script, errors) = Script.Parse(File.ReadAllText("test.lsx"));
 
-                foreach (var err in errors)
-                {
-                    Console.WriteLine(err);
-                }
-
-                script?.Run(new MyMachine(), true);
-            }
-            catch (ParseException ex)
+            foreach (var err in errors)
             {
-                Console.WriteLine($"{ex.Message} at {ex.Location}");
-                Console.ReadKey();
-                return;
+                Console.WriteLine(err);
             }
+
+            script?.Run(new MyMachine(), true);
 
             Console.ReadKey();
         }

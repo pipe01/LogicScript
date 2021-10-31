@@ -43,11 +43,15 @@ namespace LogicScript
             {
                 script = new ScriptVisitor(errors).Visit(parser.script());
             }
+            catch (ParseException ex)
+            {
+                errors.AddError(ex.Message, ex.Location);
+            }
             catch (ParseCanceledException)
             {
             }
 
-            return (script, errors);
+            return (errors.Count > 0 ? null : script, errors);
         }
     }
 }
