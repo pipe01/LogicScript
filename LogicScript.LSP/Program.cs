@@ -1,4 +1,6 @@
-﻿using LogicScript.Parsing.Structures.Expressions;
+﻿using LogicScript.Parsing;
+using LogicScript.Parsing.Structures;
+using LogicScript.Parsing.Structures.Expressions;
 using LogicScript.Parsing.Structures.Statements;
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
@@ -12,8 +14,10 @@ using OmniSharp.Extensions.LanguageServer.Protocol.Server;
 using OmniSharp.Extensions.LanguageServer.Protocol.Server.Capabilities;
 using OmniSharp.Extensions.LanguageServer.Server;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Range = OmniSharp.Extensions.LanguageServer.Protocol.Models.Range;
@@ -122,24 +126,58 @@ namespace LogicScript.LSP
         public override Task<Hover?> Handle(HoverParams request, CancellationToken cancellationToken)
         {
             var node = Workspace.GetNodeAt(request.TextDocument.Uri, request.Position);
-            MarkupContent content;
+            var lines = new List<string>();
+            int size;
+            SourceSpan span;
 
             switch (node)
             {
-                case Expression expr:
-                    content = new MarkupContent
-                    {
-                        Kind = MarkupKind.Markdown,
-                        Value = $"Size: `{expr.BitSize}` bits"
-                    };
+                case AssignStatement assign when assign.Reference is PortReference portRef:
+                    AddPortReference(portRef);
+                    span = assign.Span;
                     break;
+
+                case ReferenceExpression refExpr when refExpr.Reference is PortReference portRef:
+                    AddPortReference(portRef);
+                    span = refExpr.Span;
+                    break;
+
+                case Expression expr:
+                    size = expr.BitSize;
+                    span = expr.Span;
+                    break;
+
+                case DeclareLocalStatement local:
+                    size = local.Size;
+                    span = local.Span;
+                    break;
+
                 default:
                     return Task.FromResult(null as Hover);
             }
 
+            // C# sucks
+            void AddPortReference(PortReference portRef)
+            {
+                if (portRef.Port.BitSize == 1)
+                    lines.Add($"### {portRef.Target} index {portRef.Port.StartIndex}");
+                else
+                    lines.Add($"### {portRef.Target} index {portRef.Port.StartIndex} to {portRef.Port.StartIndex + portRef.Port.BitSize - 1}");
+
+                size = portRef.BitSize;
+            }
+
+            if (size != 0)
+                lines.Add($"Size: `{size}` bits");
+
             return Task.FromResult<Hover?>(new Hover
             {
-                Contents = new MarkedStringsOrMarkupContent(content)
+                Contents = new MarkedStringsOrMarkupContent(new MarkupContent
+                {
+                    Kind = MarkupKind.Markdown,
+                    Value = string.Join("\n---\n", lines)
+                }),
+                Range = span.GetRange()
             });
         }
     }
