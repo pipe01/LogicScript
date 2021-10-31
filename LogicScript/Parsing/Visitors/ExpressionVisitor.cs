@@ -22,8 +22,11 @@ namespace LogicScript.Parsing.Visitors
         {
             var expr = base.Visit(tree);
 
+            if (expr == null)
+                throw new ParseCanceledException();
+
             if (MaxBitSize != 0 && expr.BitSize > MaxBitSize)
-                Context.Errors.AddError($"Cannot fit a {expr.BitSize} bits long number into {MaxBitSize} bits", tree is ParserRuleContext ctx ? ctx.Loc() : default);
+                Context.Errors.AddError($"Cannot fit a {expr.BitSize} bits long number into {MaxBitSize} bits", expr);
 
             return expr;
         }
@@ -85,13 +88,29 @@ namespace LogicScript.Parsing.Visitors
                 "<" or null => IndexStart.Left,
                 _ => throw new ParseException("Unknown index start position", context.indexer().Loc())
             };
-            var offset = new NumberVisitor().Visit(context.indexer().offset).Number;
+
+            ulong offset;
+
+            if (context.indexer().offset == null)
+            {
+                Context.Errors.AddError("Missing indexer offset", context.indexer().Loc());
+                offset = 0;
+            }
+            else
+            {
+                offset = new NumberVisitor().Visit(context.indexer().offset).Number;
+            }
+
             var length = context.indexer().len == null ? 1 : new NumberVisitor().Visit(context.indexer().len).Number;
+            var sliceExpr = new SliceExpression(context.Loc(), operand, start, (int)offset, (int)length);
+
+            if (length == 0)
+                Context.Errors.AddError("Slice length cannot be zero", context.indexer().len.Loc());
 
             if (MaxBitSize != 0 && (int)length > MaxBitSize)
-                Context.Errors.AddError($"Cannot fit a {length} bits long number into {MaxBitSize} bits", context.Loc());
+                Context.Errors.AddError($"Cannot fit a {length} bits long number into {MaxBitSize} bits", sliceExpr);
 
-            return new SliceExpression(context.Loc(), operand, start, (int)offset, (int)length);
+            return sliceExpr;
         }
 
         public override Expression VisitExprXor([NotNull] LogicScriptParser.ExprXorContext context)

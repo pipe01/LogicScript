@@ -7,6 +7,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LogicScript", "LogicScript\
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Tester", "Tester\Tester.csproj", "{D3D8D859-02A9-4870-9118-835BE73C644A}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LogicScript.LSP", "LogicScript.LSP\LogicScript.LSP.csproj", "{073D8343-49DA-41AA-9EE5-1EFC356C3AD8}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -31,6 +33,14 @@ Global
 		{D3D8D859-02A9-4870-9118-835BE73C644A}.Release|Any CPU.Build.0 = Release|Any CPU
 		{D3D8D859-02A9-4870-9118-835BE73C644A}.Release|x64.ActiveCfg = Release|x64
 		{D3D8D859-02A9-4870-9118-835BE73C644A}.Release|x64.Build.0 = Release|x64
+		{073D8343-49DA-41AA-9EE5-1EFC356C3AD8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{073D8343-49DA-41AA-9EE5-1EFC356C3AD8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{073D8343-49DA-41AA-9EE5-1EFC356C3AD8}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{073D8343-49DA-41AA-9EE5-1EFC356C3AD8}.Debug|x64.Build.0 = Debug|Any CPU
+		{073D8343-49DA-41AA-9EE5-1EFC356C3AD8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{073D8343-49DA-41AA-9EE5-1EFC356C3AD8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{073D8343-49DA-41AA-9EE5-1EFC356C3AD8}.Release|x64.ActiveCfg = Release|Any CPU
+		{073D8343-49DA-41AA-9EE5-1EFC356C3AD8}.Release|x64.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

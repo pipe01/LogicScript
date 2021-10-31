@@ -10,7 +10,6 @@ namespace LogicScript.Parsing.Structures
     }
 
     internal interface IReference
-
     {
         bool IsWritable { get; }
         bool IsReadable { get; }

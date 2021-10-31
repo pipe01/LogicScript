@@ -7,7 +7,7 @@ decl_const          : 'const' WS+ IDENT WS+ '=' WS+ expression ;
 decl_input          : 'input' port_info ;
 decl_output         : 'output' port_info ;
 decl_register       : 'reg' port_info ;
-decl_when           : 'when' WS+ (cond=expression | '*') NL+ block 'end' ;
+decl_when           : 'when' WS+ (cond=expression | any='*') NL+ block 'end' ;
 decl_startup        : 'startup' WS* NL+ block 'end' ;
 decl_assign         : 'assign' WS+ stmt_assign ;
 

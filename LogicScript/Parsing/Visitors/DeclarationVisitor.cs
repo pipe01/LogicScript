@@ -2,6 +2,7 @@
 using LogicScript.Data;
 using LogicScript.Parsing.Structures;
 using LogicScript.Parsing.Structures.Blocks;
+using LogicScript.Parsing.Structures.Expressions;
 using LogicScript.Parsing.Structures.Statements;
 using System.Collections.Generic;
 using System.Linq;
@@ -44,7 +45,7 @@ namespace LogicScript.Parsing.Visitors
             var value = new ExpressionVisitor(new BlockContext(Context, true)).Visit(context.expression());
 
             if (!value.IsConstant)
-                Errors.AddError("Const declarations must have a constant value", context.expression().Loc());
+                Errors.AddError("Const declarations must have a constant value", value);
 
             Context.Constants.Add(context.IDENT().GetText(), value);
             return null;
@@ -53,7 +54,22 @@ namespace LogicScript.Parsing.Visitors
         public override object? VisitDecl_when([NotNull] LogicScriptParser.Decl_whenContext context)
         {
             var blockCtx = new BlockContext(Context, false);
-            var cond = context.cond == null ? null : new ExpressionVisitor(blockCtx).Visit(context.cond);
+            Expression? cond;
+
+            if (context.any != null)
+            {
+                cond = null;
+            }
+            else if (context.cond != null)
+            {
+                cond = new ExpressionVisitor(blockCtx).Visit(context.cond);
+            }
+            else
+            {
+                Context.Errors.AddError("Missing 'when' condition", context.Loc());
+                return null;
+            }
+
             var body = new StatementVisitor(blockCtx).Visit(context.block());
 
             Script.Blocks.Add(new WhenBlock(context.Loc(), cond, body));
@@ -67,7 +83,7 @@ namespace LogicScript.Parsing.Visitors
             if (body is AssignStatement assign)
                 Script.Blocks.Add(new AssignBlock(context.Loc(), assign));
             else
-                Errors.AddError("Assignment block must contain an assignment", context.stmt_assign().Loc());
+                Errors.AddError("Assignment block must contain an assignment", body);
 
             return null;
         }

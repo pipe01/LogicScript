@@ -1,6 +1,8 @@
 ﻿using Antlr4.Runtime.Misc;
+using LogicScript.Parsing.Structures;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace LogicScript.Parsing
 {
@@ -15,6 +17,14 @@ namespace LogicScript.Parsing
         public void AddError(string msg, SourceLocation location, bool isFatal = false, Severity severity = Severity.Error)
         {
             Errors.Add(new Error(msg, location, severity));
+
+            if (isFatal)
+                throw new ParseCanceledException();
+        }
+        public void AddError(string msg, ICodeNode node, bool isFatal = false, Severity severity = Severity.Error)
+        {
+            if (!Errors.Any(o => o.Node == node))
+                Errors.Add(new Error(msg, node, severity));
 
             if (isFatal)
                 throw new ParseCanceledException();
