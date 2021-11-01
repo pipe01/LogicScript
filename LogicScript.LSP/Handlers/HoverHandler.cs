@@ -37,14 +37,19 @@ namespace LogicScript.LSP.Handlers
 
             switch (node)
             {
-                case AssignStatement assign when assign.Reference is PortReference portRef:
-                    AddPortReference(portRef);
-                    span = assign.Span;
+                case PortReference portRef:
+                    if (portRef.Port.BitSize == 1)
+                        lines.Add($"### {portRef.PortInfo.Target} index {portRef.PortInfo.StartIndex}");
+                    else
+                        lines.Add($"### {portRef.PortInfo.Target} index {portRef.PortInfo.StartIndex} to {portRef.PortInfo.StartIndex + portRef.Port.BitSize - 1}");
+
+                    size = portRef.BitSize;
+                    span = portRef.Span;
                     break;
 
-                case ReferenceExpression refExpr when refExpr.Reference is PortReference portRef:
-                    AddPortReference(portRef);
-                    span = refExpr.Span;
+                case Reference @ref:
+                    size = @ref.BitSize;
+                    span = @ref.Span;
                     break;
 
                 case Expression expr:
@@ -59,17 +64,6 @@ namespace LogicScript.LSP.Handlers
 
                 default:
                     return Task.FromResult(null as Hover);
-            }
-
-            // C# sucks
-            void AddPortReference(PortReference portRef)
-            {
-                if (portRef.Port.BitSize == 1)
-                    lines.Add($"### {portRef.PortInfo.Target} index {portRef.PortInfo.StartIndex}");
-                else
-                    lines.Add($"### {portRef.PortInfo.Target} index {portRef.PortInfo.StartIndex} to {portRef.PortInfo.StartIndex + portRef.Port.BitSize - 1}");
-
-                size = portRef.BitSize;
             }
 
             if (size != 0)
