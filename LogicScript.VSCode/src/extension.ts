@@ -11,10 +11,9 @@ import {
 let client: LanguageClient;
 
 export function activate(context: ExtensionContext) {
-	// const serverPath = context.asAbsolutePath(
-	// 	path.join('server', 'out', 'server.js')
-	// );
-    const serverPath = "C:\\Users\\piper\\source\\repos\\LogicScript\\LogicScript.LSP\\bin\\Debug\\netcoreapp3.1\\LogicScript.LSP.exe";
+	const serverPath = context.asAbsolutePath(
+		path.join('bin', 'LogicScript.LSP.exe')
+	);
 
 	// If the extension is launched in debug mode then the debug server options are used
 	// Otherwise the run options are used
