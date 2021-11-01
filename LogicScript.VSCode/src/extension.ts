@@ -1,5 +1,5 @@
 import * as path from 'path';
-import { workspace, ExtensionContext } from 'vscode';
+import { ExtensionContext } from 'vscode';
 
 import {
 	LanguageClient,
@@ -24,7 +24,7 @@ export function activate(context: ExtensionContext) {
         },
         debug: {
             command: "dotnet",
-            args: ["run", "--project", "..\\LogicScript.LSP\\LogicScript.LSP.csproj"],
+            args: ["run", "--project", context.asAbsolutePath("..\\LogicScript.LSP\\LogicScript.LSP.csproj")],
             transport: TransportKind.stdio,
         }
 	};
