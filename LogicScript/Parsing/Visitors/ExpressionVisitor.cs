@@ -89,7 +89,7 @@ namespace LogicScript.Parsing.Visitors
                 _ => throw new ParseException("Unknown index start position", context.indexer().Span())
             };
 
-            ulong offset;
+            int offset;
 
             if (context.indexer().offset == null)
             {
@@ -98,22 +98,22 @@ namespace LogicScript.Parsing.Visitors
             }
             else
             {
-                offset = new NumberVisitor().Visit(context.indexer().offset).Number;
+                offset = context.indexer().offset.GetConstantValue(Context.Outer);
             }
 
-            var length = context.indexer().len == null ? 1 : new NumberVisitor().Visit(context.indexer().len).Number;
+            var length = context.indexer().len == null ? 1 : context.indexer().len.GetConstantValue(Context.Outer);
             var sliceExpr = new SliceExpression(context.Span(), operand, start, (int)offset, (int)length);
 
             if (length == 0)
                 Context.Errors.AddError("Slice length cannot be zero", context.indexer().len.Span());
 
-            if (offset >= (ulong)operand.BitSize)
+            if (offset >= operand.BitSize)
                 Context.Errors.AddError("Offset is out of bounds", context.indexer().offset.Span());
 
-            if (offset + length > (ulong)operand.BitSize)
+            if (offset + length > operand.BitSize)
                 Context.Errors.AddError("Slice is out of bounds", context.indexer().Span());
 
-            if (MaxBitSize != 0 && (int)length > MaxBitSize)
+            if (MaxBitSize != 0 && length > MaxBitSize)
                 Context.Errors.AddError($"Cannot fit a {length} bits long number into {MaxBitSize} bits", sliceExpr);
 
             return sliceExpr;

@@ -77,6 +77,10 @@ namespace LogicScript
             {
                 errors.AddError(ex.Message, ex.Span);
             }
+            catch (NotConstantException ex)
+            {
+                errors.AddError(ex.Message, ex.Node);
+            }
             catch (ParseCanceledException)
             {
             }

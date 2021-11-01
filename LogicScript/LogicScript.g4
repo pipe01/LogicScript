@@ -11,7 +11,7 @@ decl_when           : 'when' WS+ (cond=expression | any='*') NL+ block 'end' ;
 decl_startup        : 'startup' WS* NL+ block 'end' ;
 decl_assign         : 'assign' WS+ stmt_assign ;
 
-port_info           : ('\'' size=atom)? WS+ IDENT ;
+port_info           : ('\'' size=expression)? WS+ IDENT ;
 
 block               : (wsnl stmt WS* NL wsnl)* wsnl ;
 
@@ -78,7 +78,7 @@ reference           : VARIABLE                      # refLocal
 wsnl                : (WS | NL)* ;
 wsnl_req            : (WS | NL)+ ;
 
-indexer             : '[' lr=('>' | '<')? WS* offset=number wsnl (',' WS* len=number)? ']' ;
+indexer             : '[' lr=('>' | '<')? WS* offset=expression wsnl (',' WS* len=expression)? ']' ;
 
 /*
  * Lexer Rules
