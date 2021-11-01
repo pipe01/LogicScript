@@ -208,6 +208,9 @@ namespace LogicScript.Parsing.Visitors
                 _ => throw new ParseException($"Unknown function '{context.funcName.Text}'", context.Span())
             };
 
+            if (op == Operator.Rise || op == Operator.Fall || op == Operator.Change)
+                Context.Errors.AddError($"The {op.ToString().ToLower()} operator is not yet implemented", new SourceSpan(context.funcName));
+
             return new UnaryOperatorExpression(context.Span(), op, operand);
         }
 
