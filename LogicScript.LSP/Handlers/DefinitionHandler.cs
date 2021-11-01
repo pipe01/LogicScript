@@ -35,14 +35,6 @@ namespace LogicScript.LSP.Handlers
 
             switch (node)
             {
-                case ReferenceExpression refExpr:
-                    range = refExpr.Reference.Port.Span.ToRange();
-                    break;
-
-                case AssignStatement assign:
-                    range = assign.Reference.Port.Span.ToRange();
-                    break;
-
                 case Reference @ref:
                     range = @ref.Port.Span.ToRange();
                     break;
