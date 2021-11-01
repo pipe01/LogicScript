@@ -42,7 +42,8 @@ namespace LogicScript.LSP
 
         public ICodeNode? GetNodeAt(DocumentUri uri, SourceLocation location)
         {
-            var script = Scripts[uri];
+            if (!Scripts.TryGetValue(uri, out var script))
+                return null;
 
             return script.GetNodeAt(location);
         }
