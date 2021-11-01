@@ -1,8 +1,6 @@
 ﻿using LogicScript.Data;
 using LogicScript.Parsing.Structures;
 using LogicScript.Parsing.Structures.Statements;
-using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 
@@ -10,33 +8,41 @@ namespace LogicScript.Interpreting
 {
     partial struct Visitor
     {
-        public void Visit(Statement stmt)
+        /// <returns><see langword="true"/> if a <see langword="break"/> statement is found, <see langword="false"/> otherwise.</returns>
+        public bool Visit(Statement stmt)
         {
             if (stmt is BlockStatement block)
-                Visit(block);
+                return Visit(block);
             else if (stmt is AssignStatement assign)
-                Visit(assign);
+                return Visit(assign);
             else if (stmt is IfStatement ifStmt)
-                Visit(ifStmt);
+                return Visit(ifStmt);
             else if (stmt is TaskStatement task)
-                Visit(task);
+                return Visit(task);
             else if (stmt is DeclareLocalStatement local)
-                Visit(local);
+                return Visit(local);
             else if (stmt is ForStatement forStmt)
-                Visit(forStmt);
+                return Visit(forStmt);
+            else if (stmt is WhileStatement whileStmt)
+                return Visit(whileStmt);
+            else if (stmt is BreakStatement)
+                return true;
             else
                 throw new InterpreterException("Unknown statement", stmt.Span);
         }
 
-        private void Visit(BlockStatement stmt)
+        private bool Visit(BlockStatement stmt)
         {
             foreach (var item in stmt.Statements)
             {
-                Visit(item);
+                if (Visit(item))
+                    return true;
             }
+
+            return false;
         }
 
-        private void Visit(AssignStatement stmt)
+        private bool Visit(AssignStatement stmt)
         {
             var value = Visit(stmt.Value);
 
@@ -70,19 +76,23 @@ namespace LogicScript.Interpreting
             {
                 throw new InterpreterException("Unknown reference type", stmt.Span);
             }
+
+            return false;
         }
 
-        private void Visit(IfStatement stmt)
+        private bool Visit(IfStatement stmt)
         {
             var cond = Visit(stmt.Condition);
 
             if (cond.Number != 0)
-                Visit(stmt.Body);
+                return Visit(stmt.Body);
             else if (stmt.Else != null)
-                Visit(stmt.Else);
+                return Visit(stmt.Else);
+
+            return false;
         }
 
-        private void Visit(TaskStatement stmt)
+        private bool Visit(TaskStatement stmt)
         {
             if (stmt is PrintTaskStatement print)
                 Machine.Print(FormatString(print.Text, Locals));
@@ -90,6 +100,8 @@ namespace LogicScript.Interpreting
                 Machine.Print(Visit(show.Value).ToString());
             else
                 throw new InterpreterException("Unknown task", stmt.Span);
+
+            return false;
 
             string FormatString(string str, IDictionary<string, BitsValue> locals)
             {
@@ -107,14 +119,16 @@ namespace LogicScript.Interpreting
             }
         }
 
-        private void Visit(DeclareLocalStatement stmt)
+        private bool Visit(DeclareLocalStatement stmt)
         {
             var value = stmt.Initializer == null ? new BitsValue(0, stmt.Size) : Visit(stmt.Initializer);
 
             Locals.Add(stmt.Name, value);
+
+            return false;
         }
 
-        private void Visit(ForStatement stmt)
+        private bool Visit(ForStatement stmt)
         {
             var from = stmt.From == null ? 0 : Visit(stmt.From);
             var to = Visit(stmt.To);
@@ -127,7 +141,8 @@ namespace LogicScript.Interpreting
                 {
                     Locals[stmt.VariableName] = new BitsValue(i, size);
 
-                    Visit(stmt.Body);
+                    if (Visit(stmt.Body))
+                        break;
                 }
             }
             else
@@ -138,9 +153,23 @@ namespace LogicScript.Interpreting
                 {
                     Locals[stmt.VariableName] = new BitsValue(i, size);
 
-                    Visit(stmt.Body);
+                    if (Visit(stmt.Body))
+                        break;
                 }
             }
+
+            return false;
+        }
+
+        private bool Visit(WhileStatement stmt)
+        {
+            while (Visit(stmt.Condition).Number != 0)
+            {
+                if (Visit(stmt.Body))
+                    break;
+            }
+
+            return false;
         }
     }
 }

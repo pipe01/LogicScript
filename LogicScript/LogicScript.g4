@@ -13,12 +13,13 @@ decl_assign         : 'assign' WS+ stmt_assign ;
 
 port_info           : BIT_SIZE? WS+ IDENT ;
 
-block               : (wsnl stmt WS* NL+ WS*)* ;
+block               : (wsnl stmt WS* NL wsnl)* wsnl ;
 
-stmt                : stmt_if | stmt_for | stmt_assign | stmt_task | stmt_vardecl ;
+stmt                : stmt_if | stmt_for | stmt_assign | stmt_task | stmt_vardecl | stmt_while | stmt_break ;
 stmt_assign         : reference wsnl EQUALS wsnl expression       # assignRegular
                     | reference wsnl TRUNC_EQUALS wsnl expression # assignTruncate
                     ;
+stmt_break          : 'break' ;
 
 stmt_if             : 'if' WS+ if_body ;
 stmt_elseif         : 'else if' WS+ if_body ;
@@ -32,6 +33,8 @@ stmt_for            :
                     block
                     'end'
                     ;
+
+stmt_while          : 'while' WS+ expression WS* NL+ block 'end' ;
 
 stmt_task           : '@' task_print ;
 task_print          : 'print' wsnl_req (expression | TEXT) ;

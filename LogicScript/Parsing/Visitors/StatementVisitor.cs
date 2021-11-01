@@ -82,6 +82,14 @@ namespace LogicScript.Parsing.Visitors
             return new ForStatement(context.Span(), varName, from, to, body);
         }
 
+        public override Statement VisitStmt_while([NotNull] LogicScriptParser.Stmt_whileContext context)
+        {
+            var cond = new ExpressionVisitor(Context).Visit(context.expression());
+            var body = Visit(context.block());
+
+            return new WhileStatement(context.Span(), cond, body);
+        }
+
         public override Statement VisitStmt_vardecl([NotNull] LogicScriptParser.Stmt_vardeclContext context)
         {
             var name = context.VARIABLE().GetText().TrimStart('$');
@@ -125,6 +133,11 @@ namespace LogicScript.Parsing.Visitors
             }
 
             throw new ParseException("Invalid print value", context.Span());
+        }
+
+        public override Statement VisitStmt_break([NotNull] LogicScriptParser.Stmt_breakContext context)
+        {
+            return new BreakStatement(context.Span());
         }
     }
 }
