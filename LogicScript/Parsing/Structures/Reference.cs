@@ -1,37 +1,49 @@
-﻿namespace LogicScript.Parsing.Structures
+﻿using System.Collections.Generic;
+
+namespace LogicScript.Parsing.Structures
 {
-    internal interface IReference
+    internal abstract class Reference : ICodeNode
     {
-        IPortInfo Port { get; }
+        public abstract IPortInfo Port { get; }
 
-        bool IsWritable { get; }
-        bool IsReadable { get; }
+        public abstract bool IsWritable { get; }
+        public abstract bool IsReadable { get; }
 
-        int BitSize { get; }
-    }
-
-    internal sealed class PortReference : IReference
-    {
-        public PortInfo Port { get; }
-
-        IPortInfo IReference.Port => Port;
-
-        public int StartIndex => Port.StartIndex;
         public int BitSize => Port.BitSize;
 
-        public ICodeNode Declaration => Port;
+        public SourceSpan Span { get; }
 
-        public bool IsWritable => Port.Target is MachinePorts.Output or MachinePorts.Register;
-        public bool IsReadable => Port.Target is MachinePorts.Input or MachinePorts.Register;
-
-        public PortReference(PortInfo port)
+        protected Reference(SourceSpan span)
         {
-            this.Port = port;
+            this.Span = span;
+        }
+
+        public IEnumerable<ICodeNode> GetChildren()
+        {
+            yield break;
+        }
+    }
+
+    internal sealed class PortReference : Reference
+    {
+        public PortInfo PortInfo { get; }
+
+        public override IPortInfo Port => PortInfo;
+
+        public int StartIndex => PortInfo.StartIndex;
+        public int BitSize => PortInfo.BitSize;
+
+        public override bool IsWritable => PortInfo.Target is MachinePorts.Output or MachinePorts.Register;
+        public override bool IsReadable => PortInfo.Target is MachinePorts.Input or MachinePorts.Register;
+
+        public PortReference(SourceSpan span, PortInfo port) : base(span)
+        {
+            this.PortInfo = port;
         }
 
         public override string ToString()
         {
-            var target = Port.Target switch
+            var target = PortInfo.Target switch
             {
                 MachinePorts.Input => "input",
                 MachinePorts.Output => "output",
@@ -43,23 +55,23 @@
         }
     }
 
-    internal sealed class LocalReference : IReference
+    internal sealed class LocalReference : Reference
     {
         public string Name { get; }
-        public LocalInfo Local { get; }
+        public LocalInfo LocalInfo { get; }
 
-        IPortInfo IReference.Port => Local;
+        public override IPortInfo Port => LocalInfo;
 
-        public ICodeNode Declaration => Local;
-        public int BitSize => Local.BitSize;
+        public ICodeNode Declaration => LocalInfo;
+        public int BitSize => LocalInfo.BitSize;
 
-        public bool IsWritable => true;
-        public bool IsReadable => true;
+        public override bool IsWritable => true;
+        public override bool IsReadable => true;
 
-        public LocalReference(string name, LocalInfo local)
+        public LocalReference(SourceSpan span, string name, LocalInfo local) : base(span)
         {
             this.Name = name;
-            this.Local = local;
+            this.LocalInfo = local;
         }
 
         public override string ToString() => $"${Name}'{BitSize}";

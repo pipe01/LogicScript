@@ -1,6 +1,7 @@
 ﻿using LogicScript.Parsing;
 using LogicScript.Parsing.Structures;
 using LogicScript.Parsing.Structures.Expressions;
+using LogicScript.Parsing.Structures.Statements;
 using OmniSharp.Extensions.LanguageServer.Protocol;
 using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 using System;
@@ -69,11 +70,10 @@ namespace LogicScript.LSP
 
             VisitAll(uri, node =>
             {
-                if (node is ReferenceExpression refExpr)
-                {
-                    if (refExpr.Reference.Port.Equals(port))
-                        refs.Add(refExpr);
-                }
+                if (node is ReferenceExpression refExpr && refExpr.Reference.Port.Equals(port))
+                    refs.Add(refExpr);
+                else if (node is AssignStatement assign && assign.Reference.Port.Equals(port))
+                    refs.Add(assign.Reference);
             });
 
             return refs;

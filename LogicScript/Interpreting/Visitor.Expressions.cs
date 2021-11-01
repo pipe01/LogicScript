@@ -28,7 +28,7 @@ namespace LogicScript.Interpreting
 
             if (expr.Reference is PortReference port)
             {
-                switch (port.Port.Target)
+                switch (port.PortInfo.Target)
                 {
                     case MachinePorts.Output:
                         throw new InterpreterException("Cannot read from output", expr.Span);

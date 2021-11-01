@@ -51,7 +51,7 @@ namespace LogicScript.Interpreting
 
             if (stmt.Reference is PortReference port)
             {
-                switch (port.Port.Target)
+                switch (port.PortInfo.Target)
                 {
                     case MachinePorts.Input:
                         throw new InterpreterException("Cannot write to input", stmt.Span);

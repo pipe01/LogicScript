@@ -158,9 +158,9 @@ namespace LogicScript.LSP
             void AddPortReference(PortReference portRef)
             {
                 if (portRef.Port.BitSize == 1)
-                    lines.Add($"### {portRef.Port.Target} index {portRef.Port.StartIndex}");
+                    lines.Add($"### {portRef.PortInfo.Target} index {portRef.PortInfo.StartIndex}");
                 else
-                    lines.Add($"### {portRef.Port.Target} index {portRef.Port.StartIndex} to {portRef.Port.StartIndex + portRef.Port.BitSize - 1}");
+                    lines.Add($"### {portRef.PortInfo.Target} index {portRef.PortInfo.StartIndex} to {portRef.PortInfo.StartIndex + portRef.Port.BitSize - 1}");
 
                 size = portRef.BitSize;
             }
@@ -249,7 +249,7 @@ namespace LogicScript.LSP
             if (editedNode == null)
                 return Task.FromResult(null as WorkspaceEdit);
 
-            if (editedNode is IReference reference)
+            if (editedNode is Reference reference)
             {
                 // Edit reference
             }
