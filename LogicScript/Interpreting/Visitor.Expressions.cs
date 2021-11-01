@@ -89,13 +89,13 @@ namespace LogicScript.Interpreting
 
 
                 case Operator.EqualsCompare:
-                    return new BitsValue(left.Number == right.Number && left.Length == right.Length ? 1ul : 0, 1);
+                    return new BitsValue(left.Number == right.Number ? 1ul : 0, 1);
 
                 case Operator.Greater:
-                    return new BitsValue(left.Number > right.Number && left.Length == right.Length ? 1ul : 0, 1);
+                    return new BitsValue(left.Number > right.Number ? 1ul : 0, 1);
 
                 case Operator.Lesser:
-                    return new BitsValue(left.Number < right.Number && left.Length == right.Length ? 1ul : 0, 1);
+                    return new BitsValue(left.Number < right.Number ? 1ul : 0, 1);
 
 
                 default:
