@@ -1,4 +1,5 @@
-﻿using LogicScript.Parsing.Structures.Expressions;
+﻿using LogicScript.Parsing.Structures;
+using LogicScript.Parsing.Structures.Expressions;
 using LogicScript.Parsing.Structures.Statements;
 using OmniSharp.Extensions.LanguageServer.Protocol.Client.Capabilities;
 using OmniSharp.Extensions.LanguageServer.Protocol.Document;
@@ -40,6 +41,10 @@ namespace LogicScript.LSP.Handlers
 
                 case AssignStatement assign:
                     range = assign.Reference.Port.Span.ToRange();
+                    break;
+
+                case Reference @ref:
+                    range = @ref.Port.Span.ToRange();
                     break;
 
                 default:
