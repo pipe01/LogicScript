@@ -11,7 +11,7 @@ decl_when           : 'when' WS+ (cond=expression | any='*') NL+ block 'end' ;
 decl_startup        : 'startup' WS* NL+ block 'end' ;
 decl_assign         : 'assign' WS+ stmt_assign ;
 
-port_info           : BIT_SIZE? WS+ IDENT ;
+port_info           : ('\'' size=atom)? WS+ IDENT ;
 
 block               : (wsnl stmt WS* NL wsnl)* wsnl ;
 
@@ -39,7 +39,7 @@ stmt_while          : 'while' WS+ expression WS* NL+ block 'end' ;
 stmt_task           : '@' task_print ;
 task_print          : 'print' wsnl_req (expression | TEXT) ;
 
-stmt_vardecl        : 'local' WS+ VARIABLE BIT_SIZE? (wsnl '=' wsnl expression)? ;
+stmt_vardecl        : 'local' WS+ VARIABLE ('\'' size=atom)? (wsnl '=' wsnl expression)? ;
 
 expression          : '(' wsnl expression wsnl ')'                              # exprParen
                     | '(' wsnl expression wsnl ')\'' DEC_NUMBER                 # exprTrunc
@@ -103,8 +103,6 @@ NL                  : [\n;] ;
 TEXT                : '"' .*? '"' ;
 
 VARIABLE            : '$' IDENT ;
-
-BIT_SIZE            : '\'' DEC_NUMBER ;
 
 EQUALS              : '=' ;
 TRUNC_EQUALS        : '\'=' ;

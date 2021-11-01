@@ -2,6 +2,7 @@
 using LogicScript.Parsing.Structures;
 using LogicScript.Parsing.Structures.Statements;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Text.RegularExpressions;
 
 namespace LogicScript.Interpreting
@@ -44,6 +45,8 @@ namespace LogicScript.Interpreting
 
         private bool Visit(AssignStatement stmt)
         {
+            AssertNotConstant(stmt);
+
             var value = Visit(stmt.Value);
 
             if (stmt.Reference is PortReference port)
@@ -94,6 +97,8 @@ namespace LogicScript.Interpreting
 
         private bool Visit(TaskStatement stmt)
         {
+            AssertNotConstant(stmt);
+
             if (stmt is PrintTaskStatement print)
                 Machine.Print(FormatString(print.Text, Locals));
             else if (stmt is ShowTaskStatement show)

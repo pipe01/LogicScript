@@ -1,5 +1,6 @@
 ﻿using Antlr4.Runtime.Misc;
 using LogicScript.Data;
+using LogicScript.Interpreting;
 using LogicScript.Parsing.Structures;
 using LogicScript.Parsing.Structures.Blocks;
 using LogicScript.Parsing.Structures.Expressions;
@@ -99,7 +100,7 @@ namespace LogicScript.Parsing.Visitors
 
         private void Visit(LogicScriptParser.Port_infoContext context, IDictionary<string, PortInfo> dic)
         {
-            var size = context.BIT_SIZE() == null ? 1 : context.BIT_SIZE().ParseBitSize();
+            var size = context.size == null ? 1 : context.size.GetConstantValue(Context);
 
             if (size > BitsValue.BitSize)
                 Errors.AddError($"The maximum bit size is {BitsValue.BitSize}", context.Span());
@@ -114,7 +115,7 @@ namespace LogicScript.Parsing.Visitors
 
             int startIndex = dic.Values.Sum(o => o.BitSize);
 
-            dic.Add(name, new PortInfo(startIndex, size, new(context.IDENT().Symbol)));
+            dic.Add(name, new PortInfo(startIndex, (int)size, new(context.IDENT().Symbol)));
         }
     }
 }
