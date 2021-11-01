@@ -29,25 +29,10 @@ namespace LogicScript.LSP.Handlers
 
         public override Task<WorkspaceEdit?> Handle(RenameParams request, CancellationToken cancellationToken)
         {
-            var editedNode = Workspace.GetNodeAt(request.TextDocument.Uri, request.Position);
+            var port = Workspace.GetPortAt(request.TextDocument.Uri, request.Position.ToLocation());
 
-            if (editedNode == null)
+            if (port == null)
                 return Task.FromResult(null as WorkspaceEdit);
-
-            IPortInfo port;
-
-            if (editedNode is Reference reference)
-            {
-                port = reference.Port;
-            }
-            else if (editedNode is IPortInfo portInfo)
-            {
-                port = portInfo;
-            }
-            else
-            {
-                return Task.FromResult(null as WorkspaceEdit);
-            }
 
             var newText = port is LocalInfo ? "$" + request.NewName : request.NewName;
             var refs = Workspace.FindReferencesTo(request.TextDocument.Uri, port);

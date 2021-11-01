@@ -79,6 +79,22 @@ namespace LogicScript.LSP
             return refs;
         }
 
+        public IPortInfo? GetPortAt(DocumentUri uri, SourceLocation location)
+        {
+            var editedNode = GetNodeAt(uri, location);
+
+            if (editedNode is Reference reference)
+            {
+                return reference.Port;
+            }
+            else if (editedNode is IPortInfo portInfo)
+            {
+                return portInfo;
+            }
+
+            return null;
+        }
+
         public ICodeNode? GetNodeAt(DocumentUri uri, SourceLocation location)
         {
             if (!Scripts.TryGetValue(uri, out var script))

@@ -37,6 +37,7 @@ namespace LogicScript.LSP
                 opts.WithHandler<HoverHandler>();
                 opts.WithHandler<DefinitionHandler>();
                 opts.WithHandler<RenameHandler>();
+                opts.WithHandler<ReferencesHandler>();
             });
 
             await server.Initialize(CancellationToken.None);
