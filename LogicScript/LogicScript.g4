@@ -24,7 +24,7 @@ stmt_break          : 'break' ;
 stmt_if             : 'if' WS+ if_body ;
 stmt_elseif         : 'else if' WS+ if_body ;
 stmt_else           : 'else' WS* NL+ WS* block 'end' ;
-if_body             : expression WS* NL+ block WS* (stmt_elseif | stmt_else | 'end') ;
+if_body             : expression WS* NL+ block (stmt_elseif | stmt_else | 'end') ;
 
 stmt_for            :
                     'for' WS+ VARIABLE wsnl_req

@@ -107,6 +107,12 @@ namespace LogicScript.Parsing.Visitors
             if (length == 0)
                 Context.Errors.AddError("Slice length cannot be zero", context.indexer().len.Span());
 
+            if (offset >= (ulong)operand.BitSize)
+                Context.Errors.AddError("Offset is out of bounds", context.indexer().offset.Span());
+
+            if (offset + length > (ulong)operand.BitSize)
+                Context.Errors.AddError("Slice is out of bounds", context.indexer().Span());
+
             if (MaxBitSize != 0 && (int)length > MaxBitSize)
                 Context.Errors.AddError($"Cannot fit a {length} bits long number into {MaxBitSize} bits", sliceExpr);
 
