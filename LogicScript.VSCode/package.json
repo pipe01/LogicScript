@@ -1,0 +1,49 @@
+{
+    "name": "logicscript-lang",
+    "displayName": "LogicScript Language",
+    "description": "",
+    "author": {
+        "name": "pipe01"
+    },
+    "publisher": "lslang-publish",
+    "version": "0.0.1",
+    "engines": {
+        "vscode": "^1.61.0"
+    },
+    "categories": [
+        "Programming Languages"
+    ],
+    "contributes": {
+        "languages": [
+            {
+                "id": "logicscript",
+                "aliases": [
+                    "LogicScript",
+                    "logicscript"
+                ],
+                "extensions": [
+                    ".lsx"
+                ],
+                "configuration": "./language-configuration.json"
+            }
+        ],
+        "grammars": [
+            {
+                "language": "logicscript",
+                "scopeName": "source.lsx",
+                "path": "./syntaxes/logicscript.tmLanguage.json"
+            }
+        ]
+    },
+    "activationEvents": [
+        "onLanguage:logicscript"
+    ],
+    "dependencies": {
+        "@types/node": "^16.11.6",
+        "vscode-languageclient": "^7.0.0"
+    },
+    "main": "./out/extension",
+    "devDependencies": {
+        "@types/vscode": "^1.61.0"
+    }
+}
