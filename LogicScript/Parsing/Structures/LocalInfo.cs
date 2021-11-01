@@ -2,7 +2,7 @@
 
 namespace LogicScript.Parsing.Structures
 {
-    internal readonly struct LocalInfo : ICodeNode
+    internal readonly struct LocalInfo : IPortInfo
     {
         public int BitSize { get; }
 

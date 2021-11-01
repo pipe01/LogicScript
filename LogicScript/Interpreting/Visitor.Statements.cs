@@ -51,19 +51,19 @@ namespace LogicScript.Interpreting
 
             if (stmt.Reference is PortReference port)
             {
-                switch (port.Target)
+                switch (port.Port.Target)
                 {
-                    case ReferenceTarget.Input:
+                    case MachinePorts.Input:
                         throw new InterpreterException("Cannot write to input", stmt.Span);
 
-                    case ReferenceTarget.Output:
+                    case MachinePorts.Output:
                         if (value.Length > port.BitSize)
                             throw new InterpreterException("Value is longer than output", stmt.Span);
 
                         Machine.WriteOutput(port.StartIndex, value.Bits);
                         break;
 
-                    case ReferenceTarget.Register:
+                    case MachinePorts.Register:
                         Machine.WriteRegister(port.StartIndex, value);
                         break;
 

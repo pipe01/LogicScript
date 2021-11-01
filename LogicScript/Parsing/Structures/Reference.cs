@@ -2,13 +2,6 @@
 
 namespace LogicScript.Parsing.Structures
 {
-    internal enum ReferenceTarget
-    {
-        Input,
-        Output,
-        Register
-    }
-
     internal interface IReference
     {
         ICodeNode Declaration { get; }
@@ -21,7 +14,6 @@ namespace LogicScript.Parsing.Structures
 
     internal sealed class PortReference : IReference
     {
-        public ReferenceTarget Target { get; }
         public PortInfo Port { get; }
 
         public int StartIndex => Port.StartIndex;
@@ -29,22 +21,21 @@ namespace LogicScript.Parsing.Structures
 
         public ICodeNode Declaration => Port;
 
-        public bool IsWritable => Target is ReferenceTarget.Output or ReferenceTarget.Register;
-        public bool IsReadable => Target is ReferenceTarget.Input or ReferenceTarget.Register;
+        public bool IsWritable => Port.Target is MachinePorts.Output or MachinePorts.Register;
+        public bool IsReadable => Port.Target is MachinePorts.Input or MachinePorts.Register;
 
-        public PortReference(ReferenceTarget target, PortInfo port)
+        public PortReference(PortInfo port)
         {
-            this.Target = target;
             this.Port = port;
         }
 
         public override string ToString()
         {
-            var target = Target switch
+            var target = Port.Target switch
             {
-                ReferenceTarget.Input => "input",
-                ReferenceTarget.Output => "output",
-                ReferenceTarget.Register => "reg",
+                MachinePorts.Input => "input",
+                MachinePorts.Output => "output",
+                MachinePorts.Register => "reg",
                 _ => throw new System.Exception("Unkonwn target")
             };
 

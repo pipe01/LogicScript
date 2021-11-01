@@ -157,9 +157,9 @@ namespace LogicScript.LSP
             void AddPortReference(PortReference portRef)
             {
                 if (portRef.Port.BitSize == 1)
-                    lines.Add($"### {portRef.Target} index {portRef.Port.StartIndex}");
+                    lines.Add($"### {portRef.Port.Target} index {portRef.Port.StartIndex}");
                 else
-                    lines.Add($"### {portRef.Target} index {portRef.Port.StartIndex} to {portRef.Port.StartIndex + portRef.Port.BitSize - 1}");
+                    lines.Add($"### {portRef.Port.Target} index {portRef.Port.StartIndex} to {portRef.Port.StartIndex + portRef.Port.BitSize - 1}");
 
                 size = portRef.BitSize;
             }

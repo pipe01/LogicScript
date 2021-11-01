@@ -17,19 +17,16 @@ namespace LogicScript.Parsing.Visitors
             var identName = context.IDENT().GetText();
             PortInfo port;
 
-            ReferenceTarget? target =
-                          Context.Outer.Script.Inputs.TryGetValue(identName, out port) ? ReferenceTarget.Input
-                        : Context.Outer.Script.Outputs.TryGetValue(identName, out port) ? ReferenceTarget.Output
-                        : Context.Outer.Script.Registers.TryGetValue(identName, out port) ? ReferenceTarget.Register
+            MachinePorts? target =
+                          Context.Outer.Script.Inputs.TryGetValue(identName, out port) ? MachinePorts.Input
+                        : Context.Outer.Script.Outputs.TryGetValue(identName, out port) ? MachinePorts.Output
+                        : Context.Outer.Script.Registers.TryGetValue(identName, out port) ? MachinePorts.Register
                         : null;
 
             if (target == null)
-            {
-                Context.Errors.AddError($"Unknown identifier '{identName}'", new SourceSpan(context.IDENT().Symbol));
-                return new PortReference(ReferenceTarget.Register, port);
-            }
+                Context.Errors.AddError($"Unknown identifier '{identName}'", new SourceSpan(context.IDENT().Symbol), isFatal: true);
 
-            return new PortReference(target.Value, port);
+            return new PortReference(port);
         }
 
         public override IReference VisitRefLocal([NotNull] LogicScriptParser.RefLocalContext context)

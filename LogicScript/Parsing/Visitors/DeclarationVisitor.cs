@@ -25,19 +25,19 @@ namespace LogicScript.Parsing.Visitors
 
         public override object? VisitDecl_input([NotNull] LogicScriptParser.Decl_inputContext context)
         {
-            Visit(context.port_info(), Script.Inputs);
+            Visit(context.port_info(), Script.Inputs, MachinePorts.Input);
             return null;
         }
 
         public override object? VisitDecl_output([NotNull] LogicScriptParser.Decl_outputContext context)
         {
-            Visit(context.port_info(), Script.Outputs);
+            Visit(context.port_info(), Script.Outputs, MachinePorts.Output);
             return null;
         }
 
         public override object? VisitDecl_register([NotNull] LogicScriptParser.Decl_registerContext context)
         {
-            Visit(context.port_info(), Script.Registers);
+            Visit(context.port_info(), Script.Registers, MachinePorts.Register);
             return null;
         }
 
@@ -98,7 +98,7 @@ namespace LogicScript.Parsing.Visitors
             return null;
         }
 
-        private void Visit(LogicScriptParser.Port_infoContext context, IDictionary<string, PortInfo> dic)
+        private void Visit(LogicScriptParser.Port_infoContext context, IDictionary<string, PortInfo> dic, MachinePorts target)
         {
             var size = context.size == null ? 1 : context.size.GetConstantValue(Context);
 
@@ -115,7 +115,7 @@ namespace LogicScript.Parsing.Visitors
 
             int startIndex = dic.Values.Sum(o => o.BitSize);
 
-            dic.Add(name, new PortInfo(startIndex, (int)size, new(context.IDENT().Symbol)));
+            dic.Add(name, new PortInfo(target, startIndex, (int)size, new(context.IDENT().Symbol)));
         }
     }
 }

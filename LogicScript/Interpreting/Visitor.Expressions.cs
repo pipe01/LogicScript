@@ -28,15 +28,15 @@ namespace LogicScript.Interpreting
 
             if (expr.Reference is PortReference port)
             {
-                switch (port.Target)
+                switch (port.Port.Target)
                 {
-                    case ReferenceTarget.Output:
+                    case MachinePorts.Output:
                         throw new InterpreterException("Cannot read from output", expr.Span);
 
-                    case ReferenceTarget.Input:
+                    case MachinePorts.Input:
                         return new BitsValue(Input.Slice(port.StartIndex, port.BitSize));
 
-                    case ReferenceTarget.Register:
+                    case MachinePorts.Register:
                         return Machine.ReadRegister(port.StartIndex);
                 }
 
