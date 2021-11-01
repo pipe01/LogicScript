@@ -1,4 +1,6 @@
-﻿namespace LogicScript.Parsing.Structures.Expressions
+﻿using System.Collections.Generic;
+
+namespace LogicScript.Parsing.Structures.Expressions
 {
     internal sealed class ReferenceExpression : Expression
     {
@@ -13,5 +15,10 @@
         }
 
         public override string ToString() => Reference.ToString();
+
+        public override IEnumerable<ICodeNode> GetChildren()
+        {
+            yield return Reference;
+        }
     }
 }

@@ -49,6 +49,9 @@ namespace LogicScript.Interpreting
 
             var value = Visit(stmt.Value);
 
+            if (stmt.Truncate != null)
+                value = value.Resize(stmt.Truncate.Value);
+
             if (stmt.Reference is PortReference port)
             {
                 switch (port.PortInfo.Target)

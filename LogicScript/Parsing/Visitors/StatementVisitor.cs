@@ -30,7 +30,7 @@ namespace LogicScript.Parsing.Visitors
 
             var value = new ExpressionVisitor(Context, @ref.BitSize).Visit(context.expression());
 
-            return new AssignStatement(context.Span(), @ref, value);
+            return new AssignStatement(context.Span(), @ref, value, null);
         }
 
         public override Statement VisitAssignTruncate([NotNull] LogicScriptParser.AssignTruncateContext context)
@@ -42,7 +42,7 @@ namespace LogicScript.Parsing.Visitors
 
             var value = new ExpressionVisitor(Context).Visit(context.expression());
 
-            return new AssignStatement(context.Span(), @ref, new TruncateExpression(context.Span(), value, @ref.BitSize));
+            return new AssignStatement(context.Span(), @ref, value, @ref.BitSize);
         }
 
         public override Statement VisitStmt_if([NotNull] LogicScriptParser.Stmt_ifContext context)

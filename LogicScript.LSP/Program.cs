@@ -249,35 +249,41 @@ namespace LogicScript.LSP
             if (editedNode == null)
                 return Task.FromResult(null as WorkspaceEdit);
 
+            IPortInfo port;
+
             if (editedNode is Reference reference)
             {
-                // Edit reference
+                port = reference.Port;
             }
             else if (editedNode is IPortInfo portInfo)
             {
-                var newText = "$" + request.NewName;
-                var refs = Workspace.FindReferencesTo(request.TextDocument.Uri, portInfo);
-
-                var edits = refs.Select(o => new TextEdit
-                {
-                    NewText = newText,
-                    Range = o.Span.ToRange()
-                }).Prepend(new()
-                {
-                    NewText = newText,
-                    Range = portInfo.Span.ToRange()
-                });
-
-                return Task.FromResult<WorkspaceEdit?>(new WorkspaceEdit
-                {
-                    Changes = new Dictionary<DocumentUri, IEnumerable<TextEdit>>
-                    {
-                        { request.TextDocument.Uri, edits }
-                    }
-                });
+                port = portInfo;
+            }
+            else
+            {
+                return Task.FromResult(null as WorkspaceEdit);
             }
 
-            return Task.FromResult(null as WorkspaceEdit);
+            var newText = port is LocalInfo ? "$" + request.NewName : request.NewName;
+            var refs = Workspace.FindReferencesTo(request.TextDocument.Uri, port);
+
+            var edits = refs.Select(o => new TextEdit
+            {
+                NewText = newText,
+                Range = o.Span.ToRange()
+            }).Prepend(new()
+            {
+                NewText = newText,
+                Range = port.Span.ToRange()
+            });
+
+            return Task.FromResult<WorkspaceEdit?>(new WorkspaceEdit
+            {
+                Changes = new Dictionary<DocumentUri, IEnumerable<TextEdit>>
+                {
+                    { request.TextDocument.Uri, edits }
+                }
+            });
         }
     }
 }
