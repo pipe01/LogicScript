@@ -151,10 +151,12 @@ namespace LogicScript.Interpreting
         private BitsValue Visit(SliceExpression expr)
         {
             var operand = Visit(expr.Operand);
+            var offset = (int)Visit(expr.Offset).Number;
+
             var startIndex = expr.Start switch
             {
-                IndexStart.Left => expr.Offset,
-                IndexStart.Right => operand.Length - expr.Offset - 1,
+                IndexStart.Left => offset,
+                IndexStart.Right => operand.Length - offset - 1,
                 _ => throw new InterpreterException("Unknown slice start", expr.Span)
             };
 

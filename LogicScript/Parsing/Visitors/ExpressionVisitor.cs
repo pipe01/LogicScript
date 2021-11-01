@@ -89,29 +89,35 @@ namespace LogicScript.Parsing.Visitors
                 _ => throw new ParseException("Unknown index start position", context.indexer().Span())
             };
 
-            int offset;
+            Expression offset;
 
             if (context.indexer().offset == null)
             {
                 Context.Errors.AddError("Missing indexer offset", context.indexer().Span());
-                offset = 0;
+                offset = new NumberLiteralExpression(context.indexer().Span(), BitsValue.Zero);
             }
             else
             {
-                offset = context.indexer().offset.GetConstantValue(Context.Outer);
+                offset = new ExpressionVisitor(Context).Visit(context.indexer().offset);
             }
 
             var length = context.indexer().len == null ? 1 : context.indexer().len.GetConstantValue(Context.Outer);
-            var sliceExpr = new SliceExpression(context.Span(), operand, start, (int)offset, (int)length);
+            var sliceExpr = new SliceExpression(context.Span(), operand, start, offset, length);
 
             if (length == 0)
                 Context.Errors.AddError("Slice length cannot be zero", context.indexer().len.Span());
 
-            if (offset >= operand.BitSize)
-                Context.Errors.AddError("Offset is out of bounds", context.indexer().offset.Span());
+            if (offset.IsConstant)
+            {
+                //TODO Figure out the logic for left-indexed slices
+                var offsetValue = (int)offset.GetConstantValue().Number;
 
-            if (offset + length > operand.BitSize)
-                Context.Errors.AddError("Slice is out of bounds", context.indexer().Span());
+                if (offsetValue >= operand.BitSize)
+                    Context.Errors.AddError("Offset is out of bounds", context.indexer().offset.Span());
+
+                if (offsetValue + length > operand.BitSize)
+                    Context.Errors.AddError("Slice is out of bounds", context.indexer().Span());
+            }
 
             if (MaxBitSize != 0 && length > MaxBitSize)
                 Context.Errors.AddError($"Cannot fit a {length} bits long number into {MaxBitSize} bits", sliceExpr);
