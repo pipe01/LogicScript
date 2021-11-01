@@ -87,6 +87,9 @@ namespace LogicScript.Interpreting
                 case Operator.Power:
                     return new BitsValue((ulong)Math.Pow(left.Number, right.Number));
 
+                case Operator.Modulus:
+                    return new BitsValue(left.Number % right.Number);
+
 
                 case Operator.EqualsCompare:
                     return new BitsValue(left.Number == right.Number ? 1ul : 0, 1);

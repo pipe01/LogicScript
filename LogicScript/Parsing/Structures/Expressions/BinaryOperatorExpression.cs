@@ -1,7 +1,4 @@
-﻿using LogicScript.Data;
-using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using System.Collections.Generic;
 
 namespace LogicScript.Parsing.Structures.Expressions
 {
@@ -21,6 +18,7 @@ namespace LogicScript.Parsing.Structures.Expressions
             Operator.Add => Left.BitSize > Right.BitSize ? Left.BitSize + 1 : Right.BitSize + 1,
             Operator.Multiply => Left.BitSize + Right.BitSize,
             Operator.Power => Left.BitSize * ((1 << Right.BitSize) - 1),
+            Operator.Modulus => Right.BitSize,
             _ => throw new ParseException("Unknown operator bitsize", Span)
         };
 

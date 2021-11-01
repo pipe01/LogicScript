@@ -141,6 +141,11 @@ namespace LogicScript.Parsing.Visitors
             return new BinaryOperatorExpression(context.Span(), Operator.Power, Visit(context.expression(0)), Visit(context.expression(1)));
         }
 
+        public override Expression VisitExprModulus([NotNull] LogicScriptParser.ExprModulusContext context)
+        {
+            return new BinaryOperatorExpression(context.Span(), Operator.Modulus, Visit(context.expression(0)), Visit(context.expression(1)));
+        }
+
         public override Expression VisitExprPlusMinus([NotNull] LogicScriptParser.ExprPlusMinusContext context)
         {
             var op = context.op.Type switch

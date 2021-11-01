@@ -13,6 +13,7 @@
         Multiply,
         Divide,
         Power,
+        Modulus,
 
         // (Binary) comparison operators
         EqualsCompare,

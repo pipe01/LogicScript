@@ -51,6 +51,7 @@ expression          : '(' wsnl expression wsnl ')'                              
                     | expression wsnl POW wsnl expression                       # exprPower
                     | expression wsnl op=(PLUS | MINUS) wsnl expression         # exprPlusMinus
                     | expression wsnl op=(MULT | DIVIDE) wsnl expression        # exprMultDiv
+                    | expression wsnl MOD wsnl expression                       # exprModulus
                     | expression wsnl op=(LSHIFT | RSHIFT) wsnl expression      # exprShift
                     | expression wsnl op=(
                         COMPARE_EQUALS
@@ -122,3 +123,4 @@ MINUS               : '-' ;
 MULT                : '*' ;
 DIVIDE              : '/' ;
 POW                 : '**' ;
+MOD                 : '%' ;
