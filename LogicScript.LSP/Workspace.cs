@@ -100,6 +100,12 @@ namespace LogicScript.LSP
             if (!Scripts.TryGetValue(uri, out var script))
                 return null;
 
+            foreach (var port in script.Inputs.Values.Concat(script.Outputs.Values).Concat(script.Registers.Values))
+            {
+                if (port.Span.Contains(location))
+                    return port;
+            }
+
             return script.GetNodeAt(location);
         }
         public ICodeNode? GetNodeAt(DocumentUri uri, Position position)
