@@ -1,8 +1,9 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
 namespace LogicScript.Parsing.Structures
 {
-    internal interface IPortInfo : ICodeNode
+    internal interface IPortInfo : ICodeNode, IEquatable<IPortInfo>
     {
         int BitSize { get; }
     }
@@ -33,6 +34,17 @@ namespace LogicScript.Parsing.Structures
         public IEnumerable<ICodeNode> GetChildren()
         {
             yield break;
+        }
+
+        public override bool Equals(object obj) => obj is IPortInfo other && Equals(other);
+
+        public bool Equals(IPortInfo other)
+        {
+            return other is PortInfo port
+                && port.Target == Target
+                && port.StartIndex == StartIndex
+                && port.BitSize == BitSize
+                && port.Span.Equals(Span);
         }
     }
 }

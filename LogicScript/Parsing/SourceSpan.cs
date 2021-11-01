@@ -1,8 +1,9 @@
 ﻿using Antlr4.Runtime;
+using System;
 
 namespace LogicScript.Parsing
 {
-    public readonly struct SourceSpan
+    public readonly struct SourceSpan : IEquatable<SourceSpan>
     {
         public SourceLocation Start { get; }
         public SourceLocation End { get; }
@@ -29,5 +30,9 @@ namespace LogicScript.Parsing
             => loc.Line >= Start.Line && loc.Line <= End.Line && loc.Column >= Start.Column && loc.Column <= End.Column;
 
         public override string ToString() => $"{Start} to {End}";
+
+        public override bool Equals(object obj) => obj is SourceSpan other && Equals(other);
+
+        public bool Equals(SourceSpan other) => other.Start.Equals(Start) && other.End.Equals(End);
     }
 }

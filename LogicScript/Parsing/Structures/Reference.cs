@@ -1,10 +1,8 @@
-﻿using LogicScript.Parsing.Structures.Expressions;
-
-namespace LogicScript.Parsing.Structures
+﻿namespace LogicScript.Parsing.Structures
 {
     internal interface IReference
     {
-        ICodeNode Declaration { get; }
+        IPortInfo Port { get; }
 
         bool IsWritable { get; }
         bool IsReadable { get; }
@@ -15,6 +13,8 @@ namespace LogicScript.Parsing.Structures
     internal sealed class PortReference : IReference
     {
         public PortInfo Port { get; }
+
+        IPortInfo IReference.Port => Port;
 
         public int StartIndex => Port.StartIndex;
         public int BitSize => Port.BitSize;
@@ -47,6 +47,8 @@ namespace LogicScript.Parsing.Structures
     {
         public string Name { get; }
         public LocalInfo Local { get; }
+
+        IPortInfo IReference.Port => Local;
 
         public ICodeNode Declaration => Local;
         public int BitSize => Local.BitSize;

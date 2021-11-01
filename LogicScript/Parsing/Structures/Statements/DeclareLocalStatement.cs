@@ -5,19 +5,18 @@ namespace LogicScript.Parsing.Structures.Statements
 {
     internal sealed class DeclareLocalStatement : Statement
     {
-        public string Name { get; set; }
-        public int Size { get; set; }
-        public Expression? Initializer { get; set; }
+        public LocalInfo Local { get; }
+        public Expression? Initializer { get; }
 
-        public DeclareLocalStatement(SourceSpan span, string name, int size, Expression? initializer) : base(span)
+        public DeclareLocalStatement(SourceSpan span, LocalInfo local, Expression? initializer) : base(span)
         {
-            this.Name = name;
-            this.Size = size;
+            this.Local = local;
             this.Initializer = initializer;
         }
 
         public override IEnumerable<ICodeNode> GetChildren()
         {
+            yield return Local;
             if (Initializer != null)
                 yield return Initializer;
         }

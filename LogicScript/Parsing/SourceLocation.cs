@@ -1,8 +1,9 @@
 ﻿using Antlr4.Runtime;
+using System;
 
 namespace LogicScript.Parsing
 {
-    public readonly struct SourceLocation
+    public readonly struct SourceLocation : IEquatable<SourceLocation>
     {
         public int Line { get; }
         public int Column { get; }
@@ -17,5 +18,10 @@ namespace LogicScript.Parsing
         }
 
         public override string ToString() => $"{Line}:{Column}";
+
+        public override bool Equals(object obj) => obj is SourceLocation other && Equals(other);
+
+        public bool Equals(SourceLocation other)
+            => other.Line == Line && other.Column == Column;
     }
 }

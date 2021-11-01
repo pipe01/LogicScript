@@ -44,6 +44,7 @@ namespace LogicScript.LSP
                 opts.WithHandler<DocumentHandler>();
                 opts.WithHandler<HoverHandler>();
                 opts.WithHandler<DefinitionHandler>();
+                opts.WithHandler<RenameHandler>();
             });
 
             await server.Initialize(CancellationToken.None);
@@ -145,7 +146,7 @@ namespace LogicScript.LSP
                     break;
 
                 case DeclareLocalStatement local:
-                    size = local.Size;
+                    size = local.Local.BitSize;
                     span = local.Span;
                     break;
 
@@ -174,7 +175,7 @@ namespace LogicScript.LSP
                     Kind = MarkupKind.Markdown,
                     Value = string.Join("\n---\n", lines)
                 }),
-                Range = span.GetRange()
+                Range = span.ToRange()
             });
         }
     }
@@ -205,11 +206,11 @@ namespace LogicScript.LSP
             switch (node)
             {
                 case ReferenceExpression refExpr:
-                    range = refExpr.Reference.Declaration.Span.GetRange();
+                    range = refExpr.Reference.Port.Span.ToRange();
                     break;
 
                 case AssignStatement assign:
-                    range = assign.Reference.Declaration.Span.GetRange();
+                    range = assign.Reference.Port.Span.ToRange();
                     break;
 
                 default:
@@ -221,6 +222,62 @@ namespace LogicScript.LSP
                 Uri = request.TextDocument.Uri,
                 Range = range
             })));
+        }
+    }
+
+    class RenameHandler : RenameHandlerBase
+    {
+        private readonly Workspace Workspace;
+
+        public RenameHandler(Workspace workspace)
+        {
+            this.Workspace = workspace;
+        }
+
+        protected override RenameRegistrationOptions CreateRegistrationOptions(RenameCapability capability, ClientCapabilities clientCapabilities)
+        {
+            return new()
+            {
+                DocumentSelector = Program.Selector
+            };
+        }
+
+        public override Task<WorkspaceEdit?> Handle(RenameParams request, CancellationToken cancellationToken)
+        {
+            var editedNode = Workspace.GetNodeAt(request.TextDocument.Uri, request.Position);
+
+            if (editedNode == null)
+                return Task.FromResult(null as WorkspaceEdit);
+
+            if (editedNode is IReference reference)
+            {
+                // Edit reference
+            }
+            else if (editedNode is IPortInfo portInfo)
+            {
+                var newText = "$" + request.NewName;
+                var refs = Workspace.FindReferencesTo(request.TextDocument.Uri, portInfo);
+
+                var edits = refs.Select(o => new TextEdit
+                {
+                    NewText = newText,
+                    Range = o.Span.ToRange()
+                }).Prepend(new()
+                {
+                    NewText = newText,
+                    Range = portInfo.Span.ToRange()
+                });
+
+                return Task.FromResult<WorkspaceEdit?>(new WorkspaceEdit
+                {
+                    Changes = new Dictionary<DocumentUri, IEnumerable<TextEdit>>
+                    {
+                        { request.TextDocument.Uri, edits }
+                    }
+                });
+            }
+
+            return Task.FromResult(null as WorkspaceEdit);
         }
     }
 }

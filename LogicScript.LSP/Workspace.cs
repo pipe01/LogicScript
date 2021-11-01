@@ -1,7 +1,9 @@
 ﻿using LogicScript.Parsing;
 using LogicScript.Parsing.Structures;
+using LogicScript.Parsing.Structures.Expressions;
 using OmniSharp.Extensions.LanguageServer.Protocol;
 using OmniSharp.Extensions.LanguageServer.Protocol.Models;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -38,6 +40,43 @@ namespace LogicScript.LSP
 
             Scripts[uri] = script;
             return null;
+        }
+
+        public void VisitAll(DocumentUri uri, Action<ICodeNode> action)
+        {
+            if (!Scripts.TryGetValue(uri, out var script))
+                return;
+
+            foreach (var block in script.Blocks)
+            {
+                Visit(block);
+            }
+
+            void Visit(ICodeNode node)
+            {
+                foreach (var child in node.GetChildren())
+                {
+                    Visit(child);
+                }
+
+                action(node);
+            }
+        }
+
+        public IReadOnlyList<ICodeNode> FindReferencesTo(DocumentUri uri, IPortInfo port)
+        {
+            var refs = new List<ICodeNode>();
+
+            VisitAll(uri, node =>
+            {
+                if (node is ReferenceExpression refExpr)
+                {
+                    if (refExpr.Reference.Port.Equals(port))
+                        refs.Add(refExpr);
+                }
+            });
+
+            return refs;
         }
 
         public ICodeNode? GetNodeAt(DocumentUri uri, SourceLocation location)

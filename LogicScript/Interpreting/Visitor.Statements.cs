@@ -126,9 +126,9 @@ namespace LogicScript.Interpreting
 
         private bool Visit(DeclareLocalStatement stmt)
         {
-            var value = stmt.Initializer == null ? new BitsValue(0, stmt.Size) : Visit(stmt.Initializer);
+            var value = stmt.Initializer == null ? new BitsValue(0, stmt.Local.BitSize) : Visit(stmt.Initializer);
 
-            Locals.Add(stmt.Name, value);
+            Locals.Add(stmt.Local.Name, value);
 
             return false;
         }
