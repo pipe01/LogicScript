@@ -205,6 +205,7 @@ namespace LogicScript.Parsing.Visitors
                 "fall" => Operator.Fall,
                 "change" => Operator.Change,
                 "len" => Operator.Length,
+                "allOnes" => Operator.AllOnes,
                 _ => throw new ParseException($"Unknown function '{context.funcName.Text}'", context.Span())
             };
 

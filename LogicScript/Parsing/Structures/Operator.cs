@@ -25,5 +25,6 @@
         Fall,
         Change,
         Length,
+        AllOnes,
     }
 }

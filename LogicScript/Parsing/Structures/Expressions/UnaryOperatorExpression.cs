@@ -13,6 +13,7 @@ namespace LogicScript.Parsing.Structures.Expressions
         {
             Operator.Not or Operator.Rise or Operator.Fall or Operator.Change => Operand.BitSize,
             Operator.Length => 7,
+            Operator.AllOnes => 1,
             _ => throw new ParseException("Unknown unary operator bitsize", Span)
         };
 

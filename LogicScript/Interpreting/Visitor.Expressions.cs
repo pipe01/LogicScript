@@ -129,6 +129,8 @@ namespace LogicScript.Interpreting
                     throw new NotImplementedException();
                 case Operator.Length:
                     return new BitsValue((ulong)operand.Length, 7);
+                case Operator.AllOnes:
+                    return operand.AreAllBitsSet;
             }
 
             throw new InterpreterException("Unknown operand", expr.Span);
