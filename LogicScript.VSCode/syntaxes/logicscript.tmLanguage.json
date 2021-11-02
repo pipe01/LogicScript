@@ -115,7 +115,7 @@
 			"patterns": [
 				{
 					"name": "meta.preprocessor.logicscript",
-					"match": "@(print)"
+					"match": "@(print|queueUpdate)"
 				}
 			]
 		},

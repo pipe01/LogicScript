@@ -22,7 +22,7 @@ namespace Tester
             Console.ReadKey();
         }
 
-        class MyMachine : IMachine
+        class MyMachine : IUpdatableMachine
         {
             public int InputCount => 3;
 
@@ -60,6 +60,10 @@ namespace Tester
             public void WriteRegister(int index, BitsValue value)
             {
                 Registers[index] = value;
+            }
+
+            public void QueueUpdate()
+            {
             }
         }
     }

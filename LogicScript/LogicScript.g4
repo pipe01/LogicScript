@@ -36,8 +36,9 @@ stmt_for            :
 
 stmt_while          : 'while' WS+ expression WS* NL+ block 'end' ;
 
-stmt_task           : '@' task_print ;
+stmt_task           : '@' (task_print | task_update) ;
 task_print          : 'print' wsnl_req (expression | TEXT) ;
+task_update         : 'queueUpdate' ;
 
 stmt_vardecl        : 'local' WS+ VARIABLE ('\'' size=atom)? (wsnl '=' wsnl expression)? ;
 

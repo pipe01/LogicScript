@@ -17,4 +17,9 @@ namespace LogicScript
 
         void Print(string msg);
     }
+
+    public interface IUpdatableMachine : IMachine
+    {
+        void QueueUpdate();
+    }
 }

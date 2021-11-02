@@ -34,4 +34,11 @@ namespace LogicScript.Parsing.Structures.Statements
             yield return Value;
         }
     }
+
+    internal sealed class UpdateTaskStatement : TaskStatement
+    {
+        public UpdateTaskStatement(SourceSpan span) : base(span)
+        {
+        }
+    }
 }

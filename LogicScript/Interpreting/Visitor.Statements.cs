@@ -103,11 +103,24 @@ namespace LogicScript.Interpreting
             AssertNotConstant(stmt);
 
             if (stmt is PrintTaskStatement print)
+            {
                 Machine.Print(FormatString(print.Text, Locals));
+            }
             else if (stmt is ShowTaskStatement show)
+            {
                 Machine.Print(Visit(show.Value).ToString());
+            }
+            else if (stmt is UpdateTaskStatement)
+            {
+                if (Machine is not IUpdatableMachine upd)
+                    throw new InterpreterException("This machine cannot queue updates", stmt.Span);
+
+                upd.QueueUpdate();
+            }
             else
+            {
                 throw new InterpreterException("Unknown task", stmt.Span);
+            }
 
             return false;
 

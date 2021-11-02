@@ -136,6 +136,11 @@ namespace LogicScript.Parsing.Visitors
             throw new ParseException("Invalid print value", context.Span());
         }
 
+        public override Statement VisitTask_update([NotNull] LogicScriptParser.Task_updateContext context)
+        {
+            return new UpdateTaskStatement(context.Span());
+        }
+
         public override Statement VisitStmt_break([NotNull] LogicScriptParser.Stmt_breakContext context)
         {
             return new BreakStatement(context.Span());
