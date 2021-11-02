@@ -26,7 +26,7 @@ for (const name in platforms) {
     const outPath = path.join(outFolder, `logicscript-lang-${plat.vsce}.vsix`)
 
     console.log(`Packaging VSIX for ${name}`);
-    cp.execSync(`vsce package --target "${plat.vsce}" --out "${outPath}"`);
+    cp.execSync(`npx vsce package --target "${plat.vsce}" --out "${outPath}"`);
 
     require("rimraf").sync("bin");
 }
