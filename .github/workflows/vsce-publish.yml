@@ -2,8 +2,9 @@ name: NodeJS with Grunt
 
 on:
   push:
-    tags:
-      - '*'
+    #tags:
+    #  - '*'
+    branches: ["master"]
 
 jobs:
   build:
