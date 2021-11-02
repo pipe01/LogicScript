@@ -1,5 +1,5 @@
 const cp = require("child_process");
-const { mkdirSync, stat, access, accessSync } = require("fs");
+const { mkdirSync } = require("fs");
 const path = require("path");
 
 const platforms = {
