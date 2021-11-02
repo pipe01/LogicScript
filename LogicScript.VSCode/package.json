@@ -13,6 +13,7 @@
     "scripts": {
         "watch": "node .scripts/build.js --watch",
         "package": "node .scripts/package.js",
+        "publish": "node .scripts/publish.js",
         "test-compile": "tsc -p ./"
     },
     "repository": "github:pipe01/LogicScript",
