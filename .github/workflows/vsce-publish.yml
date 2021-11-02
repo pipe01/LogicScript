@@ -1,0 +1,35 @@
+name: NodeJS with Grunt
+
+on:
+  push:
+    tags:
+      - '*'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Use Node.js 16.x
+      uses: actions/setup-node@v1
+      with:
+        node-version: 16.x
+        
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: 5.0.x
+
+    - name: Install NPM dependencies
+      run: npm install
+      
+    - name: Package VSIX
+      run: npm run package
+      
+    - name: Upload a Build Artifact
+      uses: actions/upload-artifact@v2.2.4
+      with:
+        # A file, directory or wildcard pattern that describes what to upload
+        path: vsix/*.vsix
