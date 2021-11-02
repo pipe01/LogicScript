@@ -1,9 +1,6 @@
 ﻿using LogicScript.LSP.Handlers;
-using MediatR;
 using Microsoft.Extensions.DependencyInjection;
 using OmniSharp.Extensions.LanguageServer.Protocol.Models;
-using OmniSharp.Extensions.LanguageServer.Protocol.Server;
-using OmniSharp.Extensions.LanguageServer.Protocol.Server.Capabilities;
 using OmniSharp.Extensions.LanguageServer.Server;
 using System;
 using System.Diagnostics;
@@ -21,7 +18,9 @@ namespace LogicScript.LSP
 
         static async Task Main(string[] args)
         {
+#if DEBUG
             Debugger.Launch();
+#endif
 
             var server = LanguageServer.Create(opts =>
             {
