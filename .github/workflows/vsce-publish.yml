@@ -36,6 +36,8 @@ jobs:
     - name: Publish extension
       run: npm run publish
       working-directory: ${{env.cwd}}
+      env:
+        VSCE_PAT: ${{secrets.VSCE_PAT}}
       
     - name: Create release
       uses: ncipollo/release-action@v1
