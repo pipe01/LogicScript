@@ -9,6 +9,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      cwd: LogicScript.VSCode
 
     steps:
     - uses: actions/checkout@v2
@@ -25,9 +27,11 @@ jobs:
 
     - name: Install NPM dependencies
       run: npm install
+      working-directory: ${{env.cwd}}
       
     - name: Package VSIX
       run: npm run package
+      working-directory: ${{env.cwd}}
       
     - name: Upload a Build Artifact
       uses: actions/upload-artifact@v2.2.4
