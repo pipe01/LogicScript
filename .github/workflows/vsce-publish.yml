@@ -1,4 +1,4 @@
-name: NodeJS with Grunt
+name: Release version
 
 on:
   push:
@@ -31,6 +31,10 @@ jobs:
       
     - name: Package VSIX
       run: npm run package
+      working-directory: ${{env.cwd}}
+      
+    - name: Publish extension
+      run: npm run publish
       working-directory: ${{env.cwd}}
       
     - name: Create release
