@@ -1,5 +1,7 @@
 # LogicScript.VSCode
 
+![Visual Studio Marketplace Installs - Azure DevOps Extension](https://img.shields.io/visual-studio-marketplace/azure-devops/installs/total/pipe01.logicscript-lang)
+
 Provides syntax highlighting for the LogicScript language in VS Code.
 
 ## Supported features
