@@ -95,7 +95,7 @@
 			"patterns": [
 				{
 					"name": "keyword.operator.logicscript",
-					"match": "(==?|'=|\\+|\\*\\*?|\\/|-|&|\\||\\^|<<?|>>?|!|~)"
+					"match": "(\\!=|==?|'=|\\+|\\*\\*?|\\/|-|&|\\||\\^|<<?|>>?|!|~)"
 				},
 				{
 					"name": "entity.name.function.logicscript",

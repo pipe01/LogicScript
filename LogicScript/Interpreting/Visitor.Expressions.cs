@@ -96,6 +96,9 @@ namespace LogicScript.Interpreting
                 case Operator.EqualsCompare:
                     return new BitsValue(left.Number == right.Number ? 1ul : 0, 1);
 
+                case Operator.NotEqualsCompare:
+                    return new BitsValue(left.Number != right.Number ? 1ul : 0, 1);
+
                 case Operator.Greater:
                     return new BitsValue(left.Number > right.Number ? 1ul : 0, 1);
 

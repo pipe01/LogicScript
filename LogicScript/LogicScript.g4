@@ -55,6 +55,7 @@ expression          : '(' wsnl expression wsnl ')'                              
                     | expression wsnl op=(LSHIFT | RSHIFT) wsnl expression      # exprShift
                     | expression wsnl op=(
                         COMPARE_EQUALS
+                      | COMPARE_NOTEQUALS
                       | COMPARE_GREATER
                       | COMPARE_LESSER
                     ) wsnl expression                                           # exprCompare
@@ -105,6 +106,7 @@ TEXT                : '"' .*? '"' ;
 VARIABLE            : '$' IDENT ;
 
 EQUALS              : '=' ;
+COMPARE_NOTEQUALS   : '!=' ;
 TRUNC_EQUALS        : '\'=' ;
 COMPARE_EQUALS      : '==' ;
 COMPARE_GREATER     : '>' ;

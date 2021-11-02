@@ -14,7 +14,7 @@ namespace LogicScript.Parsing.Structures.Expressions
             Operator.And or Operator.Or or Operator.Xor or Operator.Subtract or Operator.Divide => Left.BitSize > Right.BitSize ? Left.BitSize : Right.BitSize,
             Operator.ShiftLeft => Left.BitSize + ((1 << Right.BitSize) - 1),
             Operator.ShiftRight => Left.BitSize - Right.BitSize,
-            Operator.EqualsCompare or Operator.Greater or Operator.Lesser => 1,
+            Operator.EqualsCompare or Operator.NotEqualsCompare or Operator.Greater or Operator.Lesser => 1,
             Operator.Add => Left.BitSize > Right.BitSize ? Left.BitSize + 1 : Right.BitSize + 1,
             Operator.Multiply => Left.BitSize + Right.BitSize,
             Operator.Power => Left.BitSize * ((1 << Right.BitSize) - 1),

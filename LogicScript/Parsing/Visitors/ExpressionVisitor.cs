@@ -181,6 +181,7 @@ namespace LogicScript.Parsing.Visitors
             var op = context.op.Type switch
             {
                 LogicScriptParser.COMPARE_EQUALS => Operator.EqualsCompare,
+                LogicScriptParser.COMPARE_NOTEQUALS => Operator.NotEqualsCompare,
                 LogicScriptParser.COMPARE_GREATER => Operator.Greater,
                 LogicScriptParser.COMPARE_LESSER => Operator.Lesser,
                 _ => throw new ParseException("Unknown operator", context.Span())

@@ -17,6 +17,7 @@
 
         // (Binary) comparison operators
         EqualsCompare,
+        NotEqualsCompare,
         Greater,
         Lesser,
 
