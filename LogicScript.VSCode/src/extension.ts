@@ -12,7 +12,7 @@ let client: LanguageClient;
 
 export function activate(context: ExtensionContext) {
 	const serverPath = context.asAbsolutePath(
-		path.join('bin', 'LogicScript.LSP.exe')
+		path.join('bin', process.env.BIN_NAME ?? 'LogicScript.LSP.exe')
 	);
 
 	// If the extension is launched in debug mode then the debug server options are used

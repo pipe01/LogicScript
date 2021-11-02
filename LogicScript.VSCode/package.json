@@ -5,16 +5,14 @@
     "author": {
         "name": "pipe01"
     },
-    "publisher": "lslang-publish",
+    "publisher": "pipe01",
     "version": "0.1.0",
     "engines": {
         "vscode": "^1.61.0"
     },
     "scripts": {
-        "vscode:prepublish": "npm run build-base -- --minify",
-        "build-base": "esbuild ./src/extension.ts --bundle --outfile=out/main.js --external:vscode --format=cjs --platform=node",
-        "build": "npm run build-base -- --sourcemap",
-        "watch": "npm run build-base -- --sourcemap --watch",
+        "watch": "node .scripts/build.js --watch",
+        "package": "node .scripts/package.js",
         "test-compile": "tsc -p ./"
     },
     "repository": "github:pipe01/LogicScript",
@@ -52,7 +50,10 @@
     },
     "main": "./out/main",
     "devDependencies": {
+        "@types/minimist": "^1.2.2",
         "@types/vscode": "^1.61.0",
-        "esbuild": "^0.13.12"
+        "esbuild": "^0.13.12",
+        "minimist": "^1.2.5",
+        "rimraf": "^3.0.2"
     }
 }
