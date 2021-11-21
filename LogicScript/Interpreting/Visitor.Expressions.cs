@@ -159,7 +159,7 @@ namespace LogicScript.Interpreting
             var startIndex = expr.Start switch
             {
                 IndexStart.Left => offset,
-                IndexStart.Right => operand.Length - offset - 1,
+                IndexStart.Right => operand.Length - offset - expr.Length,
                 _ => throw new InterpreterException("Unknown slice start", expr.Span)
             };
 
