@@ -1,3 +1,4 @@
+using LogicScript.Data;
 using LogicScript.Parsing.Structures;
 using LogicScript.Parsing.Structures.Blocks;
 using LogicScript.Parsing.Structures.Expressions;
@@ -122,6 +123,74 @@ namespace LogicScript.Tests
             }.Run(machine, true);
 
             machine.AssertPrinted("2");
+        }
+
+        [Fact]
+        public void Print_TernaryTrue()
+        {
+            var machine = new DummyMachine();
+
+            new Script
+            {
+                Blocks = {
+                    new StartupBlock(default,
+                        new ShowTaskStatement(default,
+                            new TernaryOperatorExpression(default,
+                                new NumberLiteralExpression(default, 1),
+                                new NumberLiteralExpression(default, 10),
+                                new NumberLiteralExpression(default, 20)
+                            )
+                        )
+                    )
+                }
+            }.Run(machine, true);
+
+            machine.AssertPrinted("10");
+        }
+
+        [Fact]
+        public void Print_TernaryFalse()
+        {
+            var machine = new DummyMachine();
+
+            new Script
+            {
+                Blocks = {
+                    new StartupBlock(default,
+                        new ShowTaskStatement(default,
+                            new TernaryOperatorExpression(default,
+                                new NumberLiteralExpression(default, 0),
+                                new NumberLiteralExpression(default, 10),
+                                new NumberLiteralExpression(default, 20)
+                            )
+                        )
+                    )
+                }
+            }.Run(machine, true);
+
+            machine.AssertPrinted("20");
+        }
+
+        [Fact]
+        public void Print_Invert()
+        {
+            var machine = new DummyMachine();
+
+            new Script
+            {
+                Blocks = {
+                    new StartupBlock(default,
+                        new ShowTaskStatement(default,
+                            new UnaryOperatorExpression(default,
+                                Operator.Not,
+                                new NumberLiteralExpression(default, new BitsValue(0, 3))
+                            )
+                        )
+                    )
+                }
+            }.Run(machine, true);
+
+            machine.AssertPrinted("7");
         }
     }
 }
