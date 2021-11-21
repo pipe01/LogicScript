@@ -10,6 +10,8 @@
 *.userosscache
 *.sln.docstates
 
+test.lsx
+
 .antlr
 
 # User-specific files (MonoDevelop/Xamarin Studio)

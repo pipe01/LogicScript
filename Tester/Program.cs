@@ -1,4 +1,5 @@
 ﻿using LogicScript;
+using LogicScript.Compiling;
 using LogicScript.Data;
 using LogicScript.Parsing;
 using System;
@@ -17,9 +18,10 @@ namespace Tester
                 Console.WriteLine(err);
             }
 
-            script?.Run(new MyMachine(), true);
+            var deleg = Compiler.Compile(script);
+            deleg(new MyMachine());
 
-            Console.ReadKey();
+            Console.Read();
         }
 
         class MyMachine : IUpdatableMachine
