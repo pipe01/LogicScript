@@ -25,7 +25,7 @@ namespace LogicScript.Interpreting
         [MemberNotNull(nameof(Machine), nameof(Locals))]
         private void AssertNotConstant(ICodeNode node, string message = "Not allowed in a constant scope")
         {
-            if (!NotConstant)
+            if (!NotConstant || Machine == null || Locals == null)
                 throw new NotConstantException(message, node);
         }
     }
