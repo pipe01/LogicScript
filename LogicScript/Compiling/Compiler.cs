@@ -11,7 +11,7 @@ using LogicScript.Parsing;
 
 namespace LogicScript.Compiling
 {
-    internal delegate void ScriptDelegate(IMachine machine);
+    internal delegate void ScriptDelegate(IMachine machine, bool runStartup);
 
     internal readonly ref partial struct Compiler
     {
@@ -88,7 +88,7 @@ namespace LogicScript.Compiling
 
             var scriptField = tb.DefineField("Script", typeof(Script), FieldAttributes.Private);
 
-            var method = tb.DefineMethod("Run", MethodAttributes.Public, typeof(void), new[] { typeof(IMachine) });
+            var method = tb.DefineMethod("Run", MethodAttributes.Public, typeof(void), new[] { typeof(IMachine), typeof(bool) });
 
             using (var il = new GroboIL(method))
             {

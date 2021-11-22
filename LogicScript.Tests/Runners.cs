@@ -17,24 +17,24 @@ namespace LogicScript.Tests
 
     public interface IRunner
     {
-        void Run(Script script, IMachine machine);
+        void Run(Script script, IMachine machine, bool runStartup = true);
     }
 
     public class InterpretedRunner : IRunner
     {
-        public void Run(Script script, IMachine machine)
+        public void Run(Script script, IMachine machine, bool runStartup = true)
         {
-            script.Run(machine, true);
+            script.Run(machine, runStartup);
         }
     }
 
     public class CompiledRunner : IRunner
     {
-        public void Run(Script script, IMachine machine)
+        public void Run(Script script, IMachine machine, bool runStartup = true)
         {
             var del = Compiler.Compile(script);
 
-            del(machine);
+            del(machine, runStartup);
         }
     }
 }

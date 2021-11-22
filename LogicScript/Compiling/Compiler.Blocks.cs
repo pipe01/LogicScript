@@ -20,6 +20,12 @@ namespace LogicScript.Compiling
 
                     Visit(whenBlock.Body);
                     break;
+
+                case StartupBlock startup:
+                    IL.Ldarg(2);
+                    IL.Brfalse(end);
+                    Visit(startup.Body);
+                    break;
             }
 
             IL.MarkLabel(end);
