@@ -26,6 +26,8 @@ namespace LogicScript.Compiling
                     Visit(task);
                     break;
             }
+
+            throw new InterpreterException("Unknown statement type", stmt.Span);
         }
 
         private void Visit(BlockStatement stmt)

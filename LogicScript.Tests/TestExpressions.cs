@@ -58,6 +58,33 @@ namespace LogicScript.Tests
         }
 
         [Test]
+        [TestCase(3, 3, Operator.Not, 4)]
+        [TestCase(0, 3, Operator.Length, 3)]
+        [TestCase(2, 3, Operator.Length, 3)]
+        [TestCase(0, 3, Operator.AllOnes, 0)]
+        [TestCase(1, 3, Operator.AllOnes, 0)]
+        [TestCase(7, 3, Operator.AllOnes, 1)]
+        public void UnaryOperators(int val, int len, Operator op, int result)
+        {
+            var machine = new DummyMachine();
+
+            Runner.Run(new Script
+            {
+                Blocks = {
+                    new StartupBlock(default,
+                        new ShowTaskStatement(default,
+                            new UnaryOperatorExpression(default, op,
+                                new NumberLiteralExpression(default, new((ulong)val, len))
+                            )
+                        )
+                    ),
+                }
+            }, machine);
+
+            machine.AssertPrinted(result.ToString());
+        }
+
+        [Test]
         public void AddInputs()
         {
             var machine = new DummyMachine(new[] { true, true, false });
