@@ -18,10 +18,11 @@ namespace Tester
                 Console.WriteLine(err);
             }
 
-            var deleg = Compiler.Compile(script);
-            deleg(new MyMachine());
-
-            Console.Read();
+            if (script != null)
+            {
+                var deleg = Compiler.Compile(script);
+                deleg(new MyMachine(), true);
+            }
         }
 
         class MyMachine : IUpdatableMachine

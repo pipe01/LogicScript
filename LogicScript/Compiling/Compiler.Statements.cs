@@ -25,9 +25,10 @@ namespace LogicScript.Compiling
                 case TaskStatement task:
                     Visit(task);
                     break;
-            }
 
-            throw new InterpreterException("Unknown statement type", stmt.Span);
+                default:
+                    throw new InterpreterException("Unknown statement type", stmt.Span);
+            }
         }
 
         private void Visit(BlockStatement stmt)

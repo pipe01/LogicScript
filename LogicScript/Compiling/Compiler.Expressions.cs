@@ -31,9 +31,10 @@ namespace LogicScript.Compiling
                 case ReferenceExpression refExpr:
                     Visit(refExpr);
                     break;
-            }
 
-            throw new InterpreterException("Unknown expression type", expr.Span);
+                default:
+                    throw new InterpreterException("Unknown expression type", expr.Span);
+            }
         }
 
         private void Visit(ReferenceExpression expr)
