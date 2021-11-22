@@ -23,6 +23,10 @@ namespace LogicScript.Compiling
                 case NumberLiteralExpression lit:
                     Visit(lit);
                     break;
+
+                case ReferenceExpression refExpr:
+                    Visit(refExpr);
+                    break;
             }
         }
 
@@ -38,6 +42,44 @@ namespace LogicScript.Compiling
         private void Visit(NumberLiteralExpression expr)
         {
             LoadBitsValue(expr.Value);
+        }
+
+        private void Visit(ReferenceExpression expr)
+        {
+            if (expr.Reference is PortReference port)
+            {
+                switch (port.PortInfo.Target)
+                {
+                    case MachinePorts.Output:
+                        throw new InterpreterException("Cannot read from output", expr.Span);
+
+                    case MachinePorts.Input:
+                        //     return new BitsValue(Input.Slice(port.StartIndex, port.BitSize));
+                        IL.Ldloca(Input);
+                        IL.Ldc_I4(port.StartIndex);
+                        IL.Ldc_I4(port.BitSize);
+                        IL.Call(typeof(Span<>).MakeGenericType(typeof(bool)).GetMethod("Slice", new[] { typeof(int), typeof(int) }));
+                        IL.Newobj(typeof(BitsValue).GetConstructor(new[] { typeof(Span<bool>) }));
+                        break;
+
+                    case MachinePorts.Register:
+                        LoadMachine();
+                        IL.Ldc_I4(port.StartIndex);
+                        IL.Call(typeof(IMachine).GetMethod(nameof(IMachine.ReadRegister)));
+                        break;
+
+                    default:
+                        throw new InterpreterException("Unknown reference target", expr.Span);
+                }
+            }
+            else if (expr.Reference is LocalReference local)
+            {
+                // return Locals[local.Name];
+            }
+            else
+            {
+                throw new InterpreterException("Unknown reference type", expr.Span);
+            }
         }
     }
 }

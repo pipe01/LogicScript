@@ -17,11 +17,38 @@ namespace LogicScript.Compiling
     {
         private readonly Script Script;
         private readonly GroboIL IL;
+        private readonly GroboIL.Local Input;
 
-        public Compiler(Script script, GroboIL iL)
+        public Compiler(Script script, GroboIL il)
         {
             this.Script = script;
-            this.IL = iL;
+            this.IL = il;
+
+            this.Input = il.DeclareLocal(typeof(Span<bool>), "input");
+
+            LoadSpan<bool>(() =>
+            {
+                il.Ldarg(1); // Load machine
+                il.Call(typeof(IMachine).GetProperty(nameof(IMachine.InputCount)).GetGetMethod());
+            });
+            il.Stloc(Input);
+
+            LoadMachine();
+            il.Ldc_I4(script.Registers.Count);
+            il.Call(typeof(IMachine).GetMethod(nameof(IMachine.AllocateRegisters)));
+
+            LoadMachine();
+            il.Ldloc(Input);
+            il.Call(typeof(IMachine).GetMethod(nameof(IMachine.ReadInput)));
+        }
+
+        private void LoadSpan<T>(Action loadLength)
+        {
+            loadLength();
+            IL.Conv<UIntPtr>();
+            IL.Localloc();
+            loadLength();
+            IL.Newobj(typeof(Span<T>).GetConstructor(new[] { typeof(void).MakePointerType(), typeof(int) }));
         }
 
         private void LoadNumber() => IL.Ldfld(typeof(BitsValue).GetField(nameof(BitsValue.Number)));
