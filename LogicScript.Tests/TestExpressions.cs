@@ -7,14 +7,36 @@ using NUnit.Framework;
 
 namespace LogicScript.Tests
 {
-    public class TestExpressions : BaseTest
+    internal class TestExpressions : BaseTest
     {
         public TestExpressions(IRunner runner) : base(runner)
         {
         }
 
         [Test]
-        public void Print_AddLiterals()
+        [TestCase(5, 3, Operator.And, 1)]
+        [TestCase(5, 3, Operator.Or, 7)]
+        [TestCase(5, 3, Operator.Xor, 6)]
+        [TestCase(3, 2, Operator.ShiftLeft, 12)]
+        [TestCase(12, 2, Operator.ShiftRight, 3)]
+        [TestCase(5, 3, Operator.Add, 8)]
+        [TestCase(5, 3, Operator.Subtract, 2)]
+        [TestCase(5, 3, Operator.Multiply, 15)]
+        [TestCase(6, 3, Operator.Divide, 2)]
+        [TestCase(5, 3, Operator.Divide, 1)]
+        [TestCase(5, 3, Operator.Power, 125)]
+        [TestCase(5, 3, Operator.Modulus, 2)]
+        [TestCase(5, 3, Operator.EqualsCompare, 0)]
+        [TestCase(5, 5, Operator.EqualsCompare, 1)]
+        [TestCase(5, 3, Operator.NotEqualsCompare, 1)]
+        [TestCase(5, 5, Operator.NotEqualsCompare, 0)]
+        [TestCase(5, 3, Operator.Greater, 1)]
+        [TestCase(3, 5, Operator.Greater, 0)]
+        [TestCase(3, 3, Operator.Greater, 0)]
+        [TestCase(5, 3, Operator.Lesser, 0)]
+        [TestCase(3, 5, Operator.Lesser, 1)]
+        [TestCase(3, 3, Operator.Lesser, 0)]
+        public void BinaryOperators(int a, int b, Operator op, int result)
         {
             var machine = new DummyMachine();
 
@@ -23,20 +45,20 @@ namespace LogicScript.Tests
                 Blocks = {
                     new StartupBlock(default,
                         new ShowTaskStatement(default,
-                            new BinaryOperatorExpression(default, Operator.Add,
-                                new NumberLiteralExpression(default, 1),
-                                new NumberLiteralExpression(default, 2)
+                            new BinaryOperatorExpression(default, op,
+                                new NumberLiteralExpression(default, a),
+                                new NumberLiteralExpression(default, b)
                             )
                         )
                     ),
                 }
             }, machine);
 
-            machine.AssertPrinted("3");
+            machine.AssertPrinted(result.ToString());
         }
 
         [Test]
-        public void Print_AddInputs()
+        public void AddInputs()
         {
             var machine = new DummyMachine(new[] { true, true, false });
 
@@ -65,7 +87,7 @@ namespace LogicScript.Tests
         }
 
         [Test]
-        public void Print_LiteralSliceRight()
+        public void LiteralSliceRight()
         {
             var machine = new DummyMachine();
 
@@ -89,7 +111,7 @@ namespace LogicScript.Tests
         }
 
         [Test]
-        public void Print_LiteralSliceLeft()
+        public void LiteralSliceLeft()
         {
             var machine = new DummyMachine();
 
@@ -113,7 +135,7 @@ namespace LogicScript.Tests
         }
 
         [Test]
-        public void Print_TernaryTrue()
+        public void TernaryTrue()
         {
             var machine = new DummyMachine();
 
@@ -136,7 +158,7 @@ namespace LogicScript.Tests
         }
 
         [Test]
-        public void Print_TernaryFalse()
+        public void TernaryFalse()
         {
             var machine = new DummyMachine();
 
@@ -159,7 +181,7 @@ namespace LogicScript.Tests
         }
 
         [Test]
-        public void Print_Invert()
+        public void InvertNumber()
         {
             var machine = new DummyMachine();
 
