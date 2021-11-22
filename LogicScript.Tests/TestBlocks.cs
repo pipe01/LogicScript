@@ -12,7 +12,7 @@ namespace LogicScript.Tests
         }
 
         [Test]
-        public void Print_Startup()
+        public void Blocks_Print()
         {
             var machine = new DummyMachine();
 
@@ -26,6 +26,36 @@ namespace LogicScript.Tests
             }, machine);
 
             machine.AssertPrinted("nice1", "nice2", "nice3");
+        }
+
+        [Test]
+        public void Startup_ShouldRun()
+        {
+            var machine = new DummyMachine();
+
+            Runner.Run(new Script
+            {
+                Blocks = {
+                    new StartupBlock(default, new PrintTaskStatement(default, "yes")),
+                }
+            }, machine, runStartup: true);
+
+            machine.AssertPrinted("yes");
+        }
+
+        [Test]
+        public void Startup_ShouldNotRun()
+        {
+            var machine = new DummyMachine();
+
+            Runner.Run(new Script
+            {
+                Blocks = {
+                    new StartupBlock(default, new PrintTaskStatement(default, "yes")),
+                }
+            }, machine, runStartup: false);
+
+            machine.AssertPrinted();
         }
     }
 }
