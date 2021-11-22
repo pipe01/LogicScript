@@ -3,18 +3,22 @@ using LogicScript.Parsing.Structures;
 using LogicScript.Parsing.Structures.Blocks;
 using LogicScript.Parsing.Structures.Expressions;
 using LogicScript.Parsing.Structures.Statements;
-using Xunit;
+using NUnit.Framework;
 
 namespace LogicScript.Tests
 {
-    public class RunBlocks
+    public class RunBlocks : BaseTest
     {
-        [Theory, ClassData(typeof(Runners))]
-        public void Print_Startup(IRunner runner)
+        public RunBlocks(IRunner runner) : base(runner)
+        {
+        }
+
+        [Test]
+        public void Print_Startup()
         {
             var machine = new DummyMachine();
 
-            runner.Run(new Script
+            Runner.Run(new Script
             {
                 Blocks = {
                     new StartupBlock(default, new PrintTaskStatement(default, "nice1")),
@@ -26,12 +30,12 @@ namespace LogicScript.Tests
             machine.AssertPrinted("nice1", "nice2", "nice3");
         }
 
-        [Theory, ClassData(typeof(Runners))]
-        public void Print_AddLiterals(IRunner runner)
+        [Test]
+        public void Print_AddLiterals()
         {
             var machine = new DummyMachine();
 
-            runner.Run(new Script
+            Runner.Run(new Script
             {
                 Blocks = {
                     new StartupBlock(default,
@@ -48,15 +52,15 @@ namespace LogicScript.Tests
             machine.AssertPrinted("3");
         }
 
-        [Theory, ClassData(typeof(Runners))]
-        public void Print_AddInputs(IRunner runner)
+        [Test]
+        public void Print_AddInputs()
         {
             var machine = new DummyMachine(new[] { true, true, false });
 
             var a = new PortInfo(MachinePorts.Input, 0, 1, default);
             var b = new PortInfo(MachinePorts.Input, 1, 2, default);
 
-            runner.Run(new Script
+            Runner.Run(new Script
             {
                 Inputs = {
                     { "a", a },
@@ -77,12 +81,12 @@ namespace LogicScript.Tests
             machine.AssertPrinted("3");
         }
 
-        [Theory, ClassData(typeof(Runners))]
-        public void Print_LiteralSliceRight(IRunner runner)
+        [Test]
+        public void Print_LiteralSliceRight()
         {
             var machine = new DummyMachine();
 
-            runner.Run(new Script
+            Runner.Run(new Script
             {
                 Blocks = {
                     new StartupBlock(default,
@@ -101,12 +105,12 @@ namespace LogicScript.Tests
             machine.AssertPrinted("2");
         }
 
-        [Theory, ClassData(typeof(Runners))]
-        public void Print_LiteralSliceLeft(IRunner runner)
+        [Test]
+        public void Print_LiteralSliceLeft()
         {
             var machine = new DummyMachine();
 
-            runner.Run(new Script
+            Runner.Run(new Script
             {
                 Blocks = {
                     new StartupBlock(default,
@@ -125,12 +129,12 @@ namespace LogicScript.Tests
             machine.AssertPrinted("2");
         }
 
-        [Theory, ClassData(typeof(Runners))]
-        public void Print_TernaryTrue(IRunner runner)
+        [Test]
+        public void Print_TernaryTrue()
         {
             var machine = new DummyMachine();
 
-            runner.Run(new Script
+            Runner.Run(new Script
             {
                 Blocks = {
                     new StartupBlock(default,
@@ -148,12 +152,12 @@ namespace LogicScript.Tests
             machine.AssertPrinted("10");
         }
 
-        [Theory, ClassData(typeof(Runners))]
-        public void Print_TernaryFalse(IRunner runner)
+        [Test]
+        public void Print_TernaryFalse()
         {
             var machine = new DummyMachine();
 
-            runner.Run(new Script
+            Runner.Run(new Script
             {
                 Blocks = {
                     new StartupBlock(default,
@@ -171,12 +175,12 @@ namespace LogicScript.Tests
             machine.AssertPrinted("20");
         }
 
-        [Theory, ClassData(typeof(Runners))]
-        public void Print_Invert(IRunner runner)
+        [Test]
+        public void Print_Invert()
         {
             var machine = new DummyMachine();
 
-            runner.Run(new Script
+            Runner.Run(new Script
             {
                 Blocks = {
                     new StartupBlock(default,

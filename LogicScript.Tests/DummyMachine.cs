@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using LogicScript.Data;
-using Xunit;
+using NUnit.Framework;
 
 namespace LogicScript.Tests
 {
@@ -57,7 +57,7 @@ namespace LogicScript.Tests
 
         public void AssertPrinted(params string[] lines)
         {
-            Assert.Equal(lines, Printed);
+            Assert.AreEqual(lines, Printed);
         }
     }
 }

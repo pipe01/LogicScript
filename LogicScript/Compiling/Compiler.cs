@@ -100,8 +100,6 @@ namespace LogicScript.Compiling
                 }
 
                 il.Ret();
-
-                System.Console.WriteLine(il.GetILCode());
             }
 
             var type = tb.CreateType();
