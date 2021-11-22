@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using LogicScript.Data;
+using LogicScript.Interpreting;
 using LogicScript.Parsing.Structures.Statements;
 
 namespace LogicScript.Compiling
@@ -17,6 +18,10 @@ namespace LogicScript.Compiling
                     Visit(block);
                     break;
 
+                case DeclareLocalStatement local:
+                    Visit(local);
+                    break;
+
                 case TaskStatement task:
                     Visit(task);
                     break;
@@ -28,6 +33,23 @@ namespace LogicScript.Compiling
             foreach (var item in stmt.Statements)
             {
                 Visit(item);
+            }
+        }
+
+        private void Visit(DeclareLocalStatement stmt)
+        {
+            var local = IL.DeclareLocal(typeof(BitsValue), "local_" + stmt.Local.Name);
+            Locals.Add(stmt.Local.Name, (local, stmt.Local.BitSize));
+
+            if (stmt.Initializer != null)
+            {
+                Visit(stmt.Initializer);
+                IL.Stloc(local);
+            }
+            else
+            {
+                IL.Ldloca(local);
+                IL.Initobj(typeof(BitsValue));
             }
         }
 

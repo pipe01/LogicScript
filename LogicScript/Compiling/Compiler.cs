@@ -18,11 +18,13 @@ namespace LogicScript.Compiling
         private readonly Script Script;
         private readonly GroboIL IL;
         private readonly GroboIL.Local Input;
+        private readonly IDictionary<string, (GroboIL.Local Local, int Size)> Locals;
 
         public Compiler(Script script, GroboIL il)
         {
             this.Script = script;
             this.IL = il;
+            this.Locals = new Dictionary<string, (GroboIL.Local, int)>();
 
             this.Input = il.DeclareLocal(typeof(Span<bool>), "input");
 

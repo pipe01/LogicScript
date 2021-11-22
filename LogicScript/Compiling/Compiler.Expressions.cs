@@ -54,7 +54,6 @@ namespace LogicScript.Compiling
                         throw new InterpreterException("Cannot read from output", expr.Span);
 
                     case MachinePorts.Input:
-                        //     return new BitsValue(Input.Slice(port.StartIndex, port.BitSize));
                         IL.Ldloca(Input);
                         IL.Ldc_I4(port.StartIndex);
                         IL.Ldc_I4(port.BitSize);
@@ -74,7 +73,7 @@ namespace LogicScript.Compiling
             }
             else if (expr.Reference is LocalReference local)
             {
-                // return Locals[local.Name];
+                IL.Ldloc(Locals[local.Name].Local);
             }
             else
             {
