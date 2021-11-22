@@ -9,29 +9,29 @@ namespace LogicScript.Tests
 {
     public class RunBlocks
     {
-        [Fact]
-        public void Print_Startup()
+        [Theory, ClassData(typeof(Runners))]
+        public void Print_Startup(IRunner runner)
         {
             var machine = new DummyMachine();
 
-            new Script
+            runner.Run(new Script
             {
                 Blocks = {
                     new StartupBlock(default, new PrintTaskStatement(default, "nice1")),
                     new WhenBlock(default, null, new PrintTaskStatement(default, "nice2")),
                     new WhenBlock(default, new NumberLiteralExpression(default, 1), new PrintTaskStatement(default, "nice3")),
                 }
-            }.Run(machine, true);
+            }, machine);
 
             machine.AssertPrinted("nice1", "nice2", "nice3");
         }
 
-        [Fact]
-        public void Print_AddLiterals()
+        [Theory, ClassData(typeof(Runners))]
+        public void Print_AddLiterals(IRunner runner)
         {
             var machine = new DummyMachine();
 
-            new Script
+            runner.Run(new Script
             {
                 Blocks = {
                     new StartupBlock(default,
@@ -43,20 +43,20 @@ namespace LogicScript.Tests
                         )
                     ),
                 }
-            }.Run(machine, true);
+            }, machine);
 
             machine.AssertPrinted("3");
         }
 
-        [Fact]
-        public void Print_AddInputs()
+        [Theory, ClassData(typeof(Runners))]
+        public void Print_AddInputs(IRunner runner)
         {
             var machine = new DummyMachine(new[] { true, true, false });
 
             var a = new PortInfo(MachinePorts.Input, 0, 1, default);
             var b = new PortInfo(MachinePorts.Input, 1, 2, default);
 
-            new Script
+            runner.Run(new Script
             {
                 Inputs = {
                     { "a", a },
@@ -72,17 +72,17 @@ namespace LogicScript.Tests
                         )
                     ),
                 }
-            }.Run(machine, true);
+            }, machine);
 
             machine.AssertPrinted("3");
         }
 
-        [Fact]
-        public void Print_LiteralSliceRight()
+        [Theory, ClassData(typeof(Runners))]
+        public void Print_LiteralSliceRight(IRunner runner)
         {
             var machine = new DummyMachine();
 
-            new Script
+            runner.Run(new Script
             {
                 Blocks = {
                     new StartupBlock(default,
@@ -96,17 +96,17 @@ namespace LogicScript.Tests
                         )
                     )
                 }
-            }.Run(machine, true);
+            }, machine);
 
             machine.AssertPrinted("2");
         }
 
-        [Fact]
-        public void Print_LiteralSliceLeft()
+        [Theory, ClassData(typeof(Runners))]
+        public void Print_LiteralSliceLeft(IRunner runner)
         {
             var machine = new DummyMachine();
 
-            new Script
+            runner.Run(new Script
             {
                 Blocks = {
                     new StartupBlock(default,
@@ -120,17 +120,17 @@ namespace LogicScript.Tests
                         )
                     )
                 }
-            }.Run(machine, true);
+            }, machine);
 
             machine.AssertPrinted("2");
         }
 
-        [Fact]
-        public void Print_TernaryTrue()
+        [Theory, ClassData(typeof(Runners))]
+        public void Print_TernaryTrue(IRunner runner)
         {
             var machine = new DummyMachine();
 
-            new Script
+            runner.Run(new Script
             {
                 Blocks = {
                     new StartupBlock(default,
@@ -143,17 +143,17 @@ namespace LogicScript.Tests
                         )
                     )
                 }
-            }.Run(machine, true);
+            }, machine);
 
             machine.AssertPrinted("10");
         }
 
-        [Fact]
-        public void Print_TernaryFalse()
+        [Theory, ClassData(typeof(Runners))]
+        public void Print_TernaryFalse(IRunner runner)
         {
             var machine = new DummyMachine();
 
-            new Script
+            runner.Run(new Script
             {
                 Blocks = {
                     new StartupBlock(default,
@@ -166,17 +166,17 @@ namespace LogicScript.Tests
                         )
                     )
                 }
-            }.Run(machine, true);
+            }, machine);
 
             machine.AssertPrinted("20");
         }
 
-        [Fact]
-        public void Print_Invert()
+        [Theory, ClassData(typeof(Runners))]
+        public void Print_Invert(IRunner runner)
         {
             var machine = new DummyMachine();
 
-            new Script
+            runner.Run(new Script
             {
                 Blocks = {
                     new StartupBlock(default,
@@ -188,7 +188,7 @@ namespace LogicScript.Tests
                         )
                     )
                 }
-            }.Run(machine, true);
+            }, machine);
 
             machine.AssertPrinted("7");
         }
