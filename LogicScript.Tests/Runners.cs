@@ -7,16 +7,12 @@ using LogicScript.Compiling;
 
 namespace LogicScript.Tests
 {
-    public class Runners : IEnumerable<object[]>
+    public static class Runners
     {
         public static readonly IRunner Interpreted = new InterpretedRunner();
         public static readonly IRunner Compiled = new CompiledRunner();
 
-        private static readonly object[] Data = new[] { new object[] { Interpreted }, new object[] { Compiled } };
-
-        public IEnumerator<object[]> GetEnumerator() => ((IEnumerable<object[]>)Data).GetEnumerator();
-
-        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+        public static readonly IRunner[] All = new[] { Interpreted , Compiled };
     }
 
     public interface IRunner
