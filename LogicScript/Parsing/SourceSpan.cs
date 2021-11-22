@@ -26,6 +26,10 @@ namespace LogicScript.Parsing
         {
         }
 
+        internal SourceSpan(int lineStart, int colStart, int lineEnd, int colEnd) : this(new SourceLocation(lineStart, colStart), new SourceLocation(lineEnd, colEnd))
+        {
+        }
+
         public bool Contains(SourceLocation loc)
             => loc.Line >= Start.Line && loc.Line <= End.Line && loc.Column >= Start.Column && loc.Column <= End.Column;
 

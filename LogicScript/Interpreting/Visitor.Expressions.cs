@@ -54,61 +54,8 @@ namespace LogicScript.Interpreting
         {
             var left = Visit(expr.Left);
             var right = Visit(expr.Right);
-            var maxLen = left.Length > right.Length ? left.Length : right.Length;
 
-            switch (expr.Operator)
-            {
-                case Operator.And:
-                    return new BitsValue(left.Number & right.Number, maxLen);
-
-                case Operator.Or:
-                    return new BitsValue(left.Number | right.Number, maxLen);
-
-                case Operator.Xor:
-                    return new BitsValue(left.Number ^ right.Number, maxLen);
-
-                case Operator.ShiftLeft:
-                    return new BitsValue(left.Number << (int)right.Number, left.Length + (int)right.Number);
-
-                case Operator.ShiftRight:
-                    return new BitsValue(left.Number >> (int)right.Number, left.Length - (int)right.Number);
-
-
-                case Operator.Add:
-                    return new BitsValue(left.Number + right.Number);
-
-                case Operator.Subtract:
-                    return new BitsValue(left.Number - right.Number);
-
-                case Operator.Multiply:
-                    return new BitsValue(left.Number * right.Number);
-
-                case Operator.Divide:
-                    return new BitsValue(left.Number / right.Number);
-
-                case Operator.Power:
-                    return new BitsValue((ulong)Math.Pow(left.Number, right.Number));
-
-                case Operator.Modulus:
-                    return new BitsValue(left.Number % right.Number);
-
-
-                case Operator.EqualsCompare:
-                    return new BitsValue(left.Number == right.Number ? 1ul : 0, 1);
-
-                case Operator.NotEqualsCompare:
-                    return new BitsValue(left.Number != right.Number ? 1ul : 0, 1);
-
-                case Operator.Greater:
-                    return new BitsValue(left.Number > right.Number ? 1ul : 0, 1);
-
-                case Operator.Lesser:
-                    return new BitsValue(left.Number < right.Number ? 1ul : 0, 1);
-
-
-                default:
-                    throw new InterpreterException("Unknown operator", expr.Span);
-            }
+            return Operations.DoOperation(left, right, expr.Operator, expr.Span);
         }
 
         private BitsValue Visit(TernaryOperatorExpression expr)
