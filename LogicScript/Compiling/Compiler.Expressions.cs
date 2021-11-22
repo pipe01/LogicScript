@@ -20,6 +20,10 @@ namespace LogicScript.Compiling
                     Visit(binOp);
                     break;
 
+                case TernaryOperatorExpression tern:
+                    Visit(tern);
+                    break;
+
                 case NumberLiteralExpression lit:
                     Visit(lit);
                     break;
@@ -28,20 +32,6 @@ namespace LogicScript.Compiling
                     Visit(refExpr);
                     break;
             }
-        }
-
-        private void Visit(BinaryOperatorExpression expr)
-        {
-            Visit(expr.Left);
-            Visit(expr.Right);
-            IL.Ldc_I4((int)expr.Operator);
-            LoadSpan(expr.Span);
-            IL.Call(typeof(Operations).GetMethod(nameof(Operations.DoOperation)));
-        }
-
-        private void Visit(NumberLiteralExpression expr)
-        {
-            LoadBitsValue(expr.Value);
         }
 
         private void Visit(ReferenceExpression expr)
@@ -79,6 +69,41 @@ namespace LogicScript.Compiling
             {
                 throw new InterpreterException("Unknown reference type", expr.Span);
             }
+        }
+
+        private void Visit(BinaryOperatorExpression expr)
+        {
+            Visit(expr.Left);
+            Visit(expr.Right);
+            IL.Ldc_I4((int)expr.Operator);
+            LoadSpan(expr.Span);
+            IL.Call(typeof(Operations).GetMethod(nameof(Operations.DoOperation)));
+        }
+
+        private void Visit(TernaryOperatorExpression expr)
+        {
+            var labelFalse = IL.DefineLabel("tern_false");
+            var labelEnd = IL.DefineLabel("tern_end");
+
+            Visit(expr.Condition);
+
+            LoadNumber();
+            IL.Brfalse(labelFalse);
+
+            Visit(expr.IfTrue);
+            IL.Br(labelEnd);
+
+            IL.MarkLabel(labelFalse);
+            IL.Nop();
+            Visit(expr.IfFalse);
+
+            IL.MarkLabel(labelEnd);
+            IL.Nop();
+        }
+
+        private void Visit(NumberLiteralExpression expr)
+        {
+            LoadBitsValue(expr.Value);
         }
     }
 }
