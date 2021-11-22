@@ -17,7 +17,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="gremit" Version="3.4.1" />
+        <PackageReference Include="gremit" Version="3.4.10" />
         <PackageReference Include="Antlr4" Version="4.6.6">
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
