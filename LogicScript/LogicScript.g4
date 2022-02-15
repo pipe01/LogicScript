@@ -1,6 +1,10 @@
 grammar LogicScript;
 
+document            : script | test_bench;
 script              : (declaration NL+)* EOF ;
+test_bench          : (test_case NL+)* EOF;
+
+test_case           : '@test' WS+ name=TEXT WS+ ;
 
 declaration         : decl_const | decl_input | decl_output | decl_register | decl_when | decl_startup | decl_assign ;
 decl_const          : 'const' WS+ IDENT WS+ '=' WS+ expression ;
@@ -42,9 +46,9 @@ task_update         : 'queueUpdate' ;
 
 stmt_vardecl        : 'local' WS+ VARIABLE ('\'' size=atom)? (wsnl '=' wsnl expression)? ;
 
-expression          : '(' wsnl expression wsnl ')'                              # exprParen
-                    | '(' wsnl expression wsnl ')\'' DEC_NUMBER                 # exprTrunc
-                    | funcName=IDENT '(' wsnl expression wsnl ')'               # exprCall
+expression          : LPAREN wsnl expression wsnl RPAREN                              # exprParen
+                    | LPAREN wsnl expression wsnl RPAREN '\'' DEC_NUMBER                 # exprTrunc
+                    | funcName=IDENT LPAREN wsnl expression wsnl RPAREN               # exprCall
                     | expression indexer                                        # exprSlice
                     | NOT expression                                            # exprNegate
                     | expression wsnl op=(OR | AND) wsnl expression             # exprAndOr
@@ -112,6 +116,9 @@ TRUNC_EQUALS        : '\'=' ;
 COMPARE_EQUALS      : '==' ;
 COMPARE_GREATER     : '>' ;
 COMPARE_LESSER      : '<' ;
+
+LPAREN              : '(' ;
+RPAREN              : ')' ;
 
 AND                 : '&' ;
 OR                  : '|' ;

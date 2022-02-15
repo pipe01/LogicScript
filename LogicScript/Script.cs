@@ -71,7 +71,16 @@ namespace LogicScript
 
             try
             {
-                script = new ScriptVisitor(errors).Visit(parser.script());
+                var doc = parser.document();
+
+                if (doc.script() == null)
+                {
+                    errors.AddError("Expected script file, not test bench", doc.script().Span(), true);
+                }
+                else
+                {
+                    script = new ScriptVisitor(errors).Visit(parser.script());
+                }
             }
             catch (ParseException ex)
             {
