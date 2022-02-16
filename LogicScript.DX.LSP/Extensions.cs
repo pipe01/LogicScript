@@ -1,7 +1,7 @@
 ﻿using LogicScript.Parsing;
 using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 
-namespace LogicScript.LSP
+namespace LogicScript.DX.LSP
 {
     public static class Extensions
     {

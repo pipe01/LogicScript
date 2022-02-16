@@ -8,7 +8,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace LogicScript.LSP.Handlers
+namespace LogicScript.DX.LSP.Handlers
 {
     class RenameHandler : RenameHandlerBase
     {

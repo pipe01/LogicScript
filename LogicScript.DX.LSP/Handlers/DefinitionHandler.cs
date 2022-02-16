@@ -8,7 +8,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Range = OmniSharp.Extensions.LanguageServer.Protocol.Models.Range;
 
-namespace LogicScript.LSP.Handlers
+namespace LogicScript.DX.LSP.Handlers
 {
     class DefinitionHandler : DefinitionHandlerBase
     {

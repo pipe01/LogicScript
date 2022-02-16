@@ -8,7 +8,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace LogicScript.LSP
+namespace LogicScript.DX.LSP
 {
     internal class Workspace
     {

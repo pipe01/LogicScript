@@ -7,7 +7,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LogicScript", "LogicScript\
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Tester", "Tester\Tester.csproj", "{D3D8D859-02A9-4870-9118-835BE73C644A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LogicScript.LSP", "LogicScript.LSP\LogicScript.LSP.csproj", "{073D8343-49DA-41AA-9EE5-1EFC356C3AD8}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LogicScript.LSP", "LogicScript.DX.LSP\LogicScript.DX.LSP.csproj", "{073D8343-49DA-41AA-9EE5-1EFC356C3AD8}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LogicScript.Tests", "LogicScript.Tests\LogicScript.Tests.csproj", "{987A542F-DE70-47A9-8E45-FBF90F95F6B8}"
 EndProject

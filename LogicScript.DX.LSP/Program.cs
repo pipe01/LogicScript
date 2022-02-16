@@ -1,4 +1,4 @@
-﻿using LogicScript.LSP.Handlers;
+﻿using LogicScript.DX.LSP.Handlers;
 using Microsoft.Extensions.DependencyInjection;
 using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 using OmniSharp.Extensions.LanguageServer.Server;
@@ -7,7 +7,7 @@ using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace LogicScript.LSP
+namespace LogicScript.DX.LSP
 {
     class Program
     {
