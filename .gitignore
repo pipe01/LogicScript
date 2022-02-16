@@ -11,6 +11,7 @@
 *.sln.docstates
 
 test.lsx
+test.lsbench
 
 .antlr
 

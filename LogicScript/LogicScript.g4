@@ -1,10 +1,15 @@
 grammar LogicScript;
 
-document            : script | test_bench;
 script              : (declaration NL+)* EOF ;
-test_bench          : (test_case NL+)* EOF;
+test_bench          : (test_case NL+)* EOF ;
 
-test_case           : '@test' WS+ name=TEXT WS+ ;
+test_case           : '@test' WS+ name=TEXT WS+ LPAREN wsnl (test_step NL+)* RPAREN wsnl ;
+test_step           : (step_action | step_repeat) COMMA ;
+
+step_action         : inputs=step_ports '=>' WS* outputs=step_ports ;
+step_repeat         : '@' DEC_NUMBER ;
+step_ports          : (step_portvalue WS+)+ ;
+step_portvalue      : port=IDENT LPAREN value=number RPAREN ;
 
 declaration         : decl_const | decl_input | decl_output | decl_register | decl_when | decl_startup | decl_assign ;
 decl_const          : 'const' WS+ IDENT WS+ '=' WS+ expression ;
@@ -84,7 +89,7 @@ reference           : VARIABLE                      # refLocal
 wsnl                : (WS | NL)* ;
 wsnl_req            : (WS | NL)+ ;
 
-indexer             : '[' lr=('>' | '<')? WS* offset=expression wsnl (',' WS* len=expression)? ']' ;
+indexer             : '[' lr=('>' | '<')? WS* offset=expression wsnl (COMMA WS* len=expression)? ']' ;
 
 /*
  * Lexer Rules
@@ -119,6 +124,7 @@ COMPARE_LESSER      : '<' ;
 
 LPAREN              : '(' ;
 RPAREN              : ')' ;
+COMMA               : ',' ;
 
 AND                 : '&' ;
 OR                  : '|' ;

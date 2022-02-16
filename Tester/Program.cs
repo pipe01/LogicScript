@@ -2,6 +2,7 @@
 using LogicScript.Compiling;
 using LogicScript.Data;
 using LogicScript.Parsing;
+using LogicScript.Testing;
 using System;
 using System.IO;
 
@@ -18,11 +19,13 @@ namespace Tester
                 Console.WriteLine(err);
             }
 
-            if (script != null)
-            {
-                var deleg = Compiler.Compile(script);
-                deleg(new MyMachine(), true);
-            }
+            // if (script != null)
+            // {
+            //     var deleg = Compiler.Compile(script);
+            //     deleg(new MyMachine(), true);
+            // }
+
+            var (bench, _) = TestBench.Parse(File.ReadAllText("test.lsbench"), script);
         }
 
         class MyMachine : IUpdatableMachine
