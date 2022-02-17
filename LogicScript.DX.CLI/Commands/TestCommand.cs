@@ -32,16 +32,16 @@ namespace LogicScript.DX.CLI.Commands
 
             foreach (var file in Files)
             {
-                RunFile(file);
+                RunFile(file, new PrettyTestLogger());
             }
         }
 
-        private void RunFile(string scriptPath)
+        private void RunFile(string scriptPath, ITestLogger logger)
         {
             var (script, errors) = Script.Parse(File.ReadAllText(scriptPath));
             if (errors != null && errors.Count > 0)
             {
-                PrintErrors(scriptPath, errors);
+                logger.LogParseErrors(scriptPath, errors);
                 return;
             }
             Debug.Assert(script != null);
@@ -49,51 +49,34 @@ namespace LogicScript.DX.CLI.Commands
             var (bench, benchErrors) = TestBench.Parse(File.ReadAllText(GetBenchPath(scriptPath)), script);
             if (benchErrors != null && benchErrors.Count > 0)
             {
-                PrintErrors(scriptPath, benchErrors);
+                logger.LogParseErrors(scriptPath, benchErrors);
                 return;
             }
             Debug.Assert(bench != null);
 
-            using (SimpleConsoleColors.Yellow)
-                Console.WriteLine($"Running {bench.CaseCount} tests...");
-            Console.WriteLine();
+            logger.LogStartBench(bench);
 
             var results = bench.Run();
+            int successful = 0, failed = 0;
 
             foreach (var result in results)
             {
+                logger.LogResult(result);
+
                 if (result.Success)
                 {
-                    using (SimpleConsoleColors.Green)
-                        Console.WriteLine($"✓ {result.Name}");
+                    successful++;
                 }
                 else
                 {
-                    var step = result.FailedStep!.Value;
-
-                    using (SimpleConsoleColors.Red)
-                        Console.WriteLine($"✗ {result.Name}, step {step.StepIndex}");
-                    Console.WriteLine("  Output values do not match:");
-
-                    foreach (var item in step.MismatchedOutputs)
-                    {
-                        Console.WriteLine($"    Expected {item.Key} = {step.ExpectedOutputs[item.Key]}, got {item.Value}");
-                    }
+                    failed++;
 
                     if (FailFast)
                         break;
                 }
             }
-        }
 
-        private void PrintErrors(string fileName, IReadOnlyList<Parsing.Error> errors)
-        {
-            Console.WriteLine($"Found {errors.Count} while parsing \"{fileName}\":");
-
-            foreach (var err in errors)
-            {
-                Console.WriteLine($"  {err.Message} at {err.Span}");
-            }
+            logger.LogEndBench(bench, successful, failed);
         }
 
         private static string GetBenchPath(string scriptPath) => Path.ChangeExtension(scriptPath, ".lsbench");

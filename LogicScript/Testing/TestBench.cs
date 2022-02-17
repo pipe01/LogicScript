@@ -9,8 +9,6 @@ using LogicScript.Testing.Results;
 
 namespace LogicScript.Testing
 {
-    public record struct TestResults(bool Success, IReadOnlyList<CaseResult> Cases);
-
     public class TestBench
     {
         private readonly IList<TestCase> Cases;
