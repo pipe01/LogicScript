@@ -16,6 +16,8 @@ namespace LogicScript.Testing
         private readonly IList<TestCase> Cases;
         private readonly Script Script;
 
+        public int CaseCount => Cases.Count;
+
         internal TestBench(IList<TestCase> cases, Script script)
         {
             this.Cases = cases;
@@ -43,7 +45,7 @@ namespace LogicScript.Testing
             {
                 foreach (var input in step.Inputs)
                 {
-                    input.Value.FillBits(machine.Inputs[input.Port.StartIndex..(input.Port.StartIndex + input.Port.BitSize)]);
+                    input.Value.FillBits(machine.Inputs.AsSpan()[input.Port.StartIndex..(input.Port.StartIndex + input.Port.BitSize)]);
                 }
 
                 Script.Run(machine, !hasRunStartup);
