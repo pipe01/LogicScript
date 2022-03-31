@@ -54,7 +54,7 @@
         "@types/minimist": "^1.2.2",
         "@types/vscode": "^1.61.0",
         "esbuild": "^0.13.12",
-        "minimist": "^1.2.5",
+        "minimist": "^1.2.6",
         "rimraf": "^3.0.2",
         "vsce": "^1.102.0"
     }
