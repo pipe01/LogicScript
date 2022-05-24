@@ -13,6 +13,9 @@ namespace LogicScript.ByteCode
         private readonly Script Script;
         private readonly IList<ushort> Program;
 
+        private int CurrentPosition => Program.Count - 1;
+        private int NextPosition => Program.Count;
+
         private Compiler(Script script)
         {
             this.Script = script;

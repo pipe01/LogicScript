@@ -29,36 +29,40 @@ namespace LogicScript.ByteCode
 
         private bool ProcessInstruction()
         {
-            switch ((OpCode)Program[Pointer])
+            var opcode = (OpCode)Program[Pointer];
+            Pointer++;
+
+            switch (opcode)
             {
+                case OpCode.Nop:
+                    break;
+
+                case OpCode.Pop:
+                    Stack.Pop();
+                    break;
+
                 case OpCode.Ld_0:
-                    Pointer++;
                     Stack.Push(new BitsValue(0, Program[Pointer++]));
                     break;
 
                 case OpCode.Ld_1:
-                    Pointer++;
                     Stack.Push(new BitsValue(1, Program[Pointer++]));
                     break;
 
                 case OpCode.Ld_0_1:
-                    Pointer++;
                     Stack.Push(BitsValue.Zero);
                     break;
 
                 case OpCode.Ld_1_1:
-                    Pointer++;
                     Stack.Push(BitsValue.One);
                     break;
 
                 case OpCode.Ldi_16:
-                    Pointer++;
                     Stack.Push(new BitsValue(Program[Pointer++], Program[Pointer++]));
                     break;
 
                 case OpCode.Ldi_32:
                     {
-                        Pointer++;
                         uint value = (uint)(Program[Pointer++] << 16) | Program[Pointer++];
                         Stack.Push(new BitsValue(value, Program[Pointer++]));
                         break;
@@ -66,7 +70,6 @@ namespace LogicScript.ByteCode
 
                 case OpCode.Ldi_64:
                     {
-                        Pointer++;
                         ulong value =
                               (uint)(Program[Pointer++] << 48)
                             | (uint)(Program[Pointer++] << 32)
@@ -78,17 +81,48 @@ namespace LogicScript.ByteCode
                     }
 
                 case OpCode.Dup:
-                    Pointer++;
                     Stack.Push(Stack.Peek());
                     break;
 
                 case OpCode.Show:
-                    Pointer++;
                     Console.WriteLine($"Debug print: {Stack.Pop()}");
                     break;
+
+                case OpCode.Jmp:
+                    Pointer = TakeAddress();
+                    break;
+
+                case OpCode.Brz or OpCode.Brnz:
+                    if ((Stack.Pop() == 0) == (opcode == OpCode.Brz))
+                        Pointer = TakeAddress();
+                    else
+                        TakeAddress();
+
+                    break;
+
+                case OpCode.Breq or OpCode.Brneq:
+                    if ((Stack.Pop() == Stack.Pop()) == (opcode == OpCode.Breq))
+                        Pointer = TakeAddress();
+                    else
+                        TakeAddress();
+
+                    break;
+
+                case OpCode.Add:
+                    Stack.Push(Stack.Pop() + Stack.Pop());
+                    break;
+
+                case OpCode.Sub:
+                    Stack.Push(Stack.Pop() - Stack.Pop());
+                    break;
+
+                default:
+                    throw new Exception("Invalid instruction");
             }
 
             return Pointer < Program.Length;
         }
+
+        private int TakeAddress() => (Program[Pointer++] << 16) | Program[Pointer++];
     }
 }
