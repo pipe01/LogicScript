@@ -6,20 +6,20 @@ using LogicScript.Data;
 
 namespace LogicScript.ByteCode
 {
-    public class CPU
+    public ref struct CPU
     {
-        private ushort[] Program;
-        private int Pointer;
+        private TapeReader Tape;
         private Stack<BitsValue> Stack = new();
 
-        public CPU(ushort[] program)
+        public CPU(byte[] program)
         {
-            this.Program = program;
+            this.Tape = new TapeReader(program);
         }
 
         public void Run()
         {
-            while (ProcessInstruction()) ;
+            while (!Tape.IsEOF)
+                ProcessInstruction();
 
             if (Stack.Count != 0)
             {
@@ -27,10 +27,9 @@ namespace LogicScript.ByteCode
             }
         }
 
-        private bool ProcessInstruction()
+        private void ProcessInstruction()
         {
-            var opcode = (OpCode)Program[Pointer];
-            Pointer++;
+            var opcode = Tape.ReadOpCode();
 
             switch (opcode)
             {
@@ -42,11 +41,11 @@ namespace LogicScript.ByteCode
                     break;
 
                 case OpCode.Ld_0:
-                    Stack.Push(new BitsValue(0, Program[Pointer++]));
+                    Stack.Push(new BitsValue(0, Tape.ReadByte()));
                     break;
 
                 case OpCode.Ld_1:
-                    Stack.Push(new BitsValue(1, Program[Pointer++]));
+                    Stack.Push(new BitsValue(1, Tape.ReadByte()));
                     break;
 
                 case OpCode.Ld_0_1:
@@ -57,28 +56,21 @@ namespace LogicScript.ByteCode
                     Stack.Push(BitsValue.One);
                     break;
 
+                case OpCode.Ldi_8:
+                    Stack.Push(new BitsValue(Tape.ReadByte(), Tape.ReadByte()));
+                    break;
+
                 case OpCode.Ldi_16:
-                    Stack.Push(new BitsValue(Program[Pointer++], Program[Pointer++]));
+                    Stack.Push(new BitsValue(Tape.ReadUInt16(), Tape.ReadByte()));
                     break;
 
                 case OpCode.Ldi_32:
-                    {
-                        uint value = (uint)(Program[Pointer++] << 16) | Program[Pointer++];
-                        Stack.Push(new BitsValue(value, Program[Pointer++]));
-                        break;
-                    }
+                    Stack.Push(new BitsValue(Tape.ReadUInt32(), Tape.ReadByte()));
+                    break;
 
                 case OpCode.Ldi_64:
-                    {
-                        ulong value =
-                              (uint)(Program[Pointer++] << 48)
-                            | (uint)(Program[Pointer++] << 32)
-                            | (uint)(Program[Pointer++] << 16)
-                            | Program[Pointer++];
-
-                        Stack.Push(new BitsValue(value, Program[Pointer++]));
-                        break;
-                    }
+                    Stack.Push(new BitsValue(Tape.ReadUInt64(), Tape.ReadByte()));
+                    break;
 
                 case OpCode.Dup:
                     Stack.Push(Stack.Peek());
@@ -89,22 +81,22 @@ namespace LogicScript.ByteCode
                     break;
 
                 case OpCode.Jmp:
-                    Pointer = TakeAddress();
+                    Tape.JumpToAddress();
                     break;
 
                 case OpCode.Brz or OpCode.Brnz:
                     if ((Stack.Pop() == 0) == (opcode == OpCode.Brz))
-                        Pointer = TakeAddress();
+                        Tape.JumpToAddress();
                     else
-                        TakeAddress();
+                        Tape.ReadAddress();
 
                     break;
 
                 case OpCode.Breq or OpCode.Brneq:
                     if ((Stack.Pop() == Stack.Pop()) == (opcode == OpCode.Breq))
-                        Pointer = TakeAddress();
+                        Tape.JumpToAddress();
                     else
-                        TakeAddress();
+                        Tape.ReadAddress();
 
                     break;
 
@@ -119,10 +111,6 @@ namespace LogicScript.ByteCode
                 default:
                     throw new Exception("Invalid instruction");
             }
-
-            return Pointer < Program.Length;
         }
-
-        private int TakeAddress() => (Program[Pointer++] << 16) | Program[Pointer++];
     }
 }
