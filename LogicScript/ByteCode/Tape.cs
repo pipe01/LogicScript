@@ -67,6 +67,8 @@ namespace LogicScript.ByteCode
 
             while (!tape.IsEOF)
             {
+                int opcodePos = tape.Position;
+                
                 var opcode = tape.ReadOpCode();
 
                 var field = typeof(OpCode).GetField(opcode.ToString());
@@ -79,7 +81,7 @@ namespace LogicScript.ByteCode
                 var stackValue = stackAttr?.Amounts.Sum() ?? 0;
                 stack += stackValue;
 
-                w.Write(stack.ToString().PadRight(3));
+                w.Write(opcodePos.ToString().PadLeft(4));
                 w.Write(' ');
                 w.Write(opAttr.ShortName);
                 w.Write(' ');

@@ -124,9 +124,21 @@ namespace LogicScript.ByteCode
                     Locals[Tape.ReadByte()] = Pop();
                     break;
 
-                case >= OpCode.FirstOp and <= OpCode.LastOp:
-                    Operator op = (Operator)(opcode - OpCode.FirstOp);
+                case >= OpCode.FirstBinOp and <= OpCode.LastBinOp:
+                    Operator op = (Operator)(opcode - OpCode.FirstBinOp);
                     Push(Operations.DoOperation(Pop(), Pop(), op));
+                    break;
+
+                case OpCode.Not:
+                    Push(Pop().Negated);
+                    break;
+
+                case OpCode.Length:
+                    Push(Pop().Length);
+                    break;
+
+                case OpCode.AllOnes:
+                    Push(Pop().AreAllBitsSet);
                     break;
 
                 default:

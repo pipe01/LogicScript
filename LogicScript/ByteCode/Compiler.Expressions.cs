@@ -26,6 +26,10 @@ namespace LogicScript.ByteCode
                     Visit(trunc);
                     break;
 
+                case UnaryOperatorExpression unary:
+                    Visit(unary);
+                    break;
+
                 default:
                     throw new Exception("Unknown expression structure");
             }
@@ -42,7 +46,7 @@ namespace LogicScript.ByteCode
                 else
                 {
                     Push(OpCode.Ld_0);
-                    Push(expr.Value.Length);
+                    Push((byte)expr.Value.Length);
                 }
             }
             else if (expr.Value.Number == 1)
@@ -54,7 +58,7 @@ namespace LogicScript.ByteCode
                 else
                 {
                     Push(OpCode.Ld_1);
-                    Push(expr.Value.Length);
+                    Push((byte)expr.Value.Length);
                 }
             }
             else
@@ -132,6 +136,28 @@ namespace LogicScript.ByteCode
                 Operator.Lesser => OpCode.Lesser,
                 _ => throw new Exception("Unknown binary operator")
             });
+        }
+
+        private void Visit(UnaryOperatorExpression expr)
+        {
+            Visit(expr.Operand);
+
+            switch (expr.Operator)
+            {
+                case Operator.Not:
+                    Push(OpCode.Not);
+                    break;
+                case Operator.Rise:
+                case Operator.Fall:
+                case Operator.Change:
+                    throw new NotImplementedException();
+                case Operator.Length:
+                    Push(OpCode.Length);
+                    break;
+                case Operator.AllOnes:
+                    Push(OpCode.AllOnes);
+                    break;
+            }
         }
     }
 }

@@ -42,8 +42,12 @@ namespace LogicScript.ByteCode
         [OpCode("grt"), Stack(-2, +1)] Greater,
         [OpCode("less"), Stack(-2, +1)] Lesser,
 
-        FirstOp = And,
-        LastOp = Lesser,
+        FirstBinOp = And,
+        LastBinOp = Lesser,
+
+        [OpCode("not"), Stack(-1, +1)] Not,
+        [OpCode("len"), Stack(-1, +1)] Length,
+        [OpCode("all1"), Stack(-1, +1)] AllOnes,
 
         [OpCode("trunc", "size", 1), Stack(-1, +1)] Trunc,
 
