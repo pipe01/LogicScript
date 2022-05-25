@@ -1,6 +1,7 @@
 ﻿using LogicScript.Data;
 using LogicScript.Parsing.Structures;
 using LogicScript.Parsing.Structures.Statements;
+using LogicScript.Utils;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text.RegularExpressions;
@@ -104,7 +105,7 @@ namespace LogicScript.Interpreting
 
             if (stmt is PrintTaskStatement print)
             {
-                Machine.Print(FormatString(print.Text, Locals));
+                Machine.Print(PrintStringFormat.Format(print.Text, Locals));
             }
             else if (stmt is ShowTaskStatement show)
             {
@@ -123,21 +124,6 @@ namespace LogicScript.Interpreting
             }
 
             return false;
-
-            string FormatString(string str, IDictionary<string, BitsValue> locals)
-            {
-                return Regex.Replace(str, @"\$([a-zA-Z_][a-zA-Z0-9_]*)(:(?<base>b|x))?", m =>
-                {
-                    if (!locals.TryGetValue(m.Groups[1].Value, out var value))
-                        throw new InterpreterException($"Local variable ${m.Value} not found in string interpolation", stmt.Span);
-
-                    var nBase = m.Groups["base"].Success ? m.Groups["base"].Value : null;
-
-                    return nBase == "x" ? value.ToStringHex()
-                        : nBase == "b" ? value.ToStringBinary()
-                        : value.ToString();
-                });
-            }
         }
 
         private bool Visit(DeclareLocalStatement stmt)
