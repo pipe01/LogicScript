@@ -24,7 +24,12 @@ namespace LogicScript.ByteCode
         [OpCode("breq", "addr", 4), Stack(-1)] Breq,
         [OpCode("brneq", "addr", 4), Stack(-1)] Brneq,
 
-        [OpCode("and"), Stack(-2, +1)] And,
+        // We put these markers before the actual operators because otherwise the
+        // Type.GetField() chooses the marker instead of the last operator
+        FirstBinOp = And,
+        LastBinOp = Lesser,
+
+        [OpCode("and"), Stack(-2, +1)] And = Brneq + 1,
         [OpCode("or"), Stack(-2, +1)] Or,
         [OpCode("xor"), Stack(-2, +1)] Xor,
         [OpCode("shl"), Stack(-2, +1)] Shl,
@@ -41,9 +46,6 @@ namespace LogicScript.ByteCode
         [OpCode("neq"), Stack(-2, +1)] NotEquals,
         [OpCode("grt"), Stack(-2, +1)] Greater,
         [OpCode("less"), Stack(-2, +1)] Lesser,
-
-        FirstBinOp = And,
-        LastBinOp = Lesser,
 
         [OpCode("not"), Stack(-1, +1)] Not,
         [OpCode("len"), Stack(-1, +1)] Length,
