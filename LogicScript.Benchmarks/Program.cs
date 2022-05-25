@@ -14,15 +14,31 @@ namespace LogicScript.Benchmarks
     {
         private readonly string Source =
 @"when 1
-    local $test = 123;
+    local $a'64 = 23947;
+    local $b'64 = 12398;
+    local $c'64 = 34598;
 
-    if 1
-        @print $test;
+    $a = $b & $c
+    $a = $b | $c
+    $a = $b ^ $c
+    $a = $b << $c
+    $a = $b >> $c
 
-        $test '= $test + 1
+    $a '= $b + $c
+    $a '= $b * $c
+    $a = $b / $c
+    $a = $b ** $c
+    $a = $b % $c
 
-        @print $test
-    end
+    $a = $b == $c
+    $a = $b != $c
+    $a = $b > $c
+    $a = $b < $c
+    $a = $b < $c
+
+    $a = !$b
+    $a = len($b)
+    $a = allOnes($b)
 end
 ";
 
@@ -56,12 +72,6 @@ end
         public void RunInterpreted()
         {
             Interpreter.Run(Script, Machine, false);
-        }
-
-        [Benchmark]
-        public void RunInterpretedNoCheck()
-        {
-            Interpreter.Run(Script, Machine, false, false);
         }
 
         [Benchmark]

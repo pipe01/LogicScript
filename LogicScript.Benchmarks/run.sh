@@ -1,1 +1,1 @@
-sudo sh -c "dotnet run -c Release && rm -r obj" && dotnet restore
+sudo sh -c "dotnet run -c Release; rm -r obj"; dotnet restore
