@@ -25,9 +25,11 @@ namespace LogicScript.ByteCode
         public static byte[] Compile(Script script)
         {
             var compiler = new Compiler(script);
-            
-            var expr = ((script.Blocks[0] as StartupBlock)?.Body as BlockStatement)?.Statements[0];
-            compiler.Visit(expr ?? throw new Exception("aaa"));
+
+            foreach (var block in script.Blocks)
+            {
+                compiler.Visit(block);
+            }
 
             return compiler.Program.ToArray();
         }
