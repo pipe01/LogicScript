@@ -2,10 +2,6 @@ namespace LogicScript.ByteCode
 {
     public enum OpCode : byte
     {
-        // Metadata opcodes, must appear before all other opcodes
-        Locals,     // locals <count (1)> [0]
-
-        // Other opcodes
         Nop,        // nop [0]
         Pop,        // pop [-1]
 

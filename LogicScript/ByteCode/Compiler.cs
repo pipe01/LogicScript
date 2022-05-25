@@ -11,28 +11,34 @@ namespace LogicScript.ByteCode
 {
     internal ref partial struct Compiler
     {
-        private readonly Script Script;
-        private readonly IList<byte> Program;
+        private const int InitialProgramCapacity = 100;
+        private const int ProgramCapacityIncrement = 100;
 
-        private int CurrentPosition => Program.Count - 1;
-        private int NextPosition => Program.Count;
+        private readonly Script Script;
+
+        private byte[] Program;
+        private int ProgramLength;
+        private Header Header;
+
+        private int CurrentPosition => ProgramLength - 1;
+        private int NextPosition => ProgramLength;
 
         private readonly IDictionary<string, byte> LocalsMap;
 
         private Compiler(Script script)
         {
+            this.Header = new();
             this.Script = script;
-            this.Program = new List<byte>();
+            this.Program = new byte[InitialProgramCapacity];
             this.LocalsMap = new Dictionary<string, byte>();
 
-            Push(OpCode.Locals);
-            Push((byte)0);
+            this.ProgramLength = Header.Size;
         }
 
         private void Done()
         {
-            // Write locals count to "locals" opcode in header
-            Program[1] = (byte)LocalsMap.Count;
+            Header.LocalsCount = (byte)LocalsMap.Count;
+            Header.Write(Program);
         }
 
         public static byte[] Compile(Script script)
@@ -46,10 +52,17 @@ namespace LogicScript.ByteCode
 
             compiler.Done();
 
-            return compiler.Program.ToArray();
+            return compiler.Program[0..compiler.ProgramLength];
         }
 
-        private void Push(byte num) => Program.Add(num);
+        private void Push(byte num)
+        {
+            if (ProgramLength == Program.Length)
+                Array.Resize(ref Program, Program.Length + ProgramCapacityIncrement);
+
+            Program[ProgramLength] = num;
+            ProgramLength++;
+        }
 
         private void Push(OpCode op) => Push((byte)op);
         private void Push(ushort num)

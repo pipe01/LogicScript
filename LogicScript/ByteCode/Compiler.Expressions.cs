@@ -1,4 +1,5 @@
 using System;
+using LogicScript.Parsing.Structures;
 using LogicScript.Parsing.Structures.Expressions;
 
 namespace LogicScript.ByteCode
@@ -11,6 +12,10 @@ namespace LogicScript.ByteCode
             {
                 case NumberLiteralExpression numLit:
                     Visit(numLit);
+                    break;
+
+                case ReferenceExpression refExpr:
+                    Visit(refExpr);
                     break;
 
                 default:
@@ -68,6 +73,22 @@ namespace LogicScript.ByteCode
                 }
 
                 Push((byte)expr.Value.Length);
+            }
+        }
+
+        private void Visit(ReferenceExpression expr)
+        {
+            if (expr.Reference.Port is LocalInfo local)
+            {
+                if (!LocalsMap.TryGetValue(local.Name, out var index))
+                    throw new Exception("Unknown local reference");
+
+                Push(OpCode.Ldloc);
+                Push(index);
+            }
+            else
+            {
+                throw new NotImplementedException();
             }
         }
     }

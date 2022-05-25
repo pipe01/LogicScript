@@ -7,15 +7,19 @@ namespace LogicScript.ByteCode
     public ref struct CPU
     {
         private readonly TapeReader Tape;
+        private readonly Header Header;
         private readonly Stack<BitsValue> Stack = new();
         private readonly IMachine Machine;
 
-        private BitsValue[] Locals = new BitsValue[0];
+        private BitsValue[] Locals;
 
         public CPU(byte[] program, IMachine machine)
         {
             this.Tape = new TapeReader(program);
             this.Machine = machine;
+            this.Header = Tape.ReadHeader();
+
+            this.Locals = new BitsValue[Header.LocalsCount];
         }
 
         public void Run()
@@ -108,6 +112,14 @@ namespace LogicScript.ByteCode
 
                 case OpCode.Sub:
                     Stack.Push(Stack.Pop() - Stack.Pop());
+                    break;
+
+                case OpCode.Ldloc:
+                    Stack.Push(Locals[Tape.ReadByte()]);
+                    break;
+
+                case OpCode.Stloc:
+                    Locals[Tape.ReadByte()] = Stack.Pop();
                     break;
 
                 default:

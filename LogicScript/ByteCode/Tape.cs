@@ -1,16 +1,15 @@
-using System;
 using System.Buffers.Binary;
 
 namespace LogicScript.ByteCode
 {
-    public ref struct TapeReader
+    internal class TapeReader
     {
-        public readonly ReadOnlySpan<byte> Data;
+        public readonly byte[] Data;
         public int Position;
 
         public bool IsEOF => Position >= Data.Length;
 
-        public TapeReader(ReadOnlySpan<byte> data)
+        public TapeReader(byte[] data)
         {
             this.Data = data;
             this.Position = 0;
@@ -19,6 +18,15 @@ namespace LogicScript.ByteCode
         public void JumpToAddress() => Position = ReadAddress();
 
         public byte ReadByte() => Data[Position++];
+
+        public Header ReadHeader()
+        {
+            Header header = new();
+            header.Read(Data[Position..]);
+
+            Position += Header.Size;
+            return header;
+        }
 
         public OpCode ReadOpCode() => (OpCode)ReadByte();
 
