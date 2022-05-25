@@ -10,12 +10,20 @@ namespace LogicScript.ByteCode
         {
             switch (expr)
             {
+                case BinaryOperatorExpression binOp:
+                    Visit(binOp);
+                    break;
+
                 case NumberLiteralExpression numLit:
                     Visit(numLit);
                     break;
 
                 case ReferenceExpression refExpr:
                     Visit(refExpr);
+                    break;
+
+                case TruncateExpression trunc:
+                    Visit(trunc);
                     break;
 
                 default:
@@ -89,6 +97,28 @@ namespace LogicScript.ByteCode
             else
             {
                 throw new NotImplementedException();
+            }
+        }
+
+        private void Visit(TruncateExpression expr)
+        {
+            Visit(expr.Operand);
+            Push(OpCode.Trunc);
+            Push((byte)expr.Size);
+        }
+
+        private void Visit(BinaryOperatorExpression expr)
+        {
+            switch (expr.Operator)
+            {
+                case Operator.Add or Operator.Subtract:
+                    Visit(expr.Left);
+                    Visit(expr.Right);
+                    Push(expr.Operator == Operator.Add ? OpCode.Add : OpCode.Sub);
+                    break;
+
+                default:
+                    throw new NotImplementedException();
             }
         }
     }

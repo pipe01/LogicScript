@@ -26,6 +26,8 @@ namespace LogicScript.ByteCode
         Add,        // add [-2+1]
         Sub,        // sub [-2+1]
 
+        Trunc,      // trunc <size (1)> [-1+1]
+
         Ldloc,      // ldloc <num (1)> [+1]
         Stloc,      // stloc <num (1)> [-1]
     }

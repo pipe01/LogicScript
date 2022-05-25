@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using LogicScript.Parsing.Structures;
 using LogicScript.Parsing.Structures.Expressions;
 using LogicScript.Parsing.Structures.Statements;
 
@@ -13,6 +14,10 @@ namespace LogicScript.ByteCode
         {
             switch (stmt)
             {
+                case AssignStatement assignStmt:
+                    Visit(assignStmt);
+                    break;
+                
                 case BlockStatement blockStmt:
                     Visit(blockStmt);
                     break;
@@ -70,6 +75,23 @@ namespace LogicScript.ByteCode
 
             Push(OpCode.Stloc);
             Push(GetLocal(stmt.Local));
+        }
+
+        private void Visit(AssignStatement stmt)
+        {
+            if (stmt.Reference.Port is LocalInfo local)
+            {
+                if (!LocalsMap.TryGetValue(local.Name, out var index))
+                    throw new Exception("Unknown local reference");
+
+                Visit(stmt.Value);
+                Push(OpCode.Stloc);
+                Push(index);
+            }
+            else
+            {
+                throw new NotImplementedException();
+            }
         }
     }
 }

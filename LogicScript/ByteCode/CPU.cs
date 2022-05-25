@@ -114,6 +114,10 @@ namespace LogicScript.ByteCode
                     Stack.Push(Stack.Pop() - Stack.Pop());
                     break;
 
+                case OpCode.Trunc:
+                    Stack.Push(Stack.Pop().Resize(Tape.ReadByte()));
+                    break;
+
                 case OpCode.Ldloc:
                     Stack.Push(Locals[Tape.ReadByte()]);
                     break;

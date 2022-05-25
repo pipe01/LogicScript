@@ -1,5 +1,5 @@
 ﻿using LogicScript;
-using LogicScript.Compiling;
+using LogicScript.ByteCode;
 using LogicScript.Data;
 using LogicScript.Parsing;
 using LogicScript.Testing;
@@ -19,13 +19,18 @@ namespace Tester
                 Console.WriteLine(err);
             }
 
+            var program = Compiler.Compile(script);
+            Console.WriteLine(string.Join(", ", program));
+
+            new CPU(program, new MyMachine()).Run();
+
             // if (script != null)
             // {
             //     var deleg = Compiler.Compile(script);
             //     deleg(new MyMachine(), true);
             // }
 
-            var (bench, _) = TestBench.Parse(File.ReadAllText("test.lsbench"), script);
+            var (bench, benchErrors) = TestBench.Parse(File.ReadAllText("test.lsbench"), script);
         }
 
         class MyMachine : IUpdatableMachine
