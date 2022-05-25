@@ -8,11 +8,14 @@ namespace LogicScript.ByteCode
 {
     public class CPU
     {
+        private const int MaxStackSize = 100;
+        
         private readonly TapeReader Tape;
         private readonly Header Header;
-        private readonly Stack<BitsValue> Stack = new();
+        private readonly BitsValue[] Stack = new BitsValue[MaxStackSize];
         private readonly IMachine Machine;
 
+        private int StackPointer = -1;
         private BitsValue[] Locals;
 
         public CPU(byte[] program, IMachine machine)
@@ -26,18 +29,18 @@ namespace LogicScript.ByteCode
 
         public void Run()
         {
+            Tape.Position = Header.Size;
+
             while (!Tape.IsEOF)
                 ProcessInstruction();
 
-            if (Stack.Count != 0)
-            {
-                throw new Exception($"Stack wasn't empty when program ended");
-            }
+            if (StackPointer != -1)
+                throw new Exception("Stack wasn't empty when program ended");
         }
 
-        private void Push(BitsValue v) => Stack.Push(v);
-        private BitsValue Pop() => Stack.Pop();
-        private BitsValue Peek() => Stack.Peek();
+        private void Push(BitsValue v) => Stack[++StackPointer] = v;
+        private BitsValue Pop() => Stack[StackPointer--];
+        private BitsValue Peek() => Stack[StackPointer];
 
         private void ProcessInstruction()
         {
