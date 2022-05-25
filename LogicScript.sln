@@ -13,6 +13,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LogicScript.Tests", "LogicS
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LogicScript.DX.CLI", "LogicScript.DX.CLI\LogicScript.DX.CLI.csproj", "{95E3A697-CABD-4E55-9DC2-6CFB2A1D9202}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LogicScript.Benchmarks", "LogicScript.Benchmarks\LogicScript.Benchmarks.csproj", "{8AF36F1D-43DA-43F6-95D5-C9C5BF287B3B}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -61,6 +63,14 @@ Global
 		{95E3A697-CABD-4E55-9DC2-6CFB2A1D9202}.Release|Any CPU.Build.0 = Release|Any CPU
 		{95E3A697-CABD-4E55-9DC2-6CFB2A1D9202}.Release|x64.ActiveCfg = Release|Any CPU
 		{95E3A697-CABD-4E55-9DC2-6CFB2A1D9202}.Release|x64.Build.0 = Release|Any CPU
+		{8AF36F1D-43DA-43F6-95D5-C9C5BF287B3B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8AF36F1D-43DA-43F6-95D5-C9C5BF287B3B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8AF36F1D-43DA-43F6-95D5-C9C5BF287B3B}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{8AF36F1D-43DA-43F6-95D5-C9C5BF287B3B}.Debug|x64.Build.0 = Debug|Any CPU
+		{8AF36F1D-43DA-43F6-95D5-C9C5BF287B3B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8AF36F1D-43DA-43F6-95D5-C9C5BF287B3B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8AF36F1D-43DA-43F6-95D5-C9C5BF287B3B}.Release|x64.ActiveCfg = Release|Any CPU
+		{8AF36F1D-43DA-43F6-95D5-C9C5BF287B3B}.Release|x64.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
