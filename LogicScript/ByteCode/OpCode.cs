@@ -1,47 +1,48 @@
+using LogicScript.ByteCode.DevEx;
+
 namespace LogicScript.ByteCode
 {
     public enum OpCode : byte
     {
-        Nop,        // nop [0]
-        Pop,        // pop [-1]
+        [OpCode("nop"), Stack(0)] Nop,
+        [OpCode("pop"), Stack(-1)] Pop,
 
-        Ldi_8,      // ldi_8 <value (1)> <length (1)> [+1]
-        Ldi_16,     // ldi_16 <value (2)> <length (1)> [+1]
-        Ldi_32,     // ldi_32 <value (4)> <length (1)> [+1]
-        Ldi_64,     // ldi_16 <value (8)> <length (1)> [+1]
-        Ld_0,       // ld_0 <length (1)> [+1]
-        Ld_1,       // ld_1 <length (1)> [+1]
-        Ld_0_1,     // ld_0_1 [+1]
-        Ld_1_1,     // ld_1_1 [+1]
+        [OpCode("ldi_8", "value", 1, "length", 1), Stack(+1)] Ldi_8,
+        [OpCode("ldi_16", "value", 2, "length", 1), Stack(+1)] Ldi_16,
+        [OpCode("ldi_32", "value", 4, "length", 1), Stack(+1)] Ldi_32,
+        [OpCode("ldi_64", "value", 8, "length", 1), Stack(+1)] Ldi_64,
+        [OpCode("ld_0", "length", 1), Stack(+1)] Ld_0,
+        [OpCode("ld_1", "length", 1), Stack(+1)] Ld_1,
+        [OpCode("ld_0_1"), Stack(+1)] Ld_0_1,
+        [OpCode("ld_1_1"), Stack(+1)] Ld_1_1,
+        [OpCode("dup"), Stack(+1)] Dup,
+        [OpCode("show"), Stack(-1)] Show,
 
-        Dup,        // dup [+1]
-        Show,       // show [-1]
+        [OpCode("jump", "addr", 4), Stack(0)] Jmp,
+        [OpCode("brz", "addr", 4), Stack(-1)] Brz,
+        [OpCode("brnz", "addr", 4), Stack(-1)] Brnz,
+        [OpCode("breq", "addr", 4), Stack(-1)] Breq,
+        [OpCode("brneq", "addr", 4), Stack(-1)] Brneq,
 
-        Jmp,        // jump <addr (4)> [0]
-        Brz,        // brz <addr (4)> [-1]
-        Brnz,       // brnz <addr (4)> [-1]
-        Breq,       // breq <addr (4)> [-2]
-        Brneq,      // brneq <addr (4)> [-2]
+        [OpCode("and"), Stack(-2, +1)] And,
+        [OpCode("or"), Stack(-2, +1)] Or,
+        [OpCode("xor"), Stack(-2, +1)] Xor,
+        [OpCode("shl"), Stack(-2, +1)] Shl,
+        [OpCode("shr"), Stack(-2, +1)] Shr,
 
-        And,        // and [-2+1]
-        Or,         // or [-2+1]
-        Xor,        // xor [-2+1]
-        Shl,        // shl [-2+1]
-        Shr,        // shl [-2+1]
-
-        Add,        // add [-2+1]
-        Sub,        // sub [-2+1]
-        Mult,       // mult [-2+1]
-        Div,        // div [-2+1]
-        Pow,        // pow [-2+1]
-        Mod,        // mod [-2+1]
+        [OpCode("add"), Stack(-2, +1)] Add,
+        [OpCode("sub"), Stack(-2, +1)] Sub,
+        [OpCode("mul"), Stack(-2, +1)] Mult,
+        [OpCode("div"), Stack(-2, +1)] Div,
+        [OpCode("pow"), Stack(-2, +1)] Pow,
+        [OpCode("mod"), Stack(-2, +1)] Mod,
 
         FirstOp = And,
         LastOp = Mod,
 
-        Trunc,      // trunc <size (1)> [-1+1]
+        [OpCode("trunc", "size", 1), Stack(-1, +1)] Trunc,
 
-        Ldloc,      // ldloc <num (1)> [+1]
-        Stloc,      // stloc <num (1)> [-1]
+        [OpCode("ldloc", "num", 1), Stack(+1)] Ldloc,
+        [OpCode("stloc", "num", 1), Stack(-1)] Stloc,
     }
 }
