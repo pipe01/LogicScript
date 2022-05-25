@@ -46,20 +46,20 @@ namespace LogicScript.ByteCode
             }
             else
             {
-                /*if (expr.Value.Length <= 8)
+                if (expr.Value.Length <= 8)
                 {
                     Push(OpCode.Ldi_8);
-                    Push((byte)expr.Value.Number);
+                    Push((byte)(expr.Value.Number & 0xFF));
                 }
-                else */if (expr.Value.Length <= 16)
+                else if (expr.Value.Length <= 16)
                 {
                     Push(OpCode.Ldi_16);
-                    Push((ushort)expr.Value.Number);
+                    Push((ushort)(expr.Value.Number & 0xFFFF));
                 }
                 else if (expr.Value.Length <= 32)
                 {
                     Push(OpCode.Ldi_32);
-                    Push((uint)expr.Value.Number);
+                    Push((uint)(expr.Value.Number & 0xFFFFFFFF));
                 }
                 else
                 {
