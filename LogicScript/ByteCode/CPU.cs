@@ -1,19 +1,21 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using LogicScript.Data;
 
 namespace LogicScript.ByteCode
 {
     public ref struct CPU
     {
-        private TapeReader Tape;
-        private Stack<BitsValue> Stack = new();
+        private readonly TapeReader Tape;
+        private readonly Stack<BitsValue> Stack = new();
+        private readonly IMachine Machine;
 
-        public CPU(byte[] program)
+        private BitsValue[] Locals = new BitsValue[0];
+
+        public CPU(byte[] program, IMachine machine)
         {
             this.Tape = new TapeReader(program);
+            this.Machine = machine;
         }
 
         public void Run()

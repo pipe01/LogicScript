@@ -2,10 +2,14 @@ namespace LogicScript.ByteCode
 {
     public enum OpCode : byte
     {
+        // Metadata opcodes, must appear before all other opcodes
+        Locals,     // locals <count (1)> [0]
+
+        // Other opcodes
         Nop,        // nop [0]
         Pop,        // pop [-1]
 
-        Ldi_8,     // ldi_8<value (1)> <length (1)> [+1]
+        Ldi_8,      // ldi_8 <value (1)> <length (1)> [+1]
         Ldi_16,     // ldi_16 <value (2)> <length (1)> [+1]
         Ldi_32,     // ldi_32 <value (4)> <length (1)> [+1]
         Ldi_64,     // ldi_16 <value (8)> <length (1)> [+1]
@@ -25,5 +29,8 @@ namespace LogicScript.ByteCode
 
         Add,        // add [-2+1]
         Sub,        // sub [-2+1]
+
+        Ldloc,      // ldloc <num (1)> [+1]
+        Stloc,      // stloc <num (1)> [-1]
     }
 }

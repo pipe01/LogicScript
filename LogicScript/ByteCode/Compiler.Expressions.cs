@@ -1,7 +1,4 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using LogicScript.Parsing.Structures.Expressions;
 
 namespace LogicScript.ByteCode
@@ -15,6 +12,9 @@ namespace LogicScript.ByteCode
                 case NumberLiteralExpression numLit:
                     Visit(numLit);
                     break;
+
+                default:
+                    throw new Exception("Unknown expression structure");
             }
         }
 

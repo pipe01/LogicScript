@@ -9,9 +9,9 @@ namespace LogicScript.ByteCode
 {
     partial struct Compiler
     {
-        private void Visit(Statement expr)
+        private void Visit(Statement stmt)
         {
-            switch (expr)
+            switch (stmt)
             {
                 case BlockStatement blockStmt:
                     Visit(blockStmt);
@@ -24,6 +24,13 @@ namespace LogicScript.ByteCode
                 case ShowTaskStatement showTask:
                     Visit(showTask);
                     break;
+
+                case DeclareLocalStatement decLocalStmt:
+                    Visit(decLocalStmt);
+                    break;
+
+                default:
+                    throw new Exception("Unknown statement structure");
             }
         }
 
@@ -52,6 +59,17 @@ namespace LogicScript.ByteCode
 
             Push(OpCode.Nop);
             MarkLabel(endLabel);
+        }
+
+        private void Visit(DeclareLocalStatement stmt)
+        {
+            if (stmt.Initializer != null)
+                Visit(stmt.Initializer);
+            else
+                Push(OpCode.Ld_0_1);
+
+            Push(OpCode.Stloc);
+            Push(GetLocal(stmt.Local));
         }
     }
 }

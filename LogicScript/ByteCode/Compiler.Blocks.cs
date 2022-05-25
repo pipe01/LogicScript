@@ -21,6 +21,9 @@ namespace LogicScript.ByteCode
                 case WhenBlock whenBlock:
                     Visit(whenBlock);
                     break;
+
+                default:
+                    throw new Exception("Unknown block structure");
             }
         }
 

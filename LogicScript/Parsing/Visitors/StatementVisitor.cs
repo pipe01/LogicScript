@@ -75,7 +75,7 @@ namespace LogicScript.Parsing.Visitors
             var to = new ExpressionVisitor(Context).Visit(context.to);
 
             if (!Context.Locals.ContainsKey(varName))
-                Context.Locals.Add(varName, new LocalInfo(to.BitSize, varName, new SourceSpan(context.VARIABLE().Symbol)));
+                Context.AddLocal(varName, to.BitSize, new SourceSpan(context.VARIABLE().Symbol));
 
             var body = Visit(context.block());
 
@@ -114,8 +114,7 @@ namespace LogicScript.Parsing.Visitors
                 Context.Errors.AddError("You must specify a local's size or initialize it", context.Span(), true);
             }
 
-            var localInfo = new LocalInfo(size, name, new SourceSpan(context.VARIABLE().Symbol));
-            Context.Locals.Add(name, localInfo);
+            var localInfo = Context.AddLocal(name, size, new SourceSpan(context.VARIABLE().Symbol));
 
             return new DeclareLocalStatement(context.Span(), localInfo, value);
         }

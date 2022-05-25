@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
 namespace LogicScript.Parsing.Structures
 {
@@ -6,12 +7,14 @@ namespace LogicScript.Parsing.Structures
     {
         public int BitSize { get; }
         public string Name { get; }
+        public string OriginalName { get; }
         public SourceSpan Span { get; }
 
-        public LocalInfo(int bitSize, string name, SourceSpan span)
+        public LocalInfo(int bitSize, string name, string originalName, SourceSpan span)
         {
             this.BitSize = bitSize;
             this.Name = name;
+            this.OriginalName = originalName;
             this.Span = span;
         }
 
@@ -26,8 +29,9 @@ namespace LogicScript.Parsing.Structures
         {
             return other is LocalInfo local
                 && local.Name == Name
-                && local.BitSize == BitSize
-                && local.Span.Equals(Span);
+                && local.BitSize == BitSize;
         }
+
+        public override int GetHashCode() => HashCode.Combine(BitSize, Name);
     }
 }

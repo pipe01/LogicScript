@@ -21,5 +21,12 @@ namespace LogicScript.Parsing.Visitors
         public bool DoesIdentifierExist(string iden)
             => Locals.ContainsKey(iden)
             || Outer.DoesIdentifierExist(iden);
+
+        public LocalInfo AddLocal(string name, int size, SourceSpan span)
+        {
+            var info = new LocalInfo(size, $"{name}_{Outer.LocalCounter++}", name, span);
+            Locals.Add(name, info);
+            return info;
+        }
     }
 }

@@ -8,6 +8,7 @@ namespace LogicScript.Parsing.Visitors
         public Script Script { get; }
         public ErrorSink Errors { get; }
         public IDictionary<string, Expression> Constants { get; } = new Dictionary<string, Expression>();
+        public int LocalCounter { get; set; }
 
         public ScriptContext(Script script, ErrorSink errors)
         {

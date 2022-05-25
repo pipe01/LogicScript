@@ -3,12 +3,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using LogicScript.Data;
+using LogicScript.Parsing.Structures;
 using LogicScript.Parsing.Structures.Blocks;
 using LogicScript.Parsing.Structures.Statements;
 
 namespace LogicScript.ByteCode
 {
-    internal readonly ref partial struct Compiler
+    internal ref partial struct Compiler
     {
         private readonly Script Script;
         private readonly IList<byte> Program;
@@ -16,10 +17,22 @@ namespace LogicScript.ByteCode
         private int CurrentPosition => Program.Count - 1;
         private int NextPosition => Program.Count;
 
+        private readonly IDictionary<string, byte> LocalsMap;
+
         private Compiler(Script script)
         {
             this.Script = script;
             this.Program = new List<byte>();
+            this.LocalsMap = new Dictionary<string, byte>();
+
+            Push(OpCode.Locals);
+            Push((byte)0);
+        }
+
+        private void Done()
+        {
+            // Write locals count to "locals" opcode in header
+            Program[1] = (byte)LocalsMap.Count;
         }
 
         public static byte[] Compile(Script script)
@@ -30,6 +43,8 @@ namespace LogicScript.ByteCode
             {
                 compiler.Visit(block);
             }
+
+            compiler.Done();
 
             return compiler.Program.ToArray();
         }
@@ -70,6 +85,16 @@ namespace LogicScript.ByteCode
         {
             Push(value.Number);
             Push((byte)value.Length);
+        }
+
+        private byte GetLocal(LocalInfo info)
+        {
+            if (!LocalsMap.TryGetValue(info.Name, out var idx))
+            {
+                LocalsMap[info.Name] = idx = (byte)LocalsMap.Count;
+            }
+
+            return idx;
         }
     }
 }
