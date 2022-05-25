@@ -30,7 +30,7 @@ namespace LogicScript.Parsing.Visitors
 
             var value = new ExpressionVisitor(Context, @ref.BitSize).Visit(context.expression());
 
-            return new AssignStatement(context.Span(), @ref, value, null);
+            return new AssignStatement(context.Span(), @ref, value);
         }
 
         public override Statement VisitAssignTruncate([NotNull] LogicScriptParser.AssignTruncateContext context)
@@ -41,8 +41,9 @@ namespace LogicScript.Parsing.Visitors
                 Context.Errors.AddError("The left hand side of an assignment must be writable", context.reference().Span());
 
             var value = new ExpressionVisitor(Context).Visit(context.expression());
+            var truncated = new TruncateExpression(context.Span(), value, @ref.BitSize);
 
-            return new AssignStatement(context.Span(), @ref, value, @ref.BitSize);
+            return new AssignStatement(context.Span(), @ref, truncated);
         }
 
         public override Statement VisitStmt_if([NotNull] LogicScriptParser.Stmt_ifContext context)
