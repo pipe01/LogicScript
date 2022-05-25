@@ -1,9 +1,4 @@
-using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using LogicScript.Compiling;
+using LogicScript.ByteCode;
 
 namespace LogicScript.Tests
 {
@@ -32,9 +27,9 @@ namespace LogicScript.Tests
     {
         public void Run(Script script, IMachine machine, bool runStartup = true)
         {
-            var del = Compiler.Compile(script);
+            var bytecode = Compiler.Compile(script);
 
-            del(machine, runStartup);
+            new CPU(bytecode, machine).Run();
         }
     }
 }

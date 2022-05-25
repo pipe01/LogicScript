@@ -126,6 +126,10 @@ namespace LogicScript.ByteCode
                 Operator.Divide => OpCode.Div,
                 Operator.Power => OpCode.Pow,
                 Operator.Modulus => OpCode.Mod,
+                Operator.EqualsCompare => OpCode.Equals,
+                Operator.NotEqualsCompare => OpCode.NotEquals,
+                Operator.Greater => OpCode.Greater,
+                Operator.Lesser => OpCode.Lesser,
                 _ => throw new Exception("Unknown binary operator")
             });
         }

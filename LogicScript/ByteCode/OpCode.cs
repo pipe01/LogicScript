@@ -37,8 +37,13 @@ namespace LogicScript.ByteCode
         [OpCode("pow"), Stack(-2, +1)] Pow,
         [OpCode("mod"), Stack(-2, +1)] Mod,
 
+        [OpCode("eq"), Stack(-2, +1)] Equals,
+        [OpCode("neq"), Stack(-2, +1)] NotEquals,
+        [OpCode("grt"), Stack(-2, +1)] Greater,
+        [OpCode("less"), Stack(-2, +1)] Lesser,
+
         FirstOp = And,
-        LastOp = Mod,
+        LastOp = Lesser,
 
         [OpCode("trunc", "size", 1), Stack(-1, +1)] Trunc,
 
