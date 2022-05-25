@@ -74,6 +74,22 @@ namespace LogicScript.ByteCode
             MarkLabel(endLabel);
         }
 
+        private void Visit(WhileStatement stmt)
+        {
+            var endLabel = NewLabel(true);
+            var startPos = NextPosition;
+
+            Visit(stmt.Condition);
+
+            Jump(OpCode.Brz, endLabel);
+
+            Visit(stmt.Body);
+            Jump(OpCode.Jmp, startPos);
+
+            Push(OpCode.Nop);
+            MarkLabel(endLabel);
+        }
+
         private void Visit(DeclareLocalStatement stmt)
         {
             if (stmt.Initializer != null)
@@ -100,21 +116,6 @@ namespace LogicScript.ByteCode
             {
                 throw new NotImplementedException();
             }
-        }
-
-        private void Visit(WhileStatement stmt)
-        {
-            var endLabel = NewLabel(true);
-            var startPos = CurrentPosition;
-
-            Visit(stmt.Condition);
-            Jump(OpCode.Brz, endLabel);
-
-            Visit(stmt.Body);
-            Jump(OpCode.Jmp, startPos);
-
-            Push(OpCode.Nop);
-            MarkLabel(endLabel);
         }
 
         private void Visit(BreakStatement stmt)

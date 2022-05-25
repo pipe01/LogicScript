@@ -8,11 +8,18 @@ namespace LogicScript.ByteCode
         private class Label
         {
             public IList<int> ReplaceAt { get; } = new List<int>();
+
+            public bool IsLoop { get; }
+
+            public Label(bool isLoop)
+            {
+                this.IsLoop = isLoop;
+            }
         }
 
         private Label NewLabel(bool isLoop = false)
         {
-            var label = new Label();
+            var label = new Label(isLoop);
 
             if (isLoop)
                 LoopStack.Push(label);
@@ -30,7 +37,8 @@ namespace LogicScript.ByteCode
                 Program[item + 3] = (byte)(CurrentPosition & 0xFF);
             }
 
-            LoopStack.Pop();
+            if (label.IsLoop)
+                LoopStack.Pop();
         }
 
         private void Jump(OpCode op, Label to)
