@@ -22,6 +22,10 @@ namespace LogicScript.ByteCode
                     Visit(refExpr);
                     break;
 
+                case TernaryOperatorExpression ternary:
+                    Visit(ternary);
+                    break;
+
                 case TruncateExpression trunc:
                     Visit(trunc);
                     break;
@@ -158,6 +162,26 @@ namespace LogicScript.ByteCode
                     Push(OpCode.AllOnes);
                     break;
             }
+        }
+
+        private void Visit(TernaryOperatorExpression expr)
+        {
+            var endLabel = NewLabel();
+            var falseLabel = NewLabel();
+
+            Visit(expr.Condition);
+            Jump(OpCode.Brz, falseLabel);
+
+            Visit(expr.IfTrue);
+            Jump(OpCode.Jmp, endLabel);
+
+            Push(OpCode.Nop);
+            MarkLabel(falseLabel);
+
+            Visit(expr.IfFalse);
+
+            Push(OpCode.Nop);
+            MarkLabel(endLabel);
         }
     }
 }
