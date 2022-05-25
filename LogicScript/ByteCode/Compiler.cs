@@ -1,11 +1,7 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using LogicScript.Data;
 using LogicScript.Parsing.Structures;
-using LogicScript.Parsing.Structures.Blocks;
-using LogicScript.Parsing.Structures.Statements;
 
 namespace LogicScript.ByteCode
 {
@@ -14,8 +10,6 @@ namespace LogicScript.ByteCode
         private const int InitialProgramCapacity = 100;
         private const int ProgramCapacityIncrement = 100;
 
-        private readonly Script Script;
-
         private byte[] Program;
         private int ProgramLength;
         private Header Header;
@@ -23,7 +17,9 @@ namespace LogicScript.ByteCode
         private int CurrentPosition => ProgramLength - 1;
         private int NextPosition => ProgramLength;
 
+        private readonly Script Script;
         private readonly IDictionary<string, byte> LocalsMap;
+        private readonly Stack<Label> LoopStack;
 
         private Compiler(Script script)
         {
@@ -31,6 +27,7 @@ namespace LogicScript.ByteCode
             this.Script = script;
             this.Program = new byte[InitialProgramCapacity];
             this.LocalsMap = new Dictionary<string, byte>();
+            this.LoopStack = new();
 
             this.ProgramLength = Header.Size;
         }

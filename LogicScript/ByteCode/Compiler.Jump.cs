@@ -1,34 +1,49 @@
 using System;
+using System.Collections.Generic;
 
 namespace LogicScript.ByteCode
 {
     partial struct Compiler
     {
-        private ref struct Label
+        private class Label
         {
-            public int AddressPointer;
-
-            public Label()
-            {
-                this.AddressPointer = 0;
-            }
+            public IList<int> ReplaceAt { get; } = new List<int>();
         }
 
-        private Label NewLabel() => new Label();
+        private Label NewLabel(bool isLoop = false)
+        {
+            var label = new Label();
+
+            if (isLoop)
+                LoopStack.Push(label);
+
+            return label;
+        }
 
         private void MarkLabel(Label label)
         {
-            Program[label.AddressPointer] = (byte)(CurrentPosition >> 24);
-            Program[label.AddressPointer + 1] = (byte)((CurrentPosition >> 16) & 0xFF);
-            Program[label.AddressPointer + 2] = (byte)((CurrentPosition >> 8) & 0xFF);
-            Program[label.AddressPointer + 3] = (byte)(CurrentPosition & 0xFF);
+            foreach (var item in label.ReplaceAt)
+            {
+                Program[item] = (byte)(CurrentPosition >> 24);
+                Program[item + 1] = (byte)((CurrentPosition >> 16) & 0xFF);
+                Program[item + 2] = (byte)((CurrentPosition >> 8) & 0xFF);
+                Program[item + 3] = (byte)(CurrentPosition & 0xFF);
+            }
+
+            LoopStack.Pop();
         }
 
-        private void Jump(OpCode op, ref Label to)
+        private void Jump(OpCode op, Label to)
         {
             Push(op);
-            to.AddressPointer = NextPosition;
+            to.ReplaceAt.Add(NextPosition);
             Push((uint)0);
+        }
+
+        private void Jump(OpCode op, int to)
+        {
+            Push(op);
+            Push(to);
         }
     }
 }

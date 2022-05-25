@@ -46,7 +46,7 @@ namespace LogicScript.ByteCode
             Visit(block.Condition);
 
             var endLabel = NewLabel();
-            Jump(OpCode.Brz, ref endLabel);
+            Jump(OpCode.Brz, endLabel);
 
             Visit(block.Body);
 

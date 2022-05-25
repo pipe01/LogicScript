@@ -22,6 +22,14 @@ namespace LogicScript.ByteCode
                     Visit(blockStmt);
                     break;
 
+                case BreakStatement breakStmt:
+                    Visit(breakStmt);
+                    break;
+
+                case DeclareLocalStatement decLocalStmt:
+                    Visit(decLocalStmt);
+                    break;
+
                 case IfStatement ifStmt:
                     Visit(ifStmt);
                     break;
@@ -30,8 +38,8 @@ namespace LogicScript.ByteCode
                     Visit(showTask);
                     break;
 
-                case DeclareLocalStatement decLocalStmt:
-                    Visit(decLocalStmt);
+                case WhileStatement whileStmt:
+                    Visit(whileStmt);
                     break;
 
                 default:
@@ -58,7 +66,7 @@ namespace LogicScript.ByteCode
             Visit(stmt.Condition);
 
             var endLabel = NewLabel();
-            Jump(OpCode.Brz, ref endLabel);
+            Jump(OpCode.Brz, endLabel);
 
             Visit(stmt.Body);
 
@@ -92,6 +100,26 @@ namespace LogicScript.ByteCode
             {
                 throw new NotImplementedException();
             }
+        }
+
+        private void Visit(WhileStatement stmt)
+        {
+            var endLabel = NewLabel(true);
+            var startPos = CurrentPosition;
+
+            Visit(stmt.Condition);
+            Jump(OpCode.Brz, endLabel);
+
+            Visit(stmt.Body);
+            Jump(OpCode.Jmp, startPos);
+
+            Push(OpCode.Nop);
+            MarkLabel(endLabel);
+        }
+
+        private void Visit(BreakStatement stmt)
+        {
+            Jump(OpCode.Jmp, LoopStack.Peek());
         }
     }
 }
