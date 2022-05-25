@@ -8,7 +8,7 @@ test_step           : (step_action | step_repeat) COMMA ;
 
 step_action         : inputs=step_ports '=>' WS* outputs=step_ports ;
 step_repeat         : '@' DEC_NUMBER ;
-step_ports          : (step_portvalue WS+)+ ;
+step_ports          : (step_portvalue WS+)* ;
 step_portvalue      : port=IDENT LPAREN value=number RPAREN ;
 
 declaration         : decl_const | decl_input | decl_output | decl_register | decl_when | decl_startup | decl_assign ;
