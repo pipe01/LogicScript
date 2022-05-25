@@ -81,6 +81,9 @@ namespace LogicScript.ByteCode
                 var stackValue = stackAttr?.Amounts.Sum() ?? 0;
                 stack += stackValue;
 
+                w.Write('(');
+                w.Write(stack);
+                w.Write(") ");
                 w.Write(opcodePos.ToString().PadLeft(4));
                 w.Write(' ');
                 w.Write(opAttr.ShortName);
