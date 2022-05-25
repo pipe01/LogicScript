@@ -10,7 +10,7 @@ namespace LogicScript.Interpreting
 {
     internal static class Operations
     {
-        public static BitsValue DoOperation(BitsValue left, BitsValue right, Operator op, SourceSpan span)
+        public static BitsValue DoOperation(BitsValue left, BitsValue right, Operator op)
         {
             var maxLen = left.Length > right.Length ? left.Length : right.Length;
 
@@ -64,7 +64,7 @@ namespace LogicScript.Interpreting
                     return new BitsValue(left.Number < right.Number ? 1ul : 0, 1);
             }
 
-            throw new InterpreterException("Unknown operator", span);
+            throw new InterpreterException("Unknown operator");
         }
     }
 }

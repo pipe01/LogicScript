@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using LogicScript.Data;
+using LogicScript.Interpreting;
+using LogicScript.Parsing.Structures;
 
 namespace LogicScript.ByteCode
 {
@@ -33,6 +35,10 @@ namespace LogicScript.ByteCode
             }
         }
 
+        private void Push(BitsValue v) => Stack.Push(v);
+        private BitsValue Pop() => Stack.Pop();
+        private BitsValue Peek() => Stack.Peek();
+
         private void ProcessInstruction()
         {
             var opcode = Tape.ReadOpCode();
@@ -43,47 +49,47 @@ namespace LogicScript.ByteCode
                     break;
 
                 case OpCode.Pop:
-                    Stack.Pop();
+                    Pop();
                     break;
 
                 case OpCode.Ld_0:
-                    Stack.Push(new BitsValue(0, Tape.ReadByte()));
+                    Push(new BitsValue(0, Tape.ReadByte()));
                     break;
 
                 case OpCode.Ld_1:
-                    Stack.Push(new BitsValue(1, Tape.ReadByte()));
+                    Push(new BitsValue(1, Tape.ReadByte()));
                     break;
 
                 case OpCode.Ld_0_1:
-                    Stack.Push(BitsValue.Zero);
+                    Push(BitsValue.Zero);
                     break;
 
                 case OpCode.Ld_1_1:
-                    Stack.Push(BitsValue.One);
+                    Push(BitsValue.One);
                     break;
 
                 case OpCode.Ldi_8:
-                    Stack.Push(new BitsValue(Tape.ReadByte(), Tape.ReadByte()));
+                    Push(new BitsValue(Tape.ReadByte(), Tape.ReadByte()));
                     break;
 
                 case OpCode.Ldi_16:
-                    Stack.Push(new BitsValue(Tape.ReadUInt16(), Tape.ReadByte()));
+                    Push(new BitsValue(Tape.ReadUInt16(), Tape.ReadByte()));
                     break;
 
                 case OpCode.Ldi_32:
-                    Stack.Push(new BitsValue(Tape.ReadUInt32(), Tape.ReadByte()));
+                    Push(new BitsValue(Tape.ReadUInt32(), Tape.ReadByte()));
                     break;
 
                 case OpCode.Ldi_64:
-                    Stack.Push(new BitsValue(Tape.ReadUInt64(), Tape.ReadByte()));
+                    Push(new BitsValue(Tape.ReadUInt64(), Tape.ReadByte()));
                     break;
 
                 case OpCode.Dup:
-                    Stack.Push(Stack.Peek());
+                    Push(Peek());
                     break;
 
                 case OpCode.Show:
-                    Console.WriteLine($"Debug print: {Stack.Pop()}");
+                    Console.WriteLine($"Debug print: {Pop()}");
                     break;
 
                 case OpCode.Jmp:
@@ -91,7 +97,7 @@ namespace LogicScript.ByteCode
                     break;
 
                 case OpCode.Brz or OpCode.Brnz:
-                    if ((Stack.Pop() == 0) == (opcode == OpCode.Brz))
+                    if ((Pop() == 0) == (opcode == OpCode.Brz))
                         Tape.JumpToAddress();
                     else
                         Tape.ReadAddress();
@@ -99,31 +105,28 @@ namespace LogicScript.ByteCode
                     break;
 
                 case OpCode.Breq or OpCode.Brneq:
-                    if ((Stack.Pop() == Stack.Pop()) == (opcode == OpCode.Breq))
+                    if ((Pop() == Pop()) == (opcode == OpCode.Breq))
                         Tape.JumpToAddress();
                     else
                         Tape.ReadAddress();
 
                     break;
 
-                case OpCode.Add:
-                    Stack.Push(Stack.Pop() + Stack.Pop());
-                    break;
-
-                case OpCode.Sub:
-                    Stack.Push(Stack.Pop() - Stack.Pop());
-                    break;
-
                 case OpCode.Trunc:
-                    Stack.Push(Stack.Pop().Resize(Tape.ReadByte()));
+                    Push(Pop().Resize(Tape.ReadByte()));
                     break;
 
                 case OpCode.Ldloc:
-                    Stack.Push(Locals[Tape.ReadByte()]);
+                    Push(Locals[Tape.ReadByte()]);
                     break;
 
                 case OpCode.Stloc:
-                    Locals[Tape.ReadByte()] = Stack.Pop();
+                    Locals[Tape.ReadByte()] = Pop();
+                    break;
+
+                case >= OpCode.FirstOp and <= OpCode.LastOp:
+                    Operator op = (Operator)(opcode - OpCode.FirstOp);
+                    Push(Operations.DoOperation(Pop(), Pop(), op));
                     break;
 
                 default:

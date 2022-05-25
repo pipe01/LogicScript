@@ -55,7 +55,7 @@ namespace LogicScript.Interpreting
             var left = Visit(expr.Left);
             var right = Visit(expr.Right);
 
-            return Operations.DoOperation(left, right, expr.Operator, expr.Span);
+            return Operations.DoOperation(left, right, expr.Operator);
         }
 
         private BitsValue Visit(TernaryOperatorExpression expr)

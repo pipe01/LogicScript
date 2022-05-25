@@ -109,17 +109,25 @@ namespace LogicScript.ByteCode
 
         private void Visit(BinaryOperatorExpression expr)
         {
-            switch (expr.Operator)
-            {
-                case Operator.Add or Operator.Subtract:
-                    Visit(expr.Left);
-                    Visit(expr.Right);
-                    Push(expr.Operator == Operator.Add ? OpCode.Add : OpCode.Sub);
-                    break;
+            // Push right then left, this way the pop order is left then right
+            Visit(expr.Right);
+            Visit(expr.Left);
 
-                default:
-                    throw new NotImplementedException();
-            }
+            Push(expr.Operator switch
+            {
+                Operator.And => OpCode.And,
+                Operator.Or => OpCode.Or,
+                Operator.Xor => OpCode.Xor,
+                Operator.ShiftLeft => OpCode.Shl,
+                Operator.ShiftRight => OpCode.Shr,
+                Operator.Add => OpCode.Add,
+                Operator.Subtract => OpCode.Sub,
+                Operator.Multiply => OpCode.Mult,
+                Operator.Divide => OpCode.Div,
+                Operator.Power => OpCode.Pow,
+                Operator.Modulus => OpCode.Mod,
+                _ => throw new Exception("Unknown binary operator")
+            });
         }
     }
 }

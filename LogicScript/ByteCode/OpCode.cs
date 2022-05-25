@@ -23,8 +23,21 @@ namespace LogicScript.ByteCode
         Breq,       // breq <addr (4)> [-2]
         Brneq,      // brneq <addr (4)> [-2]
 
+        And,        // and [-2+1]
+        Or,         // or [-2+1]
+        Xor,        // xor [-2+1]
+        Shl,        // shl [-2+1]
+        Shr,        // shl [-2+1]
+
         Add,        // add [-2+1]
         Sub,        // sub [-2+1]
+        Mult,       // mult [-2+1]
+        Div,        // div [-2+1]
+        Pow,        // pow [-2+1]
+        Mod,        // mod [-2+1]
+
+        FirstOp = And,
+        LastOp = Mod,
 
         Trunc,      // trunc <size (1)> [-1+1]
 
