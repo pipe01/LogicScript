@@ -9,6 +9,7 @@ using LogicScript.Interpreting;
 
 namespace LogicScript.Benchmarks
 {
+    [MemoryDiagnoser]
     public class LogicScriptBenchmark
     {
         private readonly string Source =
@@ -27,7 +28,6 @@ end
 
         private readonly IMachine Machine = new DummyMachine();
         private readonly Script Script;
-        private readonly byte[] Bytecode;
         private readonly CPU CPU;
 
         public LogicScriptBenchmark()
@@ -47,8 +47,9 @@ end
             }
 
             this.Script = script!;
-            this.Bytecode = LogicScript.ByteCode.Compiler.Compile(script!);
-            this.CPU = new CPU(Bytecode, Machine);
+            
+            var bytecode = LogicScript.ByteCode.Compiler.Compile(script!);
+            this.CPU = new CPU(bytecode, Machine);
         }
 
         [Benchmark]
@@ -58,13 +59,13 @@ end
         }
 
         [Benchmark]
-        public void RunBytecode()
+        public void RunInterpretedNoCheck()
         {
-            new CPU(Bytecode, Machine).Run();
+            Interpreter.Run(Script, Machine, false, false);
         }
 
         [Benchmark]
-        public void RunBytecodeReuse()
+        public void RunBytecode()
         {
             CPU.Run();
         }
