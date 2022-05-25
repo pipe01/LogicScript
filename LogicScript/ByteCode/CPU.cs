@@ -6,7 +6,7 @@ using LogicScript.Parsing.Structures;
 
 namespace LogicScript.ByteCode
 {
-    public ref struct CPU
+    public class CPU
     {
         private readonly TapeReader Tape;
         private readonly Header Header;
@@ -89,7 +89,7 @@ namespace LogicScript.ByteCode
                     break;
 
                 case OpCode.Show:
-                    Console.WriteLine($"Debug print: {Pop()}");
+                    Machine.Print(Pop().ToString());
                     break;
 
                 case OpCode.Jmp:
