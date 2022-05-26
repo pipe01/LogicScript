@@ -77,14 +77,14 @@ namespace LogicScript.ByteCode
         private void Visit(WhileStatement stmt)
         {
             var endLabel = NewLabel(true);
-            var startPos = NextPosition;
+            var startLabel = NewLabel(NextPosition);
 
             Visit(stmt.Condition);
 
             Jump(OpCode.Brz, endLabel);
 
             Visit(stmt.Body);
-            Jump(OpCode.Jmp, startPos);
+            Jump(OpCode.Jmp, startLabel);
 
             Push(OpCode.Nop);
             MarkLabel(endLabel);

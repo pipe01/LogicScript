@@ -10,10 +10,17 @@ namespace LogicScript.ByteCode
             public IList<int> ReplaceAt { get; } = new List<int>();
 
             public bool IsLoop { get; }
+            public bool IsMarked { get; set; }
+            public int Pointer { get; set; }
 
             public Label(bool isLoop)
             {
                 this.IsLoop = isLoop;
+            }
+            public Label(bool isLoop, int pointer) : this(isLoop)
+            {
+                this.Pointer = pointer;
+                this.IsMarked = true;
             }
         }
 
@@ -27,8 +34,24 @@ namespace LogicScript.ByteCode
             return label;
         }
 
+        private Label NewLabel(int pointer, bool isLoop = false)
+        {
+            var label = new Label(isLoop, pointer);
+
+            if (isLoop)
+                LoopStack.Push(label);
+
+            return label;
+        }
+
         private void MarkLabel(Label label)
         {
+            if (label.IsMarked)
+                return;
+
+            label.Pointer = CurrentPosition;
+            label.IsMarked = true;
+
             foreach (var item in label.ReplaceAt)
             {
                 Program[item] = (byte)(CurrentPosition >> 24);
@@ -44,8 +67,17 @@ namespace LogicScript.ByteCode
         private void Jump(OpCode op, Label to)
         {
             Push(op);
-            to.ReplaceAt.Add(NextPosition);
-            Push((uint)0);
+
+            if (to.IsMarked)
+            {
+                Push(to.Pointer);
+            }
+            else
+            {
+                to.ReplaceAt.Add(NextPosition);
+
+                Push((uint)0);
+            }
         }
 
         private void Jump(OpCode op, int to)

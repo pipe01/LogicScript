@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using LogicScript.Data;
 using LogicScript.Parsing.Structures;
+using LogicScript.Parsing.Structures.Blocks;
 
 namespace LogicScript.ByteCode
 {
@@ -42,14 +43,31 @@ namespace LogicScript.ByteCode
         {
             var compiler = new Compiler(script);
 
-            foreach (var block in script.Blocks)
-            {
-                compiler.Visit(block);
-            }
-
+            compiler.Visit(script);
             compiler.Done();
 
             return compiler.Program[0..compiler.ProgramLength];
+        }
+
+        private void Visit(Script script)
+        {
+            foreach (var block in script.Blocks)
+            {
+                if (block is StartupBlock)
+                    Visit(block);
+            }
+
+            Push(OpCode.Nop);
+            var startupEndPos = CurrentPosition;
+
+            foreach (var block in script.Blocks)
+            {
+                if (block is not StartupBlock)
+                    Visit(block);
+            }
+
+            Push(OpCode.Yield);
+            Jump(OpCode.Jmp, startupEndPos);
         }
 
         private void Push(byte num)

@@ -9,7 +9,7 @@ namespace LogicScript.ByteCode
     public class CPU
     {
         private const int MaxStackSize = 100;
-        
+
         private readonly TapeReader Tape;
         private readonly Header Header;
         private readonly BitsValue[] Stack = new BitsValue[MaxStackSize];
@@ -27,14 +27,18 @@ namespace LogicScript.ByteCode
             this.Locals = new BitsValue[Header.LocalsCount];
         }
 
-        public void Run()
+        public void Run(bool singleTick)
         {
-            Tape.Position = Header.Size;
+            if (!singleTick)
+                Tape.Position = Header.Size;
 
-            while (!Tape.IsEOF)
-                ProcessInstruction();
+            bool yield = false;
+            while (!yield)
+            {
+                ProcessInstruction(ref yield);
+            }
 
-            if (StackPointer != -1)
+            if (!singleTick && StackPointer != -1)
                 throw new Exception("Stack wasn't empty when program ended");
         }
 
@@ -42,9 +46,10 @@ namespace LogicScript.ByteCode
         private BitsValue Pop() => Stack[StackPointer--];
         private BitsValue Peek() => Stack[StackPointer];
 
-        private void ProcessInstruction()
+        private void ProcessInstruction(ref bool yield)
         {
             var opcode = Tape.ReadOpCode();
+            yield = false;
 
             switch (opcode)
             {
@@ -142,6 +147,10 @@ namespace LogicScript.ByteCode
 
                 case OpCode.AllOnes:
                     Push(Pop().AreAllBitsSet);
+                    break;
+
+                case OpCode.Yield:
+                    yield = true;
                     break;
 
                 default:
