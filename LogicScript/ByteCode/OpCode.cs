@@ -49,6 +49,9 @@ namespace LogicScript.ByteCode
         [OpCode("len"), Stack(-1, +1)] Length,
         [OpCode("all1"), Stack(-1, +1)] AllOnes,
 
+        [OpCode("sll", "length", 1), Stack(-2, +1)] SliceLeft,
+        [OpCode("slr", "length", 1), Stack(-2, +1)] SliceRight,
+
         [OpCode("trunc", "size", 1), Stack(-1, +1)] Trunc,
 
         [OpCode("ldloc", "num", 1), Stack(+1)] Ldloc,

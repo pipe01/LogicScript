@@ -1,6 +1,7 @@
 using System;
 using LogicScript.Data;
 using LogicScript.Parsing.Structures;
+using LogicScript.Parsing.Structures.Expressions;
 
 namespace LogicScript.Interpreting
 {
@@ -61,6 +62,24 @@ namespace LogicScript.Interpreting
             }
 
             throw new InterpreterException("Unknown operator");
+        }
+
+        public static BitsValue Slice(BitsValue value, IndexStart start, int offset, byte length)
+        {
+            var startIndex = start switch
+            {
+                IndexStart.Left => offset,
+                IndexStart.Right => value.Length - offset - length,
+                _ => throw new Exception("Unknown slice start")
+            };
+
+            if (startIndex < 0 || startIndex >= value.Length)
+                throw new Exception($"Index {startIndex} out of bounds for {value.Length} bits");
+
+            if (length == 1)
+                return value[startIndex] ? BitsValue.One : BitsValue.Zero;
+
+            return new BitsValue(value.Bits.AsSpan().Slice(startIndex, length));
         }
     }
 }

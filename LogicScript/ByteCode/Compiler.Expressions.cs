@@ -22,6 +22,10 @@ namespace LogicScript.ByteCode
                     Visit(refExpr);
                     break;
 
+                case SliceExpression slice:
+                    Visit(slice);
+                    break;
+
                 case TernaryOperatorExpression ternary:
                     Visit(ternary);
                     break;
@@ -182,6 +186,19 @@ namespace LogicScript.ByteCode
 
             Push(OpCode.Nop);
             MarkLabel(endLabel);
+        }
+
+        private void Visit(SliceExpression expr)
+        {
+            Visit(expr.Offset);
+            Visit(expr.Operand);
+
+            Push(expr.Start switch {
+                IndexStart.Left => OpCode.SliceLeft,
+                IndexStart.Right => OpCode.SliceRight,
+                _ => throw new Exception("Invalid slice index start")
+            });
+            Push((byte)expr.Length);
         }
     }
 }

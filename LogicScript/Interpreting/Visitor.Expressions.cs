@@ -103,20 +103,7 @@ namespace LogicScript.Interpreting
             var operand = Visit(expr.Operand);
             var offset = (int)Visit(expr.Offset).Number;
 
-            var startIndex = expr.Start switch
-            {
-                IndexStart.Left => offset,
-                IndexStart.Right => operand.Length - offset - expr.Length,
-                _ => throw new InterpreterException("Unknown slice start", expr.Span)
-            };
-
-            if (startIndex < 0 || startIndex >= operand.Length)
-                throw new InterpreterException($"Index {startIndex} out of bounds for {operand.Length} bits", expr.Span);
-
-            if (expr.Length == 1)
-                return operand[startIndex] ? BitsValue.One : BitsValue.Zero;
-
-            return new BitsValue(operand.Bits.AsSpan().Slice(startIndex, expr.Length));
+            return Operations.Slice(operand, expr.Start, offset, (byte)expr.Length);
         }
     }
 }

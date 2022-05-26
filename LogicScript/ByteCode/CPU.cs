@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using LogicScript.Data;
 using LogicScript.Interpreting;
 using LogicScript.Parsing.Structures;
+using LogicScript.Parsing.Structures.Expressions;
 
 namespace LogicScript.ByteCode
 {
@@ -120,18 +121,6 @@ namespace LogicScript.ByteCode
 
                     break;
 
-                case OpCode.Trunc:
-                    Push(Pop().Resize(Tape.ReadByte()));
-                    break;
-
-                case OpCode.Ldloc:
-                    Push(Locals[Tape.ReadByte()]);
-                    break;
-
-                case OpCode.Stloc:
-                    Locals[Tape.ReadByte()] = Pop();
-                    break;
-
                 case >= OpCode.FirstBinOp and <= OpCode.LastBinOp:
                     Operator op = (Operator)(opcode - OpCode.FirstBinOp);
                     Push(Operations.DoOperation(Pop(), Pop(), op));
@@ -147,6 +136,23 @@ namespace LogicScript.ByteCode
 
                 case OpCode.AllOnes:
                     Push(Pop().AreAllBitsSet);
+                    break;
+
+                case OpCode.SliceLeft or OpCode.SliceRight:
+                    var start = opcode == OpCode.SliceLeft ? IndexStart.Left : IndexStart.Right;
+                    Push(Operations.Slice(Pop(), start, (int)Pop().Number, Tape.ReadByte()));
+                    break;
+
+                case OpCode.Trunc:
+                    Push(Pop().Resize(Tape.ReadByte()));
+                    break;
+
+                case OpCode.Ldloc:
+                    Push(Locals[Tape.ReadByte()]);
+                    break;
+
+                case OpCode.Stloc:
+                    Locals[Tape.ReadByte()] = Pop();
                     break;
 
                 case OpCode.Yield:
