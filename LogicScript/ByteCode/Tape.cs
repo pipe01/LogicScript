@@ -3,6 +3,7 @@ using System.Buffers.Binary;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using LogicScript.ByteCode.DevEx;
 
 namespace LogicScript.ByteCode
@@ -22,8 +23,10 @@ namespace LogicScript.ByteCode
 
         public TapeReader Clone() => new TapeReader(Data);
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void JumpToAddress() => Position = ReadAddress();
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public byte ReadByte() => Data[Position++];
 
         public Header ReadHeader()
@@ -35,6 +38,7 @@ namespace LogicScript.ByteCode
             return header;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public OpCode ReadOpCode() => (OpCode)ReadByte();
 
         public ushort ReadUInt16()
@@ -56,6 +60,7 @@ namespace LogicScript.ByteCode
             return value;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int ReadAddress() => (int)ReadUInt32();
 
         public void Dump(TextWriter w)
