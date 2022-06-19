@@ -9,11 +9,11 @@ namespace LogicScript.ByteCode
 {
     partial class TapeReader
     {
-        private static IDictionary<OpCodes, (OpCodeAttribute, StackAttribute?)> OpCodeAttributes;
+        private static IDictionary<OpCodes, OpCode> OpCodeData;
 
         static TapeReader()
         {
-            OpCodeAttributes = new Dictionary<OpCodes, (OpCodeAttribute, StackAttribute?)>();
+            OpCodeData = new Dictionary<OpCodes, OpCode>();
 
             foreach (var field in typeof(OpCodes).GetFields())
             {
@@ -28,7 +28,8 @@ namespace LogicScript.ByteCode
 
                 var opcode = (OpCodes)field.GetValue(null);
 
-                OpCodeAttributes[opcode] = (opAttr, stackAttr);
+                var stackValue = stackAttr?.Amounts.Sum() ?? 0;
+                OpCodeData[opcode] = new(opAttr.ShortName, opAttr.Arguments, stackValue);
             }
         }
 
@@ -43,25 +44,22 @@ namespace LogicScript.ByteCode
             {
                 int opcodePos = tape.Position;
 
-                var opcode = tape.ReadOpCode();
-                if (!OpCodeAttributes.TryGetValue(opcode, out var attrs))
-                    throw new Exception($"Invalid opcode value {opcode}");
+                var code = tape.ReadOpCode();
+                if (!OpCodeData.TryGetValue(code, out var op))
+                    throw new Exception($"Invalid opcode value {code}");
 
-                var (opAttr, stackAttr) = attrs;
-
-                var stackValue = stackAttr?.Amounts.Sum() ?? 0;
-                stack += stackValue;
+                stack += op.StackDelta;
 
                 w.Write('(');
                 w.Write(new string('*', stack).PadLeft(5));
                 w.Write(") ");
                 w.Write(opcodePos.ToString().PadLeft(4));
                 w.Write(' ');
-                w.Write(opAttr.ShortName);
+                w.Write(op.ShortName);
                 w.Write(' ');
 
                 bool isFirst = true;
-                foreach (var arg in opAttr.Arguments)
+                foreach (var arg in op.Arguments)
                 {
                     if (isFirst)
                         isFirst = false;
