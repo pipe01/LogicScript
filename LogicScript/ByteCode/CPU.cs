@@ -58,116 +58,116 @@ namespace LogicScript.ByteCode
 
             switch (opcode)
             {
-                case OpCode.Nop:
+                case OpCodes.Nop:
                     break;
 
-                case OpCode.Pop:
+                case OpCodes.Pop:
                     Pop();
                     break;
 
-                case OpCode.Ld_0:
+                case OpCodes.Ld_0:
                     Push(new BitsValue(0, Tape.ReadByte()));
                     break;
 
-                case OpCode.Ld_1:
+                case OpCodes.Ld_1:
                     Push(new BitsValue(1, Tape.ReadByte()));
                     break;
 
-                case OpCode.Ld_0_1:
+                case OpCodes.Ld_0_1:
                     Push(BitsValue.Zero);
                     break;
 
-                case OpCode.Ld_1_1:
+                case OpCodes.Ld_1_1:
                     Push(BitsValue.One);
                     break;
 
-                case OpCode.Ldi_8:
+                case OpCodes.Ldi_8:
                     Push(new BitsValue(Tape.ReadByte(), Tape.ReadByte()));
                     break;
 
-                case OpCode.Ldi_16:
+                case OpCodes.Ldi_16:
                     Push(new BitsValue(Tape.ReadUInt16(), Tape.ReadByte()));
                     break;
 
-                case OpCode.Ldi_32:
+                case OpCodes.Ldi_32:
                     Push(new BitsValue(Tape.ReadUInt32(), Tape.ReadByte()));
                     break;
 
-                case OpCode.Ldi_64:
+                case OpCodes.Ldi_64:
                     Push(new BitsValue(Tape.ReadUInt64(), Tape.ReadByte()));
                     break;
 
-                case OpCode.Dup:
+                case OpCodes.Dup:
                     Push(Peek());
                     break;
 
-                case OpCode.Show:
+                case OpCodes.Show:
                     Machine.Print(Pop().ToString());
                     break;
 
-                case OpCode.LoadPortInput:
+                case OpCodes.LoadPortInput:
                     Push(new BitsValue(input.Slice(Tape.ReadByte(), Tape.ReadByte())));
                     break;
 
-                case OpCode.LoadPortRegister:
+                case OpCodes.LoadPortRegister:
                     Push(Machine.ReadRegister(Tape.ReadByte()));
                     break;
 
-                case OpCode.Jmp:
+                case OpCodes.Jmp:
                     Tape.JumpToAddress();
                     break;
 
-                case OpCode.Brz or OpCode.Brnz:
-                    if ((Pop() == 0) == (opcode == OpCode.Brz))
+                case OpCodes.Brz or OpCodes.Brnz:
+                    if ((Pop() == 0) == (opcode == OpCodes.Brz))
                         Tape.JumpToAddress();
                     else
                         Tape.ReadAddress();
 
                     break;
 
-                case OpCode.Breq or OpCode.Brneq:
-                    if ((Pop() == Pop()) == (opcode == OpCode.Breq))
+                case OpCodes.Breq or OpCodes.Brneq:
+                    if ((Pop() == Pop()) == (opcode == OpCodes.Breq))
                         Tape.JumpToAddress();
                     else
                         Tape.ReadAddress();
 
                     break;
 
-                case >= OpCode.FirstBinOp and <= OpCode.LastBinOp:
-                    Operator op = (Operator)(opcode - OpCode.FirstBinOp);
+                case >= OpCodes.FirstBinOp and <= OpCodes.LastBinOp:
+                    Operator op = (Operator)(opcode - OpCodes.FirstBinOp);
                     Push(Operations.DoOperation(Pop(), Pop(), op));
                     break;
 
-                case OpCode.Not:
+                case OpCodes.Not:
                     Push(Pop().Negated);
                     break;
 
-                case OpCode.Length:
+                case OpCodes.Length:
                     Push(Pop().Length);
                     break;
 
-                case OpCode.AllOnes:
+                case OpCodes.AllOnes:
                     Push(Pop().AreAllBitsSet);
                     break;
 
-                case OpCode.SliceLeft or OpCode.SliceRight:
-                    var start = opcode == OpCode.SliceLeft ? IndexStart.Left : IndexStart.Right;
+                case OpCodes.SliceLeft or OpCodes.SliceRight:
+                    var start = opcode == OpCodes.SliceLeft ? IndexStart.Left : IndexStart.Right;
                     Push(Operations.Slice(Pop(), start, (int)Pop().Number, Tape.ReadByte()));
                     break;
 
-                case OpCode.Trunc:
+                case OpCodes.Trunc:
                     Push(Pop().Resize(Tape.ReadByte()));
                     break;
 
-                case OpCode.Ldloc:
+                case OpCodes.Ldloc:
                     Push(Locals[Tape.ReadByte()]);
                     break;
 
-                case OpCode.Stloc:
+                case OpCodes.Stloc:
                     Locals[Tape.ReadByte()] = Pop();
                     break;
 
-                case OpCode.Yield:
+                case OpCodes.Yield:
                     yield = true;
                     break;
 

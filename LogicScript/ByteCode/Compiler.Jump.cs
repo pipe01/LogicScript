@@ -64,7 +64,7 @@ namespace LogicScript.ByteCode
                 LoopStack.Pop();
         }
 
-        private void Jump(OpCode op, Label to)
+        private void Jump(OpCodes op, Label to)
         {
             Push(op);
 
@@ -80,7 +80,7 @@ namespace LogicScript.ByteCode
             }
         }
 
-        private void Jump(OpCode op, int to)
+        private void Jump(OpCodes op, int to)
         {
             Push(op);
             Push(to);

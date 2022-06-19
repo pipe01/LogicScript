@@ -58,7 +58,7 @@ namespace LogicScript.ByteCode
                     Visit(block);
             }
 
-            Push(OpCode.Nop);
+            Push(OpCodes.Nop);
             var startupEndPos = CurrentPosition;
 
             foreach (var block in script.Blocks)
@@ -67,8 +67,8 @@ namespace LogicScript.ByteCode
                     Visit(block);
             }
 
-            Push(OpCode.Yield);
-            Jump(OpCode.Jmp, startupEndPos);
+            Push(OpCodes.Yield);
+            Jump(OpCodes.Jmp, startupEndPos);
         }
 
         private void Push(byte num)
@@ -80,7 +80,7 @@ namespace LogicScript.ByteCode
             ProgramLength++;
         }
 
-        private void Push(OpCode op) => Push((byte)op);
+        private void Push(OpCodes op) => Push((byte)op);
         private void Push(ushort num)
         {
             Push((byte)(num >> 8));

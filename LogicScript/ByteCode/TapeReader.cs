@@ -45,7 +45,7 @@ namespace LogicScript.ByteCode
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public OpCode ReadOpCode() => (OpCode)ReadByte();
+        public OpCodes ReadOpCode() => (OpCodes)ReadByte();
 
         public ushort ReadUInt16()
         {

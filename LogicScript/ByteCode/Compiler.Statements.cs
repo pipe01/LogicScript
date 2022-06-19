@@ -58,7 +58,7 @@ namespace LogicScript.ByteCode
         private void Visit(ShowTaskStatement stmt)
         {
             Visit(stmt.Value);
-            Push(OpCode.Show);
+            Push(OpCodes.Show);
         }
 
         private void Visit(IfStatement stmt)
@@ -66,11 +66,11 @@ namespace LogicScript.ByteCode
             Visit(stmt.Condition);
 
             var endLabel = NewLabel();
-            Jump(OpCode.Brz, endLabel);
+            Jump(OpCodes.Brz, endLabel);
 
             Visit(stmt.Body);
 
-            Push(OpCode.Nop);
+            Push(OpCodes.Nop);
             MarkLabel(endLabel);
         }
 
@@ -81,12 +81,12 @@ namespace LogicScript.ByteCode
 
             Visit(stmt.Condition);
 
-            Jump(OpCode.Brz, endLabel);
+            Jump(OpCodes.Brz, endLabel);
 
             Visit(stmt.Body);
-            Jump(OpCode.Jmp, startLabel);
+            Jump(OpCodes.Jmp, startLabel);
 
-            Push(OpCode.Nop);
+            Push(OpCodes.Nop);
             MarkLabel(endLabel);
         }
 
@@ -95,9 +95,9 @@ namespace LogicScript.ByteCode
             if (stmt.Initializer != null)
                 Visit(stmt.Initializer);
             else
-                Push(OpCode.Ld_0_1);
+                Push(OpCodes.Ld_0_1);
 
-            Push(OpCode.Stloc);
+            Push(OpCodes.Stloc);
             Push(GetLocal(stmt.Local));
         }
 
@@ -109,7 +109,7 @@ namespace LogicScript.ByteCode
                     throw new Exception("Unknown local reference");
 
                 Visit(stmt.Value);
-                Push(OpCode.Stloc);
+                Push(OpCodes.Stloc);
                 Push(index);
             }
             else
@@ -120,7 +120,7 @@ namespace LogicScript.ByteCode
 
         private void Visit(BreakStatement stmt)
         {
-            Jump(OpCode.Jmp, LoopStack.Peek());
+            Jump(OpCodes.Jmp, LoopStack.Peek());
         }
     }
 }

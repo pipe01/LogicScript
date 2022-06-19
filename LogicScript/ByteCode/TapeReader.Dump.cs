@@ -9,13 +9,13 @@ namespace LogicScript.ByteCode
 {
     partial class TapeReader
     {
-        private static IDictionary<OpCode, (OpCodeAttribute, StackAttribute?)> OpCodeAttributes;
+        private static IDictionary<OpCodes, (OpCodeAttribute, StackAttribute?)> OpCodeAttributes;
 
         static TapeReader()
         {
-            OpCodeAttributes = new Dictionary<OpCode, (OpCodeAttribute, StackAttribute?)>();
+            OpCodeAttributes = new Dictionary<OpCodes, (OpCodeAttribute, StackAttribute?)>();
 
-            foreach (var field in typeof(OpCode).GetFields())
+            foreach (var field in typeof(OpCodes).GetFields())
             {
                 if (field.IsSpecialName)
                     continue;
@@ -26,7 +26,7 @@ namespace LogicScript.ByteCode
                 if (opAttr == null)
                     continue;
 
-                var opcode = (OpCode)field.GetValue(null);
+                var opcode = (OpCodes)field.GetValue(null);
 
                 OpCodeAttributes[opcode] = (opAttr, stackAttr);
             }
