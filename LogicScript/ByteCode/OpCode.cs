@@ -18,6 +18,9 @@ namespace LogicScript.ByteCode
         [OpCode("dup"), Stack(+1)] Dup,
         [OpCode("show"), Stack(-1)] Show,
 
+        [OpCode("ldp_in", "start", 1, "length", 1), Stack(+1)] LoadPortInput,
+        [OpCode("ldp_reg", "index", 1), Stack(+1)] LoadPortRegister,
+
         [OpCode("jump", "addr", 4), Stack(0)] Jmp,
         [OpCode("brz", "addr", 4), Stack(-1)] Brz,
         [OpCode("brnz", "addr", 4), Stack(-1)] Brnz,

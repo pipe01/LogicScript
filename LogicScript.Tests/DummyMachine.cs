@@ -14,18 +14,19 @@ namespace LogicScript.Tests
 
         public IList<string> Printed { get; set; } = new List<string>();
 
-        private BitsValue[] Registers = Array.Empty<BitsValue>();
+        private BitsValue[] Registers;
 
-        public DummyMachine(bool[]? inputs = null, int outputCount = 0)
+        public DummyMachine(bool[]? inputs = null, int outputCount = 0, BitsValue[]? registers = null)
         {
             this.InputCount = inputs?.Length ?? 0;
             this.Inputs = inputs ?? Array.Empty<bool>();
+            this.Registers = registers ?? Array.Empty<BitsValue>();
             this.OutputCount = outputCount;
         }
 
         public void AllocateRegisters(int count)
         {
-            Registers = new BitsValue[count];
+            Array.Resize(ref Registers, count);
         }
 
         public void Print(string msg)

@@ -106,9 +106,21 @@ namespace LogicScript.ByteCode
                 Push(OpCode.Ldloc);
                 Push(index);
             }
-            else
+            else if (expr.Reference.Port is PortInfo port)
             {
-                throw new NotImplementedException();
+                switch (port.Target)
+                {
+                    case MachinePorts.Input:
+                        Push(OpCode.LoadPortInput);
+                        Push((byte)port.StartIndex);
+                        Push((byte)port.BitSize);
+                        break;
+
+                    case MachinePorts.Register:
+                        Push(OpCode.LoadPortRegister);
+                        Push((byte)port.StartIndex);
+                        break;
+                }
             }
         }
 

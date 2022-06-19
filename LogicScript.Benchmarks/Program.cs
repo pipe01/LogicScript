@@ -68,16 +68,16 @@ end
             this.CPU = new CPU(bytecode, Machine);
         }
 
-        [Benchmark]
-        public void RunInterpreted()
-        {
-            Interpreter.Run(Script, Machine, false);
-        }
+        // [Benchmark]
+        // public void RunInterpreted()
+        // {
+        //     Interpreter.Run(Script, Machine, false);
+        // }
 
         [Benchmark]
         public void RunBytecode()
         {
-            CPU.Run();
+            CPU.Run(true);
         }
     }
 

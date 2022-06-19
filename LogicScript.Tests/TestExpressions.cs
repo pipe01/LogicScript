@@ -114,6 +114,36 @@ namespace LogicScript.Tests
         }
 
         [Test]
+        public void AddRegisters()
+        {
+            var machine = new DummyMachine(registers: new BitsValue[] { 1, 2 });
+
+            var a = new PortInfo(MachinePorts.Register, 0, 1, default);
+            var b = new PortInfo(MachinePorts.Register, 1, 1, default);
+
+            Runner.Run(new Script
+            {
+                Registers =
+                {
+                    { "a", a },
+                    { "b", b },
+                },
+                Blocks = {
+                    new StartupBlock(default,
+                        new ShowTaskStatement(default,
+                            new BinaryOperatorExpression(default, Operator.Add,
+                                new ReferenceExpression(default, new PortReference(default, a)),
+                                new ReferenceExpression(default, new PortReference(default, b))
+                            )
+                        )
+                    ),
+                }
+            }, machine);
+
+            machine.AssertPrinted("3");
+        }
+
+        [Test]
         public void LiteralSliceRight()
         {
             var machine = new DummyMachine();

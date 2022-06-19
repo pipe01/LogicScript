@@ -36,6 +36,7 @@ namespace LogicScript.ByteCode
         private void Done()
         {
             Header.LocalsCount = (byte)LocalsMap.Count;
+            Header.RegisterCount = (byte)Script.Registers.Count;
             Header.Write(Program);
         }
 

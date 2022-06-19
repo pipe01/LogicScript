@@ -28,18 +28,22 @@ namespace LogicScript.ByteCode
             this.Locals = new BitsValue[Header.LocalsCount];
         }
 
-        public void Run(bool singleTick)
+        public void Run(bool reset)
         {
-            if (!singleTick)
+            if (!reset)
                 Tape.Position = Header.Size;
+
+            Span<bool> input = stackalloc bool[Machine.InputCount];
+            Machine.ReadInput(input);
+            Machine.AllocateRegisters(Header.RegisterCount);
 
             bool yield = false;
             while (!yield)
             {
-                ProcessInstruction(ref yield);
+                ProcessInstruction(ref yield, input);
             }
 
-            if (!singleTick && StackPointer != -1)
+            if (!reset && StackPointer != -1)
                 throw new Exception("Stack wasn't empty when program ended");
         }
 
@@ -47,7 +51,7 @@ namespace LogicScript.ByteCode
         private BitsValue Pop() => Stack[StackPointer--];
         private BitsValue Peek() => Stack[StackPointer];
 
-        private void ProcessInstruction(ref bool yield)
+        private void ProcessInstruction(ref bool yield, Span<bool> input)
         {
             var opcode = Tape.ReadOpCode();
             yield = false;
@@ -99,6 +103,14 @@ namespace LogicScript.ByteCode
 
                 case OpCode.Show:
                     Machine.Print(Pop().ToString());
+                    break;
+
+                case OpCode.LoadPortInput:
+                    Push(new BitsValue(input.Slice(Tape.ReadByte(), Tape.ReadByte())));
+                    break;
+
+                case OpCode.LoadPortRegister:
+                    Push(Machine.ReadRegister(Tape.ReadByte()));
                     break;
 
                 case OpCode.Jmp:

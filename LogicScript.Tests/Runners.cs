@@ -29,7 +29,7 @@ namespace LogicScript.Tests
         {
             var bytecode = Compiler.Compile(script);
 
-            new CPU(bytecode, machine).Run();
+            new CPU(bytecode, machine).Run(true);
         }
     }
 }
