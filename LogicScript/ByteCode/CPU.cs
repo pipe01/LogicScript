@@ -30,7 +30,7 @@ namespace LogicScript.ByteCode
 
         public void Run(bool reset)
         {
-            if (!reset)
+            if (reset)
                 Tape.Position = Header.Size;
 
             Span<bool> input = stackalloc bool[Machine.InputCount];
@@ -43,7 +43,7 @@ namespace LogicScript.ByteCode
                 ProcessInstruction(ref yield, input);
             }
 
-            if (!reset && StackPointer != -1)
+            if (StackPointer != -1)
                 throw new Exception("Stack wasn't empty when program ended");
         }
 
