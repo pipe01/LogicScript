@@ -18,15 +18,17 @@ for (const name in platforms) {
 
     const plat = platforms[name];
 
-    cp.execSync(`dotnet publish -c Release -r "${plat.dotnet}" -o bin /p:PublishSingleFile=true ../LogicScript.LSP/LogicScript.LSP.csproj`);
+    cp.execSync(`dotnet publish -c Release -r "${plat.dotnet}" -o bin /p:PublishSingleFile=true ../LogicScript.DX.LSP/LogicScript.DX.LSP.csproj`);
 
     console.log("Bundling code");
-    cp.execSync(`node .scripts/build.js --minify --bin "LogicScript.LSP${plat.ext}"`);
+    cp.execSync(`node .scripts/build.js --minify --bin "LogicScript.DX.LSP${plat.ext}"`);
 
     const outPath = path.join(outFolder, `logicscript-lang-${plat.vsce}.vsix`)
 
     console.log(`Packaging VSIX for ${name}`);
     cp.execSync(`npx vsce package --target "${plat.vsce}" --out "${outPath}"`);
+
+    console.log();
 
     require("rimraf").sync("bin");
 }
