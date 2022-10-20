@@ -16,10 +16,7 @@ namespace LogicScript.Interpreting
                     throw new InterpreterException($"Output length mismatch: script requires {script.RegisteredOutputLength} but machine has {machine.OutputCount}");
             }
 
-			int registerSum = 0;
-			foreach (var register in script.Registers)
-				registerSum += register.BitSize;
-            machine.AllocateRegisters(registerSum);
+            machine.AllocateRegisters(script.Registers.Values.Sum(o => o.BitSize));
 
             Span<bool> input = stackalloc bool[machine.InputCount];
             machine.ReadInput(input);
