@@ -20,6 +20,7 @@ namespace LogicScript
 
         internal int RegisteredInputLength => Inputs.Values.Sum(o => o.BitSize);
         internal int RegisteredOutputLength => Outputs.Values.Sum(o => o.BitSize);
+        internal int RegisteredRegisterLength => Registers.Values.Sum(o => o.BitSize);
 
         internal IList<Block> Blocks { get; } = new List<Block>();
 
