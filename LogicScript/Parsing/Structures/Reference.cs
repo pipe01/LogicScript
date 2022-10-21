@@ -48,7 +48,7 @@ namespace LogicScript.Parsing.Structures
                 MachinePorts.Input => "input",
                 MachinePorts.Output => "output",
                 MachinePorts.Register => "reg",
-                _ => throw new System.Exception("Unkonwn target")
+                _ => throw new System.Exception("Unknown target")
             };
 
             return $"{target}[{StartIndex}..{StartIndex + BitSize}]";
