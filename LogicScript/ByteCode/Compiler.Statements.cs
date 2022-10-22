@@ -17,7 +17,7 @@ namespace LogicScript.ByteCode
                 case AssignStatement assignStmt:
                     Visit(assignStmt);
                     break;
-                
+
                 case BlockStatement blockStmt:
                     Visit(blockStmt);
                     break;
@@ -112,9 +112,11 @@ namespace LogicScript.ByteCode
                 Push(OpCodes.Stloc);
                 Push(index);
             }
-            else
+            else if (stmt.Reference.Port is PortInfo port && port.Target == MachinePorts.Output)
             {
-                throw new NotImplementedException();
+                Visit(stmt.Value);
+                Push(OpCodes.Stout);
+                Push((byte)port.StartIndex);
             }
         }
 

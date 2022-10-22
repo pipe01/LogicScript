@@ -16,7 +16,13 @@ namespace LogicScript.ByteCode
         private readonly BitsValue[] Stack = new BitsValue[MaxStackSize];
         private readonly IMachine Machine;
 
-        private int StackPointer = -1;
+        private readonly bool[] OutputBuffer = new bool[BitsValue.BitSize];
+        private readonly bool[] InputBuffer;
+
+        /// <summary>
+        /// Points to the lowest empty stack slot.
+        /// </summary>
+        private int StackPointer = 0;
         private BitsValue[] Locals;
 
         public CPU(byte[] program, IMachine machine)
@@ -26,6 +32,9 @@ namespace LogicScript.ByteCode
             this.Header = Tape.ReadHeader();
 
             this.Locals = new BitsValue[Header.LocalsCount];
+            this.InputBuffer = new bool[machine.InputCount];
+
+            machine.AllocateRegisters(Header.RegisterCount);
         }
 
         public void Run(bool reset)
@@ -33,25 +42,23 @@ namespace LogicScript.ByteCode
             if (reset)
                 Tape.Position = Header.Size;
 
-            Span<bool> input = stackalloc bool[Machine.InputCount];
-            Machine.ReadInput(input);
-            Machine.AllocateRegisters(Header.RegisterCount);
+            Machine.ReadInput(InputBuffer);
 
             bool yield = false;
             while (!yield)
             {
-                ProcessInstruction(ref yield, input);
+                ProcessInstruction(ref yield);
             }
 
-            if (StackPointer != -1)
+            if (StackPointer != 0)
                 throw new Exception("Stack wasn't empty when program ended");
         }
 
-        private void Push(BitsValue v) => Stack[++StackPointer] = v;
-        private BitsValue Pop() => Stack[StackPointer--];
-        private BitsValue Peek() => Stack[StackPointer];
+        private void Push(BitsValue v) => Stack[StackPointer++] = v;
+        private BitsValue Pop() => Stack[--StackPointer];
+        private BitsValue Peek() => Stack[StackPointer - 1];
 
-        private void ProcessInstruction(ref bool yield, Span<bool> input)
+        private void ProcessInstruction(ref bool yield)
         {
             var opcode = Tape.ReadOpCode();
             yield = false;
@@ -106,7 +113,7 @@ namespace LogicScript.ByteCode
                     break;
 
                 case OpCodes.LoadPortInput:
-                    Push(new BitsValue(input.Slice(Tape.ReadByte(), Tape.ReadByte())));
+                    Push(new BitsValue(InputBuffer.AsSpan().Slice(Tape.ReadByte(), Tape.ReadByte())));
                     break;
 
                 case OpCodes.LoadPortRegister:
@@ -165,6 +172,14 @@ namespace LogicScript.ByteCode
 
                 case OpCodes.Stloc:
                     Locals[Tape.ReadByte()] = Pop();
+                    break;
+
+                case OpCodes.Stout:
+                    int startIndex = Tape.ReadByte();
+                    var value = Pop();
+                    value.FillBits(OutputBuffer);
+
+                    Machine.WriteOutput(startIndex, OutputBuffer[..value.Length]);
                     break;
 
                 case OpCodes.Yield:

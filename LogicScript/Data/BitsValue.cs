@@ -110,8 +110,8 @@ namespace LogicScript.Data
 
         public void FillBits(Span<bool> span)
         {
-            if (span.Length != this.Length)
-                throw new ArgumentException("Length mismatch when trying to fill span with bits");
+            if (span.Length < this.Length)
+                throw new ArgumentException("Span is smaller than bit size");
 
             for (int i = 0; i < Length; i++)
             {

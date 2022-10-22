@@ -60,6 +60,8 @@ namespace LogicScript.ByteCode
         [OpCode("ldloc", "num", 1), Stack(+1)] Ldloc,
         [OpCode("stloc", "num", 1), Stack(-1)] Stloc,
 
+        [OpCode("stout", "startIndex", 1), Stack(-1)] Stout,
+
         [OpCode("yield")] Yield,
     }
 }
