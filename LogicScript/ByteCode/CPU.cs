@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using LogicScript.Data;
 using LogicScript.Interpreting;
 using LogicScript.Parsing.Structures;

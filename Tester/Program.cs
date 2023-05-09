@@ -22,7 +22,7 @@ namespace Tester
             var program = Compiler.Compile(script);
             Console.WriteLine(string.Join(", ", program));
 
-            new CPU(program, new MyMachine()).Run();
+            new CPU(program, new MyMachine()).Run(true);
 
             // if (script != null)
             // {

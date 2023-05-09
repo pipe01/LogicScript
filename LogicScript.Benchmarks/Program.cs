@@ -63,16 +63,16 @@ end
             }
 
             this.Script = script!;
-            
+
             var bytecode = LogicScript.ByteCode.Compiler.Compile(script!);
             this.CPU = new CPU(bytecode, Machine);
         }
 
-        // [Benchmark]
-        // public void RunInterpreted()
-        // {
-        //     Interpreter.Run(Script, Machine, false);
-        // }
+        [Benchmark]
+        public void RunInterpreted()
+        {
+            Interpreter.Run(Script, Machine, false);
+        }
 
         [Benchmark]
         public void RunBytecode()
