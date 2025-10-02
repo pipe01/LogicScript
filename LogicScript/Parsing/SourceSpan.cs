@@ -38,5 +38,7 @@ namespace LogicScript.Parsing
         public override bool Equals(object obj) => obj is SourceSpan other && Equals(other);
 
         public bool Equals(SourceSpan other) => other.Start.Equals(Start) && other.End.Equals(End);
+
+        public override int GetHashCode() => HashCode.Combine(Start, End);
     }
 }

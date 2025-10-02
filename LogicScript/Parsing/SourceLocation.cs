@@ -23,5 +23,7 @@ namespace LogicScript.Parsing
 
         public bool Equals(SourceLocation other)
             => other.Line == Line && other.Column == Column;
+
+        public override int GetHashCode() => HashCode.Combine(Line, Column);
     }
 }

@@ -46,5 +46,7 @@ namespace LogicScript.Parsing.Structures
                 && port.BitSize == BitSize
                 && port.Span.Equals(Span);
         }
+
+        public override int GetHashCode() => HashCode.Combine(Target, StartIndex, BitSize, Span);
     }
 }
