@@ -26,7 +26,7 @@ namespace LogicScript.ByteCode
                 if (opAttr == null)
                     continue;
 
-                var opcode = (OpCodes)field.GetValue(null);
+                var opcode = (OpCodes)field.GetValue(null)!;
 
                 var stackValue = stackAttr?.Amounts.Sum() ?? 0;
                 OpCodeData[opcode] = new(opAttr.ShortName, opAttr.Arguments, stackValue);

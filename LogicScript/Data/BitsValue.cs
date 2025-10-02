@@ -100,9 +100,9 @@ namespace LogicScript.Data
         public string ToStringBinary() => Convert.ToString((long)Number, 2).PadLeft(Length, '0');
         public string ToStringHex() => $"{Number:X}";
 
-        public override bool Equals(object obj)
+        public override bool Equals(object? obj)
         {
-            if (!(obj is BitsValue other))
+            if (obj is not BitsValue other)
                 return false;
 
             return other == this;

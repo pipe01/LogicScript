@@ -14,7 +14,7 @@ namespace LogicScript.Parsing.Structures.Expressions
             this.Reference = target;
         }
 
-        public override string ToString() => Reference.ToString();
+        public override string ToString() => Reference.ToString() ?? "<unknown reference>";
 
         public override IEnumerable<ICodeNode> GetChildren()
         {
