@@ -1,6 +1,7 @@
 ﻿using Antlr4.Runtime;
 using Antlr4.Runtime.Misc;
 using System;
+using System.IO;
 
 namespace LogicScript.Parsing
 {
@@ -13,7 +14,7 @@ namespace LogicScript.Parsing
             this.Errors = errors;
         }
 
-        public void SyntaxError([NotNull] IRecognizer recognizer, [Nullable] IToken offendingSymbol, int line, int charPositionInLine, [NotNull] string msg, [Nullable] RecognitionException e)
+        public void SyntaxError(TextWriter output, IRecognizer recognizer, IToken offendingSymbol, int line, int charPositionInLine, string msg, RecognitionException e)
         {
             Errors.AddError(msg, new SourceSpan(offendingSymbol), isANTLR: true);
         }

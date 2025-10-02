@@ -1,28 +1,18 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFrameworks>netstandard2.1</TargetFrameworks>
+        <TargetFramework>netstandard2.1</TargetFramework>
         <Platforms>AnyCPU;x64</Platforms>
         <LangVersion>latest</LangVersion>
-        <!-- <GenerateDocumentationFile>true</GenerateDocumentationFile> -->
+        <GenerateDocumentationFile>true</GenerateDocumentationFile>
+        <!-- TODO: Implement all missing members and enable this warning again. -->
+        <NoWarn>CS1591</NoWarn>
         <Nullable>enable</Nullable>
     </PropertyGroup>
 
-    <PropertyGroup>
-        <NoWarn>$(NoWarn);NU1605</NoWarn>
-    </PropertyGroup>
-
-    <ItemGroup Condition="'$(TargetFramework)' != 'netstandard2.1'">
-        <PackageReference Include="System.Memory" Version="4.5.4" />
-    </ItemGroup>
-
     <ItemGroup>
-        <PackageReference Include="gremit" Version="3.4.10" />
-        <PackageReference Include="Antlr4" Version="4.6.6">
-            <PrivateAssets>all</PrivateAssets>
-            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-        </PackageReference>
-        <PackageReference Include="Antlr4.Runtime" Version="4.6.6" />
+        <PackageReference Include="Antlr4.Runtime.Standard" Version="4.13.1" />
+        <PackageReference Include="Antlr4BuildTasks" Version="12.10.0" PrivateAssets="all" />
         <PackageReference Include="Nullable" Version="1.3.0">
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -30,7 +20,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <Antlr4 Update="LogicScript.g4" />
+        <Antlr4 Include="LogicScript.g4" />
     </ItemGroup>
 
 </Project>
