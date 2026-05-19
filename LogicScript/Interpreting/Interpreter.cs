@@ -19,7 +19,7 @@ namespace LogicScript.Interpreting
             machine.AllocateRegisters(script.Registers.Count);
 
             Span<bool> input = stackalloc bool[machine.InputCount];
-            machine.ReadInput(input);
+            machine.ReadInputs(input);
 
             foreach (var block in script.Blocks)
             {

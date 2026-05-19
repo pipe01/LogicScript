@@ -3,8 +3,10 @@ using LogicScript.ByteCode;
 using LogicScript.Data;
 using LogicScript.Parsing;
 using LogicScript.Testing;
+using LogicScript.Transpiling;
 using System;
 using System.IO;
+using System.Linq;
 
 namespace Tester
 {
@@ -19,10 +21,18 @@ namespace Tester
                 Console.WriteLine(err);
             }
 
-            var program = Compiler.Compile(script);
+            var program = new Transpiler().Transpile(script);
             Console.WriteLine(string.Join(", ", program));
 
-            new CPU(program, new MyMachine()).Run(true);
+            var machine = new MyMachine();
+            var input = new bool[machine.InputCount];
+
+            machine.ReadInputs(input);
+            var n = new BitsValue(input);
+
+            program(machine, n);
+
+            // new CPU(program, new MyMachine()).Run(true);
 
             // if (script != null)
             // {
@@ -30,7 +40,7 @@ namespace Tester
             //     deleg(new MyMachine(), true);
             // }
 
-            var (bench, benchErrors) = TestBench.Parse(File.ReadAllText("test.lsbench"), script);
+            // var (bench, benchErrors) = TestBench.Parse(File.ReadAllText("test.lsbench"), script);
         }
 
         class MyMachine : IUpdatableMachine
@@ -46,16 +56,29 @@ namespace Tester
                 Console.WriteLine(msg);
             }
 
-            public void ReadInput(Span<bool> values)
+            public void ReadInputs(Span<bool> values)
             {
-                for (int i = 0; i < values.Length; i++)
-                {
-                    values[i] = i % 2 == 0;
-                }
+                values[0] = true;
+                values[1] = true;
+                // for (int i = 0; i < values.Length; i++)
+                // {
+                //     values[i] = i % 2 == 0;
+                // }
             }
 
-            public void WriteOutput(int startIndex, Span<bool> value)
+            public bool ReadInput(int index)
             {
+                return false;
+            }
+
+            public void WriteOutputs(int startIndex, Span<bool> value)
+            {
+                // Console.WriteLine(string.Join(' ', value.ToArray().Select(o => o ? "1" : "0").ToArray()));
+            }
+
+            public void WriteOutput(int index, bool value)
+            {
+                // Console.WriteLine(string.Join(' ', value.ToArray().Select(o => o ? "1" : "0").ToArray()));
             }
 
             public void AllocateRegisters(int count)

@@ -43,7 +43,7 @@ namespace LogicScript.ByteCode
             if (reset)
                 Tape.Position = Header.Size;
 
-            Machine.ReadInput(InputBuffer);
+            Machine.ReadInputs(InputBuffer);
 
             bool yield = false;
             while (!yield)
@@ -180,7 +180,7 @@ namespace LogicScript.ByteCode
                     var value = Pop();
                     value.FillBits(OutputBuffer);
 
-                    Machine.WriteOutput(startIndex, OutputBuffer[..value.Length]);
+                    Machine.WriteOutputs(startIndex, OutputBuffer[..value.Length]);
                     break;
 
                 case OpCodes.Yield:

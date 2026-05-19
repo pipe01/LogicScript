@@ -72,23 +72,16 @@ namespace LogicScript.Interpreting
         {
             var operand = Visit(expr.Operand);
 
-            switch (expr.Operator)
+            return expr.Operator switch
             {
-                case Operator.Not:
-                    return operand.Negated;
-                case Operator.Rise:
-                    throw new NotImplementedException();
-                case Operator.Fall:
-                    throw new NotImplementedException();
-                case Operator.Change:
-                    throw new NotImplementedException();
-                case Operator.Length:
-                    return new BitsValue((ulong)operand.Length, 7);
-                case Operator.AllOnes:
-                    return operand.AreAllBitsSet;
-            }
-
-            throw new InterpreterException("Unknown operand", expr.Span);
+                Operator.Not => operand.Negated,
+                Operator.Rise => throw new NotImplementedException(),
+                Operator.Fall => throw new NotImplementedException(),
+                Operator.Change => throw new NotImplementedException(),
+                Operator.Length => new BitsValue((ulong)operand.Length, 7),
+                Operator.AllOnes => (BitsValue)operand.AreAllBitsSet,
+                _ => throw new InterpreterException("Unknown operand", expr.Span),
+            };
         }
 
         private BitsValue Visit(TruncateExpression expr)

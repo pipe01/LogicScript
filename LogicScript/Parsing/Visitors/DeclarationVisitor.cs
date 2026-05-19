@@ -54,7 +54,6 @@ namespace LogicScript.Parsing.Visitors
 
         public override object? VisitDecl_when([NotNull] LogicScriptParser.Decl_whenContext context)
         {
-            var blockCtx = new BlockContext(Context, false);
             Expression? cond;
 
             if (context.any != null)
@@ -63,7 +62,7 @@ namespace LogicScript.Parsing.Visitors
             }
             else if (context.cond != null)
             {
-                cond = new ExpressionVisitor(blockCtx).Visit(context.cond);
+                cond = new ExpressionVisitor(new BlockContext(Context, false)).Visit(context.cond);
             }
             else
             {
@@ -71,7 +70,7 @@ namespace LogicScript.Parsing.Visitors
                 return null;
             }
 
-            var body = new StatementVisitor(blockCtx).Visit(context.block());
+            var body = new StatementVisitor(Context).Visit(context.block());
 
             Script.Blocks.Add(new WhenBlock(context.Span(), cond, body));
             return null;
@@ -79,7 +78,7 @@ namespace LogicScript.Parsing.Visitors
 
         public override object? VisitDecl_assign([NotNull] LogicScriptParser.Decl_assignContext context)
         {
-            var body = new StatementVisitor(new BlockContext(Context, false)).Visit(context.stmt_assign());
+            var body = new StatementVisitor(Context).Visit(context.stmt_assign());
 
             if (body is AssignStatement assign)
                 Script.Blocks.Add(new AssignBlock(context.Span(), assign));
@@ -91,8 +90,7 @@ namespace LogicScript.Parsing.Visitors
 
         public override object? VisitDecl_startup([NotNull] LogicScriptParser.Decl_startupContext context)
         {
-            var blockCtx = new BlockContext(Context, false);
-            var body = new StatementVisitor(blockCtx).Visit(context.block());
+            var body = new StatementVisitor(Context).Visit(context.block());
 
             Script.Blocks.Add(new StartupBlock(context.Span(), body));
             return null;

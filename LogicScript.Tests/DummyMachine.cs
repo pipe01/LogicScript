@@ -34,7 +34,7 @@ namespace LogicScript.Tests
             Printed.Add(msg);
         }
 
-        public void ReadInput(Span<bool> values)
+        public void ReadInputs(Span<bool> values)
         {
             for (int i = 0; i < values.Length; i++)
             {
@@ -47,7 +47,7 @@ namespace LogicScript.Tests
             return Registers[index];
         }
 
-        public void WriteOutput(int startIndex, Span<bool> value)
+        public void WriteOutputs(int startIndex, Span<bool> value)
         {
         }
 

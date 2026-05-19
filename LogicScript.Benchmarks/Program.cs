@@ -1,4 +1,6 @@
-﻿using System;
+﻿#nullable disable
+
+using System;
 using System.Security.Cryptography;
 using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Running;
@@ -6,14 +8,23 @@ using LogicScript;
 using LogicScript.ByteCode;
 using LogicScript.Data;
 using LogicScript.Interpreting;
+using LogicScript.Transpiling;
 
 namespace LogicScript.Benchmarks
 {
     [MemoryDiagnoser]
     public class LogicScriptBenchmark
     {
-        private readonly string Source =
-@"when 1
+        private static readonly string[] Sources = [
+            @"input a
+input b
+output c
+
+when 1
+    c = a & b
+end
+",
+            @"when 1
     local $a'64 = 23947;
     local $b'64 = 12398;
     local $c'64 = 34598;
@@ -40,22 +51,32 @@ namespace LogicScript.Benchmarks
     $a = len($b)
     $a = allOnes($b)
 end
-";
+"
+        ];
 
-        private readonly IMachine Machine = new DummyMachine();
-        private readonly Script Script;
-        private readonly CPU CPU;
+        [Params(2)]
+        public int Inputs { get; set; }
+        [Params(1)]
+        public int Outputs { get; set; }
+        [Params(0)]
+        public int SourceIndex { get; set; }
 
-        public LogicScriptBenchmark()
+        private IMachine Machine;
+        private Script Script;
+        private CPU CPU;
+        private TranspiledScript TranspiledScript;
+
+        [GlobalSetup]
+        public void GlobalSetup()
         {
-            var (script, errors) = Script.Parse(Source);
+            var (script, errors) = Script.Parse(Sources[SourceIndex]);
             if (errors != null && errors.Count > 0)
             {
                 Console.WriteLine("Found errors while parsing source:");
 
                 foreach (var err in errors)
                 {
-                    System.Console.WriteLine("  " + err);
+                    Console.WriteLine("  " + err);
                 }
 
                 Environment.Exit(1);
@@ -63,55 +84,94 @@ end
             }
 
             this.Script = script!;
+            this.Machine = new DummyMachine(Inputs, Outputs);
 
-            var bytecode = LogicScript.ByteCode.Compiler.Compile(script!);
+            System.Console.WriteLine($"asdasd {Inputs} {Outputs}");
+
+            var bytecode = Compiler.Compile(script!);
             this.CPU = new CPU(bytecode, Machine);
+
+            this.TranspiledScript = new Transpiler().Transpile(script!);
         }
 
-        [Benchmark]
-        public void RunInterpreted()
-        {
-            Interpreter.Run(Script, Machine, false);
-        }
+        // [Benchmark]
+        // public void RunInterpreted()
+        // {
+        //     Interpreter.Run(Script, Machine, false);
+        // }
+
+        // [Benchmark]
+        // public void RunBytecode()
+        // {
+        //     CPU.Run(true);
+        // }
 
         [Benchmark]
-        public void RunBytecode()
+        public void RunTranspiled()
         {
-            CPU.Run(true);
+            Span<bool> input = stackalloc bool[Machine.InputCount];
+            Machine.ReadInputs(input);
+
+            TranspiledScript(Machine, default);
+        }
+
+        [Benchmark(Baseline = true)]
+        public void RunRaw()
+        {
+            Span<bool> input = stackalloc bool[Machine.InputCount];
+            Machine.ReadInputs(input);
+
+            Machine.WriteOutputs(0, [input[0] && input[1]]);
         }
     }
 
-    class DummyMachine : IUpdatableMachine
+    class DummyMachine(int inputCount, int outputCount) : IUpdatableMachine
     {
-        public int InputCount => 0;
+        public int InputCount { get; } = inputCount;
+        public int OutputCount { get; } = outputCount;
 
-        public int OutputCount => 0;
+        private readonly bool[] Inputs = new bool[inputCount];
+        private readonly bool[] Outputs = new bool[outputCount];
 
-        private BitsValue[] Registers = Array.Empty<BitsValue>();
+        private BitsValue[] Registers = [];
 
         public void Print(string msg)
         {
         }
 
-        public void ReadInput(Span<bool> values)
+        public void ReadInputs(Span<bool> values)
         {
+            Inputs.CopyTo(values);
         }
 
-        public void WriteOutput(int startIndex, Span<bool> value)
+        public bool ReadInput(int index)
         {
+            return Inputs[index];
+        }
+
+        public void WriteOutputs(int startIndex, Span<bool> value)
+        {
+            value.CopyTo(Outputs.AsSpan()[startIndex..]);
+        }
+
+        public void WriteOutput(int index, bool value)
+        {
+            Outputs[index] = value;
         }
 
         public void AllocateRegisters(int count)
         {
+            Array.Resize(ref Registers, count);
         }
 
         public BitsValue ReadRegister(int index)
         {
-            return 0;
+            return Registers[index];
         }
 
         public void WriteRegister(int index, BitsValue value)
         {
+            Registers[index] = value;
         }
 
         public void QueueUpdate()

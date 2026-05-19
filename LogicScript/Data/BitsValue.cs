@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Numerics;
 
 namespace LogicScript.Data
 {
@@ -14,7 +13,7 @@ namespace LogicScript.Data
 
         public bool IsSingleBit => Number == 0 || Number == 1;
         public bool IsOne => Number == 1;
-        public bool AreAllBitsSet => Number != 0 && (Number == OneMask);
+        public bool AreAllBitsSet => Number == OneMask;
         public bool IsAnyBitSet => Number != 0;
         public BitsValue Negated => new BitsValue(OneMask ^ Number, Length);
         public BitsValue Truncated
@@ -63,6 +62,14 @@ namespace LogicScript.Data
                 var bits = new bool[Length];
                 FillBits(bits);
                 return bits;
+            }
+        }
+
+        public Span<bool> BitsSpan
+        {
+            get
+            {
+                return Bits;
             }
         }
 
@@ -125,6 +132,17 @@ namespace LogicScript.Data
             {
                 span[i] = this[i + start];
             }
+        }
+
+        public BitsValue Slice(int start, int size)
+        {
+            if (start < 0 || start >= Length)
+                throw new ArgumentOutOfRangeException(nameof(start));
+
+            if (size < 0 || start + size > Length)
+                throw new ArgumentOutOfRangeException(nameof(size));
+
+            return new BitsValue((Number >> (Length - start - size)) & ((1UL << size) - 1), size);
         }
 
         public override int GetHashCode() => Number.GetHashCode();

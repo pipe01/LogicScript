@@ -1,46 +1,51 @@
 ﻿using Antlr4.Runtime.Misc;
-using LogicScript.Parsing.Structures;
 using LogicScript.Parsing.Structures.Expressions;
 using LogicScript.Parsing.Structures.Statements;
 using System.Linq;
-using System.Net.Mime;
 
 namespace LogicScript.Parsing.Visitors
 {
     class StatementVisitor : LogicScriptBaseVisitor<Statement>
     {
-        private readonly BlockContext Context;
+        private readonly ScriptContext Context;
+        private readonly BlockContext BlockContext;
 
-        public StatementVisitor(BlockContext context)
+        public StatementVisitor(ScriptContext context, BlockContext? blockContext = null)
         {
             this.Context = context;
+            this.BlockContext = blockContext ?? new BlockContext(context, false);
         }
 
         public override Statement VisitBlock([NotNull] LogicScriptParser.BlockContext context)
         {
-            return new BlockStatement(context.Span(), context.stmt().Select(Visit).ToArray());
+            var blockContext = new BlockContext(Context, BlockContext.IsInConstant);
+            var visitor = new StatementVisitor(Context, blockContext);
+
+            var stmts = context.stmt().Select(visitor.Visit).ToArray();
+
+            return new BlockStatement(context.Span(), stmts, blockContext.Locals);
         }
 
         public override Statement VisitAssignRegular([NotNull] LogicScriptParser.AssignRegularContext context)
         {
-            var @ref = new ReferenceVisitor(Context).Visit(context.reference());
+            var @ref = new ReferenceVisitor(BlockContext).Visit(context.reference());
 
             if (!@ref.IsWritable)
                 Context.Errors.AddError("The left hand side of an assignment must be writable", context.reference().Span());
 
-            var value = new ExpressionVisitor(Context, @ref.BitSize).Visit(context.expression());
+            var value = new ExpressionVisitor(BlockContext, @ref.BitSize).Visit(context.expression());
 
             return new AssignStatement(context.Span(), @ref, value);
         }
 
         public override Statement VisitAssignTruncate([NotNull] LogicScriptParser.AssignTruncateContext context)
         {
-            var @ref = new ReferenceVisitor(Context).Visit(context.reference());
+            var @ref = new ReferenceVisitor(BlockContext).Visit(context.reference());
 
             if (!@ref.IsWritable)
                 Context.Errors.AddError("The left hand side of an assignment must be writable", context.reference().Span());
 
-            var value = new ExpressionVisitor(Context).Visit(context.expression());
+            var value = new ExpressionVisitor(BlockContext).Visit(context.expression());
             var truncated = new TruncateExpression(context.Span(), value, @ref.BitSize);
 
             return new AssignStatement(context.Span(), @ref, truncated);
@@ -53,7 +58,7 @@ namespace LogicScript.Parsing.Visitors
 
         private IfStatement VisitIfBody(LogicScriptParser.If_bodyContext context)
         {
-            var cond = new ExpressionVisitor(Context).Visit(context.expression());
+            var cond = new ExpressionVisitor(BlockContext).Visit(context.expression());
             var body = Visit(context.block());
             Statement? @else = null;
 
@@ -72,11 +77,11 @@ namespace LogicScript.Parsing.Visitors
         public override Statement VisitStmt_for([NotNull] LogicScriptParser.Stmt_forContext context)
         {
             var varName = context.VARIABLE().GetText().TrimStart('$');
-            var from = context.from == null ? null : new ExpressionVisitor(Context).Visit(context.from);
-            var to = new ExpressionVisitor(Context).Visit(context.to);
+            var from = context.from == null ? null : new ExpressionVisitor(BlockContext).Visit(context.from);
+            var to = new ExpressionVisitor(BlockContext).Visit(context.to);
 
-            if (!Context.Locals.ContainsKey(varName))
-                Context.AddLocal(varName, to.BitSize, new SourceSpan(context.VARIABLE().Symbol));
+            if (!BlockContext.Locals.ContainsKey(varName))
+                BlockContext.AddLocal(varName, to.BitSize, new SourceSpan(context.VARIABLE().Symbol));
 
             var body = Visit(context.block());
 
@@ -85,7 +90,7 @@ namespace LogicScript.Parsing.Visitors
 
         public override Statement VisitStmt_while([NotNull] LogicScriptParser.Stmt_whileContext context)
         {
-            var cond = new ExpressionVisitor(Context).Visit(context.expression());
+            var cond = new ExpressionVisitor(BlockContext).Visit(context.expression());
             var body = Visit(context.block());
 
             return new WhileStatement(context.Span(), cond, body);
@@ -95,27 +100,27 @@ namespace LogicScript.Parsing.Visitors
         {
             var name = context.VARIABLE().GetText().TrimStart('$');
 
-            if (Context.DoesIdentifierExist(name))
-                Context.Errors.AddError($"Identifier '{name}' already exists", new SourceSpan(context.VARIABLE().Symbol), true);
+            if (BlockContext.DoesIdentifierExist(name))
+                BlockContext.Errors.AddError($"Identifier '{name}' already exists", new SourceSpan(context.VARIABLE().Symbol), true);
 
             Expression? value = null;
 
             // If the variable has a bit size marker, we will use that size. Otherwise, we will later infer it from the value
-            int size = context.size == null ? 0 : context.size.GetConstantValue(Context.Outer);
+            int size = context.size == null ? 0 : context.size.GetConstantValue(BlockContext.Outer);
 
             if (context.expression() != null)
             {
-                value = new ExpressionVisitor(Context, size).Visit(context.expression());
+                value = new ExpressionVisitor(BlockContext, size).Visit(context.expression());
 
                 if (size == 0)
                     size = value.BitSize;
             }
             else if (size == 0)
             {
-                Context.Errors.AddError("You must specify a local's size or initialize it", context.Span(), true);
+                BlockContext.Errors.AddError("You must specify a local's size or initialize it", context.Span(), true);
             }
 
-            var localInfo = Context.AddLocal(name, size, new SourceSpan(context.VARIABLE().Symbol));
+            var localInfo = BlockContext.AddLocal(name, size, new SourceSpan(context.VARIABLE().Symbol));
 
             return new DeclareLocalStatement(context.Span(), localInfo, value);
         }
@@ -124,7 +129,7 @@ namespace LogicScript.Parsing.Visitors
         {
             if (context.expression() != null)
             {
-                var value = new ExpressionVisitor(Context).Visit(context.expression());
+                var value = new ExpressionVisitor(BlockContext).Visit(context.expression());
 
                 return new ShowTaskStatement(context.Span(), value);
             }

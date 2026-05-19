@@ -45,14 +45,24 @@ namespace LogicScript.Testing
         {
         }
 
-        public void ReadInput(Span<bool> values)
+        public void ReadInputs(Span<bool> values)
         {
             Inputs.CopyTo(values);
         }
 
-        public void WriteOutput(int startIndex, Span<bool> value)
+        public bool ReadInput(int index)
+        {
+            return Inputs[index];
+        }
+
+        public void WriteOutputs(int startIndex, Span<bool> value)
         {
             value.CopyTo(Outputs.AsSpan()[startIndex..]);
+        }
+
+        public void WriteOutput(int index, bool value)
+        {
+            Outputs[index] = value;
         }
 
         public BitsValue ReadRegister(int index)
