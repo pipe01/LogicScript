@@ -12,6 +12,7 @@ using LExpression = LogicScript.Parsing.Structures.Expressions.Expression;
 using System.Linq.Expressions;
 using Expression = System.Linq.Expressions.Expression;
 using LogicScript.Parsing;
+using LogicScript.Utils;
 
 #if USE_FAST_EXPRESSIONS
 using FastExpressionCompiler;
@@ -110,6 +111,7 @@ namespace LogicScript.Compiling
                 DeclareLocalStatement d => Compile(d),
                 ForStatement f => Compile(f),
                 IfStatement i => Compile(i),
+                TaskStatement t => Compile(t),
                 WhileStatement w => Compile(w),
                 _ => throw new NotImplementedException()
             };
@@ -160,6 +162,60 @@ namespace LogicScript.Compiling
             }
 
             return expr;
+        }
+
+        private Expression Compile(TaskStatement stmt)
+        {
+            switch (stmt)
+            {
+                case PrintTaskStatement print:
+                    {
+                        Expression text;
+
+                        if (print.String.Interpolations.Count == 0)
+                        {
+                            text = Expression.Constant(print.String.Text);
+                        }
+                        else
+                        {
+                            var locals = print.String.Interpolations.Select(l => FindLocal(l.Local));
+                            var fmtString = print.String.ToFormattable();
+
+                            // TODO: optimize this to make less allocations
+                            text = Expression.Call(
+                                typeof(string).GetMethod(nameof(string.Format), [typeof(string), typeof(object[])]),
+                                [
+                                    Expression.Constant(fmtString),
+                                    Expression.NewArrayInit(typeof(object), locals.Select(l => Expression.Convert(l, typeof(object))))
+                                ]
+                            );
+                        }
+
+                        return Expression.Call(
+                            Machine,
+                            typeof(IMachine).GetMethod(nameof(IMachine.Print)),
+                            text
+                        );
+                    }
+
+                case ShowTaskStatement show:
+                    return Expression.Call(
+                        Machine,
+                        typeof(IMachine).GetMethod(nameof(IMachine.Print)),
+                        Expression.Call(
+                            Compile(show.Value, false),
+                            typeof(object).GetMethod(nameof(object.ToString))
+                        )
+                    );
+
+                case UpdateTaskStatement:
+                    return Expression.Call(
+                        Machine,
+                        typeof(IMachine).GetMethod(nameof(IMachine.QueueUpdate))
+                    );
+            }
+
+            throw new NotImplementedException();
         }
 
         private Expression Compile(BreakStatement stmt)
@@ -250,7 +306,7 @@ namespace LogicScript.Compiling
 
         private Expression Compile(BlockStatement stmt)
         {
-            var locals = stmt.Locals.Select(l => (l.Value, Expression.Variable(typeof(ulong), l.Value.OriginalName))).ToDictionary(l => l.Value, l => l.Item2);
+            var locals = stmt.Locals.ToDictionary(l => l.Value, l => Expression.Variable(typeof(ulong), l.Value.Name));
 
             Stack.Push(new(locals));
 

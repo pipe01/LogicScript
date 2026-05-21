@@ -19,10 +19,7 @@ namespace LogicScript
         void WriteRegister(int index, BitsValue value);
 
         void Print(string msg);
-    }
 
-    public interface IUpdatableMachine : IMachine
-    {
-        void QueueUpdate();
+        void QueueUpdate() => throw new NotImplementedException("This machine cannot queue updates");
     }
 }

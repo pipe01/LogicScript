@@ -3,12 +3,13 @@ using System.Collections.Generic;
 
 namespace LogicScript.Parsing.Structures
 {
-    public readonly struct LocalInfo(int bitSize, string name, string originalName, SourceSpan span) : IPortInfo
+    public readonly struct LocalInfo(NodeID id, int bitSize, string name, SourceSpan span) : IPortInfo, IIdentifiableCodeNode
     {
         public int BitSize { get; } = bitSize;
         public string Name { get; } = name;
-        public string OriginalName { get; } = originalName;
         public SourceSpan Span { get; } = span;
+
+        public NodeID ID { get; } = id;
 
         public IEnumerable<ICodeNode> GetChildren()
         {

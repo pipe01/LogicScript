@@ -7,7 +7,7 @@ using LogicScript.Data;
 
 namespace LogicScript.Testing
 {
-    internal class TestingMachine(int inputCount, int outputCount) : IMachine, IUpdatableMachine
+    internal class TestingMachine(int inputCount, int outputCount) : IMachine
     {
         public int InputCount { get; } = inputCount;
         public int OutputCount { get; } = outputCount;

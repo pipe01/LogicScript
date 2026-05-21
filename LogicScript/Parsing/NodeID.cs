@@ -3,7 +3,7 @@ using System.Threading;
 
 namespace LogicScript.Parsing
 {
-    internal readonly struct NodeID
+    public readonly struct NodeID
     {
         private static int NextID = 999;
 

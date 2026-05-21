@@ -1,6 +1,7 @@
 ﻿using Antlr4.Runtime.Misc;
 using LogicScript.Parsing.Structures.Expressions;
 using LogicScript.Parsing.Structures.Statements;
+using LogicScript.Utils;
 using System.Linq;
 
 namespace LogicScript.Parsing.Visitors
@@ -142,7 +143,17 @@ namespace LogicScript.Parsing.Visitors
             }
             else if (context.TEXT() != null)
             {
-                return new PrintTaskStatement(context.Span(), context.TEXT().GetText().Trim('"'));
+                var text = context.TEXT().GetText().Trim('"');
+
+                var formatString = PrintStringFormat.Parse(text, name =>
+                {
+                    if (BlockContext.TryGetLocal(name, out var local))
+                        return local;
+
+                    throw new ParseException($"Unknown local '{name}' in format string", context.Span());
+                });
+
+                return new PrintTaskStatement(context.Span(), formatString);
             }
 
             throw new ParseException("Invalid print value", context.Span());

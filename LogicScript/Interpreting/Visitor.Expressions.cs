@@ -38,7 +38,7 @@ namespace LogicScript.Interpreting
             }
             else if (expr.Reference is LocalReference local)
             {
-                return Locals[local.LocalInfo.Name];
+                return Locals[local.LocalInfo];
             }
 
             throw new InterpreterException("Unknown reference type", expr.Span);

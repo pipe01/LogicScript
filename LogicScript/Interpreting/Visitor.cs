@@ -12,14 +12,14 @@ namespace LogicScript.Interpreting
         private readonly Span<bool> Input;
         private readonly bool NotConstant;
 
-        private readonly IDictionary<string, BitsValue> Locals;
+        private readonly IDictionary<LocalInfo, BitsValue> Locals;
 
         public Visitor(IMachine machine, Span<bool> input)
         {
             this.Machine = machine;
             this.Input = input;
             this.NotConstant = true;
-            this.Locals = new Dictionary<string, BitsValue>();
+            this.Locals = new Dictionary<LocalInfo, BitsValue>();
         }
 
         [MemberNotNull(nameof(Machine), nameof(Locals))]

@@ -1,4 +1,5 @@
 ﻿using LogicScript.Parsing.Structures.Expressions;
+using LogicScript.Utils;
 using System.Collections.Generic;
 
 namespace LogicScript.Parsing.Structures.Statements
@@ -7,9 +8,9 @@ namespace LogicScript.Parsing.Structures.Statements
     {
     }
 
-    internal sealed class PrintTaskStatement(SourceSpan span, string text) : TaskStatement(span)
+    internal sealed class PrintTaskStatement(SourceSpan span, PrintStringFormat str) : TaskStatement(span)
     {
-        public string Text { get; set; } = text;
+        public PrintStringFormat String { get; set; } = str;
     }
 
     internal sealed class ShowTaskStatement(SourceSpan span, Expression value) : TaskStatement(span)
