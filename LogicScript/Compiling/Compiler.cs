@@ -328,7 +328,7 @@ namespace LogicScript.Compiling
                 NumberLiteralExpression n => canReturnBool ? Expression.Constant(n.Value != 0) : Expression.Constant(n.Value.Number),
                 ReferenceExpression r => Compile(r, canReturnBool),
                 SliceExpression s => Compile(s),
-                TruncateExpression t => Compile(t),
+                TruncateExpression t => Compile(t.Operand, canReturnBool), // Truncating is a no-op at runtime since bit size is determined at compile-time
                 UnaryOperatorExpression u => Compile(u, canReturnBool),
                 _ => throw new NotImplementedException()
             };
@@ -351,16 +351,6 @@ namespace LogicScript.Compiling
             };
 
             return Slice(operand, offset, expr.Length);
-        }
-
-        private Expression Compile(TruncateExpression expr)
-        {
-            var inner = Compile(expr.Operand, false);
-
-            if (expr.Operand.BitSize <= expr.Size)
-                return inner;
-
-            return Expression.And(inner, Expression.Constant((1UL << expr.Size) - 1));
         }
 
         private Expression Compile(UnaryOperatorExpression expr, bool canReturnBool)
