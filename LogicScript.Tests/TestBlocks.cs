@@ -19,9 +19,9 @@ namespace LogicScript.Tests
             Runner.Run(new Script("<test>")
             {
                 Blocks = {
-                    new StartupBlock(default, new PrintTaskStatement(default, "nice1")),
-                    new WhenBlock(default, null, new PrintTaskStatement(default, "nice2")),
-                    new WhenBlock(default, new NumberLiteralExpression(default, 1), new PrintTaskStatement(default, "nice3")),
+                    new StartupBlock(default, new PrintTaskStatement("nice1")),
+                    new WhenBlock(default, null, new PrintTaskStatement("nice2")),
+                    new WhenBlock(default, new NumberLiteralExpression(default, 1), new PrintTaskStatement("nice3")),
                 }
             }, machine);
 
@@ -36,7 +36,7 @@ namespace LogicScript.Tests
             Runner.Run(new Script("<test>")
             {
                 Blocks = {
-                    new StartupBlock(default, new PrintTaskStatement(default, "yes")),
+                    new StartupBlock(default, new PrintTaskStatement("yes")),
                 }
             }, machine, runStartup: true);
 
@@ -51,7 +51,7 @@ namespace LogicScript.Tests
             Runner.Run(new Script("<test>")
             {
                 Blocks = {
-                    new StartupBlock(default, new PrintTaskStatement(default, "yes")),
+                    new StartupBlock(default, new PrintTaskStatement("yes")),
                 }
             }, machine, runStartup: false);
 

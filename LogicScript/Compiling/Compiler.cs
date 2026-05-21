@@ -432,7 +432,7 @@ namespace LogicScript.Compiling
             {
                 IndexStart.Left => Compile(expr.Offset, false),
                 IndexStart.Right => Expression.Subtract(
-                    Expression.Constant(expr.Operand.BitSize - expr.Length),
+                    Expression.Constant((ulong)(expr.Operand.BitSize - expr.Length)),
                     Compile(expr.Offset, false)
                 ),
                 _ => throw new NotImplementedException(),
@@ -449,7 +449,7 @@ namespace LogicScript.Compiling
             {
                 Operator.Not => inner.IsBool()
                     ? Expression.Not(inner)
-                    : Expression.OnesComplement(inner),
+                    : Negate(inner, expr.Operand.BitSize),
                 Operator.Rise => throw new NotImplementedException(),
                 Operator.Fall => throw new NotImplementedException(),
                 Operator.Change => throw new NotImplementedException(),
@@ -565,7 +565,7 @@ namespace LogicScript.Compiling
         private static Expression Slice(Expression value, Expression start, int length)
         {
             return Expression.And(
-                Expression.RightShift(value, start),
+                Expression.RightShift(value, Expression.Convert(start, typeof(int))),
                 Expression.Constant((1UL << length) - 1)
             );
         }
@@ -574,6 +574,14 @@ namespace LogicScript.Compiling
         {
             return Expression.Equal(
                 value,
+                Expression.Constant((1UL << length) - 1)
+            );
+        }
+
+        private static Expression Negate(Expression value, int length)
+        {
+            return Expression.And(
+                Expression.OnesComplement(value),
                 Expression.Constant((1UL << length) - 1)
             );
         }

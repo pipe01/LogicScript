@@ -10,6 +10,9 @@ namespace LogicScript.Parsing.Structures.Statements
 
     internal sealed class PrintTaskStatement(SourceSpan span, PrintStringFormat str) : TaskStatement(span)
     {
+        // For tests only
+        public PrintTaskStatement(string str) : this(default, PrintStringFormat.Parse(str)) { }
+
         public PrintStringFormat String { get; set; } = str;
     }
 

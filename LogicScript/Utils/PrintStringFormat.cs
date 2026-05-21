@@ -39,6 +39,9 @@ namespace LogicScript.Utils
             return str.ToString();
         }
 
+        internal static PrintStringFormat Parse(string format)
+            => Parse(format, _ => throw new InvalidOperationException("Can't access locals"));
+
         internal static PrintStringFormat Parse(string format, Func<string, LocalInfo> fetchLocal)
         {
             var str = new StringBuilder();
