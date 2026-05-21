@@ -45,9 +45,9 @@ namespace LogicScript.Testing
         {
         }
 
-        public void ReadInputs(Span<bool> values)
+        public BitsValue ReadInputs()
         {
-            Inputs.CopyTo(values);
+            return new BitsValue(Inputs);
         }
 
         public bool ReadInput(int index)
@@ -55,9 +55,13 @@ namespace LogicScript.Testing
             return Inputs[index];
         }
 
-        public void WriteOutputs(int startIndex, Span<bool> value)
+        public void WriteOutputs(int startIndex, BitsValue value)
         {
-            value.CopyTo(Outputs.AsSpan()[startIndex..]);
+            for (int i = 0; i < value.Length; i++)
+            {
+                var bitValue = (value.Number >> i) & 1UL;
+                Outputs[startIndex + i] = bitValue == 1;
+            }
         }
 
         public void WriteOutput(int index, bool value)

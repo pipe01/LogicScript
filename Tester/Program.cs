@@ -14,23 +14,20 @@ namespace Tester
     {
         static void Main(string[] args)
         {
-            var (script, errors) = Script.Parse(File.ReadAllText("test.lsx"));
+            var (script, errors) = Script.Parse(File.ReadAllText("test4.lsx"));
 
             foreach (var err in errors)
             {
                 Console.WriteLine(err);
             }
 
-            var program = new Transpiler().Transpile(script);
+            var program = Transpiler.Transpile(script);
             Console.WriteLine(string.Join(", ", program));
 
             var machine = new MyMachine();
-            var input = new bool[machine.InputCount];
+            var scratch = new bool[Math.Max(machine.InputCount, machine.OutputCount)];
 
-            machine.ReadInputs(input);
-            var n = new BitsValue(input);
-
-            program(machine, n);
+            program(machine, scratch, true);
 
             // new CPU(program, new MyMachine()).Run(true);
 
@@ -45,9 +42,9 @@ namespace Tester
 
         class MyMachine : IUpdatableMachine
         {
-            public int InputCount => 3;
+            public int InputCount => 8 * 2;
 
-            public int OutputCount => 2;
+            public int OutputCount => 8;
 
             private BitsValue[] Registers;
 
@@ -56,29 +53,25 @@ namespace Tester
                 Console.WriteLine(msg);
             }
 
-            public void ReadInputs(Span<bool> values)
+            public BitsValue ReadInputs()
             {
-                values[0] = true;
-                values[1] = true;
-                // for (int i = 0; i < values.Length; i++)
-                // {
-                //     values[i] = i % 2 == 0;
-                // }
+                return new BitsValue(3, InputCount);
             }
 
             public bool ReadInput(int index)
             {
+                Console.WriteLine($"Read input {index}");
                 return false;
             }
 
-            public void WriteOutputs(int startIndex, Span<bool> value)
+            public void WriteOutputs(int startIndex, BitsValue value)
             {
                 // Console.WriteLine(string.Join(' ', value.ToArray().Select(o => o ? "1" : "0").ToArray()));
             }
 
             public void WriteOutput(int index, bool value)
             {
-                // Console.WriteLine(string.Join(' ', value.ToArray().Select(o => o ? "1" : "0").ToArray()));
+                Console.WriteLine($"Index {index} = {(value ? '1' : '0')}");
             }
 
             public void AllocateRegisters(int count)

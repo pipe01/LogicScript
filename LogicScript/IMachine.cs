@@ -8,10 +8,10 @@ namespace LogicScript
         int InputCount { get; }
         int OutputCount { get; }
 
-        void ReadInputs(Span<bool> values);
+        BitsValue ReadInputs();
         bool ReadInput(int index);
 
-        void WriteOutputs(int startIndex, Span<bool> value);
+        void WriteOutputs(int startIndex, BitsValue value);
         void WriteOutput(int index, bool value);
 
         void AllocateRegisters(int count);

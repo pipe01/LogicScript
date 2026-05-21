@@ -2,20 +2,25 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using FastExpressionCompiler.LightExpression;
 using LogicScript.Data;
 using LogicScript.Interpreting;
 using LogicScript.Parsing.Structures;
 using LogicScript.Parsing.Structures.Blocks;
 using LogicScript.Parsing.Structures.Expressions;
 using LogicScript.Parsing.Structures.Statements;
-using LogicScript.Parsing.Visitors;
-using Expression = FastExpressionCompiler.LightExpression.Expression;
 using LExpression = LogicScript.Parsing.Structures.Expressions.Expression;
+
+#if USE_FAST_EXPRESSIONS
+using FastExpressionCompiler.LightExpression;
+using Expression = FastExpressionCompiler.LightExpression.Expression;
+#else
+using System.Linq.Expressions;
+using Expression = System.Linq.Expressions.Expression;
+#endif
 
 namespace LogicScript.Transpiling
 {
-    public delegate void TranspiledScript(IMachine machine, BitsValue Input);
+    public delegate void TranspiledScript(IMachine machine, bool[] scratch, bool firstRun);
 
     public class Transpiler
     {
@@ -24,32 +29,43 @@ namespace LogicScript.Transpiling
             public readonly IDictionary<LocalInfo, ParameterExpression> Locals = locals;
         }
 
-        private enum ValueKind
-        {
-            Bits,
-            Bool,
-        }
-
         private readonly ParameterExpression Machine = Expression.Parameter(typeof(IMachine), "machine");
-        private readonly ParameterExpression Input = Expression.Parameter(typeof(BitsValue), "input");
+        private readonly ParameterExpression Scratch = Expression.Parameter(typeof(bool[]), "scratch");
+        private readonly ParameterExpression FirstRun = Expression.Parameter(typeof(bool), "firstRun");
 
         private readonly Stack<Scope> Stack = new();
 
-        public TranspiledScript Transpile(Script script)
+        private Transpiler()
+        {
+        }
+
+        private TranspiledScript TranspileInner(Script script)
         {
             var expr = Expression.Block(script.Blocks.Select(Transpile));
 
-            var ts = Expression.Lambda<TranspiledScript>(expr, Machine, Input).CompileFast(flags: CompilerFlags.EnableDelegateDebugInfo);
+            var ts = Expression.Lambda<TranspiledScript>(expr, Machine, Scratch, FirstRun)
+#if USE_FAST_EXPRESSIONS
+            .CompileFast(flags: CompilerFlags.EnableDelegateDebugInfo);
+#else
+            .Compile();
+#endif
 
+#if USE_FAST_EXPRESSIONS
             TestTools.AllowPrintExpression = true;
             TestTools.AllowPrintCS = true;
             TestTools.AllowPrintIL = true;
 
             var d = ts.TryGetDebugInfo();
-            d.PrintCSharp();
             d.PrintIL();
+            // d.PrintCSharp();
+#endif
 
             return ts;
+        }
+
+        public static TranspiledScript Transpile(Script script)
+        {
+            return new Transpiler().TranspileInner(script);
         }
 
         private Expression Transpile(Block block)
@@ -92,7 +108,7 @@ namespace LogicScript.Transpiling
 
         private Expression Transpile(BlockStatement stmt)
         {
-            var locals = stmt.Locals.Select(l => (l.Value, Expression.Variable(typeof(BitsValue), l.Value.OriginalName))).ToDictionary(l => l.Value, l => l.Item2);
+            var locals = stmt.Locals.Select(l => (l.Value, Expression.Variable(typeof(ulong), l.Value.OriginalName))).ToDictionary(l => l.Value, l => l.Item2);
 
             Stack.Push(new(locals));
 
@@ -127,11 +143,18 @@ namespace LogicScript.Transpiling
                                 Machine,
                                 typeof(IMachine).GetMethod(nameof(IMachine.WriteOutputs)),
                                 Expression.Constant(port.StartIndex),
-                                Expression.Property(value, typeof(BitsValue).GetProperty(nameof(BitsValue.BitsSpan)))
+                                Expression.New(
+                                    typeof(BitsValue).GetConstructor([typeof(ulong), typeof(int)])!,
+                                    value,
+                                    Expression.Constant(port.BitSize)
+                                )
                             );
                         }
                     }
-                    break;
+                    else
+                    {
+                        throw new NotImplementedException();
+                    }
 
                 case LocalInfo local:
                     {
@@ -148,7 +171,7 @@ namespace LogicScript.Transpiling
         private Expression Transpile(DeclareLocalStatement stmt)
         {
             if (stmt.Initializer is null)
-                return Expression.Block([]);
+                return Expression.Empty();
 
             var localVar = FindLocal(stmt.Local) ?? throw new Exception("local not found");
 
@@ -161,7 +184,7 @@ namespace LogicScript.Transpiling
             {
                 BinaryOperatorExpression b => Transpile(b, canReturnBool),
                 UnaryOperatorExpression u => Transpile(u, canReturnBool),
-                NumberLiteralExpression n => canReturnBool ? Expression.Constant(n.Value != 0) : Expression.Constant(n.Value),
+                NumberLiteralExpression n => canReturnBool ? Expression.Constant(n.Value != 0) : Expression.Constant(n.Value.Number),
                 ReferenceExpression r => Transpile(r, canReturnBool),
                 TruncateExpression t => Transpile(t),
                 _ => throw new NotImplementedException()
@@ -172,11 +195,10 @@ namespace LogicScript.Transpiling
         {
             var inner = Transpile(expr.Operand, false);
 
-            return Expression.Call(
-                inner,
-                typeof(BitsValue).GetMethod(nameof(BitsValue.Resize)),
-                Expression.Constant(expr.Size)
-            );
+            if (expr.Operand.BitSize <= expr.Size)
+                return inner;
+
+            return Expression.And(inner, Expression.Constant((1UL << expr.Size) - 1));
         }
 
         private Expression Transpile(UnaryOperatorExpression expr, bool canReturnBool)
@@ -187,25 +209,12 @@ namespace LogicScript.Transpiling
             {
                 Operator.Not => inner.IsBool()
                     ? Expression.Not(inner)
-                    : Expression.Property(
-                        inner,
-                        typeof(BitsValue).GetProperty(nameof(BitsValue.Negated))
-                    ),
+                    : Expression.OnesComplement(inner),
                 Operator.Rise => throw new NotImplementedException(),
                 Operator.Fall => throw new NotImplementedException(),
                 Operator.Change => throw new NotImplementedException(),
-                Operator.Length => Expression.New(
-                    typeof(BitsValue).GetConstructor([typeof(ulong), typeof(int)]),
-                    Expression.Constant((ulong)expr.Operand.BitSize),
-                    Expression.Constant(7)
-                ),
-                Operator.AllOnes => Expression.Convert(
-                    Expression.Property(
-                        inner,
-                        typeof(BitsValue).GetProperty(nameof(BitsValue.AreAllBitsSet))
-                    ),
-                    typeof(BitsValue)
-                ),
+                Operator.Length => Expression.Constant((ulong)expr.Operand.BitSize),
+                Operator.AllOnes => BoolToNumberIf(AllOnes(inner, expr.Operand.BitSize), !canReturnBool),
                 _ => throw new InterpreterException("Unknown operand", expr.Span),
             };
         }
@@ -237,11 +246,31 @@ namespace LogicScript.Transpiling
             var left = Transpile(expr.Left, false);
             var right = Transpile(expr.Right, false);
 
-            return Expression.Call(
-                typeof(Operations).GetMethod(nameof(Operations.DoOperation)),
-                left, right,
-                Expression.Constant(expr.Operator)
-            );
+            return expr.Operator switch
+            {
+                Operator.And => Expression.And(left, right),
+                Operator.Or => Expression.Or(left, right),
+                Operator.Xor => Expression.ExclusiveOr(left, right),
+                Operator.ShiftLeft => Expression.LeftShift(left, Expression.Convert(right, typeof(int))),
+                Operator.ShiftRight => Expression.RightShift(left, Expression.Convert(right, typeof(int))),
+                Operator.Add => Expression.Add(left, right),
+                Operator.Subtract => Expression.Subtract(left, right),
+                Operator.Multiply => Expression.Multiply(left, right),
+                Operator.Divide => Expression.Divide(left, right),
+                Operator.Power => Expression.Convert(
+                    Expression.Power(
+                        Expression.Convert(left, typeof(double)),
+                        Expression.Convert(right, typeof(double))
+                    ),
+                    typeof(ulong)
+                ),
+                Operator.Modulus => Expression.Modulo(left, right),
+                Operator.EqualsCompare => BoolToNumberIf(Expression.Equal(left, right), !canReturnBool),
+                Operator.NotEqualsCompare => BoolToNumberIf(Expression.NotEqual(left, right), !canReturnBool),
+                Operator.Greater => BoolToNumberIf(Expression.GreaterThan(left, right), !canReturnBool),
+                Operator.Lesser => BoolToNumberIf(Expression.LessThan(left, right), !canReturnBool),
+                _ => throw new InterpreterException("Unknown operator", expr.Span)
+            };
         }
 
         private Expression Transpile(ReferenceExpression expr, bool canReturnBool)
@@ -256,12 +285,7 @@ namespace LogicScript.Transpiling
                             typeof(IMachine).GetMethod(nameof(IMachine.ReadInput)),
                             Expression.Constant(port.StartIndex)
                         )
-                        : Expression.Call(
-                            Input,
-                            typeof(BitsValue).GetMethod(nameof(BitsValue.Slice)),
-                            Expression.Constant(port.StartIndex),
-                            Expression.Constant(port.BitSize)
-                        ),
+                        : ReadInput(port.StartIndex, port.BitSize),
                     _ => throw new NotImplementedException()
                 },
                 LocalInfo local => FindLocal(local) ?? throw new Exception("local not found"),
@@ -284,19 +308,55 @@ namespace LogicScript.Transpiling
         {
             if (value.IsBool()) return value;
 
-            return Expression.NotEqual(
-                Expression.Field(
-                    value,
-                    typeof(BitsValue).GetField(nameof(BitsValue.Number))
-                ),
-                Expression.Constant((ulong)0)
-            );
+            return Expression.NotEqual(value, Expression.Constant(0UL));
         }
 
         private BitsValue GetConstantValue(LExpression expr) => GetConstantValue(Transpile(expr, false));
-        private static BitsValue GetConstantValue(Expression expr)
+        private static ulong GetConstantValue(Expression expr)
         {
-            return Expression.Lambda<Func<BitsValue>>(expr).TryCompile<Func<BitsValue>>()();
+            return Expression.Lambda<Func<ulong>>(expr)
+#if USE_FAST_EXPRESSIONS
+                .TryCompile<Func<ulong>>()();
+#else
+                .Compile()();
+#endif
+        }
+
+        private static Expression Slice(Expression value, int start, int length)
+        {
+            return Expression.And(
+                Expression.RightShift(value, Expression.Constant(start)),
+                Expression.Constant((1UL << length) - 1)
+            );
+        }
+
+        private static Expression AllOnes(Expression value, int length)
+        {
+            return Expression.Equal(
+                value,
+                Expression.Constant((1UL << length) - 1)
+            );
+        }
+
+        private static Expression BoolToNumberIf(Expression boolExpr, bool convert)
+        {
+            return convert ? Expression.Condition(boolExpr, Expression.Constant(1UL), Expression.Constant(0UL)) : boolExpr;
+        }
+
+        private Expression ReadInput(int start, int size)
+        {
+            return Expression.Field(
+                Expression.Call(
+                    Expression.Call(
+                        Machine,
+                        typeof(IMachine).GetMethod(nameof(IMachine.ReadInputs))
+                    ),
+                    typeof(BitsValue).GetMethod(nameof(BitsValue.Slice)),
+                    Expression.Constant(start),
+                    Expression.Constant(size)
+                ),
+                typeof(BitsValue).GetField(nameof(BitsValue.Number))
+            );
         }
     }
 }

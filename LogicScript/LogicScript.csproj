@@ -8,6 +8,7 @@
         <!-- TODO: Implement all missing members and enable this warning again. -->
         <NoWarn>CS1591</NoWarn>
         <Nullable>enable</Nullable>
+        <DefineConstants Condition="'$(Configuration)' == 'Release'">USE_FAST_EXPRESSIONS</DefineConstants>
     </PropertyGroup>
 
     <ItemGroup>

@@ -18,8 +18,7 @@ namespace LogicScript.Interpreting
 
             machine.AllocateRegisters(script.Registers.Count);
 
-            Span<bool> input = stackalloc bool[machine.InputCount];
-            machine.ReadInputs(input);
+            var input = machine.ReadInputs().Bits;
 
             foreach (var block in script.Blocks)
             {
