@@ -7,6 +7,7 @@ using LogicScript.Interpreting;
 using LogicScript.Compiling;
 using LogicScript.Parsing;
 using LogicScript.Parsing.Structures;
+using System.Runtime.CompilerServices;
 
 namespace LogicScript.Benchmarks
 {
@@ -54,7 +55,7 @@ when 1
 end"),
         ];
 
-        [Params(1)]
+        [Params(0)]
         public int TestIndex { get; set; }
 
         private TestCase Case;
@@ -90,7 +91,7 @@ end"),
             this.CompiledScriptDebug = Compiler.Compile(script, true);
         }
 
-        [Benchmark(Baseline = true)]
+        [Benchmark]
         public void RunCompiledNoDebug()
         {
             CompiledScript(Machine, Scratch, false, null);
@@ -108,14 +109,11 @@ end"),
             Interpreter.Run(Script, Machine, false);
         }
 
-        // [Benchmark(Baseline = true)]
-        // public void RunRaw()
-        // {
-        //     Span<bool> input = stackalloc bool[Machine.InputCount];
-        //     Machine.ReadInputs(input);
-
-        //     Machine.WriteOutputs(0, [input[0] && input[1]]);
-        // }
+        [Benchmark(Baseline = true)]
+        public void RunRaw()
+        {
+            Machine.WriteOutput(0, Machine.ReadInput(0) && Machine.ReadInput(1));
+        }
     }
 
     class DummyMachine(int inputCount, int outputCount) : IUpdatableMachine
@@ -176,6 +174,61 @@ end"),
     {
         public void TraceStatement(SourceSpan span, IDictionary<LocalInfo, ulong> locals)
         {
+        }
+    }
+
+    public class DelegatesBenchmark
+    {
+        [Benchmark(Baseline = true)]
+        public void CallMethod()
+        {
+            CalledMethod();
+        }
+
+        [Benchmark]
+        public void CallAction()
+        {
+            Action();
+        }
+
+        [Benchmark]
+        public void CallInterfaceMethod()
+        {
+            Class.Method();
+        }
+
+        [Benchmark]
+        public unsafe void CallFunctionPointer()
+        {
+            FunctionPointer();
+        }
+
+        private static int I = 0;
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        private static void CalledMethod()
+        {
+            I++;
+        }
+
+        private readonly Action Action = CalledMethod;
+        private readonly unsafe delegate*<void> FunctionPointer;
+        private readonly ICalledClass Class = new CalledClass();
+
+        private interface ICalledClass
+        {
+            void Method();
+        }
+        private class CalledClass : ICalledClass
+        {
+            [MethodImpl(MethodImplOptions.NoInlining)]
+            public void Method()
+            {
+            }
+        }
+
+        unsafe public DelegatesBenchmark()
+        {
+            FunctionPointer = (delegate*<void>)Action.Method.MethodHandle.GetFunctionPointer();
         }
     }
 
