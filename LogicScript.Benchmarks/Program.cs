@@ -4,7 +4,7 @@ using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Running;
 using LogicScript.Data;
 using LogicScript.Interpreting;
-using LogicScript.Transpiling;
+using LogicScript.Compiling;
 
 namespace LogicScript.Benchmarks
 {
@@ -57,7 +57,7 @@ end"),
 
         private TestCase Case;
         private IMachine Machine;
-        private TranspiledScript TranspiledScript;
+        private CompiledScript CompiledScript;
         private bool[] Scratch;
 
         [GlobalSetup]
@@ -82,13 +82,13 @@ end"),
             this.Machine = new DummyMachine(Case.Inputs, Case.Outputs);
 
             this.Scratch = new bool[Math.Max(Machine.InputCount, Machine.OutputCount)];
-            this.TranspiledScript = Transpiler.Transpile(script);
+            this.CompiledScript = Compiler.Compile(script);
         }
 
         [Benchmark(Baseline = true)]
-        public void RunTranspiled()
+        public void RunCompiled()
         {
-            TranspiledScript(Machine, Scratch, false);
+            CompiledScript(Machine, Scratch, false);
         }
 
         // [Benchmark]

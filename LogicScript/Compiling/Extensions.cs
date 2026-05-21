@@ -9,7 +9,7 @@ using System.Linq.Expressions;
 using Expression = System.Linq.Expressions.Expression;
 #endif
 
-namespace LogicScript.Transpiling
+namespace LogicScript.Compiling
 {
     internal static class Extensions
     {

@@ -18,11 +18,11 @@ using System.Linq.Expressions;
 using Expression = System.Linq.Expressions.Expression;
 #endif
 
-namespace LogicScript.Transpiling
+namespace LogicScript.Compiling
 {
-    public delegate void TranspiledScript(IMachine machine, bool[] scratch, bool firstRun);
+    public delegate void CompiledScript(IMachine machine, bool[] scratch, bool firstRun);
 
-    public class Transpiler
+    public class Compiler
     {
         private class Scope(IDictionary<LocalInfo, ParameterExpression> locals)
         {
@@ -35,15 +35,15 @@ namespace LogicScript.Transpiling
 
         private readonly Stack<Scope> Stack = new();
 
-        private Transpiler()
+        private Compiler()
         {
         }
 
-        private TranspiledScript TranspileInner(Script script)
+        private CompiledScript CompileInner(Script script)
         {
-            var expr = Expression.Block(script.Blocks.Select(Transpile));
+            var expr = Expression.Block(script.Blocks.Select(Compile));
 
-            var ts = Expression.Lambda<TranspiledScript>(expr, Machine, Scratch, FirstRun)
+            var ts = Expression.Lambda<CompiledScript>(expr, Machine, Scratch, FirstRun)
 #if USE_FAST_EXPRESSIONS
             .CompileFast(flags: CompilerFlags.EnableDelegateDebugInfo);
 #else
@@ -63,70 +63,70 @@ namespace LogicScript.Transpiling
             return ts;
         }
 
-        public static TranspiledScript Transpile(Script script)
+        public static CompiledScript Compile(Script script)
         {
-            return new Transpiler().TranspileInner(script);
+            return new Compiler().CompileInner(script);
         }
 
-        private Expression Transpile(Block block)
+        private Expression Compile(Block block)
         {
             return block switch
             {
-                StartupBlock sb => Transpile(sb),
-                WhenBlock w => Transpile(w),
+                StartupBlock sb => Compile(sb),
+                WhenBlock w => Compile(w),
                 _ => throw new NotImplementedException()
             };
         }
 
-        private Expression Transpile(StartupBlock block)
+        private Expression Compile(StartupBlock block)
         {
-            return Transpile(block.Body);
+            return Compile(block.Body);
         }
 
-        private Expression Transpile(WhenBlock block)
+        private Expression Compile(WhenBlock block)
         {
-            var body = Transpile(block.Body);
+            var body = Compile(block.Body);
 
             var isConstantlyTrue = block.Condition?.IsConstant == true && GetConstantValue(block.Condition).Number != 0;
 
             return block.Condition == null || isConstantlyTrue ? body : Expression.IfThen(
-                IsTruthy(Transpile(block.Condition, true)),
+                IsTruthy(Compile(block.Condition, true)),
                 body
             );
         }
 
-        private Expression Transpile(Statement stmt)
+        private Expression Compile(Statement stmt)
         {
             return stmt switch
             {
-                AssignStatement a => Transpile(a),
-                DeclareLocalStatement d => Transpile(d),
-                BlockStatement b => Transpile(b),
+                AssignStatement a => Compile(a),
+                DeclareLocalStatement d => Compile(d),
+                BlockStatement b => Compile(b),
                 _ => throw new NotImplementedException()
             };
         }
 
-        private Expression Transpile(BlockStatement stmt)
+        private Expression Compile(BlockStatement stmt)
         {
             var locals = stmt.Locals.Select(l => (l.Value, Expression.Variable(typeof(ulong), l.Value.OriginalName))).ToDictionary(l => l.Value, l => l.Item2);
 
             Stack.Push(new(locals));
 
-            var statements = stmt.Statements.Select(Transpile).ToArray();
+            var statements = stmt.Statements.Select(Compile).ToArray();
 
             Stack.Pop();
 
             return Expression.Block(locals.Values, statements);
         }
 
-        private Expression Transpile(AssignStatement stmt)
+        private Expression Compile(AssignStatement stmt)
         {
             switch (stmt.Reference.Port)
             {
                 case PortInfo port:
                     if (port.Target == MachinePorts.Output)
                     {
-                        var value = Transpile(stmt.Value, port.BitSize == 1);
+                        var value = Compile(stmt.Value, port.BitSize == 1);
 
                         if (value.IsBool())
                         {
@@ -159,7 +159,7 @@ namespace LogicScript.Transpiling
                 case LocalInfo local:
                     {
                         var localVar = FindLocal(local) ?? throw new Exception("local not found");
-                        var value = Transpile(stmt.Value, false);
+                        var value = Compile(stmt.Value, false);
 
                         return Expression.Assign(localVar, value);
                     }
@@ -168,32 +168,32 @@ namespace LogicScript.Transpiling
             throw new NotImplementedException();
         }
 
-        private Expression Transpile(DeclareLocalStatement stmt)
+        private Expression Compile(DeclareLocalStatement stmt)
         {
             if (stmt.Initializer is null)
                 return Expression.Empty();
 
             var localVar = FindLocal(stmt.Local) ?? throw new Exception("local not found");
 
-            return Expression.Assign(localVar, Transpile(stmt.Initializer, false));
+            return Expression.Assign(localVar, Compile(stmt.Initializer, false));
         }
 
-        private Expression Transpile(LExpression expr, bool canReturnBool)
+        private Expression Compile(LExpression expr, bool canReturnBool)
         {
             return expr switch
             {
-                BinaryOperatorExpression b => Transpile(b, canReturnBool),
-                UnaryOperatorExpression u => Transpile(u, canReturnBool),
+                BinaryOperatorExpression b => Compile(b, canReturnBool),
+                UnaryOperatorExpression u => Compile(u, canReturnBool),
                 NumberLiteralExpression n => canReturnBool ? Expression.Constant(n.Value != 0) : Expression.Constant(n.Value.Number),
-                ReferenceExpression r => Transpile(r, canReturnBool),
-                TruncateExpression t => Transpile(t),
+                ReferenceExpression r => Compile(r, canReturnBool),
+                TruncateExpression t => Compile(t),
                 _ => throw new NotImplementedException()
             };
         }
 
-        private Expression Transpile(TruncateExpression expr)
+        private Expression Compile(TruncateExpression expr)
         {
-            var inner = Transpile(expr.Operand, false);
+            var inner = Compile(expr.Operand, false);
 
             if (expr.Operand.BitSize <= expr.Size)
                 return inner;
@@ -201,9 +201,9 @@ namespace LogicScript.Transpiling
             return Expression.And(inner, Expression.Constant((1UL << expr.Size) - 1));
         }
 
-        private Expression Transpile(UnaryOperatorExpression expr, bool canReturnBool)
+        private Expression Compile(UnaryOperatorExpression expr, bool canReturnBool)
         {
-            var inner = Transpile(expr.Operand, canReturnBool && expr.Operator == Operator.Not);
+            var inner = Compile(expr.Operand, canReturnBool && expr.Operator == Operator.Not);
 
             return expr.Operator switch
             {
@@ -219,12 +219,12 @@ namespace LogicScript.Transpiling
             };
         }
 
-        private Expression Transpile(BinaryOperatorExpression expr, bool canReturnBool)
+        private Expression Compile(BinaryOperatorExpression expr, bool canReturnBool)
         {
             if (expr.Left.BitSize == 1 && expr.Right.BitSize == 1 && canReturnBool)
             {
-                var leftBool = Transpile(expr.Left, true);
-                var rightBool = Transpile(expr.Right, true);
+                var leftBool = Compile(expr.Left, true);
+                var rightBool = Compile(expr.Right, true);
 
                 if (leftBool.IsBool() && rightBool.IsBool())
                 {
@@ -243,8 +243,8 @@ namespace LogicScript.Transpiling
                 }
             }
 
-            var left = Transpile(expr.Left, false);
-            var right = Transpile(expr.Right, false);
+            var left = Compile(expr.Left, false);
+            var right = Compile(expr.Right, false);
 
             return expr.Operator switch
             {
@@ -273,7 +273,7 @@ namespace LogicScript.Transpiling
             };
         }
 
-        private Expression Transpile(ReferenceExpression expr, bool canReturnBool)
+        private Expression Compile(ReferenceExpression expr, bool canReturnBool)
         {
             return expr.Reference.Port switch
             {
@@ -311,7 +311,7 @@ namespace LogicScript.Transpiling
             return Expression.NotEqual(value, Expression.Constant(0UL));
         }
 
-        private BitsValue GetConstantValue(LExpression expr) => GetConstantValue(Transpile(expr, false));
+        private BitsValue GetConstantValue(LExpression expr) => GetConstantValue(Compile(expr, false));
         private static ulong GetConstantValue(Expression expr)
         {
             return Expression.Lambda<Func<ulong>>(expr)
