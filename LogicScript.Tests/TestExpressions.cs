@@ -40,7 +40,7 @@ namespace LogicScript.Tests
         {
             var machine = new DummyMachine();
 
-            Runner.Run(new Script
+            Runner.Run(new Script("<test>")
             {
                 Blocks = {
                     new StartupBlock(default,
@@ -68,7 +68,7 @@ namespace LogicScript.Tests
         {
             var machine = new DummyMachine();
 
-            Runner.Run(new Script
+            Runner.Run(new Script("<test>")
             {
                 Blocks = {
                     new StartupBlock(default,
@@ -92,7 +92,7 @@ namespace LogicScript.Tests
             var a = new PortInfo(MachinePorts.Input, 0, 1, default);
             var b = new PortInfo(MachinePorts.Input, 1, 2, default);
 
-            Runner.Run(new Script
+            Runner.Run(new Script("<test>")
             {
                 Inputs = {
                     { "a", a },
@@ -121,7 +121,7 @@ namespace LogicScript.Tests
             var a = new PortInfo(MachinePorts.Register, 0, 1, default);
             var b = new PortInfo(MachinePorts.Register, 1, 1, default);
 
-            Runner.Run(new Script
+            Runner.Run(new Script("<test>")
             {
                 Registers =
                 {
@@ -148,7 +148,7 @@ namespace LogicScript.Tests
         {
             var machine = new DummyMachine();
 
-            Runner.Run(new Script
+            Runner.Run(new Script("<test>")
             {
                 Blocks = {
                     new StartupBlock(default,
@@ -172,7 +172,7 @@ namespace LogicScript.Tests
         {
             var machine = new DummyMachine();
 
-            Runner.Run(new Script
+            Runner.Run(new Script("<test>")
             {
                 Blocks = {
                     new StartupBlock(default,
@@ -196,7 +196,7 @@ namespace LogicScript.Tests
         {
             var machine = new DummyMachine();
 
-            Runner.Run(new Script
+            Runner.Run(new Script("<test>")
             {
                 Blocks = {
                     new StartupBlock(default,
@@ -219,7 +219,7 @@ namespace LogicScript.Tests
         {
             var machine = new DummyMachine();
 
-            Runner.Run(new Script
+            Runner.Run(new Script("<test>")
             {
                 Blocks = {
                     new StartupBlock(default,
@@ -242,7 +242,7 @@ namespace LogicScript.Tests
         {
             var machine = new DummyMachine();
 
-            Runner.Run(new Script
+            Runner.Run(new Script("<test>")
             {
                 Blocks = {
                     new StartupBlock(default,

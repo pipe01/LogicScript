@@ -34,12 +34,14 @@ namespace LogicScript.Tests
             Printed.Add(msg);
         }
 
-        public void ReadInputs(Span<bool> values)
+        public bool ReadInput(int index)
         {
-            for (int i = 0; i < values.Length; i++)
-            {
-                values[i] = Inputs[i];
-            }
+            return Inputs[index];
+        }
+
+        public BitsValue ReadInputs()
+        {
+            return new(Inputs);
         }
 
         public BitsValue ReadRegister(int index)
@@ -47,7 +49,11 @@ namespace LogicScript.Tests
             return Registers[index];
         }
 
-        public void WriteOutputs(int startIndex, Span<bool> value)
+        public void WriteOutputs(int startIndex, BitsValue value)
+        {
+        }
+
+        public void WriteOutput(int index, bool value)
         {
         }
 
