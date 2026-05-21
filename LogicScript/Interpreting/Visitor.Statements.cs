@@ -1,11 +1,7 @@
 ﻿using LogicScript.Data;
 using LogicScript.Parsing.Structures;
 using LogicScript.Parsing.Structures.Statements;
-using LogicScript.Utils;
-using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
-using System.Text.RegularExpressions;
 
 namespace LogicScript.Interpreting
 {

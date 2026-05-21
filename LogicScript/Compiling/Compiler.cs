@@ -12,7 +12,6 @@ using LExpression = LogicScript.Parsing.Structures.Expressions.Expression;
 using System.Linq.Expressions;
 using Expression = System.Linq.Expressions.Expression;
 using LogicScript.Parsing;
-using LogicScript.Utils;
 
 #if USE_FAST_EXPRESSIONS
 using FastExpressionCompiler;

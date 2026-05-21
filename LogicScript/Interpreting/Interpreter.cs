@@ -1,5 +1,4 @@
 ﻿using LogicScript.Parsing.Structures.Blocks;
-using System;
 
 namespace LogicScript.Interpreting
 {

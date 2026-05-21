@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Text.RegularExpressions;
-using LogicScript.Data;
 using LogicScript.Parsing.Structures;
 
 namespace LogicScript.Utils
