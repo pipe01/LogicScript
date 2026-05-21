@@ -59,7 +59,7 @@ namespace LogicScript.Parsing.Visitors
 
         public override Expression VisitRefPort([NotNull] LogicScriptParser.RefPortContext context)
         {
-            if (Context.Outer.Constants.TryGetValue(context.GetText(), out var val))
+            if (Context.Script.Constants.TryGetValue(context.GetText(), out var val))
                 return val;
 
             if (Context.IsInConstant)
@@ -101,7 +101,7 @@ namespace LogicScript.Parsing.Visitors
                 offset = new ExpressionVisitor(Context).Visit(context.indexer().offset);
             }
 
-            var length = context.indexer().len == null ? 1 : context.indexer().len.GetConstantValue(Context.Outer);
+            var length = context.indexer().len == null ? 1 : context.indexer().len.GetConstantValue(Context.Script);
             var sliceExpr = new SliceExpression(context.Span(), operand, start, offset, length);
 
             if (length == 0)
@@ -178,6 +178,8 @@ namespace LogicScript.Parsing.Visitors
 
         public override Expression VisitExprCompare([NotNull] LogicScriptParser.ExprCompareContext context)
         {
+            // TODO: warn/error if operands are of different size
+
             var op = context.op.Type switch
             {
                 LogicScriptParser.COMPARE_EQUALS => Operator.EqualsCompare,

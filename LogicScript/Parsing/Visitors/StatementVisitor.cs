@@ -13,12 +13,17 @@ namespace LogicScript.Parsing.Visitors
         public StatementVisitor(ScriptContext context, BlockContext? blockContext = null)
         {
             this.Context = context;
-            this.BlockContext = blockContext ?? new BlockContext(context, false);
+            this.BlockContext = blockContext ?? new BlockContext(context);
         }
 
         public override Statement VisitBlock([NotNull] LogicScriptParser.BlockContext context)
         {
-            var blockContext = new BlockContext(Context, BlockContext.IsInConstant);
+            return VisitBlock(context, BlockContext.LoopID);
+        }
+
+        public Statement VisitBlock([NotNull] LogicScriptParser.BlockContext context, NodeID? loopID)
+        {
+            var blockContext = new BlockContext(Context, BlockContext, BlockContext.IsInConstant, loopID);
             var visitor = new StatementVisitor(Context, blockContext);
 
             var stmts = context.stmt().Select(visitor.Visit).ToArray();
@@ -76,37 +81,45 @@ namespace LogicScript.Parsing.Visitors
 
         public override Statement VisitStmt_for([NotNull] LogicScriptParser.Stmt_forContext context)
         {
-            var varName = context.VARIABLE().GetText().TrimStart('$');
+            var varName = context.VARIABLE().GetText();
             var from = context.from == null ? null : new ExpressionVisitor(BlockContext).Visit(context.from);
             var to = new ExpressionVisitor(BlockContext).Visit(context.to);
 
-            if (!BlockContext.Locals.ContainsKey(varName))
-                BlockContext.AddLocal(varName, to.BitSize, new SourceSpan(context.VARIABLE().Symbol));
+            // TODO: Scope the local inside the loop, not outside
+            var local = BlockContext.TryGetLocal(varName, out var l)
+                ? l
+                : BlockContext.AddLocal(varName, to.BitSize, new SourceSpan(context.VARIABLE().Symbol));
 
-            var body = Visit(context.block());
+            if (local.BitSize < to.BitSize) // TODO: The loop doesn't actually reach the value in 'to' as it's exclusive, so the required bit size may be one smaller than what's currently computed
+                Context.Errors.AddError($"The loop variable '{varName}' is too small to hold the loop limit", new SourceSpan(context.VARIABLE().Symbol));
 
-            return new ForStatement(context.Span(), varName, from, to, body);
+            var id = NodeID.Next();
+            var body = VisitBlock(context.block(), id);
+
+            return new ForStatement(id, context.Span(), local, from, to, body);
         }
 
         public override Statement VisitStmt_while([NotNull] LogicScriptParser.Stmt_whileContext context)
         {
             var cond = new ExpressionVisitor(BlockContext).Visit(context.expression());
-            var body = Visit(context.block());
 
-            return new WhileStatement(context.Span(), cond, body);
+            var id = NodeID.Next();
+            var body = VisitBlock(context.block(), id);
+
+            return new WhileStatement(id, context.Span(), cond, body);
         }
 
         public override Statement VisitStmt_vardecl([NotNull] LogicScriptParser.Stmt_vardeclContext context)
         {
             var name = context.VARIABLE().GetText();
 
-            if (BlockContext.DoesIdentifierExist(name))
+            if (BlockContext.DoesIdentifierExist(name)) // TODO: allow shadowing
                 BlockContext.Errors.AddError($"Identifier '{name}' already exists", new SourceSpan(context.VARIABLE().Symbol), true);
 
             Expression? value = null;
 
             // If the variable has a bit size marker, we will use that size. Otherwise, we will later infer it from the value
-            int size = context.size == null ? 0 : context.size.GetConstantValue(BlockContext.Outer);
+            int size = context.size == null ? 0 : context.size.GetConstantValue(BlockContext.Script);
 
             if (context.expression() != null)
             {
@@ -148,7 +161,10 @@ namespace LogicScript.Parsing.Visitors
 
         public override Statement VisitStmt_break([NotNull] LogicScriptParser.Stmt_breakContext context)
         {
-            return new BreakStatement(context.Span());
+            if (BlockContext.LoopID == null)
+                Context.Errors.AddError("Break statements can only be used inside loops", context.Span());
+
+            return new BreakStatement(context.Span(), BlockContext.LoopID.GetValueOrDefault());
         }
     }
 }

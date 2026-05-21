@@ -18,9 +18,9 @@ namespace LogicScript.Parsing.Visitors
             PortInfo port;
 
             MachinePorts? target =
-                          Context.Outer.Script.Inputs.TryGetValue(identName, out port) ? MachinePorts.Input
-                        : Context.Outer.Script.Outputs.TryGetValue(identName, out port) ? MachinePorts.Output
-                        : Context.Outer.Script.Registers.TryGetValue(identName, out port) ? MachinePorts.Register
+                          Context.Script.Script.Inputs.TryGetValue(identName, out port) ? MachinePorts.Input
+                        : Context.Script.Script.Outputs.TryGetValue(identName, out port) ? MachinePorts.Output
+                        : Context.Script.Script.Registers.TryGetValue(identName, out port) ? MachinePorts.Register
                         : null;
 
             if (target == null)
@@ -33,9 +33,9 @@ namespace LogicScript.Parsing.Visitors
         {
             var name = context.VARIABLE().GetText();
 
-            if (!Context.Locals.TryGetValue(name, out var local))
+            if (!Context.TryGetLocal(name, out var local))
             {
-                Context.Errors.AddError($"Local variable ${name} is not declared", context.Span());
+                Context.Errors.AddError($"Local variable {name} is not declared", context.Span());
                 return new LocalReference(context.Span(), name, default);
             }
 

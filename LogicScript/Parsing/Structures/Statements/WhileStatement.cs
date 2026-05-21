@@ -3,13 +3,16 @@ using System.Collections.Generic;
 
 namespace LogicScript.Parsing.Structures.Statements
 {
-    internal class WhileStatement : Statement
+    internal class WhileStatement : Statement, IIdentifiableCodeNode
     {
+        public NodeID ID { get; }
+
         public Expression Condition { get; }
         public Statement Body { get; }
 
-        public WhileStatement(SourceSpan span, Expression condition, Statement body) : base(span)
+        public WhileStatement(NodeID id, SourceSpan span, Expression condition, Statement body) : base(span)
         {
+            this.ID = id;
             this.Condition = condition;
             this.Body = body;
         }

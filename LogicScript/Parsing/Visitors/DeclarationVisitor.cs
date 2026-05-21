@@ -43,7 +43,7 @@ namespace LogicScript.Parsing.Visitors
 
         public override object? VisitDecl_const([NotNull] LogicScriptParser.Decl_constContext context)
         {
-            var value = new ExpressionVisitor(new BlockContext(Context, true)).Visit(context.expression());
+            var value = new ExpressionVisitor(new BlockContext(Context, null, true)).Visit(context.expression());
 
             if (!value.IsConstant)
                 Errors.AddError("Const declarations must have a constant value", value);
@@ -62,7 +62,7 @@ namespace LogicScript.Parsing.Visitors
             }
             else if (context.cond != null)
             {
-                cond = new ExpressionVisitor(new BlockContext(Context, false)).Visit(context.cond);
+                cond = new ExpressionVisitor(new BlockContext(Context)).Visit(context.cond);
             }
             else
             {

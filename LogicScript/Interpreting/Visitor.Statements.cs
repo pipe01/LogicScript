@@ -143,7 +143,7 @@ namespace LogicScript.Interpreting
 
                 for (ulong i = from; i > to.Number; i--)
                 {
-                    Locals[stmt.VariableName] = new BitsValue(i, size);
+                    Locals[stmt.Variable.Name] = new BitsValue(i, size);
 
                     if (Visit(stmt.Body))
                         break;
@@ -155,7 +155,7 @@ namespace LogicScript.Interpreting
 
                 for (ulong i = from; i < to.Number; i++)
                 {
-                    Locals[stmt.VariableName] = new BitsValue(i, size);
+                    Locals[stmt.Variable.Name] = new BitsValue(i, size);
 
                     if (Visit(stmt.Body))
                         break;

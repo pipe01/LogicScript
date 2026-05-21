@@ -11,6 +11,7 @@ using LogicScript.Parsing.Structures.Statements;
 using LExpression = LogicScript.Parsing.Structures.Expressions.Expression;
 using System.Linq.Expressions;
 using Expression = System.Linq.Expressions.Expression;
+using LogicScript.Parsing;
 
 #if USE_FAST_EXPRESSIONS
 using FastExpressionCompiler;
@@ -35,6 +36,7 @@ namespace LogicScript.Compiling
         private readonly bool EmitDebugInfo;
 
         private readonly Stack<Scope> Stack = new();
+        private readonly Dictionary<NodeID, LabelTarget> LoopBreaks = [];
 
         private Compiler(bool emitDebugInfo)
         {
@@ -76,6 +78,7 @@ namespace LogicScript.Compiling
             {
                 StartupBlock sb => Compile(sb),
                 WhenBlock w => Compile(w),
+                AssignBlock b => Compile(b.Assignment),
                 _ => throw new NotImplementedException()
             };
         }
@@ -89,7 +92,7 @@ namespace LogicScript.Compiling
         {
             var body = Compile(block.Body);
 
-            var isConstantlyTrue = block.Condition?.IsConstant == true && GetConstantValue(block.Condition).Number != 0;
+            var isConstantlyTrue = block.Condition?.IsConstant == true && GetConstantValue(block.Condition) != 0;
 
             return block.Condition == null || isConstantlyTrue ? body : Expression.IfThen(
                 IsTruthy(Compile(block.Condition, true)),
@@ -102,8 +105,12 @@ namespace LogicScript.Compiling
             var expr = stmt switch
             {
                 AssignStatement a => Compile(a),
-                DeclareLocalStatement d => Compile(d),
                 BlockStatement b => Compile(b),
+                BreakStatement b => Compile(b),
+                DeclareLocalStatement d => Compile(d),
+                ForStatement f => Compile(f),
+                IfStatement i => Compile(i),
+                WhileStatement w => Compile(w),
                 _ => throw new NotImplementedException()
             };
 
@@ -153,6 +160,92 @@ namespace LogicScript.Compiling
             }
 
             return expr;
+        }
+
+        private Expression Compile(BreakStatement stmt)
+        {
+            var label = LoopBreaks[stmt.TargetID]; // No need to check presence, the parser takes care of it
+
+            return Expression.Break(label);
+        }
+
+        private Expression Compile(ForStatement stmt)
+        {
+            //TODO: optimize: compute 'to' once on loop enter and don't recompute on each iteration
+
+            var from = stmt.From != null
+                ? stmt.From.IsConstant
+                    ? Expression.Constant(GetConstantValue(stmt.From))
+                    : Compile(stmt.From, false)
+                : Expression.Constant(0UL);
+            var to = stmt.To.IsConstant ? Expression.Constant(GetConstantValue(stmt.To)) : Compile(stmt.To, false);
+            var local = FindLocal(stmt.Variable);
+
+            var breakLabel = Expression.Label("loop_break");
+
+            LoopBreaks[stmt.ID] = breakLabel;
+            var body = Compile(stmt.Body);
+            LoopBreaks.Remove(stmt.ID);
+
+            return Expression.Block(
+                Expression.Assign(local, from),
+                Expression.Loop(
+                    Expression.IfThenElse(
+                        Expression.LessThan(local, to),
+                        Expression.Block(
+                            body,
+                            Expression.PostIncrementAssign(local)
+                        ),
+                        Expression.Break(breakLabel)
+                    ),
+                    breakLabel
+                )
+            );
+        }
+
+        private Expression Compile(WhileStatement stmt)
+        {
+            var breakLabel = Expression.Label("loop_break");
+
+            LoopBreaks[stmt.ID] = breakLabel;
+            var body = Compile(stmt.Body);
+            LoopBreaks.Remove(stmt.ID);
+
+            return Expression.Loop(
+                Expression.IfThenElse(
+                    IsTruthy(Compile(stmt.Condition, true)),
+                    body,
+                    Expression.Break(breakLabel)
+                ),
+                breakLabel
+            );
+        }
+
+        private Expression Compile(IfStatement stmt)
+        {
+            if (stmt.Condition.IsConstant)
+            {
+                var condConst = GetConstantValue(stmt.Condition);
+
+                if (condConst != 0)
+                    return Compile(stmt.Body);
+                else if (stmt.Else != null)
+                    return Compile(stmt.Else);
+                else
+                    return Expression.Empty();
+            }
+
+            var cond = IsTruthy(Compile(stmt.Condition, true));
+            var then = Compile(stmt.Body);
+
+            if (stmt.Else != null)
+            {
+                var @else = Compile(stmt.Else);
+
+                return Expression.IfThenElse(cond, then, @else);
+            }
+
+            return Expression.IfThen(cond, then);
         }
 
         private Expression Compile(BlockStatement stmt)
@@ -207,7 +300,7 @@ namespace LogicScript.Compiling
 
                 case LocalInfo local:
                     {
-                        var localVar = FindLocal(local) ?? throw new Exception("local not found");
+                        var localVar = FindLocal(local);
                         var value = Compile(stmt.Value, false);
 
                         return Expression.Assign(localVar, value);
@@ -222,7 +315,7 @@ namespace LogicScript.Compiling
             if (stmt.Initializer is null)
                 return Expression.Empty();
 
-            var localVar = FindLocal(stmt.Local) ?? throw new Exception("local not found");
+            var localVar = FindLocal(stmt.Local);
 
             return Expression.Assign(localVar, Compile(stmt.Initializer, false));
         }
@@ -337,12 +430,12 @@ namespace LogicScript.Compiling
                         : ReadInput(port.StartIndex, port.BitSize),
                     _ => throw new NotImplementedException()
                 },
-                LocalInfo local => FindLocal(local) ?? throw new Exception("local not found"),
+                LocalInfo local => FindLocal(local),
                 _ => throw new NotImplementedException()
             };
         }
 
-        private ParameterExpression? FindLocal(LocalInfo info)
+        private ParameterExpression FindLocal(LocalInfo info)
         {
             foreach (var scope in Stack)
             {
@@ -350,7 +443,7 @@ namespace LogicScript.Compiling
                     return local;
             }
 
-            return null;
+            throw new Exception($"Local {info} not found");
         }
 
         private static Expression IsTruthy(Expression value)
@@ -360,7 +453,7 @@ namespace LogicScript.Compiling
             return Expression.NotEqual(value, Expression.Constant(0UL));
         }
 
-        private BitsValue GetConstantValue(LExpression expr) => GetConstantValue(Compile(expr, false));
+        private ulong GetConstantValue(LExpression expr) => GetConstantValue(Compile(expr, false));
         private static ulong GetConstantValue(Expression expr)
         {
             return Expression.Lambda<Func<ulong>>(expr)

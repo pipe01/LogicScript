@@ -2,8 +2,11 @@
 {
     internal class BreakStatement : Statement
     {
-        public BreakStatement(SourceSpan span) : base(span)
+        public NodeID TargetID { get; }
+
+        public BreakStatement(SourceSpan span, NodeID targetID) : base(span)
         {
+            this.TargetID = targetID;
         }
     }
 }

@@ -22,6 +22,8 @@ namespace Tester
             {
                 Console.WriteLine(err);
             }
+            if (errors.Count > 0)
+                return;
 
             var program = Compiler.Compile(script, true);
             Console.WriteLine(string.Join(", ", program));
@@ -73,7 +75,7 @@ namespace Tester
 
             public void WriteOutputs(int startIndex, BitsValue value)
             {
-                // Console.WriteLine(string.Join(' ', value.ToArray().Select(o => o ? "1" : "0").ToArray()));
+                Console.WriteLine(value.ToStringBinary());
             }
 
             public void WriteOutput(int index, bool value)
