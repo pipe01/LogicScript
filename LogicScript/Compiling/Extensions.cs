@@ -1,13 +1,6 @@
 using System;
 using LogicScript.Data;
-
-#if USE_FAST_EXPRESSIONS
-using FastExpressionCompiler.LightExpression;
-using Expression = FastExpressionCompiler.LightExpression.Expression;
-#else
 using System.Linq.Expressions;
-using Expression = System.Linq.Expressions.Expression;
-#endif
 
 namespace LogicScript.Compiling
 {

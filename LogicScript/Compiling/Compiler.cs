@@ -9,13 +9,11 @@ using LogicScript.Parsing.Structures.Blocks;
 using LogicScript.Parsing.Structures.Expressions;
 using LogicScript.Parsing.Structures.Statements;
 using LExpression = LogicScript.Parsing.Structures.Expressions.Expression;
-
-#if USE_FAST_EXPRESSIONS
-using FastExpressionCompiler.LightExpression;
-using Expression = FastExpressionCompiler.LightExpression.Expression;
-#else
 using System.Linq.Expressions;
 using Expression = System.Linq.Expressions.Expression;
+
+#if USE_FAST_EXPRESSIONS
+using FastExpressionCompiler;
 #endif
 
 namespace LogicScript.Compiling
