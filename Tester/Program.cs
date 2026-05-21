@@ -4,6 +4,9 @@ using LogicScript.Compiling;
 using System;
 using System.IO;
 using System.Linq;
+using LogicScript.Parsing;
+using System.Collections.Generic;
+using LogicScript.Parsing.Structures;
 
 namespace Tester
 {
@@ -11,14 +14,16 @@ namespace Tester
     {
         static void Main(string[] args)
         {
-            var (script, errors) = Script.Parse(File.ReadAllText("test4.lsx"));
+            var filename = args.Length > 0 ? args[0] : "test.lsx";
+
+            var (script, errors) = Script.Parse(File.ReadAllText(filename), filename);
 
             foreach (var err in errors)
             {
                 Console.WriteLine(err);
             }
 
-            var program = Compiler.Compile(script);
+            var program = Compiler.Compile(script, true);
             Console.WriteLine(string.Join(", ", program));
 
             var machine = new MyMachine
@@ -29,7 +34,7 @@ namespace Tester
 
             var scratch = new bool[Math.Max(machine.InputCount, machine.OutputCount)];
 
-            program(machine, scratch, true);
+            program(machine, scratch, true, new MyDebugger());
 
             // new CPU(program, new MyMachine()).Run(true);
 
@@ -93,6 +98,14 @@ namespace Tester
 
             public void QueueUpdate()
             {
+            }
+        }
+
+        class MyDebugger : IDebugger
+        {
+            public void TraceStatement(SourceSpan span, IDictionary<LocalInfo, ulong> locals)
+            {
+                Console.WriteLine(span);
             }
         }
     }

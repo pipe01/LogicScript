@@ -20,7 +20,7 @@ using Expression = System.Linq.Expressions.Expression;
 
 namespace LogicScript.Compiling
 {
-    public delegate void CompiledScript(IMachine machine, bool[] scratch, bool firstRun);
+    public delegate void CompiledScript(IMachine machine, bool[] scratch, bool firstRun, IDebugger? debugger);
 
     public class Compiler
     {
@@ -32,18 +32,22 @@ namespace LogicScript.Compiling
         private readonly ParameterExpression Machine = Expression.Parameter(typeof(IMachine), "machine");
         private readonly ParameterExpression Scratch = Expression.Parameter(typeof(bool[]), "scratch");
         private readonly ParameterExpression FirstRun = Expression.Parameter(typeof(bool), "firstRun");
+        private readonly ParameterExpression Debugger = Expression.Parameter(typeof(IDebugger), "debugger");
+
+        private readonly bool EmitDebugInfo;
 
         private readonly Stack<Scope> Stack = new();
 
-        private Compiler()
+        private Compiler(bool emitDebugInfo)
         {
+            this.EmitDebugInfo = emitDebugInfo;
         }
 
-        private CompiledScript CompileInner(Script script)
+        private CompiledScript CompileScript(Script script)
         {
             var expr = Expression.Block(script.Blocks.Select(Compile));
 
-            var ts = Expression.Lambda<CompiledScript>(expr, Machine, Scratch, FirstRun)
+            var ts = Expression.Lambda<CompiledScript>(expr, Machine, Scratch, FirstRun, Debugger)
 #if USE_FAST_EXPRESSIONS
             .CompileFast(flags: CompilerFlags.EnableDelegateDebugInfo);
 #else
@@ -63,9 +67,9 @@ namespace LogicScript.Compiling
             return ts;
         }
 
-        public static CompiledScript Compile(Script script)
+        public static CompiledScript Compile(Script script, bool emitDebugInfo = false)
         {
-            return new Compiler().CompileInner(script);
+            return new Compiler(emitDebugInfo).CompileScript(script);
         }
 
         private Expression Compile(Block block)
@@ -97,13 +101,60 @@ namespace LogicScript.Compiling
 
         private Expression Compile(Statement stmt)
         {
-            return stmt switch
+            var expr = stmt switch
             {
                 AssignStatement a => Compile(a),
                 DeclareLocalStatement d => Compile(d),
                 BlockStatement b => Compile(b),
                 _ => throw new NotImplementedException()
             };
+
+            if (EmitDebugInfo)
+            {
+                // If a debugger is present, add all available locals to a dictionary then call Debugger.TraceStatement
+
+                var localsDict = Expression.Variable(typeof(IDictionary<LocalInfo, ulong>), "localsDict");
+                var block = new List<Expression>
+                {
+                    Expression.Assign(
+                        localsDict,
+                        Expression.New(typeof(Dictionary<LocalInfo, ulong>).GetConstructor([]))
+                    )
+                };
+
+                foreach (var scope in Stack)
+                {
+                    foreach (var local in scope.Locals)
+                    {
+                        block.Add(
+                            Expression.Call(
+                                localsDict,
+                                typeof(IDictionary<LocalInfo, ulong>).GetMethod("Add")!,
+                                Expression.Constant(local.Key),
+                                local.Value
+                            )
+                        );
+                    }
+                }
+
+                block.Add(
+                    Expression.IfThen(
+                        Expression.NotEqual(Debugger, Expression.Constant(null)),
+                        Expression.Call(
+                            Debugger,
+                            typeof(IDebugger).GetMethod(nameof(IDebugger.TraceStatement)),
+                            Expression.Constant(stmt.Span),
+                            localsDict
+                        )
+                    )
+                );
+
+                block.Add(expr);
+
+                return Expression.Block([localsDict], block);
+            }
+
+            return expr;
         }
 
         private Expression Compile(BlockStatement stmt)

@@ -5,6 +5,8 @@ using BenchmarkDotNet.Running;
 using LogicScript.Data;
 using LogicScript.Interpreting;
 using LogicScript.Compiling;
+using LogicScript.Parsing;
+using LogicScript.Parsing.Structures;
 
 namespace LogicScript.Benchmarks
 {
@@ -52,12 +54,13 @@ when 1
 end"),
         ];
 
-        [Params(0, 1)]
+        [Params(1)]
         public int TestIndex { get; set; }
 
         private TestCase Case;
         private IMachine Machine;
-        private CompiledScript CompiledScript;
+        private Script Script;
+        private CompiledScript CompiledScript, CompiledScriptDebug;
         private bool[] Scratch;
 
         [GlobalSetup]
@@ -78,24 +81,32 @@ end"),
                 Environment.Exit(1);
                 return;
             }
+            this.Script = script;
 
             this.Machine = new DummyMachine(Case.Inputs, Case.Outputs);
 
             this.Scratch = new bool[Math.Max(Machine.InputCount, Machine.OutputCount)];
             this.CompiledScript = Compiler.Compile(script);
+            this.CompiledScriptDebug = Compiler.Compile(script, true);
         }
 
         [Benchmark(Baseline = true)]
-        public void RunCompiled()
+        public void RunCompiledNoDebug()
         {
-            CompiledScript(Machine, Scratch, false);
+            CompiledScript(Machine, Scratch, false, null);
         }
 
-        // [Benchmark]
-        // public void RunInterpreted()
-        // {
-        //     Interpreter.Run(Script, Machine, false);
-        // }
+        [Benchmark]
+        public void RunCompiledDebug()
+        {
+            CompiledScriptDebug(Machine, Scratch, false, new MyDebugger());
+        }
+
+        [Benchmark]
+        public void RunInterpreted()
+        {
+            Interpreter.Run(Script, Machine, false);
+        }
 
         // [Benchmark(Baseline = true)]
         // public void RunRaw()
@@ -157,6 +168,13 @@ end"),
         }
 
         public void QueueUpdate()
+        {
+        }
+    }
+
+    public class MyDebugger : IDebugger
+    {
+        public void TraceStatement(SourceSpan span, IDictionary<LocalInfo, ulong> locals)
         {
         }
     }
