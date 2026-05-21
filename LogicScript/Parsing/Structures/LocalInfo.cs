@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace LogicScript.Parsing.Structures
 {
-    internal readonly struct LocalInfo : IPortInfo
+    public readonly struct LocalInfo : IPortInfo
     {
         public int BitSize { get; }
         public string Name { get; }
@@ -33,5 +33,7 @@ namespace LogicScript.Parsing.Structures
         }
 
         public override int GetHashCode() => HashCode.Combine(BitSize, Name);
+
+        public override string ToString() => $"{Name}:{BitSize}";
     }
 }

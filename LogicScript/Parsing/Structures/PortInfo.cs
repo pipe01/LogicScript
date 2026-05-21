@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace LogicScript.Parsing.Structures
 {
-    internal interface IPortInfo : ICodeNode, IEquatable<IPortInfo>
+    public interface IPortInfo : ICodeNode, IEquatable<IPortInfo>
     {
         int BitSize { get; }
     }

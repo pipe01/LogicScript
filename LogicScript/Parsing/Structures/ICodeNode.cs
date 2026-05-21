@@ -2,7 +2,7 @@
 
 namespace LogicScript.Parsing.Structures
 {
-    internal interface ICodeNode
+    public interface ICodeNode
     {
         SourceSpan Span { get; }
 

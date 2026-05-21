@@ -3,30 +3,21 @@ using System;
 
 namespace LogicScript.Parsing
 {
-    public readonly struct SourceSpan : IEquatable<SourceSpan>
+    public readonly struct SourceSpan(string fileName, SourceLocation start, SourceLocation end) : IEquatable<SourceSpan>
     {
-        public SourceLocation Start { get; }
-        public SourceLocation End { get; }
-
-        internal SourceSpan(SourceLocation start, SourceLocation end)
-        {
-            this.Start = start;
-            this.End = end;
-        }
+        public SourceLocation Start => start;
+        public SourceLocation End => end;
+        public string FileName => fileName;
 
         internal SourceSpan(ParserRuleContext context) : this(context.Start, context.Stop)
         {
         }
 
-        internal SourceSpan(IToken start, IToken end) : this(new SourceLocation(start), new SourceLocation(end.Line, end.Column + end.Text.Length + 1))
+        internal SourceSpan(IToken start, IToken end) : this(start.TokenSource.SourceName, new SourceLocation(start), new SourceLocation(end.Line, end.Column + end.Text.Length + 1))
         {
         }
 
         internal SourceSpan(IToken token) : this(token, token)
-        {
-        }
-
-        internal SourceSpan(int lineStart, int colStart, int lineEnd, int colEnd) : this(new SourceLocation(lineStart, colStart), new SourceLocation(lineEnd, colEnd))
         {
         }
 
