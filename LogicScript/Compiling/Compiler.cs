@@ -325,12 +325,32 @@ namespace LogicScript.Compiling
             return expr switch
             {
                 BinaryOperatorExpression b => Compile(b, canReturnBool),
-                UnaryOperatorExpression u => Compile(u, canReturnBool),
                 NumberLiteralExpression n => canReturnBool ? Expression.Constant(n.Value != 0) : Expression.Constant(n.Value.Number),
                 ReferenceExpression r => Compile(r, canReturnBool),
+                SliceExpression s => Compile(s),
                 TruncateExpression t => Compile(t),
+                UnaryOperatorExpression u => Compile(u, canReturnBool),
                 _ => throw new NotImplementedException()
             };
+        }
+
+        private Expression Compile(SliceExpression expr)
+        {
+            // TODO: check that this is right
+
+            var operand = Compile(expr.Operand, false);
+
+            var offset = expr.Start switch
+            {
+                IndexStart.Left => Compile(expr.Offset, false),
+                IndexStart.Right => Expression.Subtract(
+                    Expression.Constant(expr.Operand.BitSize - expr.Length),
+                    Compile(expr.Offset, false)
+                ),
+                _ => throw new NotImplementedException(),
+            };
+
+            return Slice(operand, offset, expr.Length);
         }
 
         private Expression Compile(TruncateExpression expr)
@@ -464,10 +484,10 @@ namespace LogicScript.Compiling
 #endif
         }
 
-        private static Expression Slice(Expression value, int start, int length)
+        private static Expression Slice(Expression value, Expression start, int length)
         {
             return Expression.And(
-                Expression.RightShift(value, Expression.Constant(start)),
+                Expression.RightShift(value, start),
                 Expression.Constant((1UL << length) - 1)
             );
         }
