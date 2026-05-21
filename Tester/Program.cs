@@ -1,8 +1,9 @@
 ﻿using LogicScript;
 using LogicScript.Data;
-using LogicScript.Transpiling;
+using LogicScript.Compiling;
 using System;
 using System.IO;
+using System.Linq;
 
 namespace Tester
 {
@@ -17,10 +18,15 @@ namespace Tester
                 Console.WriteLine(err);
             }
 
-            var program = Transpiler.Transpile(script);
+            var program = Compiler.Compile(script);
             Console.WriteLine(string.Join(", ", program));
 
-            var machine = new MyMachine();
+            var machine = new MyMachine
+            {
+                InputCount = script.Inputs.Values.Sum(o => o.BitSize),
+                OutputCount = script.Outputs.Values.Sum(o => o.BitSize)
+            };
+
             var scratch = new bool[Math.Max(machine.InputCount, machine.OutputCount)];
 
             program(machine, scratch, true);
@@ -38,9 +44,9 @@ namespace Tester
 
         class MyMachine : IUpdatableMachine
         {
-            public int InputCount => 8 * 2;
+            public int InputCount { get; set; }
 
-            public int OutputCount => 8;
+            public int OutputCount { get; set; }
 
             private BitsValue[] Registers;
 

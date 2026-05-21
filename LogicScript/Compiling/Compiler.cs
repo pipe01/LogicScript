@@ -80,7 +80,7 @@ namespace LogicScript.Compiling
 
         private Expression Compile(StartupBlock block)
         {
-            return Compile(block.Body);
+            return Expression.IfThen(FirstRun, Compile(block.Body));
         }
 
         private Expression Compile(WhenBlock block)
