@@ -15,7 +15,7 @@ namespace LogicScript.Testing
         public bool[] Inputs { get; } = new bool[inputCount];
         public bool[] Outputs { get; } = new bool[outputCount];
 
-        private BitsValue[] Memory = Array.Empty<BitsValue>();
+        private ulong[] Memory = [];
         private StringBuilder PrintOutput = new StringBuilder();
 
         public void AllocateRegisters(int count)
@@ -59,12 +59,12 @@ namespace LogicScript.Testing
             Outputs[index] = value;
         }
 
-        public BitsValue ReadRegister(int index)
+        public ulong ReadRegister(int index)
         {
             return Memory[index];
         }
 
-        public void WriteRegister(int index, BitsValue value)
+        public void WriteRegister(int index, ulong value)
         {
             Memory[index] = value;
         }

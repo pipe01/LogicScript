@@ -116,7 +116,7 @@ namespace LogicScript.Tests
         [Test]
         public void AddRegisters()
         {
-            var machine = new DummyMachine(registers: new BitsValue[] { 1, 2 });
+            var machine = new DummyMachine(registers: [1, 2]);
 
             var a = new PortInfo(MachinePorts.Register, 0, 1, default);
             var b = new PortInfo(MachinePorts.Register, 1, 1, default);

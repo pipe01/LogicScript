@@ -36,7 +36,7 @@ namespace Tester
 
             var scratch = new bool[Math.Max(machine.InputCount, machine.OutputCount)];
 
-            program(machine, scratch, true, new MyDebugger());
+            program(machine, scratch, true, null);
 
             // new CPU(program, new MyMachine()).Run(true);
 
@@ -49,13 +49,13 @@ namespace Tester
             // var (bench, benchErrors) = TestBench.Parse(File.ReadAllText("test.lsbench"), script);
         }
 
-        class MyMachine : IUpdatableMachine
+        class MyMachine : IMachine
         {
             public int InputCount { get; set; }
 
             public int OutputCount { get; set; }
 
-            private BitsValue[] Registers;
+            private ulong[] Registers;
 
             public void Print(string msg)
             {
@@ -85,15 +85,15 @@ namespace Tester
 
             public void AllocateRegisters(int count)
             {
-                Registers = new BitsValue[count];
+                Registers = new ulong[count];
             }
 
-            public BitsValue ReadRegister(int index)
+            public ulong ReadRegister(int index)
             {
                 return Registers[index];
             }
 
-            public void WriteRegister(int index, BitsValue value)
+            public void WriteRegister(int index, ulong value)
             {
                 Registers[index] = value;
             }

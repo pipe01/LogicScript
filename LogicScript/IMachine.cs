@@ -15,8 +15,8 @@ namespace LogicScript
         void WriteOutput(int index, bool value);
 
         void AllocateRegisters(int count);
-        BitsValue ReadRegister(int index);
-        void WriteRegister(int index, BitsValue value);
+        ulong ReadRegister(int index);
+        void WriteRegister(int index, ulong value);
 
         void Print(string msg);
 

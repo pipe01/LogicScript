@@ -46,9 +46,20 @@ namespace LogicScript.Compiling
 
         private CompiledScript CompileScript(Script script)
         {
-            var expr = Expression.Block(script.Blocks.Select(Compile));
+            var body = new List<Expression>
+            {
+                Expression.IfThen(
+                    FirstRun,
+                    Expression.Call(
+                        Machine,
+                        typeof(IMachine).GetMethod(nameof(IMachine.AllocateRegisters)),
+                        Expression.Constant(script.Registers.Count)
+                    )
+                )
+            };
+            body.AddRange(script.Blocks.Select(Compile));
 
-            var ts = Expression.Lambda<CompiledScript>(expr, Machine, Scratch, FirstRun, Debugger)
+            var ts = Expression.Lambda<CompiledScript>(Expression.Block(body), Machine, Scratch, FirstRun, Debugger)
 #if USE_FAST_EXPRESSIONS
             .CompileFast(flags: CompilerFlags.EnableDelegateDebugInfo);
 #else
@@ -322,37 +333,43 @@ namespace LogicScript.Compiling
             switch (stmt.Reference.Port)
             {
                 case PortInfo port:
-                    if (port.Target == MachinePorts.Output)
+                    switch (port.Target)
                     {
-                        var value = Compile(stmt.Value, port.BitSize == 1);
+                        case MachinePorts.Output:
+                            var value = Compile(stmt.Value, port.BitSize == 1);
 
-                        if (value.IsBool())
-                        {
+                            if (value.IsBool())
+                            {
+                                return Expression.Call(
+                                    Machine,
+                                    typeof(IMachine).GetMethod(nameof(IMachine.WriteOutput))!,
+                                    Expression.Constant(port.StartIndex),
+                                    value
+                                );
+                            }
+                            else
+                            {
+                                return Expression.Call(
+                                    Machine,
+                                    typeof(IMachine).GetMethod(nameof(IMachine.WriteOutputs)),
+                                    Expression.Constant(port.StartIndex),
+                                    Expression.New(
+                                        typeof(BitsValue).GetConstructor([typeof(ulong), typeof(int)])!,
+                                        value,
+                                        Expression.Constant(port.BitSize)
+                                    )
+                                );
+                            }
+
+                        case MachinePorts.Register:
                             return Expression.Call(
                                 Machine,
-                                typeof(IMachine).GetMethod(nameof(IMachine.WriteOutput))!,
+                                typeof(IMachine).GetMethod(nameof(IMachine.WriteRegister)),
                                 Expression.Constant(port.StartIndex),
-                                value
+                                Compile(stmt.Value, false)
                             );
-                        }
-                        else
-                        {
-                            return Expression.Call(
-                                Machine,
-                                typeof(IMachine).GetMethod(nameof(IMachine.WriteOutputs)),
-                                Expression.Constant(port.StartIndex),
-                                Expression.New(
-                                    typeof(BitsValue).GetConstructor([typeof(ulong), typeof(int)])!,
-                                    value,
-                                    Expression.Constant(port.BitSize)
-                                )
-                            );
-                        }
                     }
-                    else
-                    {
-                        throw new NotImplementedException();
-                    }
+                    throw new NotImplementedException();
 
                 case LocalInfo local:
                     {
@@ -526,6 +543,11 @@ namespace LogicScript.Compiling
                             Expression.Constant(port.StartIndex)
                         )
                         : ReadInput(port.StartIndex, port.BitSize),
+                    MachinePorts.Register => Expression.Call(
+                        Machine,
+                        typeof(IMachine).GetMethod(nameof(IMachine.ReadRegister)),
+                        Expression.Constant(port.StartIndex)
+                    ),
                     _ => throw new NotImplementedException()
                 },
                 LocalInfo local => FindLocal(local),

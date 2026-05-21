@@ -14,13 +14,13 @@ namespace LogicScript.Tests
 
         public IList<string> Printed { get; set; } = new List<string>();
 
-        private BitsValue[] Registers;
+        private ulong[] Registers;
 
-        public DummyMachine(bool[]? inputs = null, int outputCount = 0, BitsValue[]? registers = null)
+        public DummyMachine(bool[]? inputs = null, int outputCount = 0, ulong[]? registers = null)
         {
             this.InputCount = inputs?.Length ?? 0;
             this.Inputs = inputs ?? Array.Empty<bool>();
-            this.Registers = registers ?? Array.Empty<BitsValue>();
+            this.Registers = registers ?? [];
             this.OutputCount = outputCount;
         }
 
@@ -44,7 +44,7 @@ namespace LogicScript.Tests
             return new(Inputs);
         }
 
-        public BitsValue ReadRegister(int index)
+        public ulong ReadRegister(int index)
         {
             return Registers[index];
         }
@@ -57,7 +57,7 @@ namespace LogicScript.Tests
         {
         }
 
-        public void WriteRegister(int index, BitsValue value)
+        public void WriteRegister(int index, ulong value)
         {
             Registers[index] = value;
         }
