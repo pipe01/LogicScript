@@ -5,15 +5,17 @@ namespace LogicScript.Parsing
 {
     public readonly struct SourceLocation : IEquatable<SourceLocation>
     {
+        public string FileName { get; }
         public int Line { get; }
         public int Column { get; }
 
-        internal SourceLocation(int line, int column)
+        internal SourceLocation(string fileName, int line, int column)
         {
+            this.FileName = fileName;
             this.Line = line;
             this.Column = column;
         }
-        internal SourceLocation(IToken token) : this(token.Line, token.Column + 1)
+        internal SourceLocation(IToken token) : this(token.TokenSource.SourceName, token.Line, token.Column + 1)
         {
         }
 
@@ -24,6 +26,6 @@ namespace LogicScript.Parsing
         public bool Equals(SourceLocation other)
             => other.Line == Line && other.Column == Column;
 
-        public override int GetHashCode() => HashCode.Combine(Line, Column);
+        public override int GetHashCode() => HashCode.Combine(FileName, Line, Column);
     }
 }
