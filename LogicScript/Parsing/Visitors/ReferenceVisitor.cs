@@ -31,7 +31,7 @@ namespace LogicScript.Parsing.Visitors
 
         public override Reference VisitRefLocal([NotNull] LogicScriptParser.RefLocalContext context)
         {
-            var name = context.VARIABLE().GetText().TrimStart('$');
+            var name = context.VARIABLE().GetText();
 
             if (!Context.Locals.TryGetValue(name, out var local))
             {

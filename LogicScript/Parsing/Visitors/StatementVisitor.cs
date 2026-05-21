@@ -98,7 +98,7 @@ namespace LogicScript.Parsing.Visitors
 
         public override Statement VisitStmt_vardecl([NotNull] LogicScriptParser.Stmt_vardeclContext context)
         {
-            var name = context.VARIABLE().GetText().TrimStart('$');
+            var name = context.VARIABLE().GetText();
 
             if (BlockContext.DoesIdentifierExist(name))
                 BlockContext.Errors.AddError($"Identifier '{name}' already exists", new SourceSpan(context.VARIABLE().Symbol), true);
