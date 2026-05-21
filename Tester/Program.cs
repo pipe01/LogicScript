@@ -1,12 +1,8 @@
 ﻿using LogicScript;
-using LogicScript.ByteCode;
 using LogicScript.Data;
-using LogicScript.Parsing;
-using LogicScript.Testing;
 using LogicScript.Transpiling;
 using System;
 using System.IO;
-using System.Linq;
 
 namespace Tester
 {

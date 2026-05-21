@@ -2,7 +2,6 @@
 
 using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Running;
-using LogicScript.ByteCode;
 using LogicScript.Data;
 using LogicScript.Interpreting;
 using LogicScript.Transpiling;
@@ -58,8 +57,6 @@ end"),
 
         private TestCase Case;
         private IMachine Machine;
-        private Script Script;
-        private CPU CPU;
         private TranspiledScript TranspiledScript;
         private bool[] Scratch;
 
@@ -82,11 +79,7 @@ end"),
                 return;
             }
 
-            this.Script = script;
             this.Machine = new DummyMachine(Case.Inputs, Case.Outputs);
-
-            var bytecode = Compiler.Compile(script);
-            this.CPU = new CPU(bytecode, Machine);
 
             this.Scratch = new bool[Math.Max(Machine.InputCount, Machine.OutputCount)];
             this.TranspiledScript = Transpiler.Transpile(script);
@@ -102,12 +95,6 @@ end"),
         // public void RunInterpreted()
         // {
         //     Interpreter.Run(Script, Machine, false);
-        // }
-
-        // [Benchmark]
-        // public void RunBytecode()
-        // {
-        //     CPU.Run(true);
         // }
 
         // [Benchmark(Baseline = true)]
