@@ -328,10 +328,42 @@ namespace LogicScript.Compiling
                 NumberLiteralExpression n => canReturnBool ? Expression.Constant(n.Value != 0) : Expression.Constant(n.Value.Number),
                 ReferenceExpression r => Compile(r, canReturnBool),
                 SliceExpression s => Compile(s),
+                TernaryOperatorExpression t => Compile(t, canReturnBool),
                 TruncateExpression t => Compile(t.Operand, canReturnBool), // Truncating is a no-op at runtime since bit size is determined at compile-time
                 UnaryOperatorExpression u => Compile(u, canReturnBool),
                 _ => throw new NotImplementedException()
             };
+        }
+
+        private Expression Compile(TernaryOperatorExpression expr, bool canReturnBool)
+        {
+            if (expr.Condition.IsConstant)
+            {
+                var condConst = GetConstantValue(expr.Condition);
+
+                if (condConst != 0)
+                {
+                    if (expr.IfTrue.IsConstant)
+                        return Expression.Constant(GetConstantValue(expr.IfTrue));
+                    else
+                        return Compile(expr.IfTrue, canReturnBool);
+                }
+                else
+                {
+                    if (expr.IfFalse.IsConstant)
+                        return Expression.Constant(GetConstantValue(expr.IfFalse));
+                    else
+                        return Compile(expr.IfFalse, canReturnBool);
+                }
+            }
+
+            var cond = IsTruthy(Compile(expr.Condition, true));
+
+            return Expression.Condition(
+                cond,
+                Compile(expr.IfTrue, canReturnBool),
+                Compile(expr.IfFalse, canReturnBool)
+            );
         }
 
         private Expression Compile(SliceExpression expr)
