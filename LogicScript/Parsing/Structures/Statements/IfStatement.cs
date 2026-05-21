@@ -3,18 +3,11 @@ using System.Collections.Generic;
 
 namespace LogicScript.Parsing.Structures.Statements
 {
-    internal sealed class IfStatement : Statement
+    internal sealed class IfStatement(SourceSpan span, Expression condition, Statement body, Statement? @else) : Statement(span)
     {
-        public Expression Condition { get; set; }
-        public Statement Body { get; set; }
-        public Statement? Else { get; set; }
-
-        public IfStatement(SourceSpan span, Expression condition, Statement body, Statement? @else) : base(span)
-        {
-            this.Condition = condition;
-            this.Body = body;
-            this.Else = @else;
-        }
+        public Expression Condition { get; set; } = condition;
+        public Statement Body { get; set; } = body;
+        public Statement? Else { get; set; } = @else;
 
         public override IEnumerable<ICodeNode> GetChildren()
         {

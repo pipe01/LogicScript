@@ -2,14 +2,9 @@
 
 namespace LogicScript.Parsing.Structures.Blocks
 {
-    internal abstract class Block : ICodeNode
+    internal abstract class Block(SourceSpan span) : ICodeNode
     {
-        public SourceSpan Span { get; }
-
-        protected Block(SourceSpan span)
-        {
-            this.Span = span;
-        }
+        public SourceSpan Span { get; } = span;
 
         public virtual IEnumerable<ICodeNode> GetChildren()
         {

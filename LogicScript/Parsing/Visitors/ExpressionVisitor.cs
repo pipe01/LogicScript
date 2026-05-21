@@ -7,16 +7,10 @@ using LogicScript.Parsing.Structures.Expressions;
 
 namespace LogicScript.Parsing.Visitors
 {
-    class ExpressionVisitor : LogicScriptBaseVisitor<Expression>
+    class ExpressionVisitor(BlockContext context, int maxBitSize = 0) : LogicScriptBaseVisitor<Expression>
     {
-        private readonly BlockContext Context;
-        private readonly int MaxBitSize;
-
-        public ExpressionVisitor(BlockContext context, int maxBitSize = 0)
-        {
-            this.Context = context;
-            this.MaxBitSize = maxBitSize;
-        }
+        private readonly BlockContext Context = context;
+        private readonly int MaxBitSize = maxBitSize;
 
         public override Expression Visit([NotNull] IParseTree tree)
         {

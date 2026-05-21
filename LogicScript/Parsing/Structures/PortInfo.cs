@@ -15,21 +15,13 @@ namespace LogicScript.Parsing.Structures
         Register
     }
 
-    internal readonly struct PortInfo : IPortInfo
+    internal readonly struct PortInfo(MachinePorts target, int index, int bitSize, SourceSpan span) : IPortInfo
     {
-        public MachinePorts Target { get; }
-        public int StartIndex { get; }
-        public int BitSize { get; }
+        public MachinePorts Target { get; } = target;
+        public int StartIndex { get; } = index;
+        public int BitSize { get; } = bitSize;
 
-        public SourceSpan Span { get; }
-
-        public PortInfo(MachinePorts target, int index, int bitSize, SourceSpan span)
-        {
-            this.StartIndex = index;
-            this.BitSize = bitSize;
-            this.Span = span;
-            this.Target = target;
-        }
+        public SourceSpan Span { get; } = span;
 
         public IEnumerable<ICodeNode> GetChildren()
         {

@@ -10,18 +10,12 @@ using System.Linq;
 
 namespace LogicScript.Parsing.Visitors
 {
-    internal class DeclarationVisitor : LogicScriptBaseVisitor<object?>
+    internal class DeclarationVisitor(ScriptContext context, ErrorSink errors) : LogicScriptBaseVisitor<object?>
     {
-        private readonly ScriptContext Context;
-        private readonly ErrorSink Errors;
+        private readonly ScriptContext Context = context;
+        private readonly ErrorSink Errors = errors;
 
         private Script Script => Context.Script;
-
-        public DeclarationVisitor(ScriptContext context, ErrorSink errors)
-        {
-            this.Context = context;
-            this.Errors = errors;
-        }
 
         public override object? VisitDecl_input([NotNull] LogicScriptParser.Decl_inputContext context)
         {

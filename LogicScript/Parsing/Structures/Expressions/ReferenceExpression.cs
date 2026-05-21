@@ -2,17 +2,12 @@
 
 namespace LogicScript.Parsing.Structures.Expressions
 {
-    internal sealed class ReferenceExpression : Expression
+    internal sealed class ReferenceExpression(SourceSpan span, Reference target) : Expression(span)
     {
-        public Reference Reference { get; set; }
+        public Reference Reference { get; set; } = target;
 
         public override bool IsConstant => false;
         public override int BitSize => Reference.BitSize;
-
-        public ReferenceExpression(SourceSpan span, Reference target) : base(span)
-        {
-            this.Reference = target;
-        }
 
         public override string ToString() => Reference.ToString() ?? "<unknown reference>";
 

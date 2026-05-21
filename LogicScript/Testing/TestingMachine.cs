@@ -7,26 +7,16 @@ using LogicScript.Data;
 
 namespace LogicScript.Testing
 {
-    internal class TestingMachine : IMachine, IUpdatableMachine
+    internal class TestingMachine(int inputCount, int outputCount) : IMachine, IUpdatableMachine
     {
-        public int InputCount { get; }
-        public int OutputCount { get; }
+        public int InputCount { get; } = inputCount;
+        public int OutputCount { get; } = outputCount;
 
-        public bool[] Inputs { get; }
-        public bool[] Outputs { get; }
+        public bool[] Inputs { get; } = new bool[inputCount];
+        public bool[] Outputs { get; } = new bool[outputCount];
 
-        private BitsValue[] Memory;
-        private StringBuilder PrintOutput;
-
-        public TestingMachine(int inputCount, int outputCount)
-        {
-            this.InputCount = inputCount;
-            this.OutputCount = outputCount;
-            this.Inputs = new bool[inputCount];
-            this.Outputs = new bool[outputCount];
-            this.Memory = Array.Empty<BitsValue>();
-            this.PrintOutput = new StringBuilder();
-        }
+        private BitsValue[] Memory = Array.Empty<BitsValue>();
+        private StringBuilder PrintOutput = new StringBuilder();
 
         public void AllocateRegisters(int count)
         {

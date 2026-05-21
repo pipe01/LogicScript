@@ -3,24 +3,16 @@ using System.Collections.Generic;
 
 namespace LogicScript.Parsing.Visitors
 {
-    internal sealed class BlockContext
+    internal sealed class BlockContext(ScriptContext script, BlockContext? outer = null, bool isInConstant = false, NodeID? loopID = null)
     {
-        public ScriptContext Script { get; }
-        public BlockContext? Outer { get; }
+        public ScriptContext Script { get; } = script;
+        public BlockContext? Outer { get; } = outer;
         public IDictionary<string, LocalInfo> Locals { get; } = new Dictionary<string, LocalInfo>();
 
         public ErrorSink Errors => Script.Errors;
 
-        public bool IsInConstant { get; }
-        public NodeID? LoopID { get; }
-
-        public BlockContext(ScriptContext script, BlockContext? outer = null, bool isInConstant = false, NodeID? loopID = null)
-        {
-            this.Script = script;
-            this.Outer = outer;
-            this.IsInConstant = isInConstant;
-            this.LoopID = loopID;
-        }
+        public bool IsInConstant { get; } = isInConstant;
+        public NodeID? LoopID { get; } = loopID;
 
         public bool DoesIdentifierExist(string iden)
             => TryGetLocal(iden, out _)

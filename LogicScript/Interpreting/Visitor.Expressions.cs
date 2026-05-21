@@ -28,19 +28,13 @@ namespace LogicScript.Interpreting
 
             if (expr.Reference is PortReference port)
             {
-                switch (port.PortInfo.Target)
+                return port.PortInfo.Target switch
                 {
-                    case MachinePorts.Output:
-                        throw new InterpreterException("Cannot read from output", expr.Span);
-
-                    case MachinePorts.Input:
-                        return new BitsValue(Input.Slice(port.StartIndex, port.BitSize));
-
-                    case MachinePorts.Register:
-                        return Machine.ReadRegister(port.StartIndex);
-                }
-
-                throw new InterpreterException("Unknown reference target", expr.Span);
+                    MachinePorts.Output => throw new InterpreterException("Cannot read from output", expr.Span),
+                    MachinePorts.Input => new BitsValue(Input.Slice(port.StartIndex, port.BitSize)),
+                    MachinePorts.Register => Machine.ReadRegister(port.StartIndex),
+                    _ => throw new InterpreterException("Unknown reference target", expr.Span),
+                };
             }
             else if (expr.Reference is LocalReference local)
             {

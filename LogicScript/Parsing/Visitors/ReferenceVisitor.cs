@@ -3,14 +3,9 @@ using LogicScript.Parsing.Structures;
 
 namespace LogicScript.Parsing.Visitors
 {
-    internal class ReferenceVisitor : LogicScriptBaseVisitor<Reference>
+    internal class ReferenceVisitor(BlockContext context) : LogicScriptBaseVisitor<Reference>
     {
-        private readonly BlockContext Context;
-
-        public ReferenceVisitor(BlockContext context)
-        {
-            this.Context = context;
-        }
+        private readonly BlockContext Context = context;
 
         public override Reference VisitRefPort([NotNull] LogicScriptParser.RefPortContext context)
         {

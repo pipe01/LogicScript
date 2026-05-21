@@ -5,16 +5,10 @@ using System.Linq;
 
 namespace LogicScript.Parsing.Visitors
 {
-    class StatementVisitor : LogicScriptBaseVisitor<Statement>
+    class StatementVisitor(ScriptContext context, BlockContext? blockContext = null) : LogicScriptBaseVisitor<Statement>
     {
-        private readonly ScriptContext Context;
-        private readonly BlockContext BlockContext;
-
-        public StatementVisitor(ScriptContext context, BlockContext? blockContext = null)
-        {
-            this.Context = context;
-            this.BlockContext = blockContext ?? new BlockContext(context);
-        }
+        private readonly ScriptContext Context = context;
+        private readonly BlockContext BlockContext = blockContext ?? new BlockContext(context);
 
         public override Statement VisitBlock([NotNull] LogicScriptParser.BlockContext context)
         {

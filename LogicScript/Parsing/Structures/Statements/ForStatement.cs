@@ -3,24 +3,15 @@ using System.Collections.Generic;
 
 namespace LogicScript.Parsing.Structures.Statements
 {
-    internal sealed class ForStatement : Statement, IIdentifiableCodeNode
+    internal sealed class ForStatement(NodeID id, SourceSpan span, LocalInfo variable, Expression? from, Expression to, Statement body) : Statement(span), IIdentifiableCodeNode
     {
-        public NodeID ID { get; }
+        public NodeID ID { get; } = id;
 
-        public LocalInfo Variable { get; set; }
-        public Expression? From { get; set; }
-        public Expression To { get; set; }
+        public LocalInfo Variable { get; set; } = variable;
+        public Expression? From { get; set; } = from;
+        public Expression To { get; set; } = to;
 
-        public Statement Body { get; set; }
-
-        public ForStatement(NodeID id, SourceSpan span, LocalInfo variable, Expression? from, Expression to, Statement body) : base(span)
-        {
-            this.ID = id;
-            this.Variable = variable;
-            this.From = from;
-            this.To = to;
-            this.Body = body;
-        }
+        public Statement Body { get; set; } = body;
 
         public override IEnumerable<ICodeNode> GetChildren()
         {
