@@ -116,7 +116,7 @@ end"),
         }
     }
 
-    class DummyMachine(int inputCount, int outputCount) : IUpdatableMachine
+    class DummyMachine(int inputCount, int outputCount) : IMachine
     {
         public int InputCount { get; } = inputCount;
         public int OutputCount { get; } = outputCount;
@@ -124,7 +124,7 @@ end"),
         private readonly bool[] Inputs = new bool[inputCount];
         private readonly bool[] Outputs = new bool[outputCount];
 
-        private BitsValue[] Registers = [];
+        private ulong[] Registers = [];
 
         public void Print(string msg)
         {
@@ -155,12 +155,12 @@ end"),
             Array.Resize(ref Registers, count);
         }
 
-        public BitsValue ReadRegister(int index)
+        public ulong ReadRegister(int index)
         {
             return Registers[index];
         }
 
-        public void WriteRegister(int index, BitsValue value)
+        public void WriteRegister(int index, ulong value)
         {
             Registers[index] = value;
         }
