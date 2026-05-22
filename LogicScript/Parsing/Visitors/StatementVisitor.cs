@@ -108,9 +108,6 @@ namespace LogicScript.Parsing.Visitors
         {
             var name = context.VARIABLE().GetText();
 
-            if (BlockContext.DoesIdentifierExist(name)) // TODO: allow shadowing
-                BlockContext.Errors.AddError($"Identifier '{name}' already exists", new SourceSpan(context.VARIABLE().Symbol), true);
-
             Expression? value = null;
 
             // If the variable has a bit size marker, we will use that size. Otherwise, we will later infer it from the value
@@ -126,6 +123,12 @@ namespace LogicScript.Parsing.Visitors
             else if (size == 0)
             {
                 BlockContext.Errors.AddError("You must specify a local's size or initialize it", context.Span(), true);
+            }
+
+            if (BlockContext.TryGetLocal(name, out var existingLocal, checkOuter: false))
+            {
+                BlockContext.Errors.AddError($"Identifier '{name}' already exists", new SourceSpan(context.VARIABLE().Symbol));
+                return new DeclareLocalStatement(context.Span(), existingLocal, value);
             }
 
             var localInfo = BlockContext.AddLocal(name, size, new SourceSpan(context.VARIABLE().Symbol));

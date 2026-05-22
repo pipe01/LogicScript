@@ -27,6 +27,6 @@ namespace LogicScript.Parsing.Structures
 
         public override int GetHashCode() => HashCode.Combine(BitSize, Name);
 
-        public override string ToString() => $"{Name}'{BitSize}";
+        public override string ToString() => Name;
     }
 }

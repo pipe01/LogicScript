@@ -25,12 +25,12 @@ namespace LogicScript.Parsing.Visitors
             return info;
         }
 
-        public bool TryGetLocal(string name, out LocalInfo local)
+        public bool TryGetLocal(string name, out LocalInfo local, bool checkOuter = true)
         {
             if (Locals.TryGetValue(name, out local))
                 return true;
 
-            if (Outer != null && Outer.TryGetLocal(name, out local))
+            if (checkOuter && Outer != null && Outer.TryGetLocal(name, out local))
                 return true;
 
             return false;
