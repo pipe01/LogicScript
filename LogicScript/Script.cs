@@ -33,6 +33,11 @@ namespace LogicScript
             this.Errors = errors;
         }
 
+        // For tests
+        internal Script() : this("", [])
+        {
+        }
+
         public void Run(IMachine machine, bool runStartup, bool checkPortCount = true)
         {
             Interpreter.Run(this, machine, runStartup, checkPortCount);

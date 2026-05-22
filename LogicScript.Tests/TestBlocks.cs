@@ -16,7 +16,7 @@ namespace LogicScript.Tests
         {
             var machine = new DummyMachine();
 
-            Runner.Run(new Script("<test>")
+            Runner.Run(new Script()
             {
                 Blocks = {
                     new StartupBlock(default, new PrintTaskStatement("nice1")),
@@ -33,7 +33,7 @@ namespace LogicScript.Tests
         {
             var machine = new DummyMachine();
 
-            Runner.Run(new Script("<test>")
+            Runner.Run(new Script()
             {
                 Blocks = {
                     new StartupBlock(default, new PrintTaskStatement("yes")),
@@ -48,7 +48,7 @@ namespace LogicScript.Tests
         {
             var machine = new DummyMachine();
 
-            Runner.Run(new Script("<test>")
+            Runner.Run(new Script()
             {
                 Blocks = {
                     new StartupBlock(default, new PrintTaskStatement("yes")),
