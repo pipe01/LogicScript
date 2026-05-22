@@ -1,16 +1,17 @@
 import * as path from 'path';
-import { ExtensionContext } from 'vscode';
+import * as vscode from 'vscode';
 
 import {
 	LanguageClient,
 	LanguageClientOptions,
 	ServerOptions,
+	Trace,
 	TransportKind
 } from 'vscode-languageclient/node';
 
 let client: LanguageClient;
 
-export function activate(context: ExtensionContext) {
+export function activate(context: vscode.ExtensionContext) {
 	const serverPath = context.asAbsolutePath(
 		path.join('bin', process.env.BIN_NAME ?? 'LogicScript.LSP.exe')
 	);
@@ -24,7 +25,7 @@ export function activate(context: ExtensionContext) {
         },
         debug: {
             command: "dotnet",
-            args: ["run", "--project", context.asAbsolutePath("..\\LogicScript.LSP\\LogicScript.LSP.csproj")],
+            args: ["run", "--project", context.asAbsolutePath("../LogicScript.DX.LSP/LogicScript.DX.LSP.csproj")],
             transport: TransportKind.stdio,
         }
 	};
@@ -32,7 +33,9 @@ export function activate(context: ExtensionContext) {
 	// Options to control the language client
 	const clientOptions: LanguageClientOptions = {
 		// Register the server for plain text documents
-		documentSelector: [{ scheme: 'file', language: 'logicscript' }]
+		documentSelector: [{ scheme: 'file', language: 'logicscript' }],
+		outputChannel: vscode.window.createOutputChannel('LogicScript'),
+		traceOutputChannel: vscode.window.createOutputChannel('LogicScript Trace'),
 	};
 
 	// Create the language client and start the client.

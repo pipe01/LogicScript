@@ -67,7 +67,7 @@ namespace LogicScript.DX.LSP.Handlers
             }
 
             if (size != 0)
-                lines.Add($"Size: `{size}` bits");
+                lines.Add($"Size: `{size}` bit" + (size != 1 ? "s" : ""));
 
             return Task.FromResult<Hover?>(new Hover
             {

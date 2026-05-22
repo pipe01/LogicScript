@@ -25,16 +25,16 @@ namespace LogicScript.DX.LSP.Handlers
             };
         }
 
-        public override Task<LocationContainer> Handle(ReferenceParams request, CancellationToken cancellationToken)
+        public override Task<LocationContainer?> Handle(ReferenceParams request, CancellationToken cancellationToken)
         {
             var port = Workspace.GetPortAt(request.TextDocument.Uri, request.Position.ToLocation());
 
             if (port == null)
-                return Task.FromResult(LocationContainer.From(Array.Empty<Location>()));
+                return Task.FromResult<LocationContainer?>(LocationContainer.From(Array.Empty<Location>()));
 
             var refs = Workspace.FindReferencesTo(request.TextDocument.Uri, port);
 
-            return Task.FromResult(LocationContainer.From(refs.Select(o => new Location
+            return Task.FromResult<LocationContainer?>(LocationContainer.From(refs.Select(o => new Location
             {
                 Range = o.Span.ToRange(),
                 Uri = request.TextDocument.Uri

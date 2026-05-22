@@ -25,7 +25,7 @@ namespace LogicScript.DX.LSP.Handlers
             };
         }
 
-        public override Task<LocationOrLocationLinks> Handle(DefinitionParams request, CancellationToken cancellationToken)
+        public override Task<LocationOrLocationLinks?> Handle(DefinitionParams request, CancellationToken cancellationToken)
         {
             var node = Workspace.GetNodeAt(request.TextDocument.Uri, request.Position);
 
@@ -38,10 +38,10 @@ namespace LogicScript.DX.LSP.Handlers
                     break;
 
                 default:
-                    return Task.FromResult(new LocationOrLocationLinks());
+                    return Task.FromResult<LocationOrLocationLinks?>(new LocationOrLocationLinks());
             }
 
-            return Task.FromResult(new LocationOrLocationLinks(new LocationOrLocationLink(new Location
+            return Task.FromResult<LocationOrLocationLinks?>(new LocationOrLocationLinks(new LocationOrLocationLink(new Location
             {
                 Uri = request.TextDocument.Uri,
                 Range = range
