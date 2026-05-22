@@ -1,10 +1,7 @@
 ﻿using LogicScript.Data;
 using LogicScript.Parsing.Structures;
 using LogicScript.Parsing.Structures.Statements;
-using LogicScript.Utils;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Text.RegularExpressions;
+using System.Linq;
 
 namespace LogicScript.Interpreting
 {
@@ -61,7 +58,7 @@ namespace LogicScript.Interpreting
                         if (value.Length > port.BitSize)
                             throw new InterpreterException("Value is longer than output", stmt.Span);
 
-                        Machine.WriteOutput(port.StartIndex, value.Bits);
+                        Machine.WriteOutputs(port.StartIndex, new(value.Bits));
                         break;
 
                     case MachinePorts.Register:
@@ -74,7 +71,7 @@ namespace LogicScript.Interpreting
             }
             else if (stmt.Reference is LocalReference local)
             {
-                Locals[local.Name] = value;
+                Locals[local.LocalInfo] = value;
             }
             else
             {
@@ -102,7 +99,10 @@ namespace LogicScript.Interpreting
 
             if (stmt is PrintTaskStatement print)
             {
-                Machine.Print(PrintStringFormat.Format(print.Text, Locals));
+                var locals = Locals;
+                var values = print.String.Interpolations.Select(o => locals[o.Local].Number).Cast<object>().ToArray();
+
+                Machine.Print(string.Format(print.String.ToFormattable(), values));
             }
             else if (stmt is ShowTaskStatement show)
             {
@@ -110,10 +110,7 @@ namespace LogicScript.Interpreting
             }
             else if (stmt is UpdateTaskStatement)
             {
-                if (Machine is not IUpdatableMachine upd)
-                    throw new InterpreterException("This machine cannot queue updates", stmt.Span);
-
-                upd.QueueUpdate();
+                Machine.QueueUpdate();
             }
             else
             {
@@ -127,7 +124,7 @@ namespace LogicScript.Interpreting
         {
             var value = stmt.Initializer == null ? new BitsValue(0, stmt.Local.BitSize) : Visit(stmt.Initializer);
 
-            Locals.Add(stmt.Local.Name, value);
+            Locals.Add(stmt.Local, value);
 
             return false;
         }
@@ -143,7 +140,7 @@ namespace LogicScript.Interpreting
 
                 for (ulong i = from; i > to.Number; i--)
                 {
-                    Locals[stmt.VariableName] = new BitsValue(i, size);
+                    Locals[stmt.Variable] = new BitsValue(i, size);
 
                     if (Visit(stmt.Body))
                         break;
@@ -155,7 +152,7 @@ namespace LogicScript.Interpreting
 
                 for (ulong i = from; i < to.Number; i++)
                 {
-                    Locals[stmt.VariableName] = new BitsValue(i, size);
+                    Locals[stmt.Variable] = new BitsValue(i, size);
 
                     if (Visit(stmt.Body))
                         break;

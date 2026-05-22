@@ -3,14 +3,9 @@ using System.Collections.Generic;
 
 namespace LogicScript.Parsing.Structures.Blocks
 {
-    internal class AssignBlock : Block
+    internal class AssignBlock(SourceSpan span, AssignStatement assignment) : Block(span)
     {
-        public AssignStatement Assignment { get; set; }
-
-        public AssignBlock(SourceSpan span, AssignStatement assignment) : base(span)
-        {
-            this.Assignment = assignment;
-        }
+        public AssignStatement Assignment { get; set; } = assignment;
 
         public override IEnumerable<ICodeNode> GetChildren()
         {

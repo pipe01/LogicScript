@@ -9,6 +9,6 @@ namespace LogicScript.DX.LSP
             => new(span.Start.Line - 1, span.Start.Column - 1, span.End.Line - 1, span.End.Column - 1);
 
         public static SourceLocation ToLocation(this Position pos)
-            => new(pos.Line + 1, pos.Character + 1);
+            => new("", pos.Line + 1, pos.Character + 1);
     }
 }

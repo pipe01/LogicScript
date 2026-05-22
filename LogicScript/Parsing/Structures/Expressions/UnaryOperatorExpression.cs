@@ -1,12 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
 namespace LogicScript.Parsing.Structures.Expressions
 {
-    internal sealed class UnaryOperatorExpression : Expression
+    internal sealed class UnaryOperatorExpression(SourceSpan span, Operator op, Expression operand) : Expression(span)
     {
-        public Operator Operator { get; set; }
-        public Expression Operand { get; set; }
+        public Operator Operator { get; set; } = op;
+        public Expression Operand { get; set; } = operand;
 
         public override bool IsConstant => Operand.IsConstant;
         public override int BitSize => Operator switch
@@ -16,12 +15,6 @@ namespace LogicScript.Parsing.Structures.Expressions
             Operator.AllOnes => 1,
             _ => throw new ParseException("Unknown unary operator bitsize", Span)
         };
-
-        public UnaryOperatorExpression(SourceSpan span, Operator op, Expression operand) : base(span)
-        {
-            this.Operator = op;
-            this.Operand = operand;
-        }
 
         public override IEnumerable<ICodeNode> GetChildren()
         {

@@ -2,7 +2,7 @@
 
 namespace LogicScript.Parsing.Structures
 {
-    internal abstract class Reference : ICodeNode
+    internal abstract class Reference(SourceSpan span) : ICodeNode
     {
         public abstract IPortInfo Port { get; }
 
@@ -11,12 +11,7 @@ namespace LogicScript.Parsing.Structures
 
         public int BitSize => Port.BitSize;
 
-        public SourceSpan Span { get; }
-
-        protected Reference(SourceSpan span)
-        {
-            this.Span = span;
-        }
+        public SourceSpan Span { get; } = span;
 
         public IEnumerable<ICodeNode> GetChildren()
         {
@@ -24,9 +19,9 @@ namespace LogicScript.Parsing.Structures
         }
     }
 
-    internal sealed class PortReference : Reference
+    internal sealed class PortReference(SourceSpan span, PortInfo port) : Reference(span)
     {
-        public PortInfo PortInfo { get; }
+        public PortInfo PortInfo { get; } = port;
 
         public override IPortInfo Port => PortInfo;
 
@@ -34,11 +29,6 @@ namespace LogicScript.Parsing.Structures
 
         public override bool IsWritable => PortInfo.Target is MachinePorts.Output or MachinePorts.Register;
         public override bool IsReadable => PortInfo.Target is MachinePorts.Input or MachinePorts.Register;
-
-        public PortReference(SourceSpan span, PortInfo port) : base(span)
-        {
-            this.PortInfo = port;
-        }
 
         public override string ToString()
         {
@@ -54,10 +44,10 @@ namespace LogicScript.Parsing.Structures
         }
     }
 
-    internal sealed class LocalReference : Reference
+    internal sealed class LocalReference(SourceSpan span, string name, LocalInfo local) : Reference(span)
     {
-        public string Name { get; }
-        public LocalInfo LocalInfo { get; }
+        public string Name { get; } = name;
+        public LocalInfo LocalInfo { get; } = local;
 
         public override IPortInfo Port => LocalInfo;
 
@@ -65,12 +55,6 @@ namespace LogicScript.Parsing.Structures
 
         public override bool IsWritable => true;
         public override bool IsReadable => true;
-
-        public LocalReference(SourceSpan span, string name, LocalInfo local) : base(span)
-        {
-            this.Name = name;
-            this.LocalInfo = local;
-        }
 
         public override string ToString() => $"${Name}'{BitSize}";
     }

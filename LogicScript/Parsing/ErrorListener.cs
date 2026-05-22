@@ -1,18 +1,11 @@
 ﻿using Antlr4.Runtime;
-using Antlr4.Runtime.Misc;
-using System;
 using System.IO;
 
 namespace LogicScript.Parsing
 {
-    internal class ErrorListener : IAntlrErrorListener<IToken>
+    internal class ErrorListener(ErrorSink errors) : IAntlrErrorListener<IToken>
     {
-        private readonly ErrorSink Errors;
-
-        public ErrorListener(ErrorSink errors)
-        {
-            this.Errors = errors;
-        }
+        private readonly ErrorSink Errors = errors;
 
         public void SyntaxError(TextWriter output, IRecognizer recognizer, IToken offendingSymbol, int line, int charPositionInLine, string msg, RecognitionException e)
         {

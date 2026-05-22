@@ -8,18 +8,18 @@ namespace LogicScript
         int InputCount { get; }
         int OutputCount { get; }
 
-        void ReadInput(Span<bool> values);
-        void WriteOutput(int startIndex, Span<bool> value);
+        BitsValue ReadInputs();
+        bool ReadInput(int index);
+
+        void WriteOutputs(int startIndex, BitsValue value);
+        void WriteOutput(int index, bool value);
 
         void AllocateRegisters(int count);
-        BitsValue ReadRegister(int index);
-        void WriteRegister(int index, BitsValue value);
+        ulong ReadRegister(int index);
+        void WriteRegister(int index, ulong value);
 
         void Print(string msg);
-    }
 
-    public interface IUpdatableMachine : IMachine
-    {
-        void QueueUpdate();
+        void QueueUpdate() => throw new NotImplementedException("This machine cannot queue updates");
     }
 }

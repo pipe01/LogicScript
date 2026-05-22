@@ -3,18 +3,12 @@ using System.Collections.Generic;
 
 namespace LogicScript.Parsing.Visitors
 {
-    internal sealed class ScriptContext
+    internal sealed class ScriptContext(Script script, ErrorSink errors)
     {
-        public Script Script { get; }
-        public ErrorSink Errors { get; }
+        public Script Script { get; } = script;
+        public ErrorSink Errors { get; } = errors;
         public IDictionary<string, Expression> Constants { get; } = new Dictionary<string, Expression>();
         public int LocalCounter { get; set; }
-
-        public ScriptContext(Script script, ErrorSink errors)
-        {
-            this.Script = script;
-            this.Errors = errors;
-        }
 
         public bool DoesIdentifierExist(string iden)
             => Script.Inputs.ContainsKey(iden)

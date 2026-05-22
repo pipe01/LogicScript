@@ -28,23 +28,17 @@ namespace LogicScript.Interpreting
 
             if (expr.Reference is PortReference port)
             {
-                switch (port.PortInfo.Target)
+                return port.PortInfo.Target switch
                 {
-                    case MachinePorts.Output:
-                        throw new InterpreterException("Cannot read from output", expr.Span);
-
-                    case MachinePorts.Input:
-                        return new BitsValue(Input.Slice(port.StartIndex, port.BitSize));
-
-                    case MachinePorts.Register:
-                        return Machine.ReadRegister(port.StartIndex);
-                }
-
-                throw new InterpreterException("Unknown reference target", expr.Span);
+                    MachinePorts.Output => throw new InterpreterException("Cannot read from output", expr.Span),
+                    MachinePorts.Input => new BitsValue(Input.Slice(port.StartIndex, port.BitSize)),
+                    MachinePorts.Register => Machine.ReadRegister(port.StartIndex),
+                    _ => throw new InterpreterException("Unknown reference target", expr.Span),
+                };
             }
             else if (expr.Reference is LocalReference local)
             {
-                return Locals[local.LocalInfo.Name];
+                return Locals[local.LocalInfo];
             }
 
             throw new InterpreterException("Unknown reference type", expr.Span);
@@ -72,23 +66,16 @@ namespace LogicScript.Interpreting
         {
             var operand = Visit(expr.Operand);
 
-            switch (expr.Operator)
+            return expr.Operator switch
             {
-                case Operator.Not:
-                    return operand.Negated;
-                case Operator.Rise:
-                    throw new NotImplementedException();
-                case Operator.Fall:
-                    throw new NotImplementedException();
-                case Operator.Change:
-                    throw new NotImplementedException();
-                case Operator.Length:
-                    return new BitsValue((ulong)operand.Length, 7);
-                case Operator.AllOnes:
-                    return operand.AreAllBitsSet;
-            }
-
-            throw new InterpreterException("Unknown operand", expr.Span);
+                Operator.Not => operand.Negated,
+                Operator.Rise => throw new NotImplementedException(),
+                Operator.Fall => throw new NotImplementedException(),
+                Operator.Change => throw new NotImplementedException(),
+                Operator.Length => new BitsValue((ulong)operand.Length, 7),
+                Operator.AllOnes => (BitsValue)operand.AreAllBitsSet,
+                _ => throw new InterpreterException("Unknown operand", expr.Span),
+            };
         }
 
         private BitsValue Visit(TruncateExpression expr)

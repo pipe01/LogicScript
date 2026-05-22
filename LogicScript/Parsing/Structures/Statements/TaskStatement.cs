@@ -1,33 +1,24 @@
 ﻿using LogicScript.Parsing.Structures.Expressions;
+using LogicScript.Utils;
 using System.Collections.Generic;
 
 namespace LogicScript.Parsing.Structures.Statements
 {
-    internal abstract class TaskStatement : Statement
+    internal abstract class TaskStatement(SourceSpan span) : Statement(span)
     {
-        protected TaskStatement(SourceSpan span) : base(span)
-        {
-        }
     }
 
-    internal sealed class PrintTaskStatement : TaskStatement
+    internal sealed class PrintTaskStatement(SourceSpan span, PrintStringFormat str) : TaskStatement(span)
     {
-        public string Text { get; set; }
+        // For tests only
+        public PrintTaskStatement(string str) : this(default, PrintStringFormat.Parse(str)) { }
 
-        public PrintTaskStatement(SourceSpan span, string text) : base(span)
-        {
-            this.Text = text;
-        }
+        public PrintStringFormat String { get; set; } = str;
     }
 
-    internal sealed class ShowTaskStatement : TaskStatement
+    internal sealed class ShowTaskStatement(SourceSpan span, Expression value) : TaskStatement(span)
     {
-        public Expression Value { get; set; }
-
-        public ShowTaskStatement(SourceSpan span, Expression value) : base(span)
-        {
-            this.Value = value;
-        }
+        public Expression Value { get; set; } = value;
 
         public override IEnumerable<ICodeNode> GetChildren()
         {
@@ -35,10 +26,7 @@ namespace LogicScript.Parsing.Structures.Statements
         }
     }
 
-    internal sealed class UpdateTaskStatement : TaskStatement
+    internal sealed class UpdateTaskStatement(SourceSpan span) : TaskStatement(span)
     {
-        public UpdateTaskStatement(SourceSpan span) : base(span)
-        {
-        }
     }
 }

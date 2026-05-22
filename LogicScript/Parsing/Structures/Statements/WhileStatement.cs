@@ -3,16 +3,12 @@ using System.Collections.Generic;
 
 namespace LogicScript.Parsing.Structures.Statements
 {
-    internal class WhileStatement : Statement
+    internal class WhileStatement(NodeID id, SourceSpan span, Expression condition, Statement body) : Statement(span), IIdentifiableCodeNode
     {
-        public Expression Condition { get; }
-        public Statement Body { get; }
+        public NodeID ID { get; } = id;
 
-        public WhileStatement(SourceSpan span, Expression condition, Statement body) : base(span)
-        {
-            this.Condition = condition;
-            this.Body = body;
-        }
+        public Expression Condition { get; } = condition;
+        public Statement Body { get; } = body;
 
         public override IEnumerable<ICodeNode> GetChildren()
         {

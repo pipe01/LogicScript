@@ -1,71 +1,106 @@
-﻿using System;
-using System.Security.Cryptography;
+﻿#nullable disable
+
 using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Running;
-using LogicScript;
-using LogicScript.ByteCode;
 using LogicScript.Data;
 using LogicScript.Interpreting;
+using LogicScript.Compiling;
+using LogicScript.Parsing;
+using LogicScript.Parsing.Structures;
+using System.Runtime.CompilerServices;
 
 namespace LogicScript.Benchmarks
 {
     [MemoryDiagnoser]
     public class LogicScriptBenchmark
     {
-        private readonly string Source =
-@"when 1
-    local $a'64 = 23947;
-    local $b'64 = 12398;
-    local $c'64 = 34598;
+        private record struct TestCase(int Inputs, int Outputs, string Source);
 
-    $a = $b & $c
-    $a = $b | $c
-    $a = $b ^ $c
-    $a = $b << $c
-    $a = $b >> $c
+        private static readonly TestCase[] TestCases = [
+            new(2, 1, @"input a
+input b
+output c
 
-    $a '= $b + $c
-    $a '= $b * $c
-    $a = $b / $c
-    $a = $b ** $c
-    $a = $b % $c
-
-    $a = $b == $c
-    $a = $b != $c
-    $a = $b > $c
-    $a = $b < $c
-    $a = $b < $c
-
-    $a = !$b
-    $a = len($b)
-    $a = allOnes($b)
+when 1
+    c = a & b
 end
-";
+"),
+            new(8 * 3, 8, @"input'8 a
+input'8 b
+input'8 c
+output'8 out
 
-        private readonly IMachine Machine = new DummyMachine();
-        private readonly Script Script;
-        private readonly CPU CPU;
+when 1
+    out = b & c
+    out = b | c
+    out = b ^ c
+    out '= b << 3
+    out = b >> 3
 
-        public LogicScriptBenchmark()
+    out '= b + c
+    out '= b * c
+    out '= b / (c + 1)
+    out '= b ** c
+    out '= b % (c + 1)
+
+    out = b == c
+    out = b != c
+    out = b > c
+    out = b < c
+    out = b < c
+
+    out = !b
+    out = len(b)
+    out = allOnes(b)
+end"),
+        ];
+
+        [Params(0)]
+        public int TestIndex { get; set; }
+
+        private TestCase Case;
+        private IMachine Machine;
+        private Script Script;
+        private CompiledScript CompiledScript, CompiledScriptDebug;
+        private bool[] Scratch;
+
+        [GlobalSetup]
+        public void GlobalSetup()
         {
-            var (script, errors) = Script.Parse(Source);
+            this.Case = TestCases[TestIndex];
+
+            var (script, errors) = Script.Parse(Case.Source);
             if (errors != null && errors.Count > 0)
             {
                 Console.WriteLine("Found errors while parsing source:");
 
                 foreach (var err in errors)
                 {
-                    System.Console.WriteLine("  " + err);
+                    Console.WriteLine("  " + err);
                 }
 
                 Environment.Exit(1);
                 return;
             }
+            this.Script = script;
 
-            this.Script = script!;
+            this.Machine = new DummyMachine(Case.Inputs, Case.Outputs);
 
-            var bytecode = LogicScript.ByteCode.Compiler.Compile(script!);
-            this.CPU = new CPU(bytecode, Machine);
+            this.Scratch = new bool[Math.Max(Machine.InputCount, Machine.OutputCount)];
+            this.CompiledScript = Compiler.Compile(script);
+            this.CompiledScriptDebug = Compiler.Compile(script, true);
+        }
+
+        [Benchmark]
+        public void RunCompiledNoDebug()
+        {
+            CompiledScript(Machine, Scratch, false, null);
+        }
+
+        [Benchmark]
+        public void RunCompiledDebug()
+        {
+            CompiledScriptDebug(Machine, Scratch, false, new MyDebugger());
         }
 
         [Benchmark]
@@ -74,44 +109,60 @@ end
             Interpreter.Run(Script, Machine, false);
         }
 
-        [Benchmark]
-        public void RunBytecode()
+        [Benchmark(Baseline = true)]
+        public void RunRaw()
         {
-            CPU.Run(true);
+            Machine.WriteOutput(0, Machine.ReadInput(0) && Machine.ReadInput(1));
         }
     }
 
-    class DummyMachine : IUpdatableMachine
+    class DummyMachine(int inputCount, int outputCount) : IMachine
     {
-        public int InputCount => 0;
+        public int InputCount { get; } = inputCount;
+        public int OutputCount { get; } = outputCount;
 
-        public int OutputCount => 0;
+        private readonly bool[] Inputs = new bool[inputCount];
+        private readonly bool[] Outputs = new bool[outputCount];
 
-        private BitsValue[] Registers = Array.Empty<BitsValue>();
+        private ulong[] Registers = [];
 
         public void Print(string msg)
         {
         }
 
-        public void ReadInput(Span<bool> values)
+        public BitsValue ReadInputs()
         {
+            return new(Inputs);
         }
 
-        public void WriteOutput(int startIndex, Span<bool> value)
+        public bool ReadInput(int index)
         {
+            return Inputs[index];
+        }
+
+        public void WriteOutputs(int startIndex, BitsValue value)
+        {
+            value.Bits.CopyTo(Outputs.AsSpan()[startIndex..]);
+        }
+
+        public void WriteOutput(int index, bool value)
+        {
+            Outputs[index] = value;
         }
 
         public void AllocateRegisters(int count)
         {
+            Array.Resize(ref Registers, count);
         }
 
-        public BitsValue ReadRegister(int index)
+        public ulong ReadRegister(int index)
         {
-            return 0;
+            return Registers[index];
         }
 
-        public void WriteRegister(int index, BitsValue value)
+        public void WriteRegister(int index, ulong value)
         {
+            Registers[index] = value;
         }
 
         public void QueueUpdate()
@@ -119,11 +170,73 @@ end
         }
     }
 
+    public class MyDebugger : IDebugger
+    {
+        public void TraceStatement(SourceSpan span, IDictionary<LocalInfo, ulong> locals)
+        {
+        }
+    }
+
+    public class DelegatesBenchmark
+    {
+        [Benchmark(Baseline = true)]
+        public void CallMethod()
+        {
+            CalledMethod();
+        }
+
+        [Benchmark]
+        public void CallAction()
+        {
+            Action();
+        }
+
+        [Benchmark]
+        public void CallInterfaceMethod()
+        {
+            Class.Method();
+        }
+
+        [Benchmark]
+        public unsafe void CallFunctionPointer()
+        {
+            FunctionPointer();
+        }
+
+        private static int I = 0;
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        private static void CalledMethod()
+        {
+            I++;
+        }
+
+        private readonly Action Action = CalledMethod;
+        private readonly unsafe delegate*<void> FunctionPointer;
+        private readonly ICalledClass Class = new CalledClass();
+
+        private interface ICalledClass
+        {
+            void Method();
+        }
+        private class CalledClass : ICalledClass
+        {
+            [MethodImpl(MethodImplOptions.NoInlining)]
+            public void Method()
+            {
+            }
+        }
+
+        unsafe public DelegatesBenchmark()
+        {
+            FunctionPointer = (delegate*<void>)Action.Method.MethodHandle.GetFunctionPointer();
+        }
+    }
+
     public class Program
     {
-        public static void Main()
+        public static void Main(string[] args)
         {
-            BenchmarkRunner.Run<LogicScriptBenchmark>();
+            BenchmarkSwitcher.FromAssembly(typeof(Program).Assembly).Run(args);
         }
     }
 }

@@ -3,16 +3,10 @@ using System.Collections.Generic;
 
 namespace LogicScript.Parsing.Structures.Statements
 {
-    internal sealed class AssignStatement : Statement
+    internal sealed class AssignStatement(SourceSpan span, Reference target, Expression value) : Statement(span)
     {
-        public Reference Reference { get; }
-        public Expression Value { get; }
-
-        public AssignStatement(SourceSpan span, Reference target, Expression value) : base(span)
-        {
-            this.Reference = target;
-            this.Value = value;
-        }
+        public Reference Reference { get; } = target;
+        public Expression Value { get; } = value;
 
         public override IEnumerable<ICodeNode> GetChildren()
         {

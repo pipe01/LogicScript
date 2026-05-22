@@ -3,20 +3,13 @@ using System.Collections.Generic;
 
 namespace LogicScript.Parsing.Structures
 {
-    internal readonly struct LocalInfo : IPortInfo
+    public readonly struct LocalInfo(NodeID id, int bitSize, string name, SourceSpan span) : IPortInfo, IIdentifiableCodeNode
     {
-        public int BitSize { get; }
-        public string Name { get; }
-        public string OriginalName { get; }
-        public SourceSpan Span { get; }
+        public int BitSize { get; } = bitSize;
+        public string Name { get; } = name;
+        public SourceSpan Span { get; } = span;
 
-        public LocalInfo(int bitSize, string name, string originalName, SourceSpan span)
-        {
-            this.BitSize = bitSize;
-            this.Name = name;
-            this.OriginalName = originalName;
-            this.Span = span;
-        }
+        public NodeID ID { get; } = id;
 
         public IEnumerable<ICodeNode> GetChildren()
         {
@@ -33,5 +26,7 @@ namespace LogicScript.Parsing.Structures
         }
 
         public override int GetHashCode() => HashCode.Combine(BitSize, Name);
+
+        public override string ToString() => $"{Name}'{BitSize}";
     }
 }

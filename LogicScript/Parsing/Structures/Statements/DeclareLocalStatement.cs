@@ -3,16 +3,10 @@ using System.Collections.Generic;
 
 namespace LogicScript.Parsing.Structures.Statements
 {
-    internal sealed class DeclareLocalStatement : Statement
+    internal sealed class DeclareLocalStatement(SourceSpan span, LocalInfo local, Expression? initializer) : Statement(span)
     {
-        public LocalInfo Local { get; }
-        public Expression? Initializer { get; }
-
-        public DeclareLocalStatement(SourceSpan span, LocalInfo local, Expression? initializer) : base(span)
-        {
-            this.Local = local;
-            this.Initializer = initializer;
-        }
+        public LocalInfo Local { get; } = local;
+        public Expression? Initializer { get; } = initializer;
 
         public override IEnumerable<ICodeNode> GetChildren()
         {

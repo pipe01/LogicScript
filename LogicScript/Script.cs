@@ -5,10 +5,8 @@ using LogicScript.Parsing;
 using LogicScript.Parsing.Structures;
 using LogicScript.Parsing.Structures.Blocks;
 using LogicScript.Parsing.Visitors;
-using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
 
 namespace LogicScript
 {
@@ -21,7 +19,14 @@ namespace LogicScript
         internal int RegisteredInputLength => Inputs.Values.Sum(o => o.BitSize);
         internal int RegisteredOutputLength => Outputs.Values.Sum(o => o.BitSize);
 
-        internal IList<Block> Blocks { get; } = new List<Block>();
+        internal IList<Block> Blocks { get; } = [];
+
+        public string FileName { get; }
+
+        internal Script(string fileName)
+        {
+            this.FileName = fileName;
+        }
 
         public void Run(IMachine machine, bool runStartup, bool checkPortCount = true)
         {
@@ -57,11 +62,14 @@ namespace LogicScript
             }
         }
 
-        public static (Script? Script, IReadOnlyList<Error> Errors) Parse(string source)
+        public static (Script? Script, IReadOnlyList<Error> Errors) Parse(string source, string fileName = "<script>")
         {
             var errors = new ErrorSink();
 
-            var input = new AntlrInputStream(source.Replace("\r\n", "\n") + "\n");
+            var input = new AntlrInputStream(source.Replace("\r\n", "\n") + "\n")
+            {
+                name = fileName
+            };
             var lexer = new LogicScriptLexer(input);
             var stream = new CommonTokenStream(lexer);
             var parser = new LogicScriptParser(stream);

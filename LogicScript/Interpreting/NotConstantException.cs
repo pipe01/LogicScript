@@ -3,13 +3,8 @@ using System;
 
 namespace LogicScript.Interpreting
 {
-    internal class NotConstantException : Exception
+    internal class NotConstantException(string message, ICodeNode node) : Exception(message)
     {
-        public ICodeNode Node { get; }
-
-        public NotConstantException(string message, ICodeNode node) : base(message)
-        {
-            this.Node = node;
-        }
+        public ICodeNode Node { get; } = node;
     }
 }

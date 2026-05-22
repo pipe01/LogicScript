@@ -2,17 +2,12 @@
 
 namespace LogicScript.Parsing.Structures.Expressions
 {
-    internal abstract class Expression : ICodeNode
+    internal abstract class Expression(SourceSpan span) : ICodeNode
     {
-        public SourceSpan Span { get; }
+        public SourceSpan Span { get; } = span;
 
         public abstract bool IsConstant { get; }
         public abstract int BitSize { get; }
-
-        public Expression(SourceSpan span)
-        {
-            this.Span = span;
-        }
 
         public virtual IEnumerable<ICodeNode> GetChildren()
         {

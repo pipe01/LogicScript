@@ -1,9 +1,7 @@
 ﻿namespace LogicScript.Parsing.Structures.Statements
 {
-    internal class BreakStatement : Statement
+    internal class BreakStatement(SourceSpan span, NodeID targetID) : Statement(span)
     {
-        public BreakStatement(SourceSpan span) : base(span)
-        {
-        }
+        public NodeID TargetID { get; } = targetID;
     }
 }

@@ -18,7 +18,7 @@ namespace LogicScript.Parsing
         {
         }
 
-        internal SourceSpan(IToken start, IToken end) : this(new SourceLocation(start), new SourceLocation(end.Line, end.Column + end.Text.Length + 1))
+        internal SourceSpan(IToken start, IToken end) : this(new SourceLocation(start), new SourceLocation(end.TokenSource.SourceName, end.Line, end.Column + end.Text.Length + 1))
         {
         }
 
@@ -26,14 +26,10 @@ namespace LogicScript.Parsing
         {
         }
 
-        internal SourceSpan(int lineStart, int colStart, int lineEnd, int colEnd) : this(new SourceLocation(lineStart, colStart), new SourceLocation(lineEnd, colEnd))
-        {
-        }
-
         public bool Contains(SourceLocation loc)
             => loc.Line >= Start.Line && loc.Line <= End.Line && loc.Column >= Start.Column && loc.Column <= End.Column;
 
-        public override string ToString() => $"{Start} to {End}";
+        public override string ToString() => $"{Start.FileName}:{Start} to {End}";
 
         public override bool Equals(object? obj) => obj is SourceSpan other && Equals(other);
 

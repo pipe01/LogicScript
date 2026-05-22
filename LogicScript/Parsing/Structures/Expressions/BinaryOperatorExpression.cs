@@ -2,11 +2,11 @@
 
 namespace LogicScript.Parsing.Structures.Expressions
 {
-    internal class BinaryOperatorExpression : Expression
+    internal class BinaryOperatorExpression(SourceSpan span, Operator op, Expression left, Expression right) : Expression(span)
     {
-        public Operator Operator { get; set; }
-        public Expression Left { get; set; }
-        public Expression Right { get; set; }
+        public Operator Operator { get; set; } = op;
+        public Expression Left { get; set; } = left;
+        public Expression Right { get; set; } = right;
 
         public override bool IsConstant => Left.IsConstant && Right.IsConstant;
         public override int BitSize => Operator switch
@@ -21,13 +21,6 @@ namespace LogicScript.Parsing.Structures.Expressions
             Operator.Modulus => Right.BitSize,
             _ => throw new ParseException("Unknown operator bitsize", Span)
         };
-
-        public BinaryOperatorExpression(SourceSpan span, Operator op, Expression left, Expression right) : base(span)
-        {
-            this.Operator = op;
-            this.Left = left;
-            this.Right = right;
-        }
 
         public override IEnumerable<ICodeNode> GetChildren()
         {

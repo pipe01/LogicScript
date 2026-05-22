@@ -1,5 +1,4 @@
 ﻿using LogicScript.Parsing.Structures.Blocks;
-using System;
 
 namespace LogicScript.Interpreting
 {
@@ -18,8 +17,7 @@ namespace LogicScript.Interpreting
 
             machine.AllocateRegisters(script.Registers.Count);
 
-            Span<bool> input = stackalloc bool[machine.InputCount];
-            machine.ReadInput(input);
+            var input = machine.ReadInputs().Bits;
 
             foreach (var block in script.Blocks)
             {

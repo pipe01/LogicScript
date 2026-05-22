@@ -1,4 +1,5 @@
-using LogicScript.ByteCode;
+using System;
+using LogicScript.Compiling;
 
 namespace LogicScript.Tests
 {
@@ -7,7 +8,7 @@ namespace LogicScript.Tests
         public static readonly IRunner Interpreted = new InterpretedRunner();
         public static readonly IRunner Compiled = new CompiledRunner();
 
-        public static readonly IRunner[] All = new[] { Interpreted , Compiled };
+        public static readonly IRunner[] All = new[] { Interpreted, Compiled };
     }
 
     public interface IRunner
@@ -27,9 +28,9 @@ namespace LogicScript.Tests
     {
         public void Run(Script script, IMachine machine, bool runStartup = true)
         {
-            var bytecode = Compiler.Compile(script);
+            var compiled = Compiler.Compile(script);
 
-            new CPU(bytecode, machine).Run(true);
+            compiled(machine, new bool[Math.Max(machine.InputCount, machine.OutputCount)], runStartup, null);
         }
     }
 }

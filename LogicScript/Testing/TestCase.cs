@@ -2,15 +2,9 @@ using System.Collections.Generic;
 
 namespace LogicScript.Testing
 {
-    internal class TestCase
+    internal class TestCase(string name, IList<CaseStep> steps)
     {
-        public string Name { get; }
-        public IList<CaseStep> Steps { get; }
-
-        public TestCase(string name, IList<CaseStep> steps)
-        {
-            this.Name = name;
-            this.Steps = steps;
-        }
+        public string Name { get; } = name;
+        public IList<CaseStep> Steps { get; } = steps;
     }
 }
