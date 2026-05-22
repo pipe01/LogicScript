@@ -22,10 +22,14 @@ namespace LogicScript
         internal IList<Block> Blocks { get; } = [];
 
         public string FileName { get; }
+        public IReadOnlyList<Error> Errors { get; }
 
-        internal Script(string fileName)
+        public bool HasErrors => Errors.Count > 0;
+
+        internal Script(string fileName, IReadOnlyList<Error> errors)
         {
             this.FileName = fileName;
+            this.Errors = errors;
         }
 
         public void Run(IMachine machine, bool runStartup, bool checkPortCount = true)
@@ -102,7 +106,7 @@ namespace LogicScript
             {
             }
 
-            return (errors.Count > 0 ? null : script, errors);
+            return (script, errors);
         }
     }
 }

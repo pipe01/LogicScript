@@ -6,6 +6,9 @@ namespace LogicScript.Interpreting
     {
         public static void Run(Script script, IMachine machine, bool runStartup, bool checkPortCount = true)
         {
+            if (script.HasErrors)
+                throw new InterpreterException("Script has errors");
+
             if (checkPortCount)
             {
                 if (machine.InputCount != script.RegisteredInputLength)

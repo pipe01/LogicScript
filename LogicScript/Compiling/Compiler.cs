@@ -45,6 +45,9 @@ namespace LogicScript.Compiling
 
         private CompiledScript CompileScript(Script script)
         {
+            if (script.HasErrors)
+                throw new Exception("Script has errors");
+
             var body = new List<Expression>
             {
                 Expression.IfThen(

@@ -6,7 +6,7 @@ namespace LogicScript.Parsing.Visitors
     {
         public override Script VisitScript([NotNull] LogicScriptParser.ScriptContext context)
         {
-            var script = new Script(context.Start.TokenSource.SourceName);
+            var script = new Script(context.Start.TokenSource.SourceName, errors);
             var ctx = new ScriptContext(script, errors);
             var visitor = new DeclarationVisitor(ctx, errors);
 

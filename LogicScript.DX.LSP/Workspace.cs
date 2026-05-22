@@ -16,31 +16,28 @@ namespace LogicScript.DX.LSP
 
         public IReadOnlyList<Diagnostic>? LoadScript(DocumentUri uri, string text)
         {
-            var (script, errors) = Script.Parse(text);
+            var (script, errors) = Script.Parse(text, uri.ToString());
 
-            if (script == null)
+            if (script != null)
+                Scripts[uri] = script;
+
+            return errors.Select(item =>
             {
-                return errors.Select(item =>
+                var start = (Line: item.Span.Start.Line - 1, Col: item.Span.Start.Column - 1);
+                var end = (Line: item.Span.End.Line - 1, Col: item.Span.End.Column - 1);
+
+                return new Diagnostic()
                 {
-                    var start = (Line: item.Span.Start.Line - 1, Col: item.Span.Start.Column - 1);
-                    var end = (Line: item.Span.End.Line - 1, Col: item.Span.End.Column - 1);
-
-                    return new Diagnostic()
+                    Message = item.Message,
+                    Severity = item.Severity switch
                     {
-                        Message = item.Message,
-                        Severity = item.Severity switch
-                        {
-                            Severity.Error => DiagnosticSeverity.Error,
-                            Severity.Warning => DiagnosticSeverity.Warning,
-                            _ => DiagnosticSeverity.Error
-                        },
-                        Range = new(start.Line, start.Col, end.Line, end.Col)
-                    };
-                }).ToArray();
-            }
-
-            Scripts[uri] = script;
-            return null;
+                        Severity.Error => DiagnosticSeverity.Error,
+                        Severity.Warning => DiagnosticSeverity.Warning,
+                        _ => DiagnosticSeverity.Error
+                    },
+                    Range = new(start.Line, start.Col, end.Line, end.Col)
+                };
+            }).ToArray();
         }
 
         public void VisitAll(DocumentUri uri, Action<ICodeNode> action)
@@ -109,6 +106,6 @@ namespace LogicScript.DX.LSP
             return script.GetNodeAt(location);
         }
         public ICodeNode? GetNodeAt(DocumentUri uri, Position position)
-            => GetNodeAt(uri, new SourceLocation("", position.Line + 1, position.Character + 1));
+            => GetNodeAt(uri, new SourceLocation(uri.ToString(), position.Line + 1, position.Character + 1));
     }
 }
