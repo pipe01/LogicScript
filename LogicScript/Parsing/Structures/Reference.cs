@@ -15,7 +15,7 @@ namespace LogicScript.Parsing.Structures
 
         public IEnumerable<ICodeNode> GetChildren()
         {
-            yield break;
+            yield return Port;
         }
     }
 

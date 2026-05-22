@@ -1,22 +1,33 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
+using LogicScript.Parsing;
 using LogicScript.Parsing.Structures;
 
 namespace LogicScript.Utils
 {
-    public readonly struct PrintStringFormat(string text, IReadOnlyCollection<PrintStringFormat.Interpolation> interpolations)
+    public readonly struct PrintStringFormat(SourceSpan span, string text, IReadOnlyCollection<PrintStringFormat.Interpolation> interpolations) : ICodeNode
     {
-        public readonly struct Interpolation(int position, LocalInfo local, string? format)
+        public readonly struct Interpolation(SourceSpan span, int position, LocalInfo local, string? format) : ICodeNode
         {
             public int Position { get; } = position;
             internal LocalInfo Local { get; } = local;
             public string? Format { get; } = format;
+
+            public SourceSpan Span => span;
+
+            public IEnumerable<ICodeNode> GetChildren()
+            {
+                yield return Local;
+            }
         }
 
         public string Text { get; } = text;
         public IReadOnlyCollection<Interpolation> Interpolations { get; } = interpolations;
+
+        public SourceSpan Span => span;
 
         public string ToFormattable()
         {
@@ -38,10 +49,10 @@ namespace LogicScript.Utils
             return str.ToString();
         }
 
-        internal static PrintStringFormat Parse(string format)
-            => Parse(format, _ => throw new InvalidOperationException("Can't access locals"));
+        internal static PrintStringFormat Parse(SourceSpan span, string format)
+            => Parse(span, format, _ => throw new InvalidOperationException("Can't access locals"));
 
-        internal static PrintStringFormat Parse(string format, Func<string, LocalInfo> fetchLocal)
+        internal static PrintStringFormat Parse(SourceSpan span, string format, Func<string, LocalInfo> fetchLocal)
         {
             var str = new StringBuilder();
             var interpolations = new List<Interpolation>();
@@ -61,7 +72,8 @@ namespace LogicScript.Utils
                         var local = fetchLocal(match.Groups[1].Value);
                         var fmt = match.Groups["base"].Success ? match.Groups["base"].Value : null;
 
-                        interpolations.Add(new(i - removed, local, fmt));
+                        var interpSpan = new SourceSpan(span.Start.FileName, span.Start.Line, span.Start.Column + i + 1, span.Start.Line, span.Start.Column + i + 1 + match.Length);
+                        interpolations.Add(new(interpSpan, i - removed, local, fmt));
 
                         removed += match.Length;
                         i += match.Length - 1;
@@ -77,7 +89,9 @@ namespace LogicScript.Utils
                 }
             }
 
-            return new(str.ToString(), interpolations);
+            return new(span, str.ToString(), interpolations);
         }
+
+        public IEnumerable<ICodeNode> GetChildren() => Interpolations.Cast<ICodeNode>();
     }
 }

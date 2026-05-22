@@ -37,24 +37,16 @@ namespace LogicScript.DX.LSP
             }).ToArray();
         }
 
-        public void VisitAll(DocumentUri uri, Action<ICodeNode> action)
+        public IEnumerable<ICodeNode> VisitAll(DocumentUri uri)
         {
-            if (!Scripts.TryGetValue(uri, out var script))
-                return;
+            if (Scripts.TryGetValue(uri, out var script))
+                return script.Blocks.SelectMany(Visit);
 
-            foreach (var block in script.Blocks)
+            return [];
+
+            static IEnumerable<ICodeNode> Visit(ICodeNode node)
             {
-                Visit(block);
-            }
-
-            void Visit(ICodeNode node)
-            {
-                foreach (var child in node.GetChildren())
-                {
-                    Visit(child);
-                }
-
-                action(node);
+                return node.GetChildren().SelectMany(Visit).Prepend(node);
             }
         }
 
@@ -62,13 +54,15 @@ namespace LogicScript.DX.LSP
         {
             var refs = new List<ICodeNode>();
 
-            VisitAll(uri, node =>
+            foreach (var node in VisitAll(uri))
             {
                 if (node is ReferenceExpression refExpr && refExpr.Reference.Port.Equals(port))
                     refs.Add(refExpr);
                 else if (node is AssignStatement assign && assign.Reference.Port.Equals(port))
                     refs.Add(assign.Reference);
-            });
+                else if (node is PrintTaskStatement print && port is LocalInfo local)
+                    refs.AddRange(print.String.Interpolations.Where(i => i.Local.Equals(local)).Cast<ICodeNode>());
+            }
 
             return refs;
         }

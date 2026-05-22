@@ -10,6 +10,12 @@ namespace LogicScript.Parsing
 
         internal SourceSpan(SourceLocation start, SourceLocation end)
         {
+            if (start.FileName != end.FileName)
+                throw new ArgumentException("Start and end locations must be in the same file");
+
+            if (start.Line > end.Line || (start.Line == end.Line && start.Column > end.Column))
+                throw new ArgumentException("Start location must be before end location");
+
             this.Start = start;
             this.End = end;
         }
@@ -23,6 +29,10 @@ namespace LogicScript.Parsing
         }
 
         internal SourceSpan(IToken token) : this(token, token)
+        {
+        }
+
+        internal SourceSpan(string fileName, int lineStart, int colStart, int lineEnd, int colEnd) : this(new SourceLocation(fileName, lineStart, colStart), new SourceLocation(fileName, lineEnd, colEnd))
         {
         }
 

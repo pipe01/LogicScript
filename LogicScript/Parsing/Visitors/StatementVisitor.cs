@@ -148,7 +148,7 @@ namespace LogicScript.Parsing.Visitors
             {
                 var text = context.TEXT().GetText().Trim('"');
 
-                var formatString = PrintStringFormat.Parse(text, name =>
+                var formatString = PrintStringFormat.Parse(new(context.TEXT().Symbol), text, name =>
                 {
                     if (BlockContext.TryGetLocal(name, out var local))
                         return local;

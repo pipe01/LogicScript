@@ -2,6 +2,7 @@
 using LogicScript.Parsing.Structures;
 using LogicScript.Parsing.Structures.Expressions;
 using LogicScript.Parsing.Structures.Statements;
+using LogicScript.Utils;
 using OmniSharp.Extensions.LanguageServer.Protocol.Client.Capabilities;
 using OmniSharp.Extensions.LanguageServer.Protocol.Document;
 using OmniSharp.Extensions.LanguageServer.Protocol.Models;
@@ -31,7 +32,8 @@ namespace LogicScript.DX.LSP.Handlers
         public override Task<Hover?> Handle(HoverParams request, CancellationToken cancellationToken)
         {
             var node = Workspace.GetNodeAt(request.TextDocument.Uri, request.Position, [
-                typeof(PortReference),
+                typeof(PrintStringFormat.Interpolation),
+                typeof(PortInfo),
                 typeof(Reference),
                 typeof(Expression),
                 typeof(DeclareLocalStatement),
@@ -42,19 +44,23 @@ namespace LogicScript.DX.LSP.Handlers
 
             switch (node)
             {
-                case PortReference portRef:
-                    if (portRef.Port.BitSize == 1)
-                        lines.Add($"### {portRef.PortInfo.Target} index {portRef.PortInfo.StartIndex}");
-                    else
-                        lines.Add($"### {portRef.PortInfo.Target} index {portRef.PortInfo.StartIndex} to {portRef.PortInfo.StartIndex + portRef.Port.BitSize - 1}");
-
-                    size = portRef.BitSize;
-                    span = portRef.Span;
+                case PortInfo port:
+                    lines.Add(GetPortDescription(port));
+                    size = port.BitSize;
+                    span = port.Span;
                     break;
 
                 case Reference @ref:
+                    if (@ref is PortReference portRef)
+                        lines.Add(GetPortDescription(portRef.PortInfo));
+
                     size = @ref.BitSize;
                     span = @ref.Span;
+                    break;
+
+                case PrintStringFormat.Interpolation interp:
+                    size = interp.Local.BitSize;
+                    span = interp.Span;
                     break;
 
                 case Expression expr:
@@ -83,6 +89,13 @@ namespace LogicScript.DX.LSP.Handlers
                 }),
                 Range = span.ToRange()
             });
+        }
+
+        private static string GetPortDescription(PortInfo port)
+        {
+            return port.BitSize == 1
+                ? $"### {port.Target} index {port.StartIndex}"
+                : $"### {port.Target} index {port.StartIndex} to {port.StartIndex + port.BitSize - 1}";
         }
     }
 }

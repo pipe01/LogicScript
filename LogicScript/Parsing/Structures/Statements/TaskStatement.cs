@@ -11,9 +11,14 @@ namespace LogicScript.Parsing.Structures.Statements
     internal sealed class PrintTaskStatement(SourceSpan span, PrintStringFormat str) : TaskStatement(span)
     {
         // For tests only
-        public PrintTaskStatement(string str) : this(default, PrintStringFormat.Parse(str)) { }
+        public PrintTaskStatement(string str) : this(default, PrintStringFormat.Parse(default, str)) { }
 
         public PrintStringFormat String { get; set; } = str;
+
+        public override IEnumerable<ICodeNode> GetChildren()
+        {
+            yield return String;
+        }
     }
 
     internal sealed class ShowTaskStatement(SourceSpan span, Expression value) : TaskStatement(span)

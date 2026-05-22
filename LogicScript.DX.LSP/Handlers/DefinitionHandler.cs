@@ -1,4 +1,6 @@
 ﻿using LogicScript.Parsing.Structures;
+using LogicScript.Parsing.Structures.Statements;
+using LogicScript.Utils;
 using OmniSharp.Extensions.LanguageServer.Protocol.Client.Capabilities;
 using OmniSharp.Extensions.LanguageServer.Protocol.Document;
 using OmniSharp.Extensions.LanguageServer.Protocol.Models;
@@ -35,6 +37,10 @@ namespace LogicScript.DX.LSP.Handlers
             {
                 case Reference @ref:
                     range = @ref.Port.Span.ToRange();
+                    break;
+
+                case PrintStringFormat.Interpolation interp:
+                    range = interp.Local.Span.ToRange();
                     break;
 
                 default:
