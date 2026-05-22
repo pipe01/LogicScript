@@ -24,8 +24,6 @@ namespace LogicScript.Interpreting
 
         private BitsValue Visit(ReferenceExpression expr)
         {
-            AssertNotConstant(expr, "Cannot reference ports from a constant value");
-
             if (expr.Reference is PortReference port)
             {
                 return port.PortInfo.Target switch

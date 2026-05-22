@@ -43,8 +43,6 @@ namespace LogicScript.Interpreting
 
         private bool Visit(AssignStatement stmt)
         {
-            AssertNotConstant(stmt);
-
             var value = Visit(stmt.Value);
 
             if (stmt.Reference is PortReference port)
@@ -95,8 +93,6 @@ namespace LogicScript.Interpreting
 
         private bool Visit(TaskStatement stmt)
         {
-            AssertNotConstant(stmt);
-
             if (stmt is PrintTaskStatement print)
             {
                 var locals = Locals;
