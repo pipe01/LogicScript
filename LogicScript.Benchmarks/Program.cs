@@ -55,7 +55,7 @@ when 1
 end"),
         ];
 
-        [Params(0)]
+        [Params(0, 1)]
         public int TestIndex { get; set; }
 
         private TestCase Case;
