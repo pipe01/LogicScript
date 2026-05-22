@@ -30,7 +30,12 @@ namespace LogicScript.DX.LSP.Handlers
 
         public override Task<Hover?> Handle(HoverParams request, CancellationToken cancellationToken)
         {
-            var node = Workspace.GetNodeAt(request.TextDocument.Uri, request.Position);
+            var node = Workspace.GetNodeAt(request.TextDocument.Uri, request.Position, [
+                typeof(PortReference),
+                typeof(Reference),
+                typeof(Expression),
+                typeof(DeclareLocalStatement),
+            ]);
             var lines = new List<string>();
             int size;
             SourceSpan span;
@@ -59,11 +64,11 @@ namespace LogicScript.DX.LSP.Handlers
 
                 case DeclareLocalStatement local:
                     size = local.Local.BitSize;
-                    span = local.Span;
+                    span = local.Local.Span;
                     break;
 
                 default:
-                    return Task.FromResult(null as Hover);
+                    return Task.FromResult<Hover?>(null);
             }
 
             if (size != 0)

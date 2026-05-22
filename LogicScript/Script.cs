@@ -5,6 +5,7 @@ using LogicScript.Parsing;
 using LogicScript.Parsing.Structures;
 using LogicScript.Parsing.Structures.Blocks;
 using LogicScript.Parsing.Visitors;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -37,11 +38,11 @@ namespace LogicScript
             Interpreter.Run(this, machine, runStartup, checkPortCount);
         }
 
-        internal ICodeNode? GetNodeAt(SourceLocation loc)
+        internal ICodeNode? GetNodeAt(SourceLocation loc, Type[]? types = null)
         {
             foreach (var item in Blocks)
             {
-                var node = Inner(loc, item);
+                var node = Inner(loc, item, types);
 
                 if (node != null)
                     return node;
@@ -49,17 +50,18 @@ namespace LogicScript
 
             return null;
 
-            static ICodeNode? Inner(SourceLocation loc, ICodeNode node)
+            static ICodeNode? Inner(SourceLocation loc, ICodeNode node, Type[]? types)
             {
                 foreach (var child in node.GetChildren())
                 {
-                    var childNode = Inner(loc, child);
+                    var childNode = Inner(loc, child, types);
 
                     if (childNode != null)
                         return childNode;
                 }
 
-                if (node.Span.Contains(loc))
+                var nodeType = node.GetType();
+                if ((types == null || types.Any(t => t.IsAssignableFrom(nodeType))) && node.Span.Contains(loc))
                     return node;
 
                 return null;

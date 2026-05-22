@@ -12,7 +12,7 @@ namespace LogicScript.DX.LSP
 {
     internal class Workspace
     {
-        private IDictionary<DocumentUri, Script> Scripts = new Dictionary<DocumentUri, Script>();
+        private readonly Dictionary<DocumentUri, Script> Scripts = [];
 
         public IReadOnlyList<Diagnostic>? LoadScript(DocumentUri uri, string text)
         {
@@ -78,34 +78,31 @@ namespace LogicScript.DX.LSP
 
         public IPortInfo? GetPortAt(DocumentUri uri, SourceLocation location)
         {
-            var editedNode = GetNodeAt(uri, location);
-
-            if (editedNode is Reference reference)
+            return GetNodeAt(uri, location) switch
             {
-                return reference.Port;
-            }
-            else if (editedNode is IPortInfo portInfo)
-            {
-                return portInfo;
-            }
-
-            return null;
+                Reference r => r.Port,
+                IPortInfo p => p,
+                _ => null
+            };
         }
 
-        public ICodeNode? GetNodeAt(DocumentUri uri, SourceLocation location)
+        public ICodeNode? GetNodeAt(DocumentUri uri, SourceLocation location, Type[]? types = null)
         {
             if (!Scripts.TryGetValue(uri, out var script))
                 return null;
 
-            foreach (var port in script.Inputs.Values.Concat(script.Outputs.Values).Concat(script.Registers.Values))
+            if (types == null || types.Contains(typeof(PortInfo)))
             {
-                if (port.Span.Contains(location))
-                    return port;
+                foreach (var port in script.Inputs.Values.Concat(script.Outputs.Values).Concat(script.Registers.Values))
+                {
+                    if (port.Span.Contains(location))
+                        return port;
+                }
             }
 
-            return script.GetNodeAt(location);
+            return script.GetNodeAt(location, types);
         }
-        public ICodeNode? GetNodeAt(DocumentUri uri, Position position)
-            => GetNodeAt(uri, new SourceLocation(uri.ToString(), position.Line + 1, position.Character + 1));
+        public ICodeNode? GetNodeAt(DocumentUri uri, Position position, Type[]? types = null)
+            => GetNodeAt(uri, new SourceLocation(uri.ToString(), position.Line + 1, position.Character + 1), types);
     }
 }
