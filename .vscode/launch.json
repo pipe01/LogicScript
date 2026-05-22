@@ -44,9 +44,10 @@
             "stopAtEntry": false
         },
         {
-            "name": ".NET Core Attach",
+            "name": ".NET Core Attach LSP",
             "type": "coreclr",
-            "request": "attach"
+            "request": "attach",
+            "processName": "LogicScript.DX.LSP"
         }
     ]
 }

@@ -3,7 +3,6 @@ using Microsoft.Extensions.DependencyInjection;
 using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 using OmniSharp.Extensions.LanguageServer.Server;
 using System;
-using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -11,10 +10,7 @@ namespace LogicScript.DX.LSP
 {
     class Program
     {
-        public static readonly TextDocumentSelector Selector = new(new TextDocumentFilter
-        {
-            Language = "logicscript"
-        });
+        public static readonly TextDocumentSelector Selector = TextDocumentSelector.ForLanguage("logicscript");
 
         static async Task Main(string[] args)
         {

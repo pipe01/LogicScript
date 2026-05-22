@@ -23,9 +23,6 @@ namespace LogicScript.DX.LSP
 
             return errors.Select(item =>
             {
-                var start = (Line: item.Span.Start.Line - 1, Col: item.Span.Start.Column - 1);
-                var end = (Line: item.Span.End.Line - 1, Col: item.Span.End.Column - 1);
-
                 return new Diagnostic()
                 {
                     Message = item.Message,
@@ -35,7 +32,7 @@ namespace LogicScript.DX.LSP
                         Severity.Warning => DiagnosticSeverity.Warning,
                         _ => DiagnosticSeverity.Error
                     },
-                    Range = new(start.Line, start.Col, end.Line, end.Col)
+                    Range = item.Span.ToRange()
                 };
             }).ToArray();
         }
