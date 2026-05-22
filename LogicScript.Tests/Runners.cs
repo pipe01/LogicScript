@@ -30,7 +30,7 @@ namespace LogicScript.Tests
         {
             var compiled = Compiler.Compile(script);
 
-            compiled(machine, new bool[Math.Max(machine.InputCount, machine.OutputCount)], runStartup, null);
+            compiled(machine, new bool[Math.Max(machine.InputCount, machine.OutputCount)], runStartup);
         }
     }
 }

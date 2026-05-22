@@ -88,19 +88,13 @@ end"),
 
             this.Scratch = new bool[Math.Max(Machine.InputCount, Machine.OutputCount)];
             this.CompiledScript = Compiler.Compile(script);
-            this.CompiledScriptDebug = Compiler.Compile(script, true);
+            this.CompiledScriptDebug = Compiler.Compile(script);
         }
 
         [Benchmark]
         public void RunCompiledNoDebug()
         {
-            CompiledScript(Machine, Scratch, false, null);
-        }
-
-        [Benchmark]
-        public void RunCompiledDebug()
-        {
-            CompiledScriptDebug(Machine, Scratch, false, new MyDebugger());
+            CompiledScript(Machine, Scratch, false);
         }
 
         [Benchmark]

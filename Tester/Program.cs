@@ -25,7 +25,7 @@ namespace Tester
             if (errors.Count > 0)
                 return;
 
-            var program = Compiler.Compile(script, true);
+            var program = Compiler.Compile(script);
             Console.WriteLine(string.Join(", ", program));
 
             var machine = new MyMachine
@@ -36,7 +36,7 @@ namespace Tester
 
             var scratch = new bool[Math.Max(machine.InputCount, machine.OutputCount)];
 
-            program(machine, scratch, true, null);
+            program(machine, scratch, true);
 
             // new CPU(program, new MyMachine()).Run(true);
 

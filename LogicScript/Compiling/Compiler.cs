@@ -19,7 +19,7 @@ using FastExpressionCompiler;
 
 namespace LogicScript.Compiling
 {
-    public delegate void CompiledScript(IMachine machine, bool[] scratch, bool firstRun, IDebugger? debugger);
+    public delegate void CompiledScript(IMachine machine, bool[] scratch, bool firstRun);
 
     public class Compiler
     {
@@ -31,17 +31,9 @@ namespace LogicScript.Compiling
         private readonly ParameterExpression Machine = Expression.Parameter(typeof(IMachine), "machine");
         private readonly ParameterExpression Scratch = Expression.Parameter(typeof(bool[]), "scratch");
         private readonly ParameterExpression FirstRun = Expression.Parameter(typeof(bool), "firstRun");
-        private readonly ParameterExpression Debugger = Expression.Parameter(typeof(IDebugger), "debugger");
-
-        private readonly bool EmitDebugInfo;
 
         private readonly Stack<Scope> Stack = new();
         private readonly Dictionary<NodeID, LabelTarget> LoopBreaks = [];
-
-        private Compiler(bool emitDebugInfo)
-        {
-            this.EmitDebugInfo = emitDebugInfo;
-        }
 
         private CompiledScript CompileScript(Script script)
         {
@@ -61,7 +53,7 @@ namespace LogicScript.Compiling
             };
             body.AddRange(script.Blocks.Select(Compile));
 
-            var ts = Expression.Lambda<CompiledScript>(Expression.Block(body), Machine, Scratch, FirstRun, Debugger)
+            var ts = Expression.Lambda<CompiledScript>(Expression.Block(body), Machine, Scratch, FirstRun)
 #if USE_FAST_EXPRESSIONS
             .CompileFast(flags: CompilerFlags.EnableDelegateDebugInfo);
 #else
@@ -81,9 +73,9 @@ namespace LogicScript.Compiling
             return ts;
         }
 
-        public static CompiledScript Compile(Script script, bool emitDebugInfo = false)
+        public static CompiledScript Compile(Script script)
         {
-            return new Compiler(emitDebugInfo).CompileScript(script);
+            return new Compiler().CompileScript(script);
         }
 
         private Expression Compile(Block block)
@@ -116,7 +108,7 @@ namespace LogicScript.Compiling
 
         private Expression Compile(Statement stmt)
         {
-            var expr = stmt switch
+            return stmt switch
             {
                 AssignStatement a => Compile(a),
                 BlockStatement b => Compile(b),
@@ -128,53 +120,6 @@ namespace LogicScript.Compiling
                 WhileStatement w => Compile(w),
                 _ => throw new NotImplementedException()
             };
-
-            if (EmitDebugInfo)
-            {
-                // If a debugger is present, add all available locals to a dictionary then call Debugger.TraceStatement
-
-                var localsDict = Expression.Variable(typeof(IDictionary<LocalInfo, ulong>), "localsDict");
-                var block = new List<Expression>
-                {
-                    Expression.Assign(
-                        localsDict,
-                        Expression.New(typeof(Dictionary<LocalInfo, ulong>).GetConstructor([]))
-                    )
-                };
-
-                foreach (var scope in Stack)
-                {
-                    foreach (var local in scope.Locals)
-                    {
-                        block.Add(
-                            Expression.Call(
-                                localsDict,
-                                typeof(IDictionary<LocalInfo, ulong>).GetMethod("Add")!,
-                                Expression.Constant(local.Key),
-                                local.Value
-                            )
-                        );
-                    }
-                }
-
-                block.Add(
-                    Expression.IfThen(
-                        Expression.NotEqual(Debugger, Expression.Constant(null)),
-                        Expression.Call(
-                            Debugger,
-                            typeof(IDebugger).GetMethod(nameof(IDebugger.TraceStatement)),
-                            Expression.Constant(stmt.Span),
-                            localsDict
-                        )
-                    )
-                );
-
-                block.Add(expr);
-
-                return Expression.Block([localsDict], block);
-            }
-
-            return expr;
         }
 
         private Expression Compile(TaskStatement stmt)
