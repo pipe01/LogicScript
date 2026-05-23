@@ -9,7 +9,7 @@ using OmniSharp.Extensions.DebugAdapter.Server;
 
 namespace LogicScript.DX.DAP;
 
-public class LogicScriptDebugger(Session session) : IAttachHandler, IDisconnectHandler, ISetBreakpointsHandler, IThreadsHandler, IStackTraceHandler, IScopesHandler, IVariablesHandler, IContinueHandler, INextHandler, IEvaluateHandler
+public class LogicScriptDebugger(Session session) : IAttachHandler, IDisconnectHandler, ISetBreakpointsHandler, IThreadsHandler, IStackTraceHandler, IScopesHandler, IVariablesHandler, IContinueHandler, INextHandler, IEvaluateHandler, IStepInHandler
 {
     private TaskCompletionSource<bool> SessionDone = new();
     private readonly Session Session = session;
@@ -217,6 +217,13 @@ public class LogicScriptDebugger(Session session) : IAttachHandler, IDisconnectH
     }
 
     public async Task<NextResponse> Handle(NextArguments request, CancellationToken cancellationToken)
+    {
+        Session.Next();
+
+        return new();
+    }
+
+    public async Task<StepInResponse> Handle(StepInArguments request, CancellationToken cancellationToken)
     {
         Session.Next();
 
