@@ -9,14 +9,9 @@ using Range = OmniSharp.Extensions.LanguageServer.Protocol.Models.Range;
 
 namespace LogicScript.DX.LSP.Handlers
 {
-    class DefinitionHandler : DefinitionHandlerBase
+    class DefinitionHandler(Workspace workspace) : DefinitionHandlerBase
     {
-        private readonly Workspace Workspace;
-
-        public DefinitionHandler(Workspace workspace)
-        {
-            this.Workspace = workspace;
-        }
+        private readonly Workspace Workspace = workspace;
 
         protected override DefinitionRegistrationOptions CreateRegistrationOptions(DefinitionCapability capability, ClientCapabilities clientCapabilities)
         {

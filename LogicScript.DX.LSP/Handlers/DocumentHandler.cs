@@ -12,16 +12,10 @@ using System.Threading.Tasks;
 
 namespace LogicScript.DX.LSP.Handlers
 {
-    class DocumentHandler : IDidChangeTextDocumentHandler, IDidOpenTextDocumentHandler
+    class DocumentHandler(ILanguageServerFacade server, Workspace workspace) : IDidChangeTextDocumentHandler, IDidOpenTextDocumentHandler
     {
-        private readonly ILanguageServerFacade Server;
-        private readonly Workspace Workspace;
-
-        public DocumentHandler(ILanguageServerFacade server, Workspace workspace)
-        {
-            this.Server = server;
-            this.Workspace = workspace;
-        }
+        private readonly ILanguageServerFacade Server = server;
+        private readonly Workspace Workspace = workspace;
 
         TextDocumentOpenRegistrationOptions IRegistration<TextDocumentOpenRegistrationOptions, TextSynchronizationCapability>.GetRegistrationOptions(TextSynchronizationCapability capability, ClientCapabilities clientCapabilities)
         {

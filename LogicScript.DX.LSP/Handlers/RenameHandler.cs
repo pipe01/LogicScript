@@ -10,14 +10,9 @@ using System.Threading.Tasks;
 
 namespace LogicScript.DX.LSP.Handlers
 {
-    class RenameHandler : RenameHandlerBase
+    class RenameHandler(Workspace workspace) : RenameHandlerBase
     {
-        private readonly Workspace Workspace;
-
-        public RenameHandler(Workspace workspace)
-        {
-            this.Workspace = workspace;
-        }
+        private readonly Workspace Workspace = workspace;
 
         protected override RenameRegistrationOptions CreateRegistrationOptions(RenameCapability capability, ClientCapabilities clientCapabilities)
         {

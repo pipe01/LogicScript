@@ -8,14 +8,9 @@ using System.Threading.Tasks;
 
 namespace LogicScript.DX.LSP.Handlers
 {
-    class ReferencesHandler : ReferencesHandlerBase
+    class ReferencesHandler(Workspace workspace) : ReferencesHandlerBase
     {
-        private readonly Workspace Workspace;
-
-        public ReferencesHandler(Workspace workspace)
-        {
-            this.Workspace = workspace;
-        }
+        private readonly Workspace Workspace = workspace;
 
         protected override ReferenceRegistrationOptions CreateRegistrationOptions(ReferenceCapability capability, ClientCapabilities clientCapabilities)
         {

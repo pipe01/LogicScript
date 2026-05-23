@@ -12,14 +12,9 @@ using System.Threading.Tasks;
 
 namespace LogicScript.DX.LSP.Handlers
 {
-    class HoverHandler : HoverHandlerBase
+    class HoverHandler(Workspace workspace) : HoverHandlerBase
     {
-        private readonly Workspace Workspace;
-
-        public HoverHandler(Workspace workspace)
-        {
-            this.Workspace = workspace;
-        }
+        private readonly Workspace Workspace = workspace;
 
         protected override HoverRegistrationOptions CreateRegistrationOptions(HoverCapability capability, ClientCapabilities clientCapabilities)
         {
