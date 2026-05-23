@@ -264,7 +264,7 @@ namespace LogicScript.Compiling
 
         private Expression Compile(BlockStatement stmt)
         {
-            var locals = stmt.Locals.ToDictionary(l => l.Value, l => Expression.Variable(typeof(ulong), l.Value.Name));
+            var locals = stmt.Locals.ToDictionary(l => l, l => Expression.Variable(typeof(ulong), l.Name));
 
             Stack.Push(new(locals));
 

@@ -7,7 +7,7 @@ namespace LogicScript.Parsing.Visitors
     {
         public ScriptContext Script { get; } = script;
         public BlockContext? Outer { get; } = outer;
-        public IDictionary<string, LocalInfo> Locals { get; } = new Dictionary<string, LocalInfo>();
+        public IList<LocalInfo> Locals { get; } = [];
 
         public ErrorSink Errors => Script.Errors;
 
@@ -21,18 +21,25 @@ namespace LogicScript.Parsing.Visitors
         public LocalInfo AddLocal(string name, int size, SourceSpan span)
         {
             var info = new LocalInfo(NodeID.Next(), size, name, span);
-            Locals.Add(name, info);
+            Locals.Add(info);
             return info;
         }
 
         public bool TryGetLocal(string name, out LocalInfo local, bool checkOuter = true)
         {
-            if (Locals.TryGetValue(name, out local))
-                return true;
+            foreach (var item in Locals)
+            {
+                if (item.Name == name)
+                {
+                    local = item;
+                    return true;
+                }
+            }
 
             if (checkOuter && Outer != null && Outer.TryGetLocal(name, out local))
                 return true;
 
+            local = default;
             return false;
         }
     }

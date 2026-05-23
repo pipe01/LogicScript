@@ -8,20 +8,28 @@ namespace LogicScript.Parsing.Structures
         int BitSize { get; }
     }
 
-    internal enum MachinePorts
+    public enum MachinePorts
     {
         Input,
         Output,
         Register
     }
 
-    internal readonly struct PortInfo(MachinePorts target, int index, int bitSize, SourceSpan span) : IPortInfo
+    public readonly struct PortInfo : IPortInfo
     {
-        public MachinePorts Target { get; } = target;
-        public int StartIndex { get; } = index;
-        public int BitSize { get; } = bitSize;
+        public MachinePorts Target { get; }
+        public int StartIndex { get; }
+        public int BitSize { get; }
 
-        public SourceSpan Span { get; } = span;
+        public SourceSpan Span { get; }
+
+        internal PortInfo(MachinePorts target, int index, int bitSize, SourceSpan span)
+        {
+            this.Target = target;
+            this.StartIndex = index;
+            this.BitSize = bitSize;
+            this.Span = span;
+        }
 
         public IEnumerable<ICodeNode> GetChildren()
         {

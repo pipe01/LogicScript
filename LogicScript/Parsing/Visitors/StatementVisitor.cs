@@ -23,7 +23,7 @@ namespace LogicScript.Parsing.Visitors
 
             var stmts = context.stmt().Select(visitor.Visit).ToArray();
 
-            return new BlockStatement(context.Span(), stmts, blockContext.Locals);
+            return new BlockStatement(context.Span(), stmts, blockContext.Locals.ToArray());
         }
 
         public override Statement VisitAssignRegular([NotNull] LogicScriptParser.AssignRegularContext context)
