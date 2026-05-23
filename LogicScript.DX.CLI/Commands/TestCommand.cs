@@ -62,6 +62,8 @@ namespace LogicScript.DX.CLI.Commands
 
             logger.LogStartBench(bench);
 
+            debugger?.LoadedScript(script);
+
             var results = bench.Run(debugger);
             int successful = 0, failed = 0;
 

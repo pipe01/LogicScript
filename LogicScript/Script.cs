@@ -39,34 +39,29 @@ namespace LogicScript
         {
         }
 
-        internal ICodeNode? GetNodeAt(SourceLocation loc, Type[]? types = null)
+        public IEnumerable<ICodeNode> VisitAll(bool depthFirst = true)
         {
-            foreach (var item in Blocks)
-            {
-                var node = Inner(loc, item, types);
+            return Blocks.SelectMany(Inner);
 
-                if (node != null)
+            IEnumerable<ICodeNode> Inner(ICodeNode parent)
+            {
+                var children = parent.GetChildren().SelectMany(Inner);
+
+                return depthFirst ? children.Append(parent) : children.Prepend(parent);
+            }
+        }
+
+        internal ICodeNode? GetNodeAt(SourceLocation loc, Type[]? types = null, bool depthFirst = true)
+        {
+            foreach (var node in VisitAll(depthFirst))
+            {
+                var nodeType = node.GetType();
+
+                if ((types == null || types.Any(t => t.IsAssignableFrom(nodeType))) && node.Span.Contains(loc))
                     return node;
             }
 
             return null;
-
-            static ICodeNode? Inner(SourceLocation loc, ICodeNode node, Type[]? types)
-            {
-                foreach (var child in node.GetChildren())
-                {
-                    var childNode = Inner(loc, child, types);
-
-                    if (childNode != null)
-                        return childNode;
-                }
-
-                var nodeType = node.GetType();
-                if ((types == null || types.Any(t => t.IsAssignableFrom(nodeType))) && node.Span.Contains(loc))
-                    return node;
-
-                return null;
-            }
         }
 
         public static (Script? Script, IReadOnlyList<Error> Errors) Parse(string source, string fileName = "<script>")

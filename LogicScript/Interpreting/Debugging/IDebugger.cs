@@ -10,6 +10,7 @@ namespace LogicScript.Interpreting.Debugging
         void Continue();
         void Next();
 
+        void LoadedScript(Script script);
         void TraceStatement(Interpreter interpreter, Statement stmt, out bool pause);
     }
 }

@@ -1,4 +1,5 @@
-﻿using System.Net;
+﻿using System.Diagnostics.CodeAnalysis;
+using System.Net;
 using System.Net.Sockets;
 using LogicScript.Data;
 using LogicScript.Interpreting;
@@ -12,11 +13,14 @@ using OmniSharp.Extensions.DebugAdapter.Server;
 
 namespace LogicScript.DX.DAP;
 
-public class LogicScriptDebugger : IDebugger, IAttachHandler, IDisconnectHandler, ISetBreakpointsHandler, IThreadsHandler, IStackTraceHandler, IScopesHandler, IVariablesHandler, IContinueHandler, INextHandler, IEvaluateHandler, IStepInHandler
+public class LogicScriptDebugger : IDebugger, IAttachHandler, IDisconnectHandler, ISetBreakpointsHandler, IThreadsHandler, IStackTraceHandler, IScopesHandler, IVariablesHandler, IContinueHandler, INextHandler, IEvaluateHandler, IStepInHandler, IPauseHandler
 {
     private TaskCompletionSource<bool> SessionDone = new();
 
     private bool Attached;
+
+    private readonly record struct PendingBreakpoint(int Number, SourceLocation Location);
+    private readonly HashSet<PendingBreakpoint> PendingBreakpoints = [];
 
     private Interpreter EnsureInterpreter => CurrentPause?.Interpreter ?? throw new InvalidOperationException("Not currently paused");
 
@@ -48,104 +52,6 @@ public class LogicScriptDebugger : IDebugger, IAttachHandler, IDisconnectHandler
 
         Continue();
     }
-
-    #region Debugger
-
-    private readonly record struct Breakpoint(int Number, SourceLocation Location);
-
-    private readonly record struct PauseState(int? BreakpointNumber, Statement Statement, Interpreter Interpreter)
-    {
-        public readonly TaskCompletionSource<bool> PauseBarrier = new();
-
-        public bool HasBreakpoint => BreakpointNumber != null;
-    }
-
-    private readonly List<Breakpoint> LineBreakpoints = [];
-    private PauseState? CurrentPause;
-
-    private int BreakpointCounter = 0;
-    private bool IgnoreNext;
-    private bool PauseNext;
-
-    public int AddBreakpoint(SourceLocation location)
-    {
-        var number = BreakpointCounter++;
-        LineBreakpoints.Add(new(number, location));
-
-        return number;
-    }
-
-    public void ClearBreakpoints()
-    {
-        LineBreakpoints.Clear();
-    }
-
-    public void Continue()
-    {
-        if (CurrentPause != null)
-        {
-            IgnoreNext = true;
-            CurrentPause.Value.PauseBarrier.TrySetResult(true);
-        }
-    }
-
-    public void Next()
-    {
-        if (CurrentPause != null)
-        {
-            PauseNext = true;
-            Continue();
-        }
-    }
-
-    void IDebugger.TraceStatement(Interpreter interpreter, Statement stmt, out bool pause)
-    {
-        pause = false;
-
-        if (!Attached)
-        {
-            return;
-        }
-
-        if (IgnoreNext)
-        {
-            CurrentPause = null;
-            IgnoreNext = false;
-            return;
-        }
-
-        if (PauseNext)
-        {
-            PauseNext = false;
-
-            Pause(new(null, stmt, interpreter));
-            pause = true;
-            return;
-        }
-
-        foreach (var bp in LineBreakpoints)
-        {
-            if (bp.Location.FileName == stmt.Span.Start.FileName && bp.Location.Line == stmt.Span.Start.Line)
-            {
-                Pause(new(bp.Number, stmt, interpreter));
-                pause = true;
-                break;
-            }
-        }
-    }
-
-    public async Task WaitForResumeAsync()
-    {
-        if (CurrentPause != null)
-            await CurrentPause.Value.PauseBarrier.Task;
-    }
-
-    public void WaitForResume()
-    {
-        CurrentPause?.PauseBarrier.Task.Wait();
-    }
-
-    #endregion
 
     public async Task RunSocketAsync(int port)
     {
@@ -195,9 +101,197 @@ public class LogicScriptDebugger : IDebugger, IAttachHandler, IDisconnectHandler
         Server?.SendStopped(new()
         {
             ThreadId = 0,
-            Reason = CurrentPause!.Value.HasBreakpoint ? StoppedEventReason.Breakpoint : StoppedEventReason.Step
+            Reason = state.HasBreakpoint ? StoppedEventReason.Breakpoint : StoppedEventReason.Step
         });
     }
+
+    private static string FormatBitsValue(BitsValue value, int length) => $"{value.ToStringBinary(length)} ({value})";
+
+    #region Debugger
+
+    private readonly record struct StatementBreakpoint(int Number, Statement Statement);
+
+    private readonly record struct PauseState(int? BreakpointNumber, Statement Statement, Interpreter Interpreter)
+    {
+        public readonly TaskCompletionSource<bool> PauseBarrier = new(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        public bool HasBreakpoint => BreakpointNumber != null;
+    }
+
+    private readonly Dictionary<int, StatementBreakpoint> Breakpoints = [];
+    private readonly Mutex BreakpointsMutex = new();
+
+    private readonly List<Script> LoadedScripts = [];
+    private PauseState? CurrentPause;
+
+    private int BreakpointCounter = 0;
+    private bool IgnoreNext;
+    private bool PauseNext;
+
+    private Breakpoint AddBreakpoint(SourceLocation location, int? wantNumber = null)
+    {
+        var verified = TryAddBreakpoint(location, out var id, out var realLocation, wantNumber);
+        if (!verified)
+            return new Breakpoint
+            {
+                Id = id,
+                Verified = false
+            };
+
+        return new Breakpoint
+        {
+            Id = id,
+            Line = realLocation.Line,
+            Column = realLocation.Column,
+            Verified = true,
+        };
+    }
+
+    public bool TryAddBreakpoint(SourceLocation location, out int number, out SourceLocation realLocation, int? wantNumber = null)
+    {
+        BreakpointsMutex.WaitOne();
+        number = wantNumber ?? BreakpointCounter++;
+
+        if (TryFindStatement(location, out var stmt))
+        {
+            realLocation = stmt.Span.Start;
+
+            Breakpoints.Add(number, new(number, stmt));
+
+            return true;
+        }
+        else
+        {
+            PendingBreakpoints.Add(new(number, location));
+        }
+        BreakpointsMutex.ReleaseMutex();
+
+        realLocation = default;
+        return false;
+    }
+
+    private bool TryFindStatement(SourceLocation location, [MaybeNullWhen(false)] out Statement stmt)
+    {
+        var script = LoadedScripts.FirstOrDefault(s => s.FileName == location.FileName);
+        if (script != null)
+        {
+            foreach (var node in script.VisitAll())
+            {
+                if (node is Statement s && node.Span.Start.Line == location.Line && node.Span.Start.Column >= location.Column)
+                {
+                    stmt = s;
+                    return true;
+                }
+            }
+        }
+
+        stmt = null;
+        return false;
+    }
+
+    public void ClearBreakpoints()
+    {
+        BreakpointsMutex.WaitOne();
+
+        Breakpoints.Clear();
+        PendingBreakpoints.Clear();
+
+        BreakpointsMutex.ReleaseMutex();
+    }
+
+    public void Continue()
+    {
+        if (CurrentPause != null)
+        {
+            IgnoreNext = true;
+            CurrentPause.Value.PauseBarrier.TrySetResult(true);
+        }
+    }
+
+    public void Next()
+    {
+        if (CurrentPause != null)
+        {
+            PauseNext = true;
+            Continue();
+        }
+    }
+
+    void IDebugger.TraceStatement(Interpreter interpreter, Statement stmt, out bool pause)
+    {
+        pause = false;
+
+        if (!Attached)
+        {
+            return;
+        }
+
+        if (IgnoreNext)
+        {
+            CurrentPause = null;
+            IgnoreNext = false;
+            return;
+        }
+
+        if (PauseNext)
+        {
+            PauseNext = false;
+
+            Pause(new(null, stmt, interpreter));
+            pause = true;
+            return;
+        }
+
+        BreakpointsMutex.WaitOne();
+        foreach (var bp in Breakpoints.Values)
+        {
+            if (bp.Statement == stmt)
+            {
+                Pause(new(bp.Number, stmt, interpreter));
+                pause = true;
+                break;
+            }
+        }
+        BreakpointsMutex.ReleaseMutex();
+    }
+
+    public async Task WaitForResumeAsync()
+    {
+        if (CurrentPause != null)
+            await CurrentPause.Value.PauseBarrier.Task;
+    }
+
+    public void WaitForResume()
+    {
+#pragma warning disable VSTHRD002 // Avoid problematic synchronous waits
+        CurrentPause?.PauseBarrier.Task.Wait();
+#pragma warning restore VSTHRD002 // Avoid problematic synchronous waits
+    }
+
+    public void LoadedScript(Script script)
+    {
+        LoadedScripts.Add(script);
+
+        foreach (var pending in PendingBreakpoints.ToArray())
+        {
+            var bp = AddBreakpoint(pending.Location, pending.Number);
+
+            if (bp.Verified)
+            {
+                Server?.SendBreakpoint(new()
+                {
+                    Breakpoint = bp,
+                    Reason = BreakpointEventReason.Changed
+                });
+
+                PendingBreakpoints.Remove(pending);
+            }
+        }
+    }
+
+    #endregion
+
+    #region Handlers
 
     public async Task<AttachResponse> Handle(AttachRequestArguments request, CancellationToken cancellationToken)
     {
@@ -213,17 +307,17 @@ public class LogicScriptDebugger : IDebugger, IAttachHandler, IDisconnectHandler
 
     public async Task<SetBreakpointsResponse> Handle(SetBreakpointsArguments request, CancellationToken cancellationToken)
     {
-        if (request.Breakpoints is not null)
+        if (request.Breakpoints is null)
+            return new();
+
+        var script = LoadedScripts.FirstOrDefault(s => s.FileName == request.Source.Path);
+
+        ClearBreakpoints();
+
+        return new()
         {
-            ClearBreakpoints();
-
-            foreach (var bp in request.Breakpoints)
-            {
-                AddBreakpoint(new(request.Source.Path ?? "", bp.Line, bp.Column ?? 0));
-            }
-        }
-
-        return new();
+            Breakpoints = new(request.Breakpoints.Select(b => AddBreakpoint(new SourceLocation(request.Source.Path ?? "", b.Line, b.Column ?? 0))))
+        };
     }
 
     public async Task<ThreadsResponse> Handle(ThreadsArguments request, CancellationToken cancellationToken)
@@ -308,6 +402,7 @@ public class LogicScriptDebugger : IDebugger, IAttachHandler, IDisconnectHandler
 
     public async Task<ContinueResponse> Handle(ContinueArguments request, CancellationToken cancellationToken)
     {
+        Console.WriteLine("continue");
         Continue();
 
         return new();
@@ -315,6 +410,7 @@ public class LogicScriptDebugger : IDebugger, IAttachHandler, IDisconnectHandler
 
     public async Task<NextResponse> Handle(NextArguments request, CancellationToken cancellationToken)
     {
+        Console.WriteLine("next");
         Next();
 
         return new();
@@ -322,6 +418,7 @@ public class LogicScriptDebugger : IDebugger, IAttachHandler, IDisconnectHandler
 
     public async Task<StepInResponse> Handle(StepInArguments request, CancellationToken cancellationToken)
     {
+        Console.WriteLine("step in");
         Next();
 
         return new();
@@ -337,5 +434,13 @@ public class LogicScriptDebugger : IDebugger, IAttachHandler, IDisconnectHandler
         };
     }
 
-    private static string FormatBitsValue(BitsValue value, int length) => $"{value.ToStringBinary(length)} ({value})";
+    public async Task<PauseResponse> Handle(PauseArguments request, CancellationToken cancellationToken)
+    {
+        Console.WriteLine("pause");
+        PauseNext = true;
+
+        return new();
+    }
+
+    #endregion
 }
