@@ -100,14 +100,11 @@ public class LogicScriptDebugger(Session session) : IAttachHandler, IDisconnectH
     public async Task<AttachResponse> Handle(AttachRequestArguments request, CancellationToken cancellationToken)
     {
         Attached = true;
-
-        Console.WriteLine("Attached");
         return new();
     }
 
     public async Task<DisconnectResponse> Handle(DisconnectArguments request, CancellationToken cancellationToken)
     {
-        Console.WriteLine("Disconnected");
         SessionDone.TrySetResult(true);
         return new();
     }
@@ -120,8 +117,6 @@ public class LogicScriptDebugger(Session session) : IAttachHandler, IDisconnectH
 
             foreach (var bp in request.Breakpoints)
             {
-                Console.WriteLine($"Set breakpoint at {request.Source.Path}:{bp.Line}");
-
                 Session.AddBreakpoint(new(request.Source.Path ?? "", bp.Line, bp.Column ?? 0));
             }
         }
