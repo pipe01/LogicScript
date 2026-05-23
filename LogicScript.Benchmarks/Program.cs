@@ -5,10 +5,7 @@ using BenchmarkDotNet.Running;
 using LogicScript.Data;
 using LogicScript.Interpreting;
 using LogicScript.Compiling;
-using LogicScript.Parsing;
-using LogicScript.Parsing.Structures;
 using System.Runtime.CompilerServices;
-using LogicScript.Interpreting.Debugging;
 
 namespace LogicScript.Benchmarks
 {
@@ -101,7 +98,7 @@ end"),
         [Benchmark]
         public void RunInterpreted()
         {
-            Interpreter.Run(Script, Machine, false);
+            new Interpreter(Script, Machine, false).Run();
         }
 
         [Benchmark(Baseline = true)]
@@ -161,13 +158,6 @@ end"),
         }
 
         public void QueueUpdate()
-        {
-        }
-    }
-
-    public class MyDebugger : IDebugger
-    {
-        public void TraceStatement(SourceSpan span, IDictionary<LocalInfo, ulong> locals)
         {
         }
     }

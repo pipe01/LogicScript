@@ -1,5 +1,6 @@
 using System;
 using LogicScript.Compiling;
+using LogicScript.Interpreting;
 
 namespace LogicScript.Tests
 {
@@ -20,7 +21,7 @@ namespace LogicScript.Tests
     {
         public void Run(Script script, IMachine machine, bool runStartup = true)
         {
-            script.Run(machine, runStartup);
+            new Interpreter(script, machine, runStartup).Run();
         }
     }
 
