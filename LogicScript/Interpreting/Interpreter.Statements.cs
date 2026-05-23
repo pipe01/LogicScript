@@ -36,7 +36,7 @@ namespace LogicScript.Interpreting
             {
                 foreach (var local in stmt.Locals)
                 {
-                    Locals.Remove(local.Value);
+                    Locals.Remove(local);
                 }
             }));
 
@@ -49,7 +49,7 @@ namespace LogicScript.Interpreting
             {
                 foreach (var local in stmt.Locals)
                 {
-                    Locals.Add(local.Value, 0);
+                    Locals.Add(local, 0);
                 }
             }));
         }

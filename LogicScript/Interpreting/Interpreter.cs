@@ -5,6 +5,7 @@ using LogicScript.Parsing.Structures;
 using LogicScript.Parsing.Structures.Blocks;
 using LogicScript.Parsing.Structures.Expressions;
 using LogicScript.Parsing.Structures.Statements;
+using LogicScript.Parsing.Visitors;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -22,21 +23,23 @@ namespace LogicScript.Interpreting
             public readonly Action? After = after;
         }
 
-        private readonly IMachine? Machine;
+        public IMachine? Machine { get; }
         private readonly IDebugger? Debugger;
+        public Script? Script { get; }
 
         private readonly Stack<Operation> OpStack = [];
         private readonly Dictionary<LocalInfo, BitsValue> Locals = [];
 
         public Statement? CurrentLocation => OpStack.TryPeek(out var op) && op.Node is Statement stmt ? stmt : null;
 
-        private Interpreter(IMachine? machine, IDebugger? debugger)
+        private Interpreter(Script? script, IMachine? machine, IDebugger? debugger)
         {
+            this.Script = script;
             this.Machine = machine;
             this.Debugger = debugger;
         }
 
-        public Interpreter(Script script, IMachine machine, bool runStartup, bool checkPortCount = true, IDebugger? debugger = null) : this(machine, debugger)
+        public Interpreter(Script script, IMachine machine, bool runStartup, bool checkPortCount = true, IDebugger? debugger = null) : this(script, machine, debugger)
         {
             if (script.HasErrors)
                 throw new InterpreterException("Script has errors");
@@ -66,7 +69,7 @@ namespace LogicScript.Interpreting
             if (!expr.IsConstant)
                 throw new InvalidOperationException("Expression is not constant");
 
-            return new Interpreter(null, null).Visit(expr);
+            return new Interpreter(null, null, null).Visit(expr);
         }
 
         /// <returns>true if execution paused due to a breakpoint, false otherwise</returns>
@@ -126,6 +129,20 @@ namespace LogicScript.Interpreting
         private void ClearToBreak()
         {
             while (!OpStack.Pop().BreakBarrier) { }
+        }
+
+        public (BitsValue Value, IReadOnlyCollection<Error> ParseErrors) Evaluate(string expression)
+        {
+            if (Script == null)
+                throw new InvalidOperationException("Can't evaluate in constant context");
+
+            var (parsed, errors) = Script.ParseExpression(expression, Script, Locals.Keys);
+            if (errors.Count > 0)
+            {
+                return (0, errors);
+            }
+
+            return (Visit(parsed!), []);
         }
     }
 }

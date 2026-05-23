@@ -9,7 +9,7 @@ using OmniSharp.Extensions.DebugAdapter.Server;
 
 namespace LogicScript.DX.DAP;
 
-public class LogicScriptDebugger(Session session) : IAttachHandler, IDisconnectHandler, ISetBreakpointsHandler, IThreadsHandler, IStackTraceHandler, IScopesHandler, IVariablesHandler, IContinueHandler, INextHandler
+public class LogicScriptDebugger(Session session) : IAttachHandler, IDisconnectHandler, ISetBreakpointsHandler, IThreadsHandler, IStackTraceHandler, IScopesHandler, IVariablesHandler, IContinueHandler, INextHandler, IEvaluateHandler
 {
     private TaskCompletionSource<bool> SessionDone = new();
     private readonly Session Session = session;
@@ -42,6 +42,7 @@ public class LogicScriptDebugger(Session session) : IAttachHandler, IDisconnectH
         await SessionDone.Task;
 
         Session.Paused -= OnSessionPaused;
+        Session.Continue();
     }
 
     public async Task RunSocketAsync(int port = 43532)
@@ -93,6 +94,8 @@ public class LogicScriptDebugger(Session session) : IAttachHandler, IDisconnectH
     {
         if (request.Breakpoints is not null)
         {
+            Session.ClearBreakpoints();
+
             foreach (var bp in request.Breakpoints)
             {
                 Console.WriteLine($"Set breakpoint at {request.Source.Path}:{bp.Line}");
@@ -138,6 +141,9 @@ public class LogicScriptDebugger(Session session) : IAttachHandler, IDisconnectH
         };
     }
 
+    private const int LocalsReference = 1;
+    private const int InputsReference = 2;
+
     public async Task<ScopesResponse> Handle(ScopesArguments request, CancellationToken cancellationToken)
     {
         return new()
@@ -146,8 +152,14 @@ public class LogicScriptDebugger(Session session) : IAttachHandler, IDisconnectH
                 new()
                 {
                     Name = "Locals",
-                    VariablesReference = 1,
+                    VariablesReference = LocalsReference,
                     PresentationHint = "locals",
+                },
+                new()
+                {
+                    Name = "Inputs",
+                    VariablesReference = InputsReference,
+                    PresentationHint = "arguments",
                 }
             ])
         };
@@ -157,11 +169,21 @@ public class LogicScriptDebugger(Session session) : IAttachHandler, IDisconnectH
     {
         return new()
         {
-            Variables = new(EnsureInterpreter.GetAllLocals().Select(l => new Variable()
+            Variables = request.VariablesReference switch
             {
-                Name = l.Local.Name,
-                Value = l.Value.ToString()
-            }))
+                LocalsReference => new(EnsureInterpreter.GetAllLocals().Select(l => new Variable
+                {
+                    Name = l.Local.Name,
+                    Value = l.Value.ToString()
+                })),
+                InputsReference when EnsureInterpreter.Machine != null && EnsureInterpreter.Script != null
+                    => new(EnsureInterpreter.Script.Inputs.Select(i => new Variable
+                    {
+                        Name = i.Key,
+                        Value = EnsureInterpreter.Machine.ReadInputs().Slice(i.Value.StartIndex, i.Value.BitSize).ToString()
+                    })),
+                _ => new()
+            }
         };
     }
 
@@ -177,5 +199,15 @@ public class LogicScriptDebugger(Session session) : IAttachHandler, IDisconnectH
         Session.Next();
 
         return new();
+    }
+
+    public async Task<EvaluateResponse> Handle(EvaluateArguments request, CancellationToken cancellationToken)
+    {
+        var (value, errors) = EnsureInterpreter.Evaluate(request.Expression);
+
+        return new()
+        {
+            Result = errors.Count > 0 ? $"Failed to parse: {string.Join(", ", [.. errors.Select(o => o.ToString())])}" : value.ToString()
+        };
     }
 }

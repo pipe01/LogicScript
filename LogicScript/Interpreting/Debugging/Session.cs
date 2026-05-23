@@ -25,6 +25,8 @@ namespace LogicScript.Interpreting.Debugging
         private readonly List<Breakpoint> LineBreakpoints = [];
         public PauseState? CurrentPause { get; private set; }
 
+        public bool Attached => Paused != null;
+
         public event Action? Paused;
 
         private int BreakpointCounter = 0;
@@ -42,25 +44,35 @@ namespace LogicScript.Interpreting.Debugging
         public void ClearBreakpoints()
         {
             LineBreakpoints.Clear();
-
-            System.Console.WriteLine("cleared breakpoints");
         }
 
         public void Continue()
         {
-            IgnoreNext = true;
-            CurrentPause?.PauseBarrier.TrySetResult(true);
+            if (CurrentPause != null)
+            {
+                IgnoreNext = true;
+                CurrentPause.Value.PauseBarrier.TrySetResult(true);
+            }
         }
 
         public void Next()
         {
-            PauseNext = true;
-            Continue();
+            if (CurrentPause != null)
+            {
+                PauseNext = true;
+                Continue();
+            }
         }
 
         void IDebugger.TraceStatement(Interpreter interpreter, Statement stmt, out bool pause)
         {
             pause = false;
+
+            if (!Attached)
+            {
+                return;
+            }
+
             if (IgnoreNext)
             {
                 CurrentPause = null;
@@ -94,6 +106,11 @@ namespace LogicScript.Interpreting.Debugging
         {
             if (CurrentPause != null)
                 await CurrentPause.Value.PauseBarrier.Task;
+        }
+
+        public void WaitForResume()
+        {
+            CurrentPause?.PauseBarrier.Task.Wait();
         }
     }
 }
