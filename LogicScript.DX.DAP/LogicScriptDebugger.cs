@@ -3,6 +3,8 @@ using System.Net.Sockets;
 using LogicScript.Data;
 using LogicScript.Interpreting;
 using LogicScript.Interpreting.Debugging;
+using LogicScript.Parsing;
+using LogicScript.Parsing.Structures.Statements;
 using OmniSharp.Extensions.DebugAdapter.Protocol.Events;
 using OmniSharp.Extensions.DebugAdapter.Protocol.Models;
 using OmniSharp.Extensions.DebugAdapter.Protocol.Requests;
@@ -10,23 +12,25 @@ using OmniSharp.Extensions.DebugAdapter.Server;
 
 namespace LogicScript.DX.DAP;
 
-public class LogicScriptDebugger(Session session) : IAttachHandler, IDisconnectHandler, ISetBreakpointsHandler, IThreadsHandler, IStackTraceHandler, IScopesHandler, IVariablesHandler, IContinueHandler, INextHandler, IEvaluateHandler, IStepInHandler
+public class LogicScriptDebugger : IDebugger, IAttachHandler, IDisconnectHandler, ISetBreakpointsHandler, IThreadsHandler, IStackTraceHandler, IScopesHandler, IVariablesHandler, IContinueHandler, INextHandler, IEvaluateHandler, IStepInHandler
 {
     private TaskCompletionSource<bool> SessionDone = new();
-    private readonly Session Session = session;
 
     private bool Attached;
 
-    private Interpreter EnsureInterpreter => Session.CurrentPause?.Interpreter ?? throw new InvalidOperationException("Not currently paused");
+    private Interpreter EnsureInterpreter => CurrentPause?.Interpreter ?? throw new InvalidOperationException("Not currently paused");
 
     private DebugAdapterServer? Server;
+
+    private LogicScriptDebugger()
+    {
+    }
 
     public async Task RunAsync(Stream input, Stream output)
     {
         SessionDone = new();
 
-        Session.ClearBreakpoints();
-        Session.Paused += OnSessionPaused;
+        ClearBreakpoints();
 
         Server = DebugAdapterServer.Create(opts => opts
             .WithInput(input)
@@ -37,14 +41,111 @@ public class LogicScriptDebugger(Session session) : IAttachHandler, IDisconnectH
 
         await Server.Initialize(CancellationToken.None);
 
-        if (Session.CurrentPause != null)
-            OnSessionPaused();
+        if (CurrentPause != null)
+            Pause(CurrentPause.Value);
 
         await SessionDone.Task;
 
-        Session.Paused -= OnSessionPaused;
-        Session.Continue();
+        Continue();
     }
+
+    #region Debugger
+
+    private readonly record struct Breakpoint(int Number, SourceLocation Location);
+
+    private readonly record struct PauseState(int? BreakpointNumber, Statement Statement, Interpreter Interpreter)
+    {
+        public readonly TaskCompletionSource<bool> PauseBarrier = new();
+
+        public bool HasBreakpoint => BreakpointNumber != null;
+    }
+
+    private readonly List<Breakpoint> LineBreakpoints = [];
+    private PauseState? CurrentPause;
+
+    private int BreakpointCounter = 0;
+    private bool IgnoreNext;
+    private bool PauseNext;
+
+    public int AddBreakpoint(SourceLocation location)
+    {
+        var number = BreakpointCounter++;
+        LineBreakpoints.Add(new(number, location));
+
+        return number;
+    }
+
+    public void ClearBreakpoints()
+    {
+        LineBreakpoints.Clear();
+    }
+
+    public void Continue()
+    {
+        if (CurrentPause != null)
+        {
+            IgnoreNext = true;
+            CurrentPause.Value.PauseBarrier.TrySetResult(true);
+        }
+    }
+
+    public void Next()
+    {
+        if (CurrentPause != null)
+        {
+            PauseNext = true;
+            Continue();
+        }
+    }
+
+    void IDebugger.TraceStatement(Interpreter interpreter, Statement stmt, out bool pause)
+    {
+        pause = false;
+
+        if (!Attached)
+        {
+            return;
+        }
+
+        if (IgnoreNext)
+        {
+            CurrentPause = null;
+            IgnoreNext = false;
+            return;
+        }
+
+        if (PauseNext)
+        {
+            PauseNext = false;
+
+            Pause(new(null, stmt, interpreter));
+            pause = true;
+            return;
+        }
+
+        foreach (var bp in LineBreakpoints)
+        {
+            if (bp.Location.FileName == stmt.Span.Start.FileName && bp.Location.Line == stmt.Span.Start.Line)
+            {
+                Pause(new(bp.Number, stmt, interpreter));
+                pause = true;
+                break;
+            }
+        }
+    }
+
+    public async Task WaitForResumeAsync()
+    {
+        if (CurrentPause != null)
+            await CurrentPause.Value.PauseBarrier.Task;
+    }
+
+    public void WaitForResume()
+    {
+        CurrentPause?.PauseBarrier.Task.Wait();
+    }
+
+    #endregion
 
     public async Task RunSocketAsync(int port)
     {
@@ -63,24 +164,22 @@ public class LogicScriptDebugger(Session session) : IAttachHandler, IDisconnectH
 
     public static IDebugger Launch(int port = 43532)
     {
-        var session = new Session();
-        var debugger = new LogicScriptDebugger(session);
+        var debugger = new LogicScriptDebugger();
 
         _ = Task.Run(async () => await debugger.RunSocketAsync(port));
 
-        return session;
+        return debugger;
     }
 
     public static async Task<IDebugger> LaunchAndWaitForAttachedAsync(int port = 43532)
     {
-        var session = new Session();
-        var debugger = new LogicScriptDebugger(session);
+        var debugger = new LogicScriptDebugger();
 
         _ = Task.Run(async () => await debugger.RunSocketAsync(port));
 
         await debugger.WaitForAttachedAsync();
 
-        return session;
+        return debugger;
     }
 
     public async Task WaitForAttachedAsync()
@@ -89,12 +188,14 @@ public class LogicScriptDebugger(Session session) : IAttachHandler, IDisconnectH
             await Task.Delay(100); // This is stupid and hacky but async in C# makes completely no sense and it's the only way I could find to make this work
     }
 
-    private void OnSessionPaused()
+    private void Pause(PauseState state)
     {
+        CurrentPause = state;
+
         Server?.SendStopped(new()
         {
             ThreadId = 0,
-            Reason = Session.CurrentPause!.Value.HasBreakpoint ? StoppedEventReason.Breakpoint : StoppedEventReason.Step
+            Reason = CurrentPause!.Value.HasBreakpoint ? StoppedEventReason.Breakpoint : StoppedEventReason.Step
         });
     }
 
@@ -114,11 +215,11 @@ public class LogicScriptDebugger(Session session) : IAttachHandler, IDisconnectH
     {
         if (request.Breakpoints is not null)
         {
-            Session.ClearBreakpoints();
+            ClearBreakpoints();
 
             foreach (var bp in request.Breakpoints)
             {
-                Session.AddBreakpoint(new(request.Source.Path ?? "", bp.Line, bp.Column ?? 0));
+                AddBreakpoint(new(request.Source.Path ?? "", bp.Line, bp.Column ?? 0));
             }
         }
 
@@ -207,21 +308,21 @@ public class LogicScriptDebugger(Session session) : IAttachHandler, IDisconnectH
 
     public async Task<ContinueResponse> Handle(ContinueArguments request, CancellationToken cancellationToken)
     {
-        Session.Continue();
+        Continue();
 
         return new();
     }
 
     public async Task<NextResponse> Handle(NextArguments request, CancellationToken cancellationToken)
     {
-        Session.Next();
+        Next();
 
         return new();
     }
 
     public async Task<StepInResponse> Handle(StepInArguments request, CancellationToken cancellationToken)
     {
-        Session.Next();
+        Next();
 
         return new();
     }

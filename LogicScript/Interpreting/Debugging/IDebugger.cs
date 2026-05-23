@@ -7,6 +7,9 @@ namespace LogicScript.Interpreting.Debugging
     {
         Task WaitForResumeAsync();
 
+        void Continue();
+        void Next();
+
         void TraceStatement(Interpreter interpreter, Statement stmt, out bool pause);
     }
 }
