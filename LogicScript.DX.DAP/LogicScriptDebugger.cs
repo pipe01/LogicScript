@@ -1,5 +1,6 @@
 ﻿using System.Net;
 using System.Net.Sockets;
+using LogicScript.Data;
 using LogicScript.Interpreting;
 using LogicScript.Interpreting.Debugging;
 using OmniSharp.Extensions.DebugAdapter.Protocol.Events;
@@ -191,13 +192,13 @@ public class LogicScriptDebugger(Session session) : IAttachHandler, IDisconnectH
                 LocalsReference => new(EnsureInterpreter.GetAllLocals().Select(l => new Variable
                 {
                     Name = l.Local.Name,
-                    Value = l.Value.ToString()
+                    Value = FormatBitsValue(l.Value, l.Local.BitSize)
                 })),
                 InputsReference when EnsureInterpreter.Machine != null && EnsureInterpreter.Script != null
                     => new(EnsureInterpreter.Script.Inputs.Select(i => new Variable
                     {
                         Name = i.Key,
-                        Value = EnsureInterpreter.Machine.ReadInputs().Slice(i.Value.StartIndex, i.Value.BitSize).ToString()
+                        Value = FormatBitsValue(EnsureInterpreter.Machine.ReadInputs().Slice(i.Value.StartIndex, i.Value.BitSize), i.Value.BitSize)
                     })),
                 _ => new()
             }
@@ -234,4 +235,6 @@ public class LogicScriptDebugger(Session session) : IAttachHandler, IDisconnectH
             Result = errors.Count > 0 ? $"Failed to parse: {string.Join(", ", [.. errors.Select(o => o.ToString())])}" : value.ToString()
         };
     }
+
+    private static string FormatBitsValue(BitsValue value, int length) => $"{value.ToStringBinary(length)} ({value})";
 }

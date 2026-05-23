@@ -104,7 +104,8 @@ namespace LogicScript.Data
 
         public override string ToString() => Number.ToString();
 
-        public string ToStringBinary() => Convert.ToString((long)Number, 2).PadLeft(Length, '0');
+        public string ToStringBinary(int length) => Convert.ToString((long)Number, 2).PadLeft(length, '0');
+        public string ToStringBinary() => ToStringBinary(Length);
         public string ToStringHex() => $"{Number:X}";
 
         public override bool Equals(object? obj)
