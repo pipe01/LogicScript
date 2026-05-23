@@ -5,7 +5,6 @@ using LogicScript.Parsing.Structures;
 using LogicScript.Parsing.Structures.Blocks;
 using LogicScript.Parsing.Structures.Expressions;
 using LogicScript.Parsing.Structures.Statements;
-using LogicScript.Parsing.Visitors;
 using System;
 using System.Collections.Generic;
 using System.Linq;

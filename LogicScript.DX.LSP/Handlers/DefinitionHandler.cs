@@ -1,5 +1,4 @@
 ﻿using LogicScript.Parsing.Structures;
-using LogicScript.Parsing.Structures.Statements;
 using LogicScript.Utils;
 using OmniSharp.Extensions.LanguageServer.Protocol.Client.Capabilities;
 using OmniSharp.Extensions.LanguageServer.Protocol.Document;

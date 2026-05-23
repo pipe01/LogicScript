@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using LogicScript.DX.DAP;
 using LogicScript.Interpreting.Debugging;
 using LogicScript.Testing;

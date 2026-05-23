@@ -4,9 +4,6 @@ using LogicScript.Compiling;
 using System;
 using System.IO;
 using System.Linq;
-using LogicScript.Parsing;
-using System.Collections.Generic;
-using LogicScript.Parsing.Structures;
 using LogicScript.Interpreting;
 
 namespace Tester
@@ -32,7 +29,7 @@ namespace Tester
                 OutputCount = script.Outputs.Values.Sum(o => o.BitSize)
             };
 
-            Interpreter.Run(script, machine, true);
+            new Interpreter(script, machine, true).Run();
 
             var program = Compiler.Compile(script);
             Console.WriteLine(string.Join(", ", program));

@@ -1,10 +1,7 @@
 using System;
 using System.Collections.Generic;
-using System.Threading;
 using System.Threading.Tasks;
-using LogicScript.Data;
 using LogicScript.Parsing;
-using LogicScript.Parsing.Structures;
 using LogicScript.Parsing.Structures.Statements;
 
 namespace LogicScript.Interpreting.Debugging
