@@ -368,6 +368,7 @@ public class LogicScriptDebugger : IDebugger, IAttachHandler, IDisconnectHandler
 
     private const int LocalsReference = 1;
     private const int InputsReference = 2;
+    private const int RegistersReference = 3;
 
     public async Task<ScopesResponse> Handle(ScopesArguments request, CancellationToken cancellationToken)
     {
@@ -385,7 +386,13 @@ public class LogicScriptDebugger : IDebugger, IAttachHandler, IDisconnectHandler
                     Name = "Inputs",
                     VariablesReference = InputsReference,
                     PresentationHint = "arguments",
-                }
+                },
+                new()
+                {
+                    Name = "Registers",
+                    VariablesReference = RegistersReference,
+                    PresentationHint = "registers",
+                },
             ])
         };
     }
@@ -396,16 +403,23 @@ public class LogicScriptDebugger : IDebugger, IAttachHandler, IDisconnectHandler
         {
             Variables = request.VariablesReference switch
             {
-                LocalsReference => new(EnsureInterpreter.GetAllLocals().Select(l => new Variable
-                {
-                    Name = l.Local.Name,
-                    Value = FormatBitsValue(l.Value, l.Local.BitSize)
-                })),
+                LocalsReference
+                    => new(EnsureInterpreter.GetAllLocals().Select(l => new Variable
+                    {
+                        Name = l.Local.Name,
+                        Value = FormatBitsValue(l.Value, l.Local.BitSize)
+                    })),
                 InputsReference when EnsureInterpreter.Machine != null && EnsureInterpreter.Script != null
                     => new(EnsureInterpreter.Script.Inputs.Select(i => new Variable
                     {
                         Name = i.Key,
                         Value = FormatBitsValue(EnsureInterpreter.Machine.ReadInputs().Slice(i.Value.StartIndex, i.Value.BitSize), i.Value.BitSize)
+                    })),
+                RegistersReference when EnsureInterpreter.Machine != null && EnsureInterpreter.Script != null
+                    => new(EnsureInterpreter.Script.Registers.Select(i => new Variable
+                    {
+                        Name = i.Key,
+                        Value = FormatBitsValue(EnsureInterpreter.Machine.ReadRegister(i.Value.StartIndex), i.Value.BitSize)
                     })),
                 _ => new()
             }
