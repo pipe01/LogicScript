@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using LogicScript.Parsing.Structures;
 using LogicScript.Parsing.Structures.Statements;
 using OmniSharp.Extensions.LanguageServer.Protocol.Client.Capabilities;
 using OmniSharp.Extensions.LanguageServer.Protocol.Document;
@@ -31,11 +32,14 @@ namespace LogicScript.DX.LSP.Handlers
                 return new();
 
             var hints = new List<InlayHint>();
+            var hintedLocals = new HashSet<LocalInfo>();
 
             foreach (var node in script.VisitAll())
             {
-                if (node is DeclareLocalStatement stmt && !stmt.HasExplicitSize)
+                if (node is DeclareLocalStatement stmt && !stmt.HasExplicitSize && !hintedLocals.Contains(stmt.Local))
                 {
+                    hintedLocals.Add(stmt.Local);
+
                     var nameEnd = stmt.Local.Span.End.ToPosition();
                     var hint = $"'{stmt.Local.BitSize}";
 
