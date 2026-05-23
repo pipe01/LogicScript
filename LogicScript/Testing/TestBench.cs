@@ -1,8 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using Antlr4.Runtime;
 using LogicScript.Data;
+using LogicScript.Interpreting;
+using LogicScript.Interpreting.Debugging;
 using LogicScript.Parsing;
 using LogicScript.Parsing.Visitors;
 using LogicScript.Testing.Results;
@@ -22,17 +25,20 @@ namespace LogicScript.Testing
             this.Script = script;
         }
 
-        public IEnumerable<CaseResult> Run()
+        public async IAsyncEnumerable<CaseResult> Run(IDebugger? debugger)
         {
+            var machine = new TestingMachine(Script.RegisteredInputLength, Script.RegisteredOutputLength);
+
             foreach (var @case in Cases)
             {
-                yield return RunCase(@case);
+                machine.Reset();
+
+                yield return await RunCase(machine, @case, debugger);
             }
         }
 
-        private CaseResult RunCase(TestCase @case)
+        private async Task<CaseResult> RunCase(TestingMachine machine, TestCase @case, IDebugger? debugger)
         {
-            var machine = new TestingMachine(Script.RegisteredInputLength, Script.RegisteredOutputLength);
             var hasRunStartup = false;
             int stepsRan = 0;
 
@@ -46,7 +52,7 @@ namespace LogicScript.Testing
                     input.Value.FillBits(machine.Inputs.AsSpan()[input.Port.StartIndex..(input.Port.StartIndex + input.Port.BitSize)]);
                 }
 
-                Script.Run(machine, !hasRunStartup);
+                await new Interpreter(Script, machine, !hasRunStartup, debugger: debugger).RunToEndAsync();
                 hasRunStartup = true;
                 stepsRan++;
 
@@ -96,7 +102,7 @@ namespace LogicScript.Testing
                     {
                         if (lastStep == null)
                             throw new ParseException("The first step on a case must not be a repetition", step.Span());
-                        
+
                         steps.Add(lastStep);
                     }
                     else
@@ -116,7 +122,7 @@ namespace LogicScript.Testing
                     foreach (var item in ctx.step_portvalue())
                     {
                         if (!scriptPorts.TryGetValue(item.port.Text, out var port))
-                            throw new ParseException($"Unknown input {item.port.Text}", item.Span());
+                            throw new ParseException($"Unknown input '{item.port.Text}'", item.Span());
 
                         var value = new NumberVisitor().Visit(item.value);
                         yield return new PortValue(item.port.Text, port, value);

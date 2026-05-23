@@ -11,6 +11,6 @@ namespace LogicScript.Parsing.Visitors
             => (int)new ExpressionVisitor(new BlockContext(context, null, true)).Visit(tree).GetConstantValue().Number;
 
         public static BitsValue GetConstantValue(this Expression expr)
-            => new Visitor().Visit(expr);
+            => Interpreter.GetConstantValue(expr);
     }
 }

@@ -23,7 +23,7 @@ namespace LogicScript.Parsing.Visitors
 
             var stmts = context.stmt().Select(visitor.Visit).ToArray();
 
-            return new BlockStatement(context.Span(), stmts, blockContext.Locals);
+            return new BlockStatement(context.Span(), stmts, blockContext.Locals.ToArray());
         }
 
         public override Statement VisitAssignRegular([NotNull] LogicScriptParser.AssignRegularContext context)
@@ -53,10 +53,10 @@ namespace LogicScript.Parsing.Visitors
 
         public override Statement VisitStmt_if([NotNull] LogicScriptParser.Stmt_ifContext context)
         {
-            return VisitIfBody(context.if_body());
+            return VisitIfBody(context.Span(), context.if_body());
         }
 
-        private IfStatement VisitIfBody(LogicScriptParser.If_bodyContext context)
+        private IfStatement VisitIfBody(SourceSpan span, LogicScriptParser.If_bodyContext context)
         {
             var cond = new ExpressionVisitor(BlockContext).Visit(context.expression());
             var body = Visit(context.block());
@@ -68,10 +68,10 @@ namespace LogicScript.Parsing.Visitors
             }
             else if (context.stmt_elseif() != null)
             {
-                @else = VisitIfBody(context.stmt_elseif().if_body());
+                @else = VisitIfBody(context.stmt_elseif().Span(), context.stmt_elseif().if_body());
             }
 
-            return new IfStatement(context.Span(), cond, body, @else);
+            return new IfStatement(span, cond, body, @else);
         }
 
         public override Statement VisitStmt_for([NotNull] LogicScriptParser.Stmt_forContext context)

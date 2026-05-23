@@ -4,6 +4,7 @@ using LogicScript.Interpreting;
 using LogicScript.Parsing;
 using LogicScript.Parsing.Structures;
 using LogicScript.Parsing.Structures.Blocks;
+using LogicScript.Parsing.Structures.Expressions;
 using LogicScript.Parsing.Visitors;
 using System;
 using System.Collections.Generic;
@@ -13,9 +14,9 @@ namespace LogicScript
 {
     public class Script
     {
-        internal IDictionary<string, PortInfo> Inputs { get; } = new Dictionary<string, PortInfo>();
-        internal IDictionary<string, PortInfo> Outputs { get; } = new Dictionary<string, PortInfo>();
-        internal IDictionary<string, PortInfo> Registers { get; } = new Dictionary<string, PortInfo>();
+        public IDictionary<string, PortInfo> Inputs { get; } = new Dictionary<string, PortInfo>();
+        public IDictionary<string, PortInfo> Outputs { get; } = new Dictionary<string, PortInfo>();
+        public IDictionary<string, PortInfo> Registers { get; } = new Dictionary<string, PortInfo>();
 
         internal int RegisteredInputLength => Inputs.Values.Sum(o => o.BitSize);
         internal int RegisteredOutputLength => Outputs.Values.Sum(o => o.BitSize);
@@ -38,39 +39,29 @@ namespace LogicScript
         {
         }
 
-        public void Run(IMachine machine, bool runStartup, bool checkPortCount = true)
+        public IEnumerable<ICodeNode> VisitAll(bool depthFirst = true)
         {
-            Interpreter.Run(this, machine, runStartup, checkPortCount);
+            return Blocks.SelectMany(Inner);
+
+            IEnumerable<ICodeNode> Inner(ICodeNode parent)
+            {
+                var children = parent.GetChildren().SelectMany(Inner);
+
+                return depthFirst ? children.Append(parent) : children.Prepend(parent);
+            }
         }
 
-        internal ICodeNode? GetNodeAt(SourceLocation loc, Type[]? types = null)
+        internal ICodeNode? GetNodeAt(SourceLocation loc, Type[]? types = null, bool depthFirst = true)
         {
-            foreach (var item in Blocks)
+            foreach (var node in VisitAll(depthFirst))
             {
-                var node = Inner(loc, item, types);
+                var nodeType = node.GetType();
 
-                if (node != null)
+                if ((types == null || types.Any(t => t.IsAssignableFrom(nodeType))) && node.Span.Contains(loc))
                     return node;
             }
 
             return null;
-
-            static ICodeNode? Inner(SourceLocation loc, ICodeNode node, Type[]? types)
-            {
-                foreach (var child in node.GetChildren())
-                {
-                    var childNode = Inner(loc, child, types);
-
-                    if (childNode != null)
-                        return childNode;
-                }
-
-                var nodeType = node.GetType();
-                if ((types == null || types.Any(t => t.IsAssignableFrom(nodeType))) && node.Span.Contains(loc))
-                    return node;
-
-                return null;
-            }
         }
 
         public static (Script? Script, IReadOnlyList<Error> Errors) Parse(string source, string fileName = "<script>")
@@ -114,6 +105,47 @@ namespace LogicScript
             }
 
             return (script, errors);
+        }
+
+        internal static (Expression? Parsed, IReadOnlyCollection<Error> Errors) ParseExpression(string expression, Script script, IReadOnlyCollection<LocalInfo> locals)
+        {
+            var errors = new ErrorSink();
+            var scriptContext = new ScriptContext(script, errors);
+            var blockContext = new BlockContext(scriptContext);
+
+            foreach (var local in locals)
+            {
+                blockContext.Locals.Add(local);
+            }
+
+            var input = new AntlrInputStream(expression.Replace("\r\n", "\n") + "\n")
+            {
+                name = "<expression>"
+            };
+            var lexer = new LogicScriptLexer(input);
+            var stream = new CommonTokenStream(lexer);
+            var parser = new LogicScriptParser(stream);
+            parser.AddErrorListener(new ErrorListener(errors));
+
+            Expression? parsed = null;
+
+            try
+            {
+                parsed = new ExpressionVisitor(blockContext).Visit(parser.expression());
+            }
+            catch (ParseException ex)
+            {
+                errors.AddError(ex.Message, ex.Span);
+            }
+            catch (NotConstantException ex)
+            {
+                errors.AddError(ex.Message, ex.Node);
+            }
+            catch (ParseCanceledException)
+            {
+            }
+
+            return (parsed, errors);
         }
     }
 }

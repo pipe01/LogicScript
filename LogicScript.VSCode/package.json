@@ -56,7 +56,32 @@
                         "description": "Traces the communication between VS Code and the language server."
                 }
             }
-        }
+        },
+        "breakpoints": [
+            {
+                "language": "logicscript"
+            }
+        ],
+        "debuggers": [
+            {
+                "type": "logicscript",
+                "label": "Logic Script Debugger",
+
+                "configurationAttributes": {
+                    "attach": {}
+                },
+
+                "initialConfigurations": [
+                    {
+                        "type": "logicscript",
+                        "request": "attach",
+                        "name": "Attach to running LogicScript",
+                        "stopOnEntry": true,
+                        "debugServer": 43532
+                    }
+                ]
+            }
+        ]
     },
     "activationEvents": [
         "onLanguage:logicscript"

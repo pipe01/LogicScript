@@ -2,7 +2,7 @@
 
 namespace LogicScript.Parsing.Structures.Statements
 {
-    internal abstract class Statement(SourceSpan span) : ICodeNode
+    public abstract class Statement(SourceSpan span) : ICodeNode
     {
         public SourceSpan Span { get; } = span;
 
