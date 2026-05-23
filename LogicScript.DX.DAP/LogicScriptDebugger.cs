@@ -152,19 +152,25 @@ public class LogicScriptDebugger : IDebugger, IAttachHandler, IDisconnectHandler
         BreakpointsMutex.WaitOne();
         number = wantNumber ?? BreakpointCounter++;
 
-        if (TryFindStatement(location, out var stmt))
+        try
         {
-            realLocation = stmt.Span.Start;
+            if (TryFindStatement(location, out var stmt))
+            {
+                realLocation = stmt.Span.Start;
 
-            Breakpoints.Add(number, new(number, stmt));
+                Breakpoints.Add(number, new(number, stmt));
 
-            return true;
+                return true;
+            }
+            else
+            {
+                PendingBreakpoints.Add(new(number, location));
+            }
         }
-        else
+        finally
         {
-            PendingBreakpoints.Add(new(number, location));
+            BreakpointsMutex.ReleaseMutex();
         }
-        BreakpointsMutex.ReleaseMutex();
 
         realLocation = default;
         return false;
@@ -243,16 +249,22 @@ public class LogicScriptDebugger : IDebugger, IAttachHandler, IDisconnectHandler
         }
 
         BreakpointsMutex.WaitOne();
-        foreach (var bp in Breakpoints.Values)
+        try
         {
-            if (bp.Statement == stmt)
+            foreach (var bp in Breakpoints.Values)
             {
-                Pause(new(bp.Number, stmt, interpreter));
-                pause = true;
-                break;
+                if (bp.Statement == stmt)
+                {
+                    Pause(new(bp.Number, stmt, interpreter));
+                    pause = true;
+                    break;
+                }
             }
         }
-        BreakpointsMutex.ReleaseMutex();
+        finally
+        {
+            BreakpointsMutex.ReleaseMutex();
+        }
     }
 
     public async Task WaitForResumeAsync()
@@ -402,7 +414,6 @@ public class LogicScriptDebugger : IDebugger, IAttachHandler, IDisconnectHandler
 
     public async Task<ContinueResponse> Handle(ContinueArguments request, CancellationToken cancellationToken)
     {
-        Console.WriteLine("continue");
         Continue();
 
         return new();
@@ -410,7 +421,6 @@ public class LogicScriptDebugger : IDebugger, IAttachHandler, IDisconnectHandler
 
     public async Task<NextResponse> Handle(NextArguments request, CancellationToken cancellationToken)
     {
-        Console.WriteLine("next");
         Next();
 
         return new();
@@ -418,7 +428,6 @@ public class LogicScriptDebugger : IDebugger, IAttachHandler, IDisconnectHandler
 
     public async Task<StepInResponse> Handle(StepInArguments request, CancellationToken cancellationToken)
     {
-        Console.WriteLine("step in");
         Next();
 
         return new();
@@ -436,7 +445,6 @@ public class LogicScriptDebugger : IDebugger, IAttachHandler, IDisconnectHandler
 
     public async Task<PauseResponse> Handle(PauseArguments request, CancellationToken cancellationToken)
     {
-        Console.WriteLine("pause");
         PauseNext = true;
 
         return new();
