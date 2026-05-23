@@ -8,6 +8,7 @@ using LogicScript.Compiling;
 using LogicScript.Parsing;
 using LogicScript.Parsing.Structures;
 using System.Runtime.CompilerServices;
+using LogicScript.Interpreting.Debugging;
 
 namespace LogicScript.Benchmarks
 {

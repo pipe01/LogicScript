@@ -5,43 +5,56 @@ using System.Linq;
 
 namespace LogicScript.Interpreting
 {
-    partial struct Visitor
+    partial class Interpreter
     {
         /// <returns><see langword="true"/> if a <see langword="break"/> statement is found, <see langword="false"/> otherwise.</returns>
-        public bool Visit(Statement stmt)
+        private void ExecuteStatement(Statement stmt)
         {
             if (stmt is BlockStatement block)
-                return Visit(block);
+                Visit(block);
             else if (stmt is AssignStatement assign)
-                return Visit(assign);
+                Visit(assign);
             else if (stmt is IfStatement ifStmt)
-                return Visit(ifStmt);
+                Visit(ifStmt);
             else if (stmt is TaskStatement task)
-                return Visit(task);
+                Visit(task);
             else if (stmt is DeclareLocalStatement local)
-                return Visit(local);
+                Visit(local);
             else if (stmt is ForStatement forStmt)
-                return Visit(forStmt);
+                Visit(forStmt);
             else if (stmt is WhileStatement whileStmt)
-                return Visit(whileStmt);
+                Visit(whileStmt);
             else if (stmt is BreakStatement)
-                return true;
+                ClearToBreak();
             else
                 throw new InterpreterException("Unknown statement", stmt.Span);
         }
 
-        private bool Visit(BlockStatement stmt)
+        private void Visit(BlockStatement stmt)
         {
-            foreach (var item in stmt.Statements)
+            OpStack.Push(new(null, after: () =>
             {
-                if (Visit(item))
-                    return true;
+                foreach (var local in stmt.Locals)
+                {
+                    Locals.Remove(local.Value);
+                }
+            }));
+
+            for (int i = stmt.Statements.Count - 1; i >= 0; i--)
+            {
+                OpStack.Push(new(stmt.Statements[i]));
             }
 
-            return false;
+            OpStack.Push(new(null, after: () =>
+            {
+                foreach (var local in stmt.Locals)
+                {
+                    Locals.Add(local.Value, 0);
+                }
+            }));
         }
 
-        private bool Visit(AssignStatement stmt)
+        private void Visit(AssignStatement stmt)
         {
             var value = Visit(stmt.Value);
 
@@ -56,11 +69,11 @@ namespace LogicScript.Interpreting
                         if (value.Length > port.BitSize)
                             throw new InterpreterException("Value is longer than output", stmt.Span);
 
-                        Machine.WriteOutputs(port.StartIndex, new(value.Bits));
+                        Machine!.WriteOutputs(port.StartIndex, new(value.Bits));
                         break;
 
                     case MachinePorts.Register:
-                        Machine.WriteRegister(port.StartIndex, value);
+                        Machine!.WriteRegister(port.StartIndex, value);
                         break;
 
                     default:
@@ -75,98 +88,85 @@ namespace LogicScript.Interpreting
             {
                 throw new InterpreterException("Unknown reference type", stmt.Span);
             }
-
-            return false;
         }
 
-        private bool Visit(IfStatement stmt)
+        private void Visit(IfStatement stmt)
         {
             var cond = Visit(stmt.Condition);
 
             if (cond.Number != 0)
-                return Visit(stmt.Body);
+                Push(stmt.Body);
             else if (stmt.Else != null)
-                return Visit(stmt.Else);
-
-            return false;
+                Push(stmt.Else);
         }
 
-        private bool Visit(TaskStatement stmt)
+        private void Visit(TaskStatement stmt)
         {
             if (stmt is PrintTaskStatement print)
             {
                 var locals = Locals;
                 var values = print.String.Interpolations.Select(o => locals[o.Local].Number).Cast<object>().ToArray();
 
-                Machine.Print(string.Format(print.String.ToFormattable(), values));
+                Machine!.Print(string.Format(print.String.ToFormattable(), values));
             }
             else if (stmt is ShowTaskStatement show)
             {
-                Machine.Print(Visit(show.Value).ToString());
+                Machine!.Print(Visit(show.Value).ToString());
             }
             else if (stmt is UpdateTaskStatement)
             {
-                Machine.QueueUpdate();
+                Machine!.QueueUpdate();
             }
             else
             {
                 throw new InterpreterException("Unknown task", stmt.Span);
             }
-
-            return false;
         }
 
-        private bool Visit(DeclareLocalStatement stmt)
+        private void Visit(DeclareLocalStatement stmt)
         {
             var value = stmt.Initializer == null ? new BitsValue(0, stmt.Local.BitSize) : Visit(stmt.Initializer);
 
-            Locals.Add(stmt.Local, value);
-
-            return false;
+            Locals[stmt.Local] = value;
         }
 
-        private bool Visit(ForStatement stmt)
+        private void Visit(ForStatement stmt)
         {
             var from = stmt.From == null ? 0 : Visit(stmt.From);
             var to = Visit(stmt.To);
 
-            if (from > to)
-            {
-                int size = from.Length;
+            int size = to.Length;
 
-                for (ulong i = from; i > to.Number; i--)
+            OpStack.Push(new(null, breakBarrier: true));
+
+            for (ulong i = from; i < to.Number; i++)
+            {
+                OpStack.Push(new(stmt.Body, before: () =>
                 {
                     Locals[stmt.Variable] = new BitsValue(i, size);
-
-                    if (Visit(stmt.Body))
-                        break;
-                }
+                    return true;
+                }));
             }
-            else
-            {
-                int size = to.Length;
-
-                for (ulong i = from; i < to.Number; i++)
-                {
-                    Locals[stmt.Variable] = new BitsValue(i, size);
-
-                    if (Visit(stmt.Body))
-                        break;
-                }
-            }
-
-            return false;
         }
 
-        private bool Visit(WhileStatement stmt)
+        private void Visit(WhileStatement stmt)
         {
-            while (Visit(stmt.Condition).Number != 0)
-            {
-                if (Visit(stmt.Body))
-                    break;
-            }
+            OpStack.Push(new(null, breakBarrier: true));
 
-            return false;
+            Operation loopOp = default;
+            loopOp = new Operation(null, before: () =>
+            {
+                if (Visit(stmt.Condition).Number != 0)
+                {
+                    OpStack.Push(loopOp);
+                    Push(stmt.Body);
+                    return true;
+                }
+
+                return false;
+            });
+
+            OpStack.Push(loopOp);
         }
     }
 }

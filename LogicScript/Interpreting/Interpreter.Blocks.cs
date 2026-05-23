@@ -2,9 +2,9 @@
 
 namespace LogicScript.Interpreting
 {
-    partial struct Visitor
+    partial class Interpreter
     {
-        public void Visit(Block block)
+        private void Visit(Block block)
         {
             switch (block)
             {
@@ -22,20 +22,20 @@ namespace LogicScript.Interpreting
             }
         }
 
-        public void Visit(WhenBlock block)
+        private void Visit(WhenBlock block)
         {
             if (block.Condition == null || Visit(block.Condition).Number != 0)
-                Visit(block.Body);
+                Push(block.Body);
         }
 
-        public void Visit(AssignBlock block)
+        private void Visit(AssignBlock block)
         {
-            Visit(block.Assignment);
+            Push(block.Assignment);
         }
 
-        public void Visit(StartupBlock block)
+        private void Visit(StartupBlock block)
         {
-            Visit(block.Body);
+            Push(block.Body);
         }
     }
 }

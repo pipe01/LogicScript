@@ -38,11 +38,6 @@ namespace LogicScript
         {
         }
 
-        public void Run(IMachine machine, bool runStartup, bool checkPortCount = true)
-        {
-            Interpreter.Run(this, machine, runStartup, checkPortCount);
-        }
-
         internal ICodeNode? GetNodeAt(SourceLocation loc, Type[]? types = null)
         {
             foreach (var item in Blocks)

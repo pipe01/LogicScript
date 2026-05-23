@@ -7,7 +7,7 @@ namespace LogicScript.DX.CLI
 {
     public interface ITestLogger
     {
-        void LogParseErrors(string fileName, IReadOnlyList<Parsing.Error> errors);
+        void LogParseErrors(string fileName, IReadOnlyList<Error> errors);
         void LogStartBench(TestBench bench);
         void LogResult(CaseResult result);
         void LogEndBench(TestBench bench, int successful, int failed);

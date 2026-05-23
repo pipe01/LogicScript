@@ -9,7 +9,7 @@ namespace LogicScript.Parsing
         public int Line { get; }
         public int Column { get; }
 
-        internal SourceLocation(string fileName, int line, int column)
+        public SourceLocation(string fileName, int line, int column)
         {
             this.FileName = fileName;
             this.Line = line;
@@ -27,5 +27,8 @@ namespace LogicScript.Parsing
             => other.Line == Line && other.Column == Column;
 
         public override int GetHashCode() => HashCode.Combine(FileName, Line, Column);
+
+        public static bool operator ==(SourceLocation left, SourceLocation right) => left.Equals(right);
+        public static bool operator !=(SourceLocation left, SourceLocation right) => !(left == right);
     }
 }

@@ -3,6 +3,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\Yaclip\Yaclip.csproj" />
     <ProjectReference Include="..\LogicScript\LogicScript.csproj" />
+    <ProjectReference Include="..\LogicScript.DX.DAP\LogicScript.DX.DAP.csproj" />
   </ItemGroup>
 
   <ItemGroup>

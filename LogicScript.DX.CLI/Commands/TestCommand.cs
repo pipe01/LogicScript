@@ -1,4 +1,6 @@
 using System.Diagnostics;
+using LogicScript.DX.DAP;
+using LogicScript.Interpreting.Debugging;
 using LogicScript.Testing;
 
 namespace LogicScript.DX.CLI.Commands
@@ -7,9 +9,23 @@ namespace LogicScript.DX.CLI.Commands
     {
         public IReadOnlyList<string>? Files { get; set; }
         public bool FailFast { get; set; }
+        public bool Debug { get; set; }
 
-        public void Run()
+        public async Task RunAsync()
         {
+            Session? debugSession = null;
+            if (Debug)
+            {
+                debugSession = new Session();
+
+                var debugger = new LogicScriptDebugger(debugSession);
+
+                _ = Task.Run(async () => await debugger.RunSocketAsync());
+
+                Console.WriteLine("Waiting for debugger connection...");
+                await debugger.WaitForAttachedAsync();
+            }
+
             if (Files == null)
             {
                 Files = Directory.EnumerateFiles(".", "*.lsx").Where(o => File.Exists(GetBenchPath(o))).ToList();
@@ -27,19 +43,20 @@ namespace LogicScript.DX.CLI.Commands
 
             foreach (var file in Files)
             {
-                RunFile(file, new PrettyTestLogger());
+                await RunFileAsync(Path.GetFullPath(file), new PrettyTestLogger(), debugSession);
             }
         }
 
-        private void RunFile(string scriptPath, ITestLogger logger)
+        private async Task RunFileAsync(string scriptPath, ITestLogger logger, Session? debugSession)
         {
-            var (script, errors) = Script.Parse(File.ReadAllText(scriptPath));
+            var (script, errors) = Script.Parse(File.ReadAllText(scriptPath), scriptPath);
             if (errors != null && errors.Count > 0)
             {
                 logger.LogParseErrors(scriptPath, errors);
                 return;
             }
-            Debug.Assert(script != null);
+            if (script == null)
+                throw new Exception("Failed to parse script");
 
             var (bench, benchErrors) = TestBench.Parse(File.ReadAllText(GetBenchPath(scriptPath)), script);
             if (benchErrors != null && benchErrors.Count > 0)
@@ -47,14 +64,15 @@ namespace LogicScript.DX.CLI.Commands
                 logger.LogParseErrors(scriptPath, benchErrors);
                 return;
             }
-            Debug.Assert(bench != null);
+            if (bench == null)
+                throw new Exception("Failed to parse bench");
 
             logger.LogStartBench(bench);
 
-            var results = bench.Run();
+            var results = bench.Run(debugSession);
             int successful = 0, failed = 0;
 
-            foreach (var result in results)
+            await foreach (var result in results)
             {
                 logger.LogResult(result);
 

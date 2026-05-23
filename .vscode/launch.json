@@ -36,9 +36,9 @@
             "request": "launch",
             "preLaunchTask": "build-cli",
             // If you have changed target frameworks, make sure to update the program path.
-            "program": "${workspaceFolder}/LogicScript.DX.CLI/bin/Debug/net6.0/LogicScript.DX.CLI.dll",
-            "args": ["test"],
-            "cwd": "${workspaceFolder}/LogicScript.DX.CLI/bin/Debug/net6.0",
+            "program": "${workspaceFolder}/LogicScript.DX.CLI/bin/Debug/net10.0/LogicScript.DX.CLI.dll",
+            "args": ["test", "-d"],
+            "cwd": "${workspaceFolder}/Tester",
             // For more information about the 'console' field, see https://aka.ms/VSCode-CS-LaunchJson-Console
             "console": "internalConsole",
             "stopAtEntry": false

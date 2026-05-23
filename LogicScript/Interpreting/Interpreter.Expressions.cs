@@ -5,9 +5,9 @@ using System;
 
 namespace LogicScript.Interpreting
 {
-    partial struct Visitor
+    partial class Interpreter
     {
-        public BitsValue Visit(Expression expr)
+        private BitsValue Visit(Expression expr)
         {
             return expr switch
             {
@@ -29,8 +29,8 @@ namespace LogicScript.Interpreting
                 return port.PortInfo.Target switch
                 {
                     MachinePorts.Output => throw new InterpreterException("Cannot read from output", expr.Span),
-                    MachinePorts.Input => new BitsValue(Input.Slice(port.StartIndex, port.BitSize)),
-                    MachinePorts.Register => Machine.ReadRegister(port.StartIndex),
+                    MachinePorts.Input => new BitsValue(Machine!.ReadInputs().Slice(port.StartIndex, port.BitSize)),
+                    MachinePorts.Register => Machine!.ReadRegister(port.StartIndex),
                     _ => throw new InterpreterException("Unknown reference target", expr.Span),
                 };
             }

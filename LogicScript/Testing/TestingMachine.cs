@@ -13,7 +13,15 @@ namespace LogicScript.Testing
         public bool[] Outputs { get; } = new bool[outputCount];
 
         private ulong[] Memory = [];
-        private StringBuilder PrintOutput = new StringBuilder();
+        private readonly StringBuilder PrintOutput = new();
+
+        public void Reset()
+        {
+            Array.Clear(Inputs, 0, Inputs.Length);
+            Array.Clear(Outputs, 0, Outputs.Length);
+            Memory = [];
+            PrintOutput.Clear();
+        }
 
         public void AllocateRegisters(int count)
         {

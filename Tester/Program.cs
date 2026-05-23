@@ -7,6 +7,7 @@ using System.Linq;
 using LogicScript.Parsing;
 using System.Collections.Generic;
 using LogicScript.Parsing.Structures;
+using LogicScript.Interpreting;
 
 namespace Tester
 {
@@ -25,14 +26,16 @@ namespace Tester
             if (errors.Count > 0)
                 return;
 
-            var program = Compiler.Compile(script);
-            Console.WriteLine(string.Join(", ", program));
-
             var machine = new MyMachine
             {
                 InputCount = script.Inputs.Values.Sum(o => o.BitSize),
                 OutputCount = script.Outputs.Values.Sum(o => o.BitSize)
             };
+
+            Interpreter.Run(script, machine, true);
+
+            var program = Compiler.Compile(script);
+            Console.WriteLine(string.Join(", ", program));
 
             var scratch = new bool[Math.Max(machine.InputCount, machine.OutputCount)];
 
@@ -100,14 +103,6 @@ namespace Tester
 
             public void QueueUpdate()
             {
-            }
-        }
-
-        class MyDebugger : IDebugger
-        {
-            public void TraceStatement(SourceSpan span, IDictionary<LocalInfo, ulong> locals)
-            {
-                Console.WriteLine(span);
             }
         }
     }
