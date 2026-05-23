@@ -30,7 +30,7 @@ public class LogicScriptDebugger : IDebugger, IAttachHandler, IDisconnectHandler
     {
     }
 
-    public async Task RunAsync(Stream input, Stream output)
+    private async Task RunAsync(Stream input, Stream output)
     {
         SessionDone = new();
 
@@ -53,7 +53,7 @@ public class LogicScriptDebugger : IDebugger, IAttachHandler, IDisconnectHandler
         Continue();
     }
 
-    public async Task RunSocketAsync(int port)
+    private async Task RunSocketAsync(int port)
     {
         var listener = new TcpListener(IPAddress.Loopback, port);
 
@@ -68,7 +68,7 @@ public class LogicScriptDebugger : IDebugger, IAttachHandler, IDisconnectHandler
         }
     }
 
-    public static IDebugger Launch(int port = 43532)
+    public static LogicScriptDebugger Launch(int port = 43532)
     {
         var debugger = new LogicScriptDebugger();
 
@@ -77,11 +77,9 @@ public class LogicScriptDebugger : IDebugger, IAttachHandler, IDisconnectHandler
         return debugger;
     }
 
-    public static async Task<IDebugger> LaunchAndWaitForAttachedAsync(int port = 43532)
+    public static async Task<LogicScriptDebugger> LaunchAndWaitForAttachedAsync(int port = 43532)
     {
-        var debugger = new LogicScriptDebugger();
-
-        _ = Task.Run(async () => await debugger.RunSocketAsync(port));
+        var debugger = Launch(port);
 
         await debugger.WaitForAttachedAsync();
 
@@ -147,7 +145,7 @@ public class LogicScriptDebugger : IDebugger, IAttachHandler, IDisconnectHandler
         };
     }
 
-    public bool TryAddBreakpoint(SourceLocation location, out int number, out SourceLocation realLocation, int? wantNumber = null)
+    private bool TryAddBreakpoint(SourceLocation location, out int number, out SourceLocation realLocation, int? wantNumber = null)
     {
         BreakpointsMutex.WaitOne();
         number = wantNumber ?? BreakpointCounter++;
@@ -195,7 +193,7 @@ public class LogicScriptDebugger : IDebugger, IAttachHandler, IDisconnectHandler
         return false;
     }
 
-    public void ClearBreakpoints()
+    private void ClearBreakpoints()
     {
         BreakpointsMutex.WaitOne();
 
