@@ -96,17 +96,22 @@ namespace LogicScript.Parsing.Visitors
             if (size > BitsValue.BitSize)
                 Errors.AddError($"The maximum bit size is {BitsValue.BitSize}", context.Span());
 
-            var name = context.IDENT().GetText();
-
-            if (Script.Inputs.ContainsKey(name) || Script.Outputs.ContainsKey(name) || Script.Registers.ContainsKey(name))
+            var name = context.IDENT()?.GetText();
+            if (name == null)
             {
-                Errors.AddError($"The port '{name}' is already registered", new SourceSpan(context.IDENT().Symbol));
+                Errors.AddError("Missing register name", context.Span());
+                return;
+            }
+
+            if (Script.Inputs.TryGetValue(name, out var port) || Script.Outputs.TryGetValue(name, out port) || Script.Registers.TryGetValue(name, out port))
+            {
+                Errors.AddError($"The name '{name}' is already taken by previous declaration at line {port.Span.Start.Line}", new SourceSpan(context.IDENT().Symbol));
                 return;
             }
 
             int startIndex = dic.Values.Sum(o => o.BitSize);
 
-            dic.Add(name, new PortInfo(target, startIndex, (int)size, new(context.IDENT().Symbol)));
+            dic.Add(name, new PortInfo(target, startIndex, size, new(context.IDENT().Symbol)));
         }
     }
 }

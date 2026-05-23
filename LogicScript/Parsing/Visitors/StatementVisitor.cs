@@ -127,7 +127,7 @@ namespace LogicScript.Parsing.Visitors
 
             if (BlockContext.TryGetLocal(name, out var existingLocal, checkOuter: false))
             {
-                BlockContext.Errors.AddError($"Identifier '{name}' already exists", new SourceSpan(context.VARIABLE().Symbol));
+                BlockContext.Errors.AddError($"Identifier {name} already taken by declaration at line {existingLocal.Span.Start.Line}", new SourceSpan(context.VARIABLE().Symbol));
                 return new DeclareLocalStatement(context.Span(), existingLocal, value, context.size != null);
             }
 
