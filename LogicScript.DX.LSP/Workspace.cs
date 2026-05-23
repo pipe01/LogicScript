@@ -6,6 +6,7 @@ using OmniSharp.Extensions.LanguageServer.Protocol;
 using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 
 namespace LogicScript.DX.LSP
@@ -35,6 +36,11 @@ namespace LogicScript.DX.LSP
                     Range = item.Span.ToRange()
                 };
             }).ToArray();
+        }
+
+        public bool TryGetScript(DocumentUri uri, [MaybeNullWhen(false)] out Script script)
+        {
+            return Scripts.TryGetValue(uri, out script);
         }
 
         public IEnumerable<ICodeNode> VisitAll(DocumentUri uri)

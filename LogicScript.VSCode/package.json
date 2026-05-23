@@ -83,12 +83,9 @@
             }
         ]
     },
-    "activationEvents": [
-        "onLanguage:logicscript"
-    ],
     "dependencies": {
         "@types/node": "^16.11.6",
-        "vscode-languageclient": "^7.0.0"
+        "vscode-languageclient": "^9.0.1"
     },
     "main": "./out/main",
     "devDependencies": {

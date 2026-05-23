@@ -1,8 +1,11 @@
 ﻿using LogicScript.DX.LSP.Handlers;
 using Microsoft.Extensions.DependencyInjection;
+using OmniSharp.Extensions.LanguageServer.Protocol.Client.Capabilities;
+using OmniSharp.Extensions.LanguageServer.Protocol.Document;
 using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 using OmniSharp.Extensions.LanguageServer.Server;
 using System;
+using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -14,6 +17,10 @@ namespace LogicScript.DX.LSP
 
         static async Task Main(string[] args)
         {
+            if (args.Length > 0 && args[0] == "--wait-debugger")
+                while (!Debugger.IsAttached)
+                    await Task.Delay(400);
+
             var server = LanguageServer.Create(opts => opts
                 .WithServices(o =>
                 {
@@ -33,6 +40,7 @@ namespace LogicScript.DX.LSP
                 .WithHandler<DefinitionHandler>()
                 .WithHandler<RenameHandler>()
                 .WithHandler<ReferencesHandler>()
+                .WithHandler<InlayHintsHandler>()
             );
 
             await server.Initialize(CancellationToken.None);

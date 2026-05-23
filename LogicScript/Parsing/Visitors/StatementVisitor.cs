@@ -128,12 +128,12 @@ namespace LogicScript.Parsing.Visitors
             if (BlockContext.TryGetLocal(name, out var existingLocal, checkOuter: false))
             {
                 BlockContext.Errors.AddError($"Identifier '{name}' already exists", new SourceSpan(context.VARIABLE().Symbol));
-                return new DeclareLocalStatement(context.Span(), existingLocal, value);
+                return new DeclareLocalStatement(context.Span(), existingLocal, value, context.size != null);
             }
 
             var localInfo = BlockContext.AddLocal(name, size, new SourceSpan(context.VARIABLE().Symbol));
 
-            return new DeclareLocalStatement(context.Span(), localInfo, value);
+            return new DeclareLocalStatement(context.Span(), localInfo, value, context.size != null);
         }
 
         public override Statement VisitTask_print([NotNull] LogicScriptParser.Task_printContext context)
