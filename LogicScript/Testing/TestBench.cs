@@ -25,7 +25,7 @@ namespace LogicScript.Testing
             this.Script = script;
         }
 
-        public async IAsyncEnumerable<CaseResult> Run(Session? debugSession)
+        public async IAsyncEnumerable<CaseResult> Run(IDebugger? debugger)
         {
             var machine = new TestingMachine(Script.RegisteredInputLength, Script.RegisteredOutputLength);
 
@@ -33,11 +33,11 @@ namespace LogicScript.Testing
             {
                 machine.Reset();
 
-                yield return await RunCase(machine, @case, debugSession);
+                yield return await RunCase(machine, @case, debugger);
             }
         }
 
-        private async Task<CaseResult> RunCase(TestingMachine machine, TestCase @case, Session? debugSession)
+        private async Task<CaseResult> RunCase(TestingMachine machine, TestCase @case, IDebugger? debugger)
         {
             var hasRunStartup = false;
             int stepsRan = 0;
@@ -52,7 +52,7 @@ namespace LogicScript.Testing
                     input.Value.FillBits(machine.Inputs.AsSpan()[input.Port.StartIndex..(input.Port.StartIndex + input.Port.BitSize)]);
                 }
 
-                await new Interpreter(Script, machine, !hasRunStartup, debugger: debugSession).RunToEndAsync();
+                await new Interpreter(Script, machine, !hasRunStartup, debugger: debugger).RunToEndAsync();
                 hasRunStartup = true;
                 stepsRan++;
 

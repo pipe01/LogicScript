@@ -45,7 +45,7 @@ public class LogicScriptDebugger(Session session) : IAttachHandler, IDisconnectH
         Session.Continue();
     }
 
-    public async Task RunSocketAsync(int port = 43532)
+    public async Task RunSocketAsync(int port)
     {
         var listener = new TcpListener(IPAddress.Loopback, port);
 
@@ -58,6 +58,28 @@ public class LogicScriptDebugger(Session session) : IAttachHandler, IDisconnectH
 
             await RunAsync(stream, stream);
         }
+    }
+
+    public static IDebugger Launch(int port = 43532)
+    {
+        var session = new Session();
+        var debugger = new LogicScriptDebugger(session);
+
+        _ = Task.Run(async () => await debugger.RunSocketAsync(port));
+
+        return session;
+    }
+
+    public static async Task<IDebugger> LaunchAndWaitForAttachedAsync(int port = 43532)
+    {
+        var session = new Session();
+        var debugger = new LogicScriptDebugger(session);
+
+        _ = Task.Run(async () => await debugger.RunSocketAsync(port));
+
+        await debugger.WaitForAttachedAsync();
+
+        return session;
     }
 
     public async Task WaitForAttachedAsync()
