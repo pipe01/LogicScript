@@ -65,14 +65,7 @@ namespace LogicScript.Tests
 
             if (!result.Success)
             {
-                var msg = new StringBuilder();
-                msg.AppendLine($"Failed on step {result.FailedStep!.Value.StepIndex}:");
-
-                msg.AppendLine($"           Input: {FormatIO(result.FailedStep.Value.Inputs)}");
-                msg.AppendLine($" Expected output: {FormatIO(result.FailedStep.Value.ExpectedOutputs)}");
-                msg.AppendLine($"Disparate output: {FormatIO(result.FailedStep.Value.MismatchedOutputs)}");
-
-                Assert.Fail(msg.ToString());
+                Assert.Fail(result.GetFailureString());
             }
         }
 
@@ -95,11 +88,6 @@ namespace LogicScript.Tests
             using var reader = new StreamReader(stream!);
 
             return reader.ReadToEnd();
-        }
-
-        private static string FormatIO(IDictionary<string, BitsValue> values)
-        {
-            return string.Join(' ', values.OrderBy(e => e.Key).Select(e => $"{e.Key}({e.Value.Number})").ToArray());
         }
     }
 }

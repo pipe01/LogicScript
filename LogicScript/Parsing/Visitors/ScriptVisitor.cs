@@ -27,14 +27,14 @@ namespace LogicScript.Parsing.Visitors
                     {
                         if (!script.Inputs.TryGetValue(input.Name, out var stepInput))
                             errors.AddError($"Unknown input port '{input.Name}'", input.NameSpan);
-                        if (stepInput.BitSize < input.Value.Length)
+                        else if (stepInput.BitSize < input.Value.Length)
                             errors.AddError("Value doesn't fit in port", input.ValueSpan);
                     }
                     foreach (var output in step.Outputs)
                     {
                         if (!script.Outputs.TryGetValue(output.Name, out var stepOutput))
                             errors.AddError($"Unknown output port '{output.Name}'", output.NameSpan);
-                        if (stepOutput.BitSize < output.Value.Length)
+                        else if (stepOutput.BitSize < output.Value.Length)
                             errors.AddError("Value doesn't fit in port", output.ValueSpan);
                     }
                 }

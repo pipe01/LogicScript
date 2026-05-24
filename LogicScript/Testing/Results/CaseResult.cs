@@ -1,4 +1,7 @@
+using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Text;
 using LogicScript.Data;
 
 namespace LogicScript.Testing.Results
@@ -33,6 +36,25 @@ namespace LogicScript.Testing.Results
         {
             this.FailedStep = failedStep;
             this.Success = false;
+        }
+
+        public string GetFailureString()
+        {
+            if (Success) throw new InvalidOperationException("Test was successful");
+
+            var msg = new StringBuilder();
+            msg.AppendLine($"Failed on step {FailedStep!.Value.StepIndex}:");
+
+            msg.AppendLine($"           Input: {FormatIO(FailedStep.Value.Inputs)}");
+            msg.AppendLine($" Expected output: {FormatIO(FailedStep.Value.ExpectedOutputs)}");
+            msg.AppendLine($"Disparate output: {FormatIO(FailedStep.Value.MismatchedOutputs)}");
+
+            return msg.ToString();
+
+            static string FormatIO(IDictionary<string, BitsValue> values)
+            {
+                return string.Join(' ', values.OrderBy(e => e.Key).Select(e => $"{e.Key}({e.Value.Number})").ToArray());
+            }
         }
     }
 }

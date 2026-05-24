@@ -36,7 +36,6 @@ export async function activate(context: vscode.ExtensionContext) {
 	const clientOptions: LanguageClientOptions = {
 		// Register the server for plain text documents
 		documentSelector: [{ scheme: 'file', language: 'logicscript' }],
-		outputChannel: vscode.window.createOutputChannel('LogicScript'),
 		traceOutputChannel: vscode.window.createOutputChannel('LogicScript Trace'),
 	};
 
@@ -47,6 +46,24 @@ export async function activate(context: vscode.ExtensionContext) {
 		serverOptions,
 		clientOptions
 	);
+
+	vscode.commands.registerCommand("logicscript.tests.runFile", () => {
+		const currentDocument = vscode.window.activeTextEditor?.document;
+		if (!currentDocument) return;
+
+		client.sendRequest("workspace/executeCommand", {
+			command: "logicscript.runtestsfile",
+			arguments: [currentDocument.uri.toString()]
+		})
+	});
+
+	const testOutput = vscode.window.createOutputChannel("LogicScript Tests");
+	client.onNotification("logicscript/logTestOutput", params => {
+		testOutput.appendLine(params);
+
+		if (vscode.workspace.getConfiguration().get<boolean>("logicscript.test.focusOnFail"))
+			testOutput.show(true);
+	});
 
 	// Start the client. This will also launch the server
 	await client.start();

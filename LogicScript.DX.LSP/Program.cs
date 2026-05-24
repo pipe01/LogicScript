@@ -30,7 +30,7 @@ namespace LogicScript.DX.LSP
 
                 .ConfigureLogging(logging =>
                 {
-                    logging.AddLanguageProtocolLogging();
+                    // logging.AddLanguageProtocolLogging();
                 })
 
                 .WithHandler<DocumentHandler>()
@@ -39,6 +39,8 @@ namespace LogicScript.DX.LSP
                 .WithHandler<RenameHandler>()
                 .WithHandler<ReferencesHandler>()
                 .WithHandler<InlayHintsHandler>()
+                .WithHandler<CodeLensHandler>()
+                .WithHandler<ExecuteCommandHandler>()
             );
 
             await server.Initialize(CancellationToken.None);

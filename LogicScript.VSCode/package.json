@@ -41,19 +41,31 @@
                 "path": "./syntaxes/logicscript.tmLanguage.json"
             }
         ],
+        "commands": [
+            {
+                "command": "logicscript.tests.runFile",
+                "title": "LogicScript: Run all tests in current file"
+            }
+        ],
         "configuration": {
             "title": "LogicScript Language Support",
             "properties": {
                 "logicscript.trace.server": {
-                        "scope": "window",
-                        "type": "string",
-                        "enum": [
-                            "off",
-                            "messages",
-                            "verbose"
-                        ],
-                        "default": "off",
-                        "description": "Traces the communication between VS Code and the language server."
+                    "scope": "window",
+                    "type": "string",
+                    "enum": [
+                        "off",
+                        "messages",
+                        "verbose"
+                    ],
+                    "default": "off",
+                    "description": "Traces the communication between VS Code and the language server."
+                },
+                "logicscript.test.focusOnFail": {
+                    "scope": "window",
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Focus the test output window when a test fails"
                 }
             }
         },
