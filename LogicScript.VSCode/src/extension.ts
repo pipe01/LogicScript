@@ -5,13 +5,12 @@ import {
 	LanguageClient,
 	LanguageClientOptions,
 	ServerOptions,
-	Trace,
 	TransportKind
 } from 'vscode-languageclient/node';
 
 let client: LanguageClient;
 
-export function activate(context: vscode.ExtensionContext) {
+export async function activate(context: vscode.ExtensionContext) {
 	const serverPath = context.asAbsolutePath(
 		path.join('bin', process.env.BIN_NAME ?? 'LogicScript.LSP.exe')
 	);
@@ -20,14 +19,15 @@ export function activate(context: vscode.ExtensionContext) {
 	// Otherwise the run options are used
 	const serverOptions: ServerOptions = {
 		run: {
-            command: serverPath,
-            transport: TransportKind.stdio,
-        },
-        debug: {
-            command: "dotnet",
-            args: ["run", "--project", context.asAbsolutePath("../LogicScript.DX.LSP/LogicScript.DX.LSP.csproj")],
-            transport: TransportKind.stdio,
-        }
+			command: serverPath,
+			// args: ["--wait-debugger"],
+			transport: TransportKind.stdio,
+		},
+		debug: {
+			command: "dotnet",
+			args: ["run", "--project", context.asAbsolutePath("../LogicScript.DX.LSP/LogicScript.DX.LSP.csproj"), "--", "--wait-debugger"],
+			transport: TransportKind.stdio,
+		}
 	};
 
 	// Options to control the language client
@@ -47,9 +47,9 @@ export function activate(context: vscode.ExtensionContext) {
 	);
 
 	// Start the client. This will also launch the server
-	client.start();
+	await client.start();
 }
 
-export function deactivate(): Thenable<void> | undefined {
-	return client?.stop();
+export async function deactivate() {
+	await client?.stop();
 }

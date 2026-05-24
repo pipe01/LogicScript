@@ -139,13 +139,17 @@ namespace LogicScript.Interpreting
 
             OpStack.Push(new(null, breakBarrier: true));
 
-            for (ulong i = from; i < to.Number; i++)
+            for (ulong i = to - 1; i >= from; i--)
             {
+                var _i = i;
                 OpStack.Push(new(stmt.Body, before: () =>
                 {
-                    Locals[stmt.Variable] = new BitsValue(i, size);
+                    Locals[stmt.Variable] = new BitsValue(_i, size);
                     return true;
                 }));
+
+                if (i == from)
+                    break;
             }
         }
 

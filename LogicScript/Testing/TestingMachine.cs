@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Text;
 using LogicScript.Data;
 
@@ -13,7 +14,7 @@ namespace LogicScript.Testing
         public bool[] Outputs { get; } = new bool[outputCount];
 
         private ulong[] Memory = [];
-        private readonly StringBuilder PrintOutput = new();
+        public readonly IList<string> PrintOutput = [];
 
         public void Reset()
         {
@@ -33,7 +34,7 @@ namespace LogicScript.Testing
 
         public void Print(string msg)
         {
-            PrintOutput.AppendLine(msg);
+            PrintOutput.Add(msg);
         }
 
         public void QueueUpdate()

@@ -18,6 +18,7 @@ namespace LogicScript.Testing
         private readonly Script Script;
 
         public int CaseCount => Cases.Count;
+        public IReadOnlyCollection<string?> CaseNames => Cases.Select(o => o.Name).ToArray();
 
         internal TestBench(IList<TestCase> cases, Script script)
         {
@@ -25,7 +26,7 @@ namespace LogicScript.Testing
             this.Script = script;
         }
 
-        public async IAsyncEnumerable<CaseResult> Run(IDebugger? debugger)
+        public async IAsyncEnumerable<CaseResult> Run(IDebugger? debugger = null)
         {
             var machine = new TestingMachine(Script.RegisteredInputLength, Script.RegisteredOutputLength);
 
@@ -35,6 +36,13 @@ namespace LogicScript.Testing
 
                 yield return await RunCase(machine, @case, debugger);
             }
+        }
+
+        public async Task<CaseResult> RunCase(int index, IDebugger? debugger = null)
+        {
+            var machine = new TestingMachine(Script.RegisteredInputLength, Script.RegisteredOutputLength);
+
+            return await RunCase(machine, Cases[index], debugger);
         }
 
         private async Task<CaseResult> RunCase(TestingMachine machine, TestCase @case, IDebugger? debugger)
@@ -49,7 +57,11 @@ namespace LogicScript.Testing
             {
                 foreach (var input in step.Inputs)
                 {
-                    input.Value.FillBits(machine.Inputs.AsSpan()[input.Port.StartIndex..(input.Port.StartIndex + input.Port.BitSize)]);
+                    Span<bool> values = stackalloc bool[input.Port.BitSize];
+                    input.Value.FillBits(values);
+                    values.Reverse();
+
+                    values.CopyTo(machine.Inputs.AsSpan()[input.Port.StartIndex..]);
                 }
 
                 await new Interpreter(Script, machine, !hasRunStartup, debugger: debugger).RunToEndAsync();
@@ -58,7 +70,11 @@ namespace LogicScript.Testing
 
                 foreach (var output in step.Outputs)
                 {
-                    var machineValue = new BitsValue(machine.Outputs[output.Port.StartIndex..(output.Port.StartIndex + output.Port.BitSize)]);
+                    Span<bool> values = stackalloc bool[output.Port.BitSize];
+                    machine.Outputs[output.Port.StartIndex..].CopyTo(values);
+                    values.Reverse();
+
+                    var machineValue = new BitsValue(values);
 
                     if (output.Value != machineValue)
                     {
@@ -74,24 +90,27 @@ namespace LogicScript.Testing
                 }
             }
 
+            var printed = machine.PrintOutput.ToArray();
+
             if (failedStep == null)
             {
-                return new CaseResult(@case.Name, @case.Steps.Count);
+                return new CaseResult(@case.Index, @case.Name, @case.Steps.Count, printed);
             }
 
             var resultInputs = failedStep.Inputs.ToDictionary(o => o.Name, o => o.Value);
             var resultOutputs = failedStep.Outputs.ToDictionary(o => o.Name, o => o.Value);
 
-            return new CaseResult(@case.Name, @case.Steps.Count, new FailedStep(stepsRan, resultInputs, resultOutputs, mismatchedOutputs));
+            return new CaseResult(@case.Index, @case.Name, @case.Steps.Count, printed, new(stepsRan, resultInputs, resultOutputs, mismatchedOutputs));
         }
 
         internal static TestBench FromParsed(LogicScriptParser.Test_benchContext ctx, Script script)
         {
             var cases = new List<TestCase>();
 
+            int i = 0;
             foreach (var testCase in ctx.test_case())
             {
-                var name = testCase.name.Text.Trim('"');
+                var name = testCase.name?.Text.Trim('"');
                 var steps = new List<CaseStep>();
                 CaseStep? lastStep = null;
 
@@ -115,7 +134,7 @@ namespace LogicScript.Testing
                     }
                 }
 
-                cases.Add(new TestCase(name, steps));
+                cases.Add(new TestCase(i++, name, steps));
 
                 static IEnumerable<PortValue> GetPorts(LogicScriptParser.Step_portsContext ctx, IDictionary<string, Parsing.Structures.PortInfo> scriptPorts)
                 {

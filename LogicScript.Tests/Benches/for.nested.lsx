@@ -1,0 +1,16 @@
+output'4 o
+
+const a = 2
+const b = 4
+
+startup
+    local $c'4
+
+    for $i to a
+        for $j to b
+            $c '= $c + 1
+        end
+    end
+
+    o = $c
+end

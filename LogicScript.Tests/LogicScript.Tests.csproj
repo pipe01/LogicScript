@@ -8,6 +8,11 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <EmbeddedResource Include="Benches/*.lsx" />
+    <EmbeddedResource Include="Benches/*.lsbench" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.11.0" />
     <PackageReference Include="nunit" Version="3.13.2" />
     <PackageReference Include="Nunit3TestAdapter" Version="4.1.0" />

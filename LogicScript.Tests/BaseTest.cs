@@ -3,7 +3,7 @@ using NUnit.Framework;
 
 namespace LogicScript.Tests
 {
-    [TestFixtureSource(nameof(BaseTest.Data))]
+    [TestFixtureSource(nameof(Data))]
     public abstract class BaseTest
     {
         public static IEnumerable<object> Data = Runners.All;

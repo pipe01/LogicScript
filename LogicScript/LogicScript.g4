@@ -3,7 +3,7 @@ grammar LogicScript;
 script              : (declaration NL+)* EOF ;
 test_bench          : (test_case NL+)* EOF ;
 
-test_case           : '@test' WS+ name=TEXT WS+ LPAREN wsnl (test_step NL+)* RPAREN wsnl ;
+test_case           : '@test' WS+ (name=TEXT WS+)? LPAREN wsnl (test_step NL+)* RPAREN wsnl ;
 test_step           : (step_action | step_repeat) COMMA ;
 
 step_action         : inputs=step_ports WS* ARROW WS* outputs=step_ports ;

@@ -1,0 +1,11 @@
+output'4 o
+
+startup
+    local $c'4
+
+    for $i to 5
+        $c '= $c + 1
+    end
+
+    o = $c
+end
