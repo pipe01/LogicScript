@@ -3,39 +3,50 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using LogicScript.Data;
+using LogicScript.Parsing;
 
 namespace LogicScript.Testing.Results
 {
-    public readonly record struct FailedStep(
-        int StepIndex,
-        IDictionary<string, BitsValue> Inputs,
-        IDictionary<string, BitsValue> ExpectedOutputs,
-        IDictionary<string, BitsValue> MismatchedOutputs
-    );
-
-    public class CaseResult
+    public abstract class CaseResult
     {
-        public int Index { get; }
-        public string? Name { get; }
-        public int StepCount { get; }
+        public TestCase TestCase { get; }
         public IReadOnlyCollection<string> PrintedLines { get; }
 
-        public bool Success { get; }
-        public FailedStep? FailedStep { get; }
+        public abstract bool Success { get; }
 
-        internal CaseResult(int index, string? name, int stepCount, IReadOnlyCollection<string> printedLines)
+        internal CaseResult(TestCase testCase, IReadOnlyCollection<string> printedLines)
         {
-            this.Index = index;
-            this.Name = name;
-            this.StepCount = stepCount;
-            this.Success = true;
+            this.TestCase = testCase;
             this.PrintedLines = printedLines;
         }
+    }
 
-        internal CaseResult(int index, string? name, int stepCount, IReadOnlyCollection<string> printedLines, FailedStep? failedStep) : this(index, name, stepCount, printedLines)
+    public sealed class SuccessStepResult : CaseResult
+    {
+        public override bool Success => true;
+
+        internal SuccessStepResult(TestCase testCase, IReadOnlyCollection<string> printedLines) : base(testCase, printedLines)
         {
-            this.FailedStep = failedStep;
-            this.Success = false;
+        }
+    }
+
+    public sealed class FailedStepCaseResult : CaseResult
+    {
+        public override bool Success => false;
+
+        public int StepIndex { get; }
+        public SourceSpan StepSpan { get; }
+        public IDictionary<string, BitsValue> Inputs { get; }
+        public IDictionary<string, BitsValue> ExpectedOutputs { get; }
+        public IDictionary<string, BitsValue> MismatchedOutputs { get; }
+
+        internal FailedStepCaseResult(TestCase testCase, IReadOnlyCollection<string> printedLines, int stepIndex, SourceSpan stepSpan, IDictionary<string, BitsValue> inputs, IDictionary<string, BitsValue> expectedOutputs, IDictionary<string, BitsValue> mismatchedOutputs) : base(testCase, printedLines)
+        {
+            this.StepIndex = stepIndex;
+            this.StepSpan = stepSpan;
+            this.Inputs = inputs;
+            this.ExpectedOutputs = expectedOutputs;
+            this.MismatchedOutputs = mismatchedOutputs;
         }
 
         public string GetFailureString()
@@ -43,11 +54,11 @@ namespace LogicScript.Testing.Results
             if (Success) throw new InvalidOperationException("Test was successful");
 
             var msg = new StringBuilder();
-            msg.AppendLine($"Failed on step {FailedStep!.Value.StepIndex}:");
+            msg.AppendLine($"Failed on step {StepIndex} at {StepSpan.Start.FileName}:{StepSpan.Start}");
 
-            msg.AppendLine($"           Input: {FormatIO(FailedStep.Value.Inputs)}");
-            msg.AppendLine($" Expected output: {FormatIO(FailedStep.Value.ExpectedOutputs)}");
-            msg.AppendLine($"Disparate output: {FormatIO(FailedStep.Value.MismatchedOutputs)}");
+            msg.AppendLine($"           Input: {FormatIO(Inputs)}");
+            msg.AppendLine($" Expected output: {FormatIO(ExpectedOutputs)}");
+            msg.AppendLine($"Disparate output: {FormatIO(MismatchedOutputs)}");
 
             return msg.ToString();
 
@@ -55,6 +66,18 @@ namespace LogicScript.Testing.Results
             {
                 return string.Join(' ', values.OrderBy(e => e.Key).Select(e => $"{e.Key}({e.Value.Number})").ToArray());
             }
+        }
+    }
+
+    public sealed class LimitReachedCaseResult : CaseResult
+    {
+        public override bool Success => false;
+
+        public int StepsRan { get; }
+
+        internal LimitReachedCaseResult(TestCase testCase, IReadOnlyCollection<string> printedLines, int stepsRan) : base(testCase, printedLines)
+        {
+            this.StepsRan = stepsRan;
         }
     }
 }

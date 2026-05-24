@@ -12,6 +12,13 @@ using System.Threading.Tasks;
 
 namespace LogicScript.Interpreting
 {
+    public enum ExitReason
+    {
+        Ended,
+        Debugger,
+        LimitReached,
+    }
+
     public partial class Interpreter
     {
         private readonly struct Operation(ICodeNode? node, bool breakBarrier = false, Func<bool>? before = null, Action? after = null)
@@ -71,8 +78,7 @@ namespace LogicScript.Interpreting
             return new Interpreter(null, null, null).Visit(expr);
         }
 
-        /// <returns>true if execution paused due to a breakpoint, false otherwise</returns>
-        public bool Run()
+        public ExitReason Run(int statementLimit = -1)
         {
             while (OpStack.TryPop(out var op))
             {
@@ -82,7 +88,7 @@ namespace LogicScript.Interpreting
                     if (pause)
                     {
                         OpStack.Push(op);
-                        return true;
+                        return ExitReason.Debugger;
                     }
                 }
 
@@ -101,20 +107,25 @@ namespace LogicScript.Interpreting
                 }
 
                 op.After?.Invoke();
+
+                if (statementLimit >= 0 && --statementLimit == 0)
+                {
+                    return ExitReason.LimitReached;
+                }
             }
 
-            return false;
+            return ExitReason.Ended;
         }
 
-        public async Task RunToEndAsync()
+        public async Task<ExitReason> RunToEndAsync(int statementLimit = -1)
         {
             while (true)
             {
-                var paused = Run();
-                if (paused && Debugger != null)
+                var exitReason = Run(statementLimit);
+                if (exitReason == ExitReason.Debugger && Debugger != null)
                     await Debugger.WaitForResumeAsync();
                 else
-                    break;
+                    return exitReason;
             }
         }
 

@@ -10,7 +10,7 @@ import {
 
 let client: LanguageClient;
 
-const waitDebugger = false; // TODO: Move to configuration
+const waitDebugger = false;
 
 export async function activate(context: vscode.ExtensionContext) {
 	const serverPath = context.asAbsolutePath(
@@ -47,21 +47,27 @@ export async function activate(context: vscode.ExtensionContext) {
 		clientOptions
 	);
 
+	const config = vscode.workspace.getConfiguration("logicscript");
+
 	vscode.commands.registerCommand("logicscript.tests.runFile", () => {
 		const currentDocument = vscode.window.activeTextEditor?.document;
 		if (!currentDocument) return;
 
 		client.sendRequest("workspace/executeCommand", {
 			command: "logicscript.runtestsfile",
-			arguments: [currentDocument.uri.toString()]
+			arguments: [
+				currentDocument.uri.toString(),
+				config.get("test.statementLimit")
+			]
 		})
 	});
 
 	const testOutput = vscode.window.createOutputChannel("LogicScript Tests");
+	client.onNotification("logicscript/clearTestOutput", () => testOutput.clear());
 	client.onNotification("logicscript/logTestOutput", params => {
 		testOutput.appendLine(params);
 
-		if (vscode.workspace.getConfiguration().get<boolean>("logicscript.test.focusOnFail"))
+		if (config.get<boolean>("test.focusOnFail"))
 			testOutput.show(true);
 	});
 

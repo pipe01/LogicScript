@@ -1,13 +1,7 @@
-﻿using LogicScript.Parsing;
-using LogicScript.Parsing.Structures;
-using LogicScript.Parsing.Structures.Expressions;
-using LogicScript.Parsing.Structures.Statements;
-using LogicScript.Testing;
-using LogicScript.Utils;
+﻿using LogicScript.Testing;
 using OmniSharp.Extensions.LanguageServer.Protocol.Client.Capabilities;
 using OmniSharp.Extensions.LanguageServer.Protocol.Document;
 using OmniSharp.Extensions.LanguageServer.Protocol.Models;
-using OmniSharp.Extensions.LanguageServer.Protocol.Server;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;

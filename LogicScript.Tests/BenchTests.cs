@@ -3,9 +3,8 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Text;
 using System.Threading.Tasks;
-using LogicScript.Data;
+using LogicScript.Testing.Results;
 using NUnit.Framework;
 using NUnit.Framework.Internal;
 
@@ -56,16 +55,22 @@ namespace LogicScript.Tests
         public async Task Run(string lsbenchFile, int caseIndex)
         {
             var script = ParseScript(lsbenchFile);
-            var result = await script.TestCases[caseIndex].Run(script, null);
+            var result = await script.TestCases[caseIndex].Run(script, null, -1);
 
             foreach (var line in result.PrintedLines)
             {
                 Debug.WriteLine($"[Script Output] {line}");
             }
 
-            if (!result.Success)
+            switch (result)
             {
-                Assert.Fail(result.GetFailureString());
+                case FailedStepCaseResult failedStep:
+                    Assert.Fail(failedStep.GetFailureString());
+                    break;
+
+                case LimitReachedCaseResult:
+                    Assert.Fail("Statement limit reached");
+                    break;
             }
         }
 

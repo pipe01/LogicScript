@@ -28,7 +28,7 @@ namespace LogicScript.Testing
             {
                 machine.Reset();
 
-                yield return await @case.Run(script, machine, debugger);
+                yield return await @case.Run(script, machine, debugger, -1);
             }
         }
 

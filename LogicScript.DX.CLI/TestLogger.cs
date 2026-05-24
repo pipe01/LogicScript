@@ -24,23 +24,27 @@ namespace LogicScript.DX.CLI
 
         public void LogResult(CaseResult result)
         {
-            if (result.Success)
+            switch (result)
             {
-                using (SimpleConsoleColors.Green)
-                    Console.WriteLine($"✓ {result.Name}");
-            }
-            else
-            {
-                var step = result.FailedStep!.Value;
+                case SuccessStepResult:
+                    using (SimpleConsoleColors.Green)
+                        Console.WriteLine($"✓ {result.TestCase.Name}");
+                    break;
 
-                using (SimpleConsoleColors.Red)
-                    Console.WriteLine($"✗ {result.Name}, step {step.StepIndex}");
-                Console.WriteLine("  Output values do not match:");
+                case FailedStepCaseResult failedStep:
+                    using (SimpleConsoleColors.Red)
+                        Console.WriteLine($"✗ {failedStep.TestCase.Name}, step {failedStep.StepIndex}");
+                    Console.WriteLine("  Output values do not match:");
 
-                foreach (var item in step.MismatchedOutputs)
-                {
-                    Console.WriteLine($"    Expected {item.Key} = {step.ExpectedOutputs[item.Key]}, got {item.Value}");
-                }
+                    foreach (var item in failedStep.MismatchedOutputs)
+                    {
+                        Console.WriteLine($"    Expected {item.Key} = {failedStep.ExpectedOutputs[item.Key]}, got {item.Value}");
+                    }
+                    break;
+
+                case LimitReachedCaseResult:
+                    Console.WriteLine("✗ Statement limit reached");
+                    break;
             }
         }
 
