@@ -7,5 +7,7 @@ namespace LogicScript
     {
         public static SourceSpan Span(this ParserRuleContext context)
             => new(context);
+        public static SourceSpan Span(this IToken token)
+            => new(token);
     }
 }

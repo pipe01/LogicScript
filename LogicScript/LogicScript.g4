@@ -1,6 +1,6 @@
 grammar LogicScript;
 
-script              : (declaration NL+)* EOF ;
+script              : (declaration NL+)* (test_case NL+)* EOF ;
 test_bench          : (test_case NL+)* EOF ;
 
 test_case           : '@test' WS+ (name=TEXT WS+)? LPAREN wsnl (test_step NL+)* RPAREN wsnl ;

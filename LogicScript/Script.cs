@@ -6,8 +6,10 @@ using LogicScript.Parsing.Structures;
 using LogicScript.Parsing.Structures.Blocks;
 using LogicScript.Parsing.Structures.Expressions;
 using LogicScript.Parsing.Visitors;
+using LogicScript.Testing;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 
 namespace LogicScript
@@ -17,6 +19,7 @@ namespace LogicScript
         public IDictionary<string, PortInfo> Inputs { get; } = new Dictionary<string, PortInfo>();
         public IDictionary<string, PortInfo> Outputs { get; } = new Dictionary<string, PortInfo>();
         public IDictionary<string, PortInfo> Registers { get; } = new Dictionary<string, PortInfo>();
+        public IList<TestCase> TestCases { get; } = [];
 
         internal int RegisteredInputLength => Inputs.Values.Sum(o => o.BitSize);
         internal int RegisteredOutputLength => Outputs.Values.Sum(o => o.BitSize);
@@ -41,13 +44,32 @@ namespace LogicScript
 
         public IEnumerable<ICodeNode> VisitAll(bool depthFirst = true)
         {
-            return Blocks.SelectMany(Inner);
+            return Blocks.Cast<ICodeNode>().Concat(TestCases.Cast<ICodeNode>()).SelectMany(Inner);
 
             IEnumerable<ICodeNode> Inner(ICodeNode parent)
             {
+                if (parent == null)
+                    return [];
+
                 var children = parent.GetChildren().SelectMany(Inner);
 
                 return depthFirst ? children.Append(parent) : children.Prepend(parent);
+            }
+        }
+
+        public bool TryGetPort(string name, MachinePorts ports, [MaybeNullWhen(false)] out PortInfo portInfo)
+        {
+            switch (ports)
+            {
+                case MachinePorts.Input:
+                    return Inputs.TryGetValue(name, out portInfo);
+                case MachinePorts.Output:
+                    return Outputs.TryGetValue(name, out portInfo);
+                case MachinePorts.Register:
+                    return Registers.TryGetValue(name, out portInfo);
+                default:
+                    portInfo = default;
+                    return false;
             }
         }
 

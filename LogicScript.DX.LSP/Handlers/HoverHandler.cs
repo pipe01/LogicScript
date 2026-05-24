@@ -2,6 +2,7 @@
 using LogicScript.Parsing.Structures;
 using LogicScript.Parsing.Structures.Expressions;
 using LogicScript.Parsing.Structures.Statements;
+using LogicScript.Testing;
 using LogicScript.Utils;
 using OmniSharp.Extensions.LanguageServer.Protocol.Client.Capabilities;
 using OmniSharp.Extensions.LanguageServer.Protocol.Document;
@@ -32,6 +33,7 @@ namespace LogicScript.DX.LSP.Handlers
                 typeof(Reference),
                 typeof(Expression),
                 typeof(DeclareLocalStatement),
+                typeof(PortValue),
             ]);
             var lines = new List<string>();
             int size;
@@ -66,6 +68,11 @@ namespace LogicScript.DX.LSP.Handlers
                 case DeclareLocalStatement local:
                     size = local.Local.BitSize;
                     span = local.Local.Span;
+                    break;
+
+                case PortValue portValue:
+                    size = portValue.Value.Length;
+                    span = portValue.NameSpan;
                     break;
 
                 default:

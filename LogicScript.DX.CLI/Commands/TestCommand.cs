@@ -51,7 +51,7 @@ namespace LogicScript.DX.CLI.Commands
             if (script == null)
                 throw new Exception("Failed to parse script");
 
-            var (bench, benchErrors) = TestBench.Parse(File.ReadAllText(GetBenchPath(scriptPath)), script);
+            var (bench, benchErrors) = TestBench.Parse(File.ReadAllText(GetBenchPath(scriptPath)));
             if (benchErrors != null && benchErrors.Count > 0)
             {
                 logger.LogParseErrors(scriptPath, benchErrors);
@@ -64,7 +64,7 @@ namespace LogicScript.DX.CLI.Commands
 
             debugger?.LoadedScript(script);
 
-            var results = bench.Run(debugger);
+            var results = bench.Run(script, debugger);
             int successful = 0, failed = 0;
 
             await foreach (var result in results)

@@ -22,19 +22,19 @@ namespace LogicScript.Tests
                 var assembly = Assembly.GetExecutingAssembly();
 
                 var prefix = assembly.GetName().Name + ".Benches.";
-                var lsbenchFiles = assembly.GetManifestResourceNames().Where(n => n.EndsWith(".lsbench"));
+                var lsxFiles = assembly.GetManifestResourceNames().Where(n => n.EndsWith(".lsx"));
 
-                return lsbenchFiles.SelectMany(lsbenchFile =>
+                return lsxFiles.SelectMany(lsxFile =>
                 {
-                    var bench = ParseBench(lsbenchFile);
+                    var script = ParseScript(lsxFile);
 
-                    return bench.CaseNames.Select((caseName, i) =>
+                    return script.TestCases.Select((@case, i) =>
                     {
-                        caseName ??= $"Case {i}";
+                        var caseName = @case.Name ?? $"Case {i}";
 
-                        return new TestCaseParameters([lsbenchFile, i])
+                        return new TestCaseParameters([lsxFile, i])
                         {
-                            TestName = $"{lsbenchFile[prefix.Length..^".lsbench".Length]}.{caseName}"
+                            TestName = $"{lsxFile[prefix.Length..^".lsx".Length]}.{caseName}"
                         };
                     });
                 });
@@ -56,8 +56,8 @@ namespace LogicScript.Tests
         [TestCaseSource(nameof(Benches))]
         public async Task Run(string lsbenchFile, int caseIndex)
         {
-            var bench = ParseBench(lsbenchFile);
-            var result = await bench.RunCase(caseIndex);
+            var script = ParseScript(lsbenchFile);
+            var result = await script.TestCases[caseIndex].Run(script, null);
 
             foreach (var line in result.PrintedLines)
             {
@@ -77,22 +77,15 @@ namespace LogicScript.Tests
             }
         }
 
-        private static TestBench ParseBench(string lsbenchFile)
+        private static Script ParseScript(string lsxFile)
         {
-            var lsxFile = lsbenchFile.Replace(".lsbench", ".lsx");
-
             var lsxSource = ReadEmbeddedFile(lsxFile);
-            var lsbenchSource = ReadEmbeddedFile(lsbenchFile);
 
             var (script, scriptErrors) = Script.Parse(lsxSource, lsxFile);
             Assert.NotNull(script);
             Assert.IsEmpty(scriptErrors);
 
-            var (bench, benchErrors) = TestBench.Parse(lsbenchSource, script!);
-            Assert.NotNull(bench);
-            Assert.IsEmpty(benchErrors);
-
-            return bench!;
+            return script!;
         }
 
         private static string ReadEmbeddedFile(string name)

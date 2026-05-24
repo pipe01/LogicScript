@@ -15,144 +15,28 @@ namespace LogicScript.Testing
     public class TestBench
     {
         private readonly IList<TestCase> Cases;
-        private readonly Script Script;
 
         public int CaseCount => Cases.Count;
         public IReadOnlyCollection<string?> CaseNames => Cases.Select(o => o.Name).ToArray();
 
-        internal TestBench(IList<TestCase> cases, Script script)
+        internal TestBench(IList<TestCase> cases)
         {
             this.Cases = cases;
-            this.Script = script;
         }
 
-        public async IAsyncEnumerable<CaseResult> Run(IDebugger? debugger = null)
+        public async IAsyncEnumerable<CaseResult> Run(Script script, IDebugger? debugger = null)
         {
-            var machine = new TestingMachine(Script.RegisteredInputLength, Script.RegisteredOutputLength);
+            var machine = new TestingMachine(script.RegisteredInputLength, script.RegisteredOutputLength);
 
             foreach (var @case in Cases)
             {
                 machine.Reset();
 
-                yield return await RunCase(machine, @case, debugger);
+                yield return await @case.Run(script, machine, debugger);
             }
         }
 
-        public async Task<CaseResult> RunCase(int index, IDebugger? debugger = null)
-        {
-            var machine = new TestingMachine(Script.RegisteredInputLength, Script.RegisteredOutputLength);
-
-            return await RunCase(machine, Cases[index], debugger);
-        }
-
-        private async Task<CaseResult> RunCase(TestingMachine machine, TestCase @case, IDebugger? debugger)
-        {
-            var hasRunStartup = false;
-            int stepsRan = 0;
-
-            CaseStep? failedStep = null;
-            var mismatchedOutputs = new Dictionary<string, BitsValue>();
-
-            foreach (var step in @case.Steps)
-            {
-                foreach (var input in step.Inputs)
-                {
-                    Span<bool> values = stackalloc bool[input.Port.BitSize];
-                    input.Value.FillBits(values);
-                    values.Reverse();
-
-                    values.CopyTo(machine.Inputs.AsSpan()[input.Port.StartIndex..]);
-                }
-
-                await new Interpreter(Script, machine, !hasRunStartup, debugger: debugger).RunToEndAsync();
-                hasRunStartup = true;
-                stepsRan++;
-
-                foreach (var output in step.Outputs)
-                {
-                    Span<bool> values = stackalloc bool[output.Port.BitSize];
-                    machine.Outputs[output.Port.StartIndex..].CopyTo(values);
-                    values.Reverse();
-
-                    var machineValue = new BitsValue(values);
-
-                    if (output.Value != machineValue)
-                    {
-                        mismatchedOutputs[output.Name] = machineValue;
-
-                        failedStep = step;
-                    }
-                }
-
-                if (failedStep != null)
-                {
-                    break;
-                }
-            }
-
-            var printed = machine.PrintOutput.ToArray();
-
-            if (failedStep == null)
-            {
-                return new CaseResult(@case.Index, @case.Name, @case.Steps.Count, printed);
-            }
-
-            var resultInputs = failedStep.Inputs.ToDictionary(o => o.Name, o => o.Value);
-            var resultOutputs = failedStep.Outputs.ToDictionary(o => o.Name, o => o.Value);
-
-            return new CaseResult(@case.Index, @case.Name, @case.Steps.Count, printed, new(stepsRan, resultInputs, resultOutputs, mismatchedOutputs));
-        }
-
-        internal static TestBench FromParsed(LogicScriptParser.Test_benchContext ctx, Script script)
-        {
-            var cases = new List<TestCase>();
-
-            int i = 0;
-            foreach (var testCase in ctx.test_case())
-            {
-                var name = testCase.name?.Text.Trim('"');
-                var steps = new List<CaseStep>();
-                CaseStep? lastStep = null;
-
-                foreach (var step in testCase.test_step())
-                {
-                    var repeat = step.step_repeat();
-                    if (repeat != null)
-                    {
-                        if (lastStep == null)
-                            throw new ParseException("The first step on a case must not be a repetition", step.Span());
-
-                        steps.Add(lastStep);
-                    }
-                    else
-                    {
-                        var action = step.step_action();
-                        var inputs = GetPorts(action.inputs, script.Inputs).ToList();
-                        var outputs = GetPorts(action.outputs, script.Outputs).ToList();
-
-                        steps.Add(new CaseStep(inputs, outputs));
-                    }
-                }
-
-                cases.Add(new TestCase(i++, name, steps));
-
-                static IEnumerable<PortValue> GetPorts(LogicScriptParser.Step_portsContext ctx, IDictionary<string, Parsing.Structures.PortInfo> scriptPorts)
-                {
-                    foreach (var item in ctx.step_portvalue())
-                    {
-                        if (!scriptPorts.TryGetValue(item.port.Text, out var port))
-                            throw new ParseException($"Unknown input '{item.port.Text}'", item.Span());
-
-                        var value = new NumberVisitor().Visit(item.value);
-                        yield return new PortValue(item.port.Text, port, value);
-                    }
-                }
-            }
-
-            return new TestBench(cases, script);
-        }
-
-        public static (TestBench? Bench, IReadOnlyList<Error> Errors) Parse(string source, Script script)
+        public static (TestBench? Bench, IReadOnlyList<Error> Errors) Parse(string source)
         {
             var errors = new ErrorSink();
 
@@ -162,7 +46,9 @@ namespace LogicScript.Testing
             var parser = new LogicScriptParser(stream);
             parser.AddErrorListener(new ErrorListener(errors));
 
-            return (FromParsed(parser.test_bench(), script), Array.Empty<Error>());
+            var visitor = new TestBenchVisitor(errors);
+
+            return (visitor.VisitTest_bench(parser.test_bench()), errors);
         }
     }
 }

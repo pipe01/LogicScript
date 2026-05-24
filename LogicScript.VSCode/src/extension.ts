@@ -10,6 +10,8 @@ import {
 
 let client: LanguageClient;
 
+const waitDebugger = false; // TODO: Move to configuration
+
 export async function activate(context: vscode.ExtensionContext) {
 	const serverPath = context.asAbsolutePath(
 		path.join('bin', process.env.BIN_NAME ?? 'LogicScript.LSP.exe')
@@ -20,12 +22,12 @@ export async function activate(context: vscode.ExtensionContext) {
 	const serverOptions: ServerOptions = {
 		run: {
 			command: serverPath,
-			// args: ["--wait-debugger"],
+			args: waitDebugger ? ["--wait-debugger"] : [],
 			transport: TransportKind.stdio,
 		},
 		debug: {
 			command: "dotnet",
-			args: ["run", "--project", context.asAbsolutePath("../LogicScript.DX.LSP/LogicScript.DX.LSP.csproj"), "--", "--wait-debugger"],
+			args: ["run", "--project", context.asAbsolutePath("../LogicScript.DX.LSP/LogicScript.DX.LSP.csproj"), ...(waitDebugger ? ["--", "--wait-debugger"] : [])],
 			transport: TransportKind.stdio,
 		}
 	};

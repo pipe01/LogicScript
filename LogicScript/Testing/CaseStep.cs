@@ -1,14 +1,26 @@
 using System.Collections.Generic;
+using System.Linq;
 using LogicScript.Data;
+using LogicScript.Parsing;
 using LogicScript.Parsing.Structures;
 
 namespace LogicScript.Testing
 {
-    internal record struct PortValue(string Name, PortInfo Port, BitsValue Value);
-
-    internal class CaseStep(IList<PortValue> inputs, IList<PortValue> outputs)
+    public record struct PortValue(string Name, MachinePorts Ports, BitsValue Value, SourceSpan NameSpan, SourceSpan ValueSpan) : ICodeNode
     {
-        public IList<PortValue> Inputs { get; } = inputs;
-        public IList<PortValue> Outputs { get; } = outputs;
+        readonly SourceSpan ICodeNode.Span => NameSpan;
+
+        public readonly IEnumerable<ICodeNode> GetChildren()
+        {
+            yield break;
+        }
+    }
+
+    public record CaseStep(IList<PortValue> Inputs, IList<PortValue> Outputs, SourceSpan Span) : ICodeNode
+    {
+        public IEnumerable<ICodeNode> GetChildren()
+        {
+            return Inputs.Concat(Outputs).Cast<ICodeNode>();
+        }
     }
 }

@@ -14,3 +14,7 @@ startup
 
     o = $c
 end
+
+@test (
+    => o(8),
+)

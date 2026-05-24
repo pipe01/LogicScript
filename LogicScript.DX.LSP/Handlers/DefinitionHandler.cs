@@ -1,4 +1,5 @@
 ﻿using LogicScript.Parsing.Structures;
+using LogicScript.Testing;
 using LogicScript.Utils;
 using OmniSharp.Extensions.LanguageServer.Protocol.Client.Capabilities;
 using OmniSharp.Extensions.LanguageServer.Protocol.Document;
@@ -21,7 +22,7 @@ namespace LogicScript.DX.LSP.Handlers
             };
         }
 
-        public override Task<LocationOrLocationLinks?> Handle(DefinitionParams request, CancellationToken cancellationToken)
+        public override async Task<LocationOrLocationLinks?> Handle(DefinitionParams request, CancellationToken cancellationToken)
         {
             var node = Workspace.GetNodeAt(request.TextDocument.Uri, request.Position);
 
@@ -37,15 +38,22 @@ namespace LogicScript.DX.LSP.Handlers
                     range = interp.Local.Span.ToRange();
                     break;
 
+                case PortValue portValue:
+                    if (Workspace.TryGetScript(request.TextDocument.Uri, out var script) && script.TryGetPort(portValue.Name, portValue.Ports, out var port))
+                        range = port.Span.ToRange();
+                    else
+                        return new();
+                    break;
+
                 default:
-                    return Task.FromResult<LocationOrLocationLinks?>(new LocationOrLocationLinks());
+                    return new();
             }
 
-            return Task.FromResult<LocationOrLocationLinks?>(new LocationOrLocationLinks(new LocationOrLocationLink(new Location
+            return new(new LocationOrLocationLink(new Location
             {
                 Uri = request.TextDocument.Uri,
                 Range = range
-            })));
+            }));
         }
     }
 }
