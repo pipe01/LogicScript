@@ -1,4 +1,5 @@
-﻿using Antlr4.Runtime.Misc;
+﻿using System;
+using Antlr4.Runtime.Misc;
 using Antlr4.Runtime.Tree;
 using LogicScript.Data;
 using LogicScript.Parsing.Structures;
@@ -30,7 +31,7 @@ namespace LogicScript.Parsing.Visitors
             {
                 var n = new NumberVisitor().Visit(context.number());
 
-                return new NumberLiteralExpression(context.Span(), n);
+                return new NumberLiteralExpression(context.Span(), new BitsValue(n, Math.Max(MaxBitSize, n.Length)));
             }
             else if (context.reference() != null)
             {
