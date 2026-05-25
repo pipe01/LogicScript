@@ -1,0 +1,18 @@
+output'4 o1
+output'4 o2
+
+startup
+    local $i = 2
+    local $c'4
+
+    for $i to 5
+        $c = $i
+    end
+
+    o1 = $c
+    o2 = $i
+end
+
+@test (
+    => o1(4) o2(2),
+)

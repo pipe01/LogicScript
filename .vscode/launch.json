@@ -8,7 +8,7 @@
             "args": [
                 "--extensionDevelopmentPath=${workspaceFolder}/LogicScript.VSCode",
                 "--disable-extensions",
-                "${workspaceFolder}/Tester"
+                "${workspaceFolder}/LogicScript.Tests/Benches"
             ]
         },
         {

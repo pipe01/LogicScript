@@ -16,9 +16,11 @@ namespace LogicScript.Parsing.Visitors
             return VisitBlock(context, BlockContext.LoopID);
         }
 
-        public Statement VisitBlock([NotNull] LogicScriptParser.BlockContext context, NodeID? loopID, BlockContext? blockContext = null)
+        public Statement VisitBlock([NotNull] LogicScriptParser.BlockContext context, NodeID? loopID, BlockContext? outerContext = null)
         {
-            blockContext ??= new BlockContext(Context, BlockContext, BlockContext.IsInConstant, loopID);
+            outerContext ??= this.BlockContext;
+
+            var blockContext = new BlockContext(Context, outerContext, outerContext.IsInConstant, loopID);
             var visitor = new StatementVisitor(Context, blockContext);
 
             var stmts = context.stmt().Select(visitor.Visit).ToArray();
@@ -82,12 +84,13 @@ namespace LogicScript.Parsing.Visitors
             var from = context.from == null ? null : new ExpressionVisitor(BlockContext).Visit(context.from);
             var to = new ExpressionVisitor(BlockContext).Visit(context.to);
 
-            var bodyContext = new BlockContext(Context, BlockContext, BlockContext.IsInConstant, id);
-            var local = bodyContext.AddLocal(varName, to.BitSize, new SourceSpan(context.VARIABLE().Symbol));
+            var outerContext = new BlockContext(Context, BlockContext, BlockContext.IsInConstant, id);
+            var local = outerContext.AddLocal(varName, to.BitSize, new SourceSpan(context.VARIABLE().Symbol));
 
-            var body = (BlockStatement)VisitBlock(context.block(), id, bodyContext);
+            var body = (BlockStatement)VisitBlock(context.block(), id, outerContext);
+            var forStmt = new ForStatement(id, context.Span(), local, from, to, body);
 
-            return new ForStatement(id, context.Span(), local, from, to, body);
+            return new BlockStatement(context.Span(), [forStmt], outerContext.Locals.ToArray());
         }
 
         public override Statement VisitStmt_while([NotNull] LogicScriptParser.Stmt_whileContext context)
