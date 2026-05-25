@@ -214,12 +214,27 @@ public class LogicScriptDebugger : IDebugger, IAttachHandler, IDisconnectHandler
         return false;
     }
 
-    private void ClearBreakpoints()
+    private void ClearBreakpoints(string? forFile = null)
     {
         BreakpointsMutex.WaitOne();
 
-        Breakpoints.Clear();
-        PendingBreakpoints.Clear();
+        if (forFile == null)
+        {
+            Breakpoints.Clear();
+            PendingBreakpoints.Clear();
+        }
+        else
+        {
+            foreach (var key in Breakpoints.Keys.Where(k => Breakpoints[k].Statement.Span.Start.FileName == forFile).ToArray())
+            {
+                Breakpoints.Remove(key);
+            }
+
+            foreach (var pending in PendingBreakpoints.Where(p => p.Location.FileName == forFile).ToArray())
+            {
+                PendingBreakpoints.Remove(pending);
+            }
+        }
 
         BreakpointsMutex.ReleaseMutex();
     }
@@ -343,7 +358,7 @@ public class LogicScriptDebugger : IDebugger, IAttachHandler, IDisconnectHandler
 
         var documentUri = "file://" + request.Source.Path;
 
-        ClearBreakpoints();
+        ClearBreakpoints(documentUri);
 
         return new()
         {
