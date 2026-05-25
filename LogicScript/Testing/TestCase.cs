@@ -41,7 +41,7 @@ namespace LogicScript.Testing
                     input.Value.FillBits(values);
                     values.Reverse();
 
-                    values.CopyTo(machine.Inputs.AsSpan()[port.StartIndex..]);
+                    values.CopyTo(machine.Inputs.AsSpan()[port.StartIndex..(port.StartIndex + port.BitSize)]);
                 }
 
                 var exitReason = await new Interpreter(script, machine, !hasRunStartup, debugger: debugger).RunToEndAsync(statementLimit);
@@ -63,7 +63,7 @@ namespace LogicScript.Testing
                         throw new ArgumentException($"Unknown output port '{output.Name}'");
 
                     Span<bool> values = new bool[port.BitSize];
-                    machine.Outputs[port.StartIndex..].CopyTo(values);
+                    machine.Outputs[port.StartIndex..(port.StartIndex + port.BitSize)].CopyTo(values);
                     values.Reverse();
 
                     var machineValue = new BitsValue(values);
