@@ -16,9 +16,9 @@ namespace LogicScript.Parsing.Visitors
             return VisitBlock(context, BlockContext.LoopID);
         }
 
-        public Statement VisitBlock([NotNull] LogicScriptParser.BlockContext context, NodeID? loopID)
+        public Statement VisitBlock([NotNull] LogicScriptParser.BlockContext context, NodeID? loopID, BlockContext? blockContext = null)
         {
-            var blockContext = new BlockContext(Context, BlockContext, BlockContext.IsInConstant, loopID);
+            blockContext ??= new BlockContext(Context, BlockContext, BlockContext.IsInConstant, loopID);
             var visitor = new StatementVisitor(Context, blockContext);
 
             var stmts = context.stmt().Select(visitor.Visit).ToArray();
@@ -76,20 +76,16 @@ namespace LogicScript.Parsing.Visitors
 
         public override Statement VisitStmt_for([NotNull] LogicScriptParser.Stmt_forContext context)
         {
+            var id = NodeID.Next();
+
             var varName = context.VARIABLE().GetText();
             var from = context.from == null ? null : new ExpressionVisitor(BlockContext).Visit(context.from);
             var to = new ExpressionVisitor(BlockContext).Visit(context.to);
 
-            // TODO: Scope the local inside the loop, not outside
-            var local = BlockContext.TryGetLocal(varName, out var l)
-                ? l
-                : BlockContext.AddLocal(varName, to.BitSize, new SourceSpan(context.VARIABLE().Symbol));
+            var bodyContext = new BlockContext(Context, BlockContext, BlockContext.IsInConstant, id);
+            var local = bodyContext.AddLocal(varName, to.BitSize, new SourceSpan(context.VARIABLE().Symbol));
 
-            if (local.BitSize < to.BitSize) // TODO: The loop doesn't actually reach the value in 'to' as it's exclusive, so the required bit size may be one smaller than what's currently computed
-                Context.Errors.AddError($"The loop variable '{varName}' is too small to hold the loop limit", new SourceSpan(context.VARIABLE().Symbol));
-
-            var id = NodeID.Next();
-            var body = VisitBlock(context.block(), id);
+            var body = (BlockStatement)VisitBlock(context.block(), id, bodyContext);
 
             return new ForStatement(id, context.Span(), local, from, to, body);
         }

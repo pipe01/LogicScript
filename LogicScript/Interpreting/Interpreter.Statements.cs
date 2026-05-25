@@ -49,7 +49,7 @@ namespace LogicScript.Interpreting
             {
                 foreach (var local in stmt.Locals)
                 {
-                    Locals.Add(local, 0);
+                    Locals[local] = 0;
                 }
             }));
         }
