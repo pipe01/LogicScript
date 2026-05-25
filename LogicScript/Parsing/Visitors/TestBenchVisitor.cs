@@ -13,7 +13,7 @@ namespace LogicScript.Parsing.Visitors
             int i = 0;
             foreach (var testCase in context.test_case())
             {
-                cases.Add(new TestCaseVisitor(i++, errors).VisitTest_case(testCase));
+                cases.Add(new TestCaseVisitor(null, i++, errors).VisitTest_case(testCase));
             }
 
             return new TestBench(cases);

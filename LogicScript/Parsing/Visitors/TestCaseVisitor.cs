@@ -6,7 +6,7 @@ using LogicScript.Testing;
 
 namespace LogicScript.Parsing.Visitors
 {
-    internal class TestCaseVisitor(int index, ErrorSink errors) : LogicScriptBaseVisitor<TestCase>
+    internal class TestCaseVisitor(ScriptContext? script, int index, ErrorSink errors) : LogicScriptBaseVisitor<TestCase>
     {
         public override TestCase VisitTest_case([NotNull] LogicScriptParser.Test_caseContext context)
         {
@@ -69,7 +69,7 @@ namespace LogicScript.Parsing.Visitors
                     }
                     seen.Add(item.port.Text);
 
-                    var value = new NumberVisitor().Visit(item.value);
+                    var value = item.value.GetConstantValue(script ?? new(new(), errors));
                     yield return new PortValue(item.port.Text, ports, value, item.port.Span(), item.value.Span());
                 }
             }

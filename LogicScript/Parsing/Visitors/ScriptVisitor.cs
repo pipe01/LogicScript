@@ -18,7 +18,7 @@ namespace LogicScript.Parsing.Visitors
             int caseCounter = 0;
             foreach (var testCaseCtx in context.test_case())
             {
-                var testCaseVisitor = new TestCaseVisitor(caseCounter++, errors);
+                var testCaseVisitor = new TestCaseVisitor(ctx, caseCounter++, errors);
                 var testCase = testCaseVisitor.VisitTest_case(testCaseCtx);
 
                 foreach (var step in testCase.Steps)
