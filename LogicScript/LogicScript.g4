@@ -52,7 +52,7 @@ task_update         : 'queueUpdate' ;
 stmt_vardecl        : 'local' WS+ VARIABLE ('\'' size=atom)? (wsnl '=' wsnl expression)? ;
 
 expression          : LPAREN wsnl expression wsnl RPAREN                        # exprParen
-                    | LPAREN wsnl expression wsnl RPAREN '\'' DEC_NUMBER        # exprTrunc
+                    | LPAREN wsnl expression wsnl RPAREN '\'' size=expression   # exprTrunc
                     | funcName=IDENT LPAREN wsnl expression wsnl RPAREN         # exprCall
                     | expression indexer                                        # exprSlice
                     | NOT expression                                            # exprNegate

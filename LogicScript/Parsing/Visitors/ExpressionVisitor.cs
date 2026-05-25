@@ -234,9 +234,9 @@ namespace LogicScript.Parsing.Visitors
 
         public override Expression VisitExprTrunc([NotNull] LogicScriptParser.ExprTruncContext context)
         {
-            // Create a new unbounded expression visitor, since we don't care about length
-            var operand = new ExpressionVisitor(Context).Visit(context.expression());
-            var size = int.Parse(context.DEC_NUMBER().GetText());
+            // Create a new unbounded expression visitor since we don't care about length
+            var operand = new ExpressionVisitor(Context).Visit(context.expression(0));
+            var size = context.size.GetConstantValue(Context.Script);
 
             return new TruncateExpression(context.Span(), operand, size);
         }
