@@ -51,13 +51,23 @@ namespace LogicScript.DX.LSP
                 switch (result)
                 {
                     case FailedStepCaseResult failedStep:
-                        message.AppendLine(failedStep.GetFailureString());
+                        message.Append(failedStep.GetFailureString());
                         break;
 
                     case LimitReachedCaseResult limitReached:
                         message.AppendLine("Statement limit reached");
                         message.AppendLine("Check your code for any infinite loops or try raising the statement limit in the extension's settings.");
                         break;
+                }
+
+                if (result.PrintedLines.Count > 0)
+                {
+                    message.AppendLine("\nOutput:");
+
+                    foreach (var line in result.PrintedLines)
+                    {
+                        message.AppendLine("  " + line);
+                    }
                 }
 
                 server.SendNotification("logicscript/logTestOutput", message.ToString());
