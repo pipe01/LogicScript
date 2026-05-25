@@ -2,6 +2,7 @@
 using LogicScript.Parsing.Structures;
 using LogicScript.Parsing.Structures.Expressions;
 using LogicScript.Parsing.Structures.Statements;
+using LogicScript.Parsing.Visitors;
 using LogicScript.Testing;
 using LogicScript.Utils;
 using OmniSharp.Extensions.LanguageServer.Protocol.Client.Capabilities;
@@ -63,6 +64,16 @@ namespace LogicScript.DX.LSP.Handlers
                 case Expression expr:
                     size = expr.BitSize;
                     span = expr.Span;
+
+                    if (expr.IsConstant)
+                    {
+                        try
+                        {
+                            lines.Add($"Constant: `{expr.GetConstantValue()}`");
+                        }
+                        catch { }
+                    }
+
                     break;
 
                 case DeclareLocalStatement local:
@@ -87,7 +98,7 @@ namespace LogicScript.DX.LSP.Handlers
                 Contents = new MarkedStringsOrMarkupContent(new MarkupContent
                 {
                     Kind = MarkupKind.Markdown,
-                    Value = string.Join("\n---\n", lines)
+                    Value = string.Join("\n\n", lines)
                 }),
                 Range = span.ToRange()
             });
@@ -96,8 +107,8 @@ namespace LogicScript.DX.LSP.Handlers
         private static string GetPortDescription(PortInfo port)
         {
             return port.BitSize == 1
-                ? $"### {port.Target} index {port.StartIndex}"
-                : $"### {port.Target} index {port.StartIndex} to {port.StartIndex + port.BitSize - 1}";
+                ? $"**{port.Target} index {port.StartIndex}**"
+                : $"**{port.Target} index {port.StartIndex} to {port.StartIndex + port.BitSize - 1}**";
         }
     }
 }
