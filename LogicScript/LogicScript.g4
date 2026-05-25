@@ -7,7 +7,7 @@ test_case           : '@test' WS+ (name=TEXT WS+)? LPAREN wsnl (test_step NL+)* 
 test_step           : WS* (step_action | step_repeat) COMMA ;
 
 step_action         : inputs=step_ports WS* ARROW WS* outputs=step_ports ;
-step_repeat         : '@' DEC_NUMBER ;
+step_repeat         : '+' DEC_NUMBER ;
 step_ports          : (step_portvalue (WS+ step_portvalue)*)? ;
 step_portvalue      : port=IDENT LPAREN value=number RPAREN ;
 
