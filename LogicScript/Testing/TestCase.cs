@@ -37,8 +37,10 @@ namespace LogicScript.Testing
                     if (!script.Inputs.TryGetValue(input.Name, out var port))
                         throw new ArgumentException($"Unknown input port '{input.Name}'");
 
+                    var expandedValue = new BitsValue(input.Value.Number, port.BitSize);
+
                     Span<bool> values = new bool[port.BitSize];
-                    input.Value.FillBits(values);
+                    expandedValue.FillBits(values);
                     values.Reverse();
 
                     values.CopyTo(machine.Inputs.AsSpan()[port.StartIndex..(port.StartIndex + port.BitSize)]);
@@ -68,6 +70,7 @@ namespace LogicScript.Testing
 
                     var machineValue = new BitsValue(values);
 
+                    var expandedValue = new BitsValue(output.Value.Number, port.BitSize);
                     if (output.Value != machineValue)
                     {
                         mismatchedOutputs[output.Name] = machineValue;
