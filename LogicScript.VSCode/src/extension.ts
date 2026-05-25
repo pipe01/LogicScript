@@ -13,21 +13,26 @@ let client: LanguageClient;
 const waitDebugger = false;
 
 export async function activate(context: vscode.ExtensionContext) {
-	const serverPath = context.asAbsolutePath(
-		path.join('bin', process.env.BIN_NAME ?? 'LogicScript.LSP.exe')
+	const lspPath = context.asAbsolutePath(
+		path.join('bin', process.env.LSP_NAME ?? 'LogicScript.LSP.exe')
+	);
+	const lspArgs = waitDebugger ? ["--wait-debugger"] : [];
+
+	const cliPath = context.asAbsolutePath(
+		path.join('bin', process.env.CLI_NAME ?? 'LogicScript.CLI.exe')
 	);
 
 	// If the extension is launched in debug mode then the debug server options are used
 	// Otherwise the run options are used
 	const serverOptions: ServerOptions = {
 		run: {
-			command: serverPath,
-			args: waitDebugger ? ["--wait-debugger"] : [],
+			command: lspPath,
+			args: lspArgs,
 			transport: TransportKind.stdio,
 		},
 		debug: {
 			command: "dotnet",
-			args: ["run", "--project", context.asAbsolutePath("../LogicScript.DX.LSP/LogicScript.DX.LSP.csproj"), ...(waitDebugger ? ["--", "--wait-debugger"] : [])],
+			args: ["run", "--project", context.asAbsolutePath("../LogicScript.DX.LSP/LogicScript.DX.LSP.csproj"), ...lspArgs],
 			transport: TransportKind.stdio,
 		}
 	};
@@ -62,6 +67,16 @@ export async function activate(context: vscode.ExtensionContext) {
 		})
 	});
 
+	vscode.commands.registerCommand("logicscript.tests.debugFile", (script, caseIndex) => {
+		vscode.debug.startDebugging(undefined, {
+			name: "Test debug",
+			request: "attach",
+			type: "logicscript-test",
+			script,
+			caseIndices: [caseIndex],
+		})
+	})
+
 	const testOutput = vscode.window.createOutputChannel("LogicScript Tests");
 	client.onNotification("logicscript/clearTestOutput", () => testOutput.clear());
 	client.onNotification("logicscript/logTestOutput", params => {
@@ -70,6 +85,24 @@ export async function activate(context: vscode.ExtensionContext) {
 		if (config.get<boolean>("test.focusOnFail"))
 			testOutput.show(true);
 	});
+	context.subscriptions.push(testOutput);
+
+	context.subscriptions.push(vscode.debug.registerDebugAdapterDescriptorFactory("logicscript-test", {
+		async createDebugAdapterDescriptor(session, _) {
+			const scriptPath = (session.configuration.script as string) ?? vscode.window.activeTextEditor?.document.uri.toString();
+			const caseIndices = session.configuration.caseIndices as number[] | undefined;
+
+			const dapEndpoint: { host: string, port: number } = await client.sendRequest("workspace/executeCommand", {
+				command: "logicscript/startTestDebug",
+				arguments: [
+					scriptPath,
+					...(caseIndices ? [caseIndices] : [])
+				]
+			});
+
+			return new vscode.DebugAdapterServer(dapEndpoint.port);
+		},
+	}));
 
 	// Start the client. This will also launch the server
 	await client.start();

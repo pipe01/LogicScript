@@ -1,8 +1,8 @@
 const esbuild = require("esbuild");
 const argv = require("minimist")(process.argv.slice(2));
 
-if (!argv.bin) {
-    console.error("Binary name is required");
+if (!argv.lsp) {
+    console.error("LSP binary name is required");
     process.exit(1);
 }
 
@@ -17,7 +17,7 @@ const options = {
     format: "cjs",
     platform: "node",
     define: {
-        "process.env.BIN_NAME": JSON.stringify(argv.bin)
+        "process.env.LSP_NAME": JSON.stringify(argv.lsp)
     }
 };
 

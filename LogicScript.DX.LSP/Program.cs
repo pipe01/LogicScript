@@ -15,7 +15,7 @@ namespace LogicScript.DX.LSP
 
         static async Task Main(string[] args)
         {
-            if (args.Length > 0 && args[0] == "--wait-debugger")
+            if (args.Contains("--wait-debugger"))
                 while (!Debugger.IsAttached)
                     await Task.Delay(400);
 
@@ -30,7 +30,8 @@ namespace LogicScript.DX.LSP
 
                 .ConfigureLogging(logging =>
                 {
-                    // logging.AddLanguageProtocolLogging();
+                    if (args.Contains("--log-protocol"))
+                        logging.AddLanguageProtocolLogging();
                 })
 
                 .WithHandler<DocumentHandler>()
@@ -41,6 +42,7 @@ namespace LogicScript.DX.LSP
                 .WithHandler<InlayHintsHandler>()
                 .WithHandler<CodeLensHandler>()
                 .WithHandler<ExecuteCommandHandler>()
+                .WithHandler<StartTestDebugHandler>()
             );
 
             await server.Initialize(CancellationToken.None);

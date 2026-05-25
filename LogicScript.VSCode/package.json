@@ -82,8 +82,8 @@
         ],
         "debuggers": [
             {
-                "type": "logicscript",
-                "label": "Logic Script Debugger",
+                "type": "logicscript-attach",
+                "label": "Attach to LogicScript",
 
                 "configurationAttributes": {
                     "attach": {}
@@ -91,11 +91,34 @@
 
                 "initialConfigurations": [
                     {
-                        "type": "logicscript",
+                        "type": "logicscript-attach",
                         "request": "attach",
                         "name": "Attach to running LogicScript",
-                        "stopOnEntry": true,
                         "debugServer": 43532
+                    }
+                ]
+            },
+            {
+                "type": "logicscript-test",
+                "label": "Debug LogicScript tests",
+
+                "configurationAttributes": {
+                    "attach": {
+                        "properties": {
+                            "script": {
+                                "type": "string",
+                                "description": "Path to a .lsx file with tests or .lsbench file to run and debug.",
+                                "default": "${file}"
+                            }
+                        }
+                    }
+                },
+
+                "initialConfigurations": [
+                    {
+                        "type": "logicscript-test",
+                        "request": "launch",
+                        "name": "Debug LogicScript tests"
                     }
                 ]
             }
@@ -105,6 +128,9 @@
         "@types/node": "^16.11.6",
         "vscode-languageclient": "^9.0.1"
     },
+    "activationEvents": [
+        "onDebug"
+    ],
     "main": "./out/main",
     "devDependencies": {
         "@types/minimist": "^1.2.2",

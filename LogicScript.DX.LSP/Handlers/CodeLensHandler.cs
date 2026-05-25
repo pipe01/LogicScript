@@ -43,6 +43,17 @@ namespace LogicScript.DX.LSP.Handlers
                                 Title = "Run test"
                             }
                         });
+
+                        codeLens.Add(new()
+                        {
+                            Range = new(testCase.Span.Start.Line - 1, 0, testCase.Span.Start.Line - 1, 0),
+                            Command = new()
+                            {
+                                Name = "logicscript.tests.debugFile",
+                                Arguments = [request.TextDocument.Uri.ToString(), testCase.Index],
+                                Title = "Debug test"
+                            }
+                        });
                     }
                 }
             }

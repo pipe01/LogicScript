@@ -36,14 +36,16 @@ public class LogicScriptDebugger : IDebugger, IAttachHandler, IDisconnectHandler
 
         ClearBreakpoints();
 
-        Server = DebugAdapterServer.Create(opts => opts
-            .WithInput(input)
-            .WithOutput(output)
-            .WithUnhandledExceptionHandler(_ => SessionDone.TrySetResult(false))
-            .AddHandler(this)
-        );
+        using var server = DebugAdapterServer.Create(opts => opts
+                    .WithInput(input)
+                    .WithOutput(output)
+                    .WithUnhandledExceptionHandler(_ => SessionDone.TrySetResult(false))
+                    .AddHandler(this)
+                );
 
-        await Server.Initialize(CancellationToken.None);
+        this.Server = server;
+
+        await server.Initialize(CancellationToken.None);
 
         if (CurrentPause != null)
             Pause(CurrentPause.Value);
@@ -53,26 +55,40 @@ public class LogicScriptDebugger : IDebugger, IAttachHandler, IDisconnectHandler
         Continue();
     }
 
-    private async Task RunSocketAsync(int port)
-    {
-        var listener = new TcpListener(IPAddress.Loopback, port);
+    public static LogicScriptDebugger Launch(int port = 43532, bool singleClient = false) => Launch(new TcpListener(IPAddress.Loopback, port), singleClient);
 
+    public static LogicScriptDebugger Launch(TcpListener listener, bool singleClient = false)
+    {
         listener.Start();
 
-        while (true)
-        {
-            using var socket = await listener.AcceptSocketAsync();
-            using var stream = new NetworkStream(socket);
+        var debugger = new LogicScriptDebugger();
 
-            await RunAsync(stream, stream);
-        }
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                do
+                {
+                    using var socket = await listener.AcceptSocketAsync();
+                    using var stream = new NetworkStream(socket);
+
+                    await debugger.RunAsync(stream, stream);
+                } while (!singleClient);
+            }
+            finally
+            {
+                listener.Stop();
+            }
+        });
+
+        return debugger;
     }
 
-    public static LogicScriptDebugger Launch(int port = 43532)
+    public static LogicScriptDebugger Launch(Stream input, Stream output)
     {
         var debugger = new LogicScriptDebugger();
 
-        _ = Task.Run(async () => await debugger.RunSocketAsync(port));
+        _ = Task.Run(async () => await debugger.RunAsync(input, output));
 
         return debugger;
     }
@@ -101,6 +117,11 @@ public class LogicScriptDebugger : IDebugger, IAttachHandler, IDisconnectHandler
             ThreadId = 0,
             Reason = state.HasBreakpoint ? StoppedEventReason.Breakpoint : StoppedEventReason.Step
         });
+    }
+
+    public void Stop()
+    {
+        Server?.SendTerminated(new());
     }
 
     private static string FormatBitsValue(BitsValue value, int length) => $"{value.ToStringBinary(length)} ({value})";
@@ -320,13 +341,13 @@ public class LogicScriptDebugger : IDebugger, IAttachHandler, IDisconnectHandler
         if (request.Breakpoints is null)
             return new();
 
-        var script = LoadedScripts.FirstOrDefault(s => s.FileName == request.Source.Path);
+        var documentUri = "file://" + request.Source.Path;
 
         ClearBreakpoints();
 
         return new()
         {
-            Breakpoints = new(request.Breakpoints.Select(b => AddBreakpoint(new SourceLocation(request.Source.Path ?? "", b.Line, b.Column ?? 0))))
+            Breakpoints = new(request.Breakpoints.Select(b => AddBreakpoint(new SourceLocation(documentUri, b.Line, b.Column ?? 0))))
         };
     }
 
