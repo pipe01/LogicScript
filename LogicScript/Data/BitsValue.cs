@@ -73,7 +73,7 @@ namespace LogicScript.Data
             }
         }
 
-        public bool this[int bitIndex] => ((Number >> (Length - 1 - bitIndex)) & 1) == 1;
+        public bool this[int bitIndex] => ((Number >> bitIndex) & 1) == 1;
 
         public BitsValue(ulong number, int length)
         {
@@ -92,10 +92,10 @@ namespace LogicScript.Data
 
             ulong n = 0;
 
-            for (int i = bits.Length - 1; i >= 0; i--)
+            for (int i = 0; i < bits.Length; i++)
             {
                 if (bits[i])
-                    n |= 1UL << (bits.Length - 1 - i);
+                    n |= 1UL << i;
             }
 
             this.Number = n;
@@ -143,7 +143,7 @@ namespace LogicScript.Data
             if (size < 0 || start + size > Length)
                 throw new ArgumentOutOfRangeException(nameof(size));
 
-            return new BitsValue((Number >> (Length - start - size)) & ((1UL << size) - 1), size);
+            return new BitsValue((Number >> start) & ((1UL << size) - 1), size);
         }
 
         public override int GetHashCode() => Number.GetHashCode();
