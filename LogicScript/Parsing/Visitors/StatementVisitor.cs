@@ -31,7 +31,7 @@ namespace LogicScript.Parsing.Visitors
 
         public override Statement VisitAssignRegular([NotNull] LogicScriptParser.AssignRegularContext context)
         {
-            var @ref = new ReferenceVisitor(BlockContext).Visit(context.reference());
+            var @ref = new ReferenceVisitor(BlockContext, 0).Visit(context.reference());
 
             if (!@ref.IsWritable)
                 Context.Errors.AddError("The left hand side of an assignment must be writable", context.reference().Span());
@@ -43,7 +43,7 @@ namespace LogicScript.Parsing.Visitors
 
         public override Statement VisitAssignTruncate([NotNull] LogicScriptParser.AssignTruncateContext context)
         {
-            var @ref = new ReferenceVisitor(BlockContext).Visit(context.reference());
+            var @ref = new ReferenceVisitor(BlockContext, 0).Visit(context.reference());
 
             if (!@ref.IsWritable)
                 Context.Errors.AddError("The left hand side of an assignment must be writable", context.reference().Span());
@@ -124,7 +124,7 @@ namespace LogicScript.Parsing.Visitors
             Expression? value = null;
 
             // If the variable has a bit size marker, we will use that size. Otherwise, we will later infer it from the value
-            int size = context.size == null ? 0 : context.size.GetConstantValue(BlockContext.Script);
+            int size = context.size == null ? 0 : (int)context.size.GetConstantValue(BlockContext.Script);
 
             if (context.expression() != null)
             {

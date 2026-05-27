@@ -9,7 +9,7 @@ test_step           : WS* (step_action | step_repeat) COMMA ;
 step_action         : inputs=step_ports WS* ARROW WS* outputs=step_ports ;
 step_repeat         : '+' DEC_NUMBER ;
 step_ports          : (step_portvalue (WS+ step_portvalue)*)? ;
-step_portvalue      : port=IDENT LPAREN value=expression RPAREN ;
+step_portvalue      : port=IDENT LPAREN expression (wsnl ',' wsnl expression)* RPAREN ;
 
 declaration         : decl_const | decl_input | decl_output | decl_register | decl_when | decl_startup | decl_assign ;
 decl_const          : 'const' WS+ IDENT WS+ EQUALS WS+ expression ;
@@ -20,7 +20,7 @@ decl_when           : 'when' space=WS+ (cond=expression | any='*') NL+ block 'en
 decl_startup        : 'startup' WS* NL+ block 'end' ;
 decl_assign         : 'assign' WS+ stmt_assign ;
 
-port_info           : ('\'' size=expression)? WS+ IDENT ;
+port_info           : ('\'' size=expression)? WS+ IDENT simple_indexer? ;
 
 block               : (wsnl stmt WS* NL wsnl)* wsnl ;
 
@@ -55,7 +55,7 @@ expression          : LPAREN wsnl expression wsnl RPAREN                        
                     | LPAREN wsnl expression wsnl RPAREN '\'' size=expression   # exprTrunc
                     | funcName=IDENT LPAREN wsnl expression wsnl RPAREN         # exprCall
                     | 'len' LPAREN wsnl (reference | expression) wsnl RPAREN    # exprLength
-                    | expression indexer                                        # exprSlice
+                    | expression slice_indexer                                  # exprSlice
                     | NOT expression                                            # exprNegate
                     | expression wsnl op=(OR | AND) wsnl expression             # exprAndOr
                     | expression wsnl XOR wsnl expression                       # exprXor
@@ -83,14 +83,15 @@ atom                : reference
 number              : DEC_NUMBER | BIN_NUMBER | HEX_NUMBER ;
 
 reference           : VARIABLE                      # refLocal
+                    | IDENT simple_indexer          # refIndex
                     | IDENT                         # refPort
-                    // | reference indexer             # refSlice
                     ;
 
 wsnl                : (WS | NL)* ;
 wsnl_req            : (WS | NL)+ ;
 
-indexer             : '[' lr=('>' | '<')? WS* offset=expression wsnl (COMMA WS* len=expression)? ']' ;
+slice_indexer       : '{' lr=('>' | '<')? WS* offset=expression wsnl (COMMA WS* len=expression)? '}' ;
+simple_indexer      : '[' index=expression ']' ;
 
 /*
  * Lexer Rules

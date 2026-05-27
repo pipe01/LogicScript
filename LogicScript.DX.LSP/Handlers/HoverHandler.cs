@@ -34,7 +34,7 @@ namespace LogicScript.DX.LSP.Handlers
                 typeof(Reference),
                 typeof(Expression),
                 typeof(DeclareLocalStatement),
-                typeof(PortValue),
+                typeof(PortValues),
             ]);
             var lines = new List<string>();
             int size;
@@ -83,7 +83,7 @@ namespace LogicScript.DX.LSP.Handlers
 
                 case PortValue portValue:
                     size = portValue.Value.Length;
-                    span = portValue.NameSpan;
+                    span = portValue.Span;
                     break;
 
                 default:

@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using LogicScript.Parsing.Structures;
 using LogicScript.Parsing.Structures.Expressions;
 using LogicScript.Parsing.Structures.Statements;
 using OmniSharp.Extensions.LanguageServer.Protocol.Client.Capabilities;
@@ -42,7 +43,7 @@ namespace LogicScript.DX.LSP.Handlers
                     highlights.Add(new()
                     {
                         Kind = DocumentHighlightKind.Write,
-                        Range = assign.Reference.Span.ToRange()
+                        Range = assign.Reference is PortReference portRef ? portRef.PortSpan.ToRange() : assign.Reference.Span.ToRange()
                     });
                 }
                 else if (node is ReferenceExpression refExpr && refExpr.Reference.Port.Equals(port))
@@ -50,7 +51,7 @@ namespace LogicScript.DX.LSP.Handlers
                     highlights.Add(new()
                     {
                         Kind = DocumentHighlightKind.Read,
-                        Range = refExpr.Reference.Span.ToRange()
+                        Range = refExpr.Reference is PortReference portRef ? portRef.PortSpan.ToRange() : refExpr.Reference.Span.ToRange()
                     });
                 }
             }

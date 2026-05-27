@@ -23,8 +23,8 @@ namespace LogicScript
         public IDictionary<string, BitsValue> Constants { get; } = new Dictionary<string, BitsValue>();
         public IList<TestCase> TestCases { get; } = [];
 
-        internal int RegisteredInputLength => Inputs.Values.Sum(o => o.BitSize);
-        internal int RegisteredOutputLength => Outputs.Values.Sum(o => o.BitSize);
+        internal int RegisteredInputLength => Inputs.Values.Sum(o => o.BitSize * o.VectorLength);
+        internal int RegisteredOutputLength => Outputs.Values.Sum(o => o.BitSize * o.VectorLength);
 
         internal IList<Block> Blocks { get; } = [];
 

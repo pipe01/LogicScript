@@ -25,14 +25,13 @@ namespace Tester
 
             var machine = new MyMachine
             {
-                InputCount = script.Inputs.Values.Sum(o => o.BitSize),
-                OutputCount = script.Outputs.Values.Sum(o => o.BitSize)
+                InputCount = script.RegisteredInputLength,
+                OutputCount = script.RegisteredOutputLength
             };
 
             new Interpreter(script, machine, true).Run();
 
             var program = Compiler.Compile(script);
-            Console.WriteLine(string.Join(", ", program));
 
             var scratch = new bool[Math.Max(machine.InputCount, machine.OutputCount)];
 

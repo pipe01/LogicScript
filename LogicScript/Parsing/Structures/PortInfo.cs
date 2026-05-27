@@ -12,7 +12,8 @@ namespace LogicScript.Parsing.Structures
     {
         Input,
         Output,
-        Register
+        Register,
+        Placeholder
     }
 
     public readonly struct MachinePortInfo : IPortInfo
@@ -20,14 +21,19 @@ namespace LogicScript.Parsing.Structures
         public MachinePorts Target { get; }
         public int StartIndex { get; }
         public int BitSize { get; }
+        public int VectorLength { get; }
 
         public SourceSpan Span { get; }
 
-        internal MachinePortInfo(MachinePorts target, int index, int bitSize, SourceSpan span)
+        internal MachinePortInfo(MachinePorts target, int index, int bitSize, int vectorLength, SourceSpan span)
         {
+            if (vectorLength <= 0)
+                throw new ArgumentOutOfRangeException(nameof(vectorLength), "Vector length must be one or greater.");
+
             this.Target = target;
             this.StartIndex = index;
             this.BitSize = bitSize;
+            this.VectorLength = vectorLength;
             this.Span = span;
         }
 

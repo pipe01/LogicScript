@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using LogicScript.Parsing.Structures.Expressions;
 
 namespace LogicScript.Parsing.Structures
 {
@@ -19,16 +20,18 @@ namespace LogicScript.Parsing.Structures
         }
     }
 
-    internal sealed class PortReference(SourceSpan span, MachinePortInfo port) : Reference(span)
+    internal sealed class PortReference(SourceSpan span, SourceSpan portSpan, MachinePortInfo port, Expression? vectorIndex) : Reference(span)
     {
         public MachinePortInfo PortInfo { get; } = port;
+        public SourceSpan PortSpan { get; } = portSpan;
 
         public override IPortInfo Port => PortInfo;
 
         public int StartIndex => PortInfo.StartIndex;
+        public Expression? VectorIndex { get; } = vectorIndex;
 
-        public override bool IsWritable => PortInfo.Target is MachinePorts.Output or MachinePorts.Register;
-        public override bool IsReadable => PortInfo.Target is MachinePorts.Input or MachinePorts.Register;
+        public override bool IsWritable => PortInfo.Target is MachinePorts.Output or MachinePorts.Register or MachinePorts.Placeholder;
+        public override bool IsReadable => PortInfo.Target is MachinePorts.Input or MachinePorts.Register or MachinePorts.Placeholder;
 
         public override string ToString()
         {
@@ -37,6 +40,7 @@ namespace LogicScript.Parsing.Structures
                 MachinePorts.Input => "input",
                 MachinePorts.Output => "output",
                 MachinePorts.Register => "reg",
+                MachinePorts.Placeholder => "<placeholder>",
                 _ => throw new System.Exception("Unknown target")
             };
 

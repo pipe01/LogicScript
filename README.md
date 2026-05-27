@@ -74,7 +74,7 @@ input sel
 input'2 data
 output out
 
-assign out = sel ? data[0] : data[1]
+assign out = sel ? data{0} : data{1}
 ```
 
 # Syntax reference
@@ -101,6 +101,9 @@ They can be defined in one of three formats:
 The machine can interact with its surroundings through the use of inputs and outputs, and it can additionally store an arbitrary amount of data using registers.
 
 Inputs can only be read from, and outputs can only be written to. They have a size of 1 bit, however they can be grouped together and be represented as a single number. Registers can be written to and read from, they can have a size from 1 to 64 bits and they persist their value.
+
+You may additionally create input, output and register vectors, which are simply multiple ports of the same size grouped together.
+For instance, `input'3 in[5]` declares an input vector made of 5 numbers that are 3 bits wide for a total of 15 bits.
 
 ## Top-level declarations
 ### Ports
@@ -170,7 +173,9 @@ The body of the blocks mentioned above consists of multiple statements, one per 
 
 #### Port references
 
-To read readable (input and register) ports' value, you can use the same name that was specified in the declaration.
+To read readable (input and register) ports' value, simply use the same name that was specified in the declaration.
+
+To access port vectors you can use an index in square brackets after the name, e.g. `data[3]`.
 
 #### Operators
 
@@ -213,10 +218,10 @@ The slice expression can be used to get a number consisting of a subset of anoth
 In order to specify the starting reference, a `<` or `>` character can be inserted after the opening bracket to indicate "left" or "right" respectively; if neither is used, the latter will be assumed. The syntax is as follows:
 
 ```js
-[0]     // Get 1 bit starting from the 1st position from the right (the offset is inclusive)
-[0,3]   // Get 3 bits starting from the 1st position from the right
-[>4,3]  // Get 3 bits starting from the 5th position from the right
-[<2,2]  // Get 2 bits starting from the 3rd position from the left
+{0}     // Get 1 bit starting from the 1st position from the right (the offset is inclusive)
+{0,3}   // Get 3 bits starting from the 1st position from the right
+{>4,3}  // Get 3 bits starting from the 5th position from the right
+{<2,2}  // Get 2 bits starting from the 3rd position from the left
 ```
 
 #### Truncation
@@ -233,7 +238,7 @@ There's also a shortcut truncation assignment, which will truncate the right sid
 ```
 local $var'4
 
-$var '= 100 // Will truncate to 4 bits
+$var '= 100 // Equivalent to (100)'len($var)
 ```
 
 ### Statements
@@ -270,6 +275,10 @@ end
 Runs a list of statements a number of times, as defined by the "from" and "to" values. It assigns an increasing value to a local, which will be declared if it isn't already. The "from" value is inclusive, while the "to" value isn't. If the former is not specified, `0` will be assumed.
 
 ```lua
+for $i to 5
+    // ...
+end
+
 for $i from 0 to 5
     // ...
 end
@@ -287,7 +296,7 @@ end
 
 #### Break statement
 
-When used inside a `for` or `while` loop, it exits that loop. When used inside a `when` or `startup` block, it exits that block.
+When used inside a `for` or `while` loop, it exits that loop.
 
 #### Tasks
 

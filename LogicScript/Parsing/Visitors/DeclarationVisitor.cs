@@ -99,10 +99,18 @@ namespace LogicScript.Parsing.Visitors
 
         private void Visit(LogicScriptParser.Port_infoContext context, IDictionary<string, MachinePortInfo> dic, MachinePorts target)
         {
-            var size = context.size == null ? 1 : context.size.GetConstantValue(Context);
+            int size = context.size == null ? 1 : (int)context.size.GetConstantValue(Context);
 
             if (size > BitsValue.BitSize)
                 Errors.AddError($"The maximum bit size is {BitsValue.BitSize}", context.Span());
+
+            int length = context.simple_indexer() == null ? 1 : (int)context.simple_indexer().index.GetConstantValue(Context);
+
+            if (length <= 0)
+            {
+                Errors.AddError("Vectors length must be greater than zero", context.Span());
+                length = 1;
+            }
 
             var name = context.IDENT()?.GetText();
             if (name == null)
@@ -119,7 +127,7 @@ namespace LogicScript.Parsing.Visitors
 
             int startIndex = dic.Values.Sum(o => o.BitSize);
 
-            dic.Add(name, new MachinePortInfo(target, startIndex, size, new(context.IDENT().Symbol)));
+            dic.Add(name, new MachinePortInfo(target, startIndex, size, length, new(context.IDENT().Symbol)));
         }
     }
 }

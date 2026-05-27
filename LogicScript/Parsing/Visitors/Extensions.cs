@@ -7,8 +7,8 @@ namespace LogicScript.Parsing.Visitors
 {
     internal static class Extensions
     {
-        public static int GetConstantValue(this IParseTree tree, ScriptContext context)
-            => (int)new ExpressionVisitor(new BlockContext(context, null, true)).Visit(tree).GetConstantValue().Number;
+        public static BitsValue GetConstantValue(this IParseTree tree, ScriptContext context)
+            => new ExpressionVisitor(new BlockContext(context, null, true)).Visit(tree).GetConstantValue();
 
         public static BitsValue GetConstantValue(this Expression expr)
             => Interpreter.GetConstantValue(expr);

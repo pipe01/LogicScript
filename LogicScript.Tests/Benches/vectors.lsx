@@ -1,0 +1,11 @@
+input'5 in_a[4]
+input'3 in_b[5]
+output'15 out[3]
+
+assign out[0] = len(in_b)
+assign out[1] = len(in_b) / len(in_b[0])
+assign out[2] = 4321
+
+@test (
+    => out(15, 5, 4321),
+)

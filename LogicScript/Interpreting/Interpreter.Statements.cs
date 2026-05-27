@@ -60,6 +60,10 @@ namespace LogicScript.Interpreting
 
             if (stmt.Reference is PortReference port)
             {
+                var vectorIndex = port.VectorIndex == null ? 0 : (int)Visit(port.VectorIndex).Number;
+                if (vectorIndex >= port.PortInfo.VectorLength)
+                    throw new InterpreterException("Vector index out of range", port.VectorIndex!.Span);
+
                 switch (port.PortInfo.Target)
                 {
                     case MachinePorts.Input:
@@ -69,11 +73,11 @@ namespace LogicScript.Interpreting
                         if (value.Length > port.BitSize)
                             throw new InterpreterException("Value is longer than output", stmt.Span);
 
-                        Machine!.WriteOutputs(port.StartIndex, new(value.Bits));
+                        Machine!.WriteOutputs(port.StartIndex + port.BitSize * vectorIndex, new(value.Bits));
                         break;
 
                     case MachinePorts.Register:
-                        Machine!.WriteRegister(port.StartIndex, value);
+                        Machine!.WriteRegister(port.StartIndex + port.BitSize * vectorIndex, value);
                         break;
 
                     default:

@@ -1,4 +1,6 @@
 ﻿using Antlr4.Runtime.Misc;
+using LogicScript.Parsing.Structures;
+using LogicScript.Testing;
 
 namespace LogicScript.Parsing.Visitors
 {
@@ -25,17 +27,17 @@ namespace LogicScript.Parsing.Visitors
                 {
                     foreach (var input in step.Inputs)
                     {
-                        if (!script.Inputs.TryGetValue(input.Name, out var stepInput))
+                        if (!script.Inputs.TryGetValue(input.Name, out var inputPort))
                             errors.AddError($"Unknown input port '{input.Name}'", input.NameSpan);
-                        else if (stepInput.BitSize < input.Value.Length)
-                            errors.AddError("Value doesn't fit in port", input.ValueSpan);
+                        else
+                            CheckTestPort(inputPort, input);
                     }
                     foreach (var output in step.Outputs)
                     {
-                        if (!script.Outputs.TryGetValue(output.Name, out var stepOutput))
+                        if (!script.Outputs.TryGetValue(output.Name, out var outputPort))
                             errors.AddError($"Unknown output port '{output.Name}'", output.NameSpan);
-                        else if (stepOutput.BitSize < output.Value.Length)
-                            errors.AddError("Value doesn't fit in port", output.ValueSpan);
+                        else
+                            CheckTestPort(outputPort, output);
                     }
                 }
 
@@ -43,6 +45,20 @@ namespace LogicScript.Parsing.Visitors
             }
 
             return script;
+
+            void CheckTestPort(MachinePortInfo port, PortValues values)
+            {
+                if (values.Values.Length < port.VectorLength)
+                    errors.AddError("Not enough values to fill port vector", values.ValuesSpan);
+                else if (values.Values.Length > port.VectorLength)
+                    errors.AddError("Too many values for port vector", values.ValuesSpan);
+
+                foreach (var value in values.Values)
+                {
+                    if (value.Value.Length > port.BitSize)
+                        errors.AddError("Value doesn't fit in port", value.Span);
+                }
+            }
         }
     }
 }

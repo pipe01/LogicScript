@@ -59,7 +59,7 @@ namespace LogicScript.Parsing.Visitors
             if (Context.IsInConstant)
                 Context.Errors.AddError("You can only reference constants from other constants", context.Span(), true);
 
-            var @ref = new ReferenceVisitor(Context).Visit(context);
+            var @ref = new ReferenceVisitor(Context, MaxBitSize).Visit(context);
 
             return new ReferenceExpression(context.Span(), @ref);
         }
@@ -72,10 +72,20 @@ namespace LogicScript.Parsing.Visitors
             if (Context.IsInConstant)
                 Context.Errors.AddError("You can only reference constants from other constants", context.Span(), true);
 
-            var @ref = new ReferenceVisitor(Context).Visit(context);
+            var @ref = new ReferenceVisitor(Context, MaxBitSize).Visit(context);
 
             if (!@ref.IsReadable)
                 Context.Errors.AddError("An identifier in an expression must be readable", context.Span());
+
+            return new ReferenceExpression(context.Span(), @ref);
+        }
+
+        public override Expression VisitRefIndex([NotNull] LogicScriptParser.RefIndexContext context)
+        {
+            if (Context.IsInConstant)
+                Context.Errors.AddError("You can only reference constants from other constants", context.Span(), true);
+
+            var @ref = new ReferenceVisitor(Context, MaxBitSize).Visit(context);
 
             return new ReferenceExpression(context.Span(), @ref);
         }
@@ -89,30 +99,30 @@ namespace LogicScript.Parsing.Visitors
         {
             // Create a new unbounded expression visitor, since we only care about the slice length, not the operand's
             var operand = new ExpressionVisitor(Context).Visit(context.expression());
-            var start = context.indexer().lr?.Text switch
+            var start = context.slice_indexer().lr?.Text switch
             {
                 ">" => IndexStart.Right,
                 "<" or null => IndexStart.Left,
-                _ => throw new ParseException("Unknown index start position", context.indexer().Span())
+                _ => throw new ParseException("Unknown index start position", context.slice_indexer().Span())
             };
 
             Expression offset;
 
-            if (context.indexer().offset == null)
+            if (context.slice_indexer().offset == null)
             {
-                Context.Errors.AddError("Missing indexer offset", context.indexer().Span());
-                offset = new NumberLiteralExpression(context.indexer().Span(), BitsValue.Zero);
+                Context.Errors.AddError("Missing indexer offset", context.slice_indexer().Span());
+                offset = new NumberLiteralExpression(context.slice_indexer().Span(), BitsValue.Zero);
             }
             else
             {
-                offset = new ExpressionVisitor(Context).Visit(context.indexer().offset);
+                offset = new ExpressionVisitor(Context).Visit(context.slice_indexer().offset);
             }
 
-            var length = context.indexer().len == null ? 1 : context.indexer().len.GetConstantValue(Context.Script);
+            var length = context.slice_indexer().len == null ? 1 : (int)context.slice_indexer().len.GetConstantValue(Context.Script);
             var sliceExpr = new SliceExpression(context.Span(), operand, start, offset, length);
 
             if (length == 0)
-                Context.Errors.AddError("Slice length cannot be zero", context.indexer().len.Span());
+                Context.Errors.AddError("Slice length cannot be zero", context.slice_indexer().len.Span());
 
             if (offset.IsConstant)
             {
@@ -120,10 +130,10 @@ namespace LogicScript.Parsing.Visitors
                 var offsetValue = (int)offset.GetConstantValue().Number;
 
                 if (offsetValue >= operand.BitSize)
-                    Context.Errors.AddError("Offset is out of bounds", context.indexer().offset.Span());
+                    Context.Errors.AddError("Offset is out of bounds", context.slice_indexer().offset.Span());
 
                 if (offsetValue + length > operand.BitSize)
-                    Context.Errors.AddError("Slice is out of bounds", context.indexer().Span());
+                    Context.Errors.AddError("Slice is out of bounds", context.slice_indexer().Span());
             }
 
             if (MaxBitSize != 0 && length > MaxBitSize)
@@ -242,7 +252,7 @@ namespace LogicScript.Parsing.Visitors
 
             if (context.reference() != null)
             {
-                var reference = new ReferenceVisitor(Context).Visit(context.reference());
+                var reference = new ReferenceVisitor(Context, MaxBitSize, true).Visit(context.reference());
                 return new ReferenceLengthExpression(context.Span(), reference);
             }
 
@@ -269,7 +279,7 @@ namespace LogicScript.Parsing.Visitors
         {
             // Create a new unbounded expression visitor since we don't care about length
             var operand = new ExpressionVisitor(Context).Visit(context.expression(0));
-            var size = context.size.GetConstantValue(Context.Script);
+            var size = (int)context.size.GetConstantValue(Context.Script);
 
             return new TruncateExpression(context.Span(), operand, size);
         }

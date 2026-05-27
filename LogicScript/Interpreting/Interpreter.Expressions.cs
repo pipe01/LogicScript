@@ -18,7 +18,8 @@ namespace LogicScript.Interpreting
                 UnaryOperatorExpression unary => Visit(unary),
                 TruncateExpression trunc => Visit(trunc),
                 SliceExpression slice => Visit(slice),
-                ReferenceLengthExpression len => new((ulong)len.Reference.BitSize, 7),
+                ReferenceLengthExpression len => len.Value,
+                PlaceholderExpression => throw new InterpreterException("Tried to execute placeholder"),
                 _ => throw new InterpreterException("Unknown expression", expr.Span.Start),
             };
         }
@@ -27,11 +28,15 @@ namespace LogicScript.Interpreting
         {
             if (expr.Reference is PortReference port)
             {
+                var vectorIndex = port.VectorIndex == null ? 0 : (int)Visit(port.VectorIndex).Number;
+                if (vectorIndex >= port.PortInfo.VectorLength)
+                    throw new InterpreterException("Vector index out of range", port.VectorIndex!.Span);
+
                 return port.PortInfo.Target switch
                 {
                     MachinePorts.Output => throw new InterpreterException("Cannot read from output", expr.Span),
-                    MachinePorts.Input => new BitsValue(Machine!.ReadInputs().Slice(port.StartIndex, port.BitSize)),
-                    MachinePorts.Register => Machine!.ReadRegister(port.StartIndex),
+                    MachinePorts.Input => new BitsValue(Machine!.ReadInputs().Slice(port.StartIndex + port.BitSize * vectorIndex, port.BitSize)),
+                    MachinePorts.Register => Machine!.ReadRegister(port.StartIndex + port.BitSize * vectorIndex),
                     _ => throw new InterpreterException("Unknown reference target", expr.Span),
                 };
             }
