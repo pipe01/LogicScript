@@ -37,7 +37,21 @@ namespace LogicScript.Parsing
         }
 
         public bool Contains(SourceLocation loc)
-            => loc.Line >= Start.Line && loc.Line <= End.Line && loc.Column >= Start.Column && loc.Column <= End.Column;
+        {
+            if (loc.FileName != Start.FileName)
+                return false;
+
+            if (loc.Line < Start.Line || loc.Line > End.Line)
+                return false;
+
+            if (loc.Line == Start.Line && loc.Column < Start.Column)
+                return false;
+
+            if (loc.Line == End.Line && loc.Column > End.Column)
+                return false;
+
+            return true;
+        }
 
         public override string ToString() => $"{Start.FileName}:{Start} to {End}";
 

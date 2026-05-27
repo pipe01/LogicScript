@@ -53,8 +53,8 @@ namespace LogicScript.Parsing.Visitors
 
         public override Expression VisitRefPort([NotNull] LogicScriptParser.RefPortContext context)
         {
-            if (Context.Script.Constants.TryGetValue(context.GetText(), out var val))
-                return val;
+            if (Context.Script.Script.Constants.TryGetValue(context.GetText(), out var val))
+                return new NumberLiteralExpression(context.Span(), val);
 
             if (Context.IsInConstant)
                 Context.Errors.AddError("You can only reference constants from other constants", context.Span(), true);

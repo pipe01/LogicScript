@@ -7,7 +7,6 @@ namespace LogicScript.Parsing.Visitors
     {
         public Script Script { get; } = script;
         public ErrorSink Errors { get; } = errors;
-        public IDictionary<string, Expression> Constants { get; } = new Dictionary<string, Expression>();
         public int LocalCounter { get; set; }
 
         public bool DoesIdentifierExist(string iden)

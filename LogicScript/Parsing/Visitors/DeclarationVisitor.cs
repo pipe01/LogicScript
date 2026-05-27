@@ -41,7 +41,7 @@ namespace LogicScript.Parsing.Visitors
             if (!value.IsConstant)
                 Errors.AddError("Const declarations must have a constant value", value);
 
-            Context.Constants.Add(context.IDENT().GetText(), value);
+            Context.Script.Constants.Add(context.IDENT().GetText(), value.GetConstantValue());
             return null;
         }
 
