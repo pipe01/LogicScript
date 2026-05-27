@@ -18,6 +18,7 @@ namespace LogicScript.Interpreting
                 UnaryOperatorExpression unary => Visit(unary),
                 TruncateExpression trunc => Visit(trunc),
                 SliceExpression slice => Visit(slice),
+                ReferenceLengthExpression len => new((ulong)len.Reference.BitSize, 7),
                 _ => throw new InterpreterException("Unknown expression", expr.Span.Start),
             };
         }
@@ -62,6 +63,9 @@ namespace LogicScript.Interpreting
 
         private BitsValue Visit(UnaryOperatorExpression expr)
         {
+            if (expr.Operator == Operator.Length)
+                return new BitsValue((ulong)expr.Operand.BitSize, 7);
+
             var operand = Visit(expr.Operand);
 
             return expr.Operator switch
@@ -70,7 +74,6 @@ namespace LogicScript.Interpreting
                 Operator.Rise => throw new NotImplementedException(),
                 Operator.Fall => throw new NotImplementedException(),
                 Operator.Change => throw new NotImplementedException(),
-                Operator.Length => new BitsValue((ulong)operand.Length, 7),
                 Operator.AllOnes => (BitsValue)operand.AreAllBitsSet,
                 _ => throw new InterpreterException("Unknown operand", expr.Span),
             };

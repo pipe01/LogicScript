@@ -54,6 +54,7 @@ stmt_vardecl        : 'local' WS+ VARIABLE ('\'' size=atom)? (wsnl '=' wsnl expr
 expression          : LPAREN wsnl expression wsnl RPAREN                        # exprParen
                     | LPAREN wsnl expression wsnl RPAREN '\'' size=expression   # exprTrunc
                     | funcName=IDENT LPAREN wsnl expression wsnl RPAREN         # exprCall
+                    | 'len' LPAREN wsnl (reference | expression) wsnl RPAREN    # exprLength
                     | expression indexer                                        # exprSlice
                     | NOT expression                                            # exprNegate
                     | expression wsnl op=(OR | AND) wsnl expression             # exprAndOr

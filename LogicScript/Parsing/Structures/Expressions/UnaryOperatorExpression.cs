@@ -7,7 +7,7 @@ namespace LogicScript.Parsing.Structures.Expressions
         public Operator Operator { get; set; } = op;
         public Expression Operand { get; set; } = operand;
 
-        public override bool IsConstant => Operand.IsConstant;
+        public override bool IsConstant => Operator == Operator.Length || Operand.IsConstant;
         public override int BitSize => Operator switch
         {
             Operator.Not or Operator.Rise or Operator.Fall or Operator.Change => Operand.BitSize,

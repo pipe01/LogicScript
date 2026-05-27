@@ -225,7 +225,6 @@ namespace LogicScript.Parsing.Visitors
                 "rise" => Operator.Rise,
                 "fall" => Operator.Fall,
                 "change" => Operator.Change,
-                "len" => Operator.Length,
                 "allOnes" => Operator.AllOnes,
                 _ => throw new ParseException($"Unknown function '{context.funcName.Text}'", context.Span())
             };
@@ -234,6 +233,27 @@ namespace LogicScript.Parsing.Visitors
                 Context.Errors.AddError($"The {op.ToString().ToLower()} operator is not yet implemented", new SourceSpan(context.funcName));
 
             return new UnaryOperatorExpression(context.Span(), op, operand);
+        }
+
+        public override Expression VisitExprLength([NotNull] LogicScriptParser.ExprLengthContext context)
+        {
+            // When using len(x), the result is always a constant even if x isn't.
+            // Thus, when visiting the operand we allow references to non-constant values as they won't ever actually be evaluated.
+
+            if (context.reference() != null)
+            {
+                var reference = new ReferenceVisitor(Context).Visit(context.reference());
+                return new ReferenceLengthExpression(context.Span(), reference);
+            }
+
+            if (context.expression() != null)
+            {
+                var value = new ExpressionVisitor(new BlockContext(Context.Script, Context.Outer)).Visit(context.expression());
+                return new UnaryOperatorExpression(context.Span(), Operator.Length, value);
+            }
+
+            // For partial parsing
+            return new NumberLiteralExpression(context.Span(), 0);
         }
 
         public override Expression VisitExprTernary([NotNull] LogicScriptParser.ExprTernaryContext context)

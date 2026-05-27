@@ -351,6 +351,7 @@ namespace LogicScript.Compiling
                 TernaryOperatorExpression t => Compile(t, canReturnBool),
                 TruncateExpression t => Compile(t.Operand, canReturnBool), // Truncating is a no-op at runtime since bit size is determined at compile-time
                 UnaryOperatorExpression u => Compile(u, canReturnBool),
+                ReferenceLengthExpression r => Expression.Constant((ulong)r.Reference.BitSize),
                 _ => throw new NotImplementedException()
             };
         }
