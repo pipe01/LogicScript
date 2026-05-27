@@ -4,7 +4,7 @@ using LogicScript.Parsing.Structures;
 
 namespace LogicScript.Parsing.Visitors
 {
-    internal class ReferenceVisitor(BlockContext context, int defaultBitSize) : LogicScriptBaseVisitor<Reference>
+    internal class ReferenceVisitor(BlockContext context, int defaultBitSize = 0, bool allowRawVectors = false) : LogicScriptBaseVisitor<Reference>
     {
         private readonly BlockContext Context = context;
 
@@ -29,6 +29,9 @@ namespace LogicScript.Parsing.Visitors
         public override Reference VisitRefPort([NotNull] LogicScriptParser.RefPortContext context)
         {
             var portInfo = GetPortInfo(context.IDENT().GetText(), context.IDENT().Symbol.Span());
+
+            if (portInfo.VectorLength > 1 && !allowRawVectors)
+                Context.Errors.AddError("Vectored port must be indexed", context.Span());
 
             return new PortReference(context.Span(), portInfo, null);
         }

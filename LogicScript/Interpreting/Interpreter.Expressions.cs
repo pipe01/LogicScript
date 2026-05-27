@@ -18,7 +18,7 @@ namespace LogicScript.Interpreting
                 UnaryOperatorExpression unary => Visit(unary),
                 TruncateExpression trunc => Visit(trunc),
                 SliceExpression slice => Visit(slice),
-                ReferenceLengthExpression len => new((ulong)len.Reference.BitSize, 7),
+                ReferenceLengthExpression len => len.Value,
                 PlaceholderExpression => throw new InterpreterException("Tried to execute placeholder"),
                 _ => throw new InterpreterException("Unknown expression", expr.Span.Start),
             };

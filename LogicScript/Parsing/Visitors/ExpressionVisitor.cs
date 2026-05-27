@@ -252,7 +252,7 @@ namespace LogicScript.Parsing.Visitors
 
             if (context.reference() != null)
             {
-                var reference = new ReferenceVisitor(Context, MaxBitSize).Visit(context.reference());
+                var reference = new ReferenceVisitor(Context, MaxBitSize, true).Visit(context.reference());
                 return new ReferenceLengthExpression(context.Span(), reference);
             }
 

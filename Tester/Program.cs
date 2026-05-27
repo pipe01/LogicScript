@@ -32,7 +32,6 @@ namespace Tester
             new Interpreter(script, machine, true).Run();
 
             var program = Compiler.Compile(script);
-            Console.WriteLine(string.Join(", ", program));
 
             var scratch = new bool[Math.Max(machine.InputCount, machine.OutputCount)];
 
