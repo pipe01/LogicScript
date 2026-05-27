@@ -50,13 +50,13 @@ namespace LogicScript.Parsing.Visitors
 
             return new(index++, name, steps, context.Span());
 
-            IEnumerable<PortValue> GetPorts(MachinePorts ports, LogicScriptParser.Step_portsContext ctx)
+            IEnumerable<PortValues> GetPorts(MachinePorts ports, LogicScriptParser.Step_portsContext ctx)
             {
                 var seen = new HashSet<string>();
 
                 foreach (var item in ctx.step_portvalue())
                 {
-                    if (item.value == null)
+                    if (item.expression().Length == 0)
                     {
                         errors.AddError("Missing port value", item.Span());
                         continue;
@@ -69,8 +69,8 @@ namespace LogicScript.Parsing.Visitors
                     }
                     seen.Add(item.port.Text);
 
-                    var value = item.value.GetConstantValue(script ?? new(new(), errors));
-                    yield return new PortValue(item.port.Text, ports, value, item.port.Span(), item.value.Span());
+                    var values = item.expression().Select(e => new PortValue(e.GetConstantValue(script ?? new(new(), errors)), e.Span())).ToArray();
+                    yield return new PortValues(item.port.Text, ports, values, item.port.Span());
                 }
             }
         }

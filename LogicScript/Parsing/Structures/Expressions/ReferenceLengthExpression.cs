@@ -14,7 +14,7 @@ namespace LogicScript.Parsing.Structures.Expressions
             get
             {
                 if (Reference is PortReference portRef)
-                    return portRef.PortInfo.BitSize * portRef.PortInfo.VectorLength;
+                    return portRef.VectorIndex != null ? portRef.PortInfo.BitSize : portRef.PortInfo.BitSize * portRef.PortInfo.VectorLength;
 
                 return Reference.BitSize;
             }

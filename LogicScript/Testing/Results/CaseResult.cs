@@ -36,11 +36,11 @@ namespace LogicScript.Testing.Results
 
         public int StepIndex { get; }
         public SourceSpan StepSpan { get; }
-        public IDictionary<string, BitsValue> Inputs { get; }
-        public IDictionary<string, BitsValue> ExpectedOutputs { get; }
-        public IDictionary<string, BitsValue> MismatchedOutputs { get; }
+        public IDictionary<string, BitsValue[]> Inputs { get; }
+        public IDictionary<string, BitsValue[]> ExpectedOutputs { get; }
+        public IDictionary<string, BitsValue[]> MismatchedOutputs { get; }
 
-        internal FailedStepCaseResult(TestCase testCase, IReadOnlyCollection<string> printedLines, int stepIndex, SourceSpan stepSpan, IDictionary<string, BitsValue> inputs, IDictionary<string, BitsValue> expectedOutputs, IDictionary<string, BitsValue> mismatchedOutputs) : base(testCase, printedLines)
+        internal FailedStepCaseResult(TestCase testCase, IReadOnlyCollection<string> printedLines, int stepIndex, SourceSpan stepSpan, IDictionary<string, BitsValue[]> inputs, IDictionary<string, BitsValue[]> expectedOutputs, IDictionary<string, BitsValue[]> mismatchedOutputs) : base(testCase, printedLines)
         {
             this.StepIndex = stepIndex;
             this.StepSpan = stepSpan;
@@ -62,9 +62,9 @@ namespace LogicScript.Testing.Results
 
             return msg.ToString();
 
-            static string FormatIO(IDictionary<string, BitsValue> values)
+            static string FormatIO(IDictionary<string, BitsValue[]> values)
             {
-                return string.Join(' ', values.OrderBy(e => e.Key).Select(e => $"{e.Key}({e.Value.Number})").ToArray());
+                return string.Join(' ', values.OrderBy(e => e.Key).Select(e => $"{e.Key}({string.Join(", ", e.Value)})").ToArray());
             }
         }
     }

@@ -124,7 +124,7 @@ namespace LogicScript.Parsing.Visitors
             Expression? value = null;
 
             // If the variable has a bit size marker, we will use that size. Otherwise, we will later infer it from the value
-            int size = context.size == null ? 0 : context.size.GetConstantValue(BlockContext.Script);
+            int size = context.size == null ? 0 : (int)context.size.GetConstantValue(BlockContext.Script);
 
             if (context.expression() != null)
             {

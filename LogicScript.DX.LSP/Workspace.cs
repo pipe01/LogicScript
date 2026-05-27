@@ -129,7 +129,7 @@ namespace LogicScript.DX.LSP
                 Reference r => r.Port,
                 IPortInfo p => p,
                 PrintStringFormat.Interpolation interp => interp.Local,
-                PortValue portValue when TryGetScript(uri, out var script) && script.TryGetPort(portValue.Name, portValue.Ports, out var port) => port,
+                PortValues portValue when TryGetScript(uri, out var script) && script.TryGetPort(portValue.Name, portValue.Ports, out var port) => port,
                 _ => null
             };
         }

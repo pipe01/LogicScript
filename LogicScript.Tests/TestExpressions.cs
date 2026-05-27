@@ -81,8 +81,8 @@ namespace LogicScript.Tests
         {
             var machine = new DummyMachine(new[] { false, true, true });
 
-            var a = new MachinePortInfo(MachinePorts.Input, 0, 1, default);
-            var b = new MachinePortInfo(MachinePorts.Input, 1, 2, default);
+            var a = new MachinePortInfo(MachinePorts.Input, 0, 1, 1, default);
+            var b = new MachinePortInfo(MachinePorts.Input, 1, 2, 1, default);
 
             Run(new Script()
             {
@@ -94,8 +94,8 @@ namespace LogicScript.Tests
                     new StartupBlock(default,
                         new ShowTaskStatement(default,
                             new BinaryOperatorExpression(default, Operator.Add,
-                                new ReferenceExpression(default, new PortReference(default, a)),
-                                new ReferenceExpression(default, new PortReference(default, b))
+                                new ReferenceExpression(default, new PortReference(default, a, null)),
+                                new ReferenceExpression(default, new PortReference(default, b, null))
                             )
                         )
                     ),
@@ -110,8 +110,8 @@ namespace LogicScript.Tests
         {
             var machine = new DummyMachine(registers: [1, 2]);
 
-            var a = new MachinePortInfo(MachinePorts.Register, 0, 1, default);
-            var b = new MachinePortInfo(MachinePorts.Register, 1, 1, default);
+            var a = new MachinePortInfo(MachinePorts.Register, 0, 1, 1, default);
+            var b = new MachinePortInfo(MachinePorts.Register, 1, 1, 1, default);
 
             Run(new Script()
             {
@@ -124,8 +124,8 @@ namespace LogicScript.Tests
                     new StartupBlock(default,
                         new ShowTaskStatement(default,
                             new BinaryOperatorExpression(default, Operator.Add,
-                                new ReferenceExpression(default, new PortReference(default, a)),
-                                new ReferenceExpression(default, new PortReference(default, b))
+                                new ReferenceExpression(default, new PortReference(default, a, null)),
+                                new ReferenceExpression(default, new PortReference(default, b, null))
                             )
                         )
                     ),

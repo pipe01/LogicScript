@@ -9,7 +9,7 @@ test_step           : WS* (step_action | step_repeat) COMMA ;
 step_action         : inputs=step_ports WS* ARROW WS* outputs=step_ports ;
 step_repeat         : '+' DEC_NUMBER ;
 step_ports          : (step_portvalue (WS+ step_portvalue)*)? ;
-step_portvalue      : port=IDENT LPAREN value=expression RPAREN ;
+step_portvalue      : port=IDENT LPAREN expression (wsnl ',' wsnl expression)* RPAREN ;
 
 declaration         : decl_const | decl_input | decl_output | decl_register | decl_when | decl_startup | decl_assign ;
 decl_const          : 'const' WS+ IDENT WS+ EQUALS WS+ expression ;

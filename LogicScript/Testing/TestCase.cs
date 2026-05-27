@@ -37,9 +37,13 @@ namespace LogicScript.Testing
                     if (!script.Inputs.TryGetValue(input.Name, out var port))
                         throw new ArgumentException($"Unknown input port '{input.Name}'");
 
-                    var expandedValue = new BitsValue(input.Value.Number, port.BitSize);
+                    for (int i = 0; i < input.Values.Length; i++)
+                    {
+                        int vectorStart = port.StartIndex + i * port.BitSize;
+                        var expandedValue = new BitsValue(input.Values[i].Value.Number, port.BitSize);
 
-                    expandedValue.Bits.CopyTo(machine.Inputs.AsSpan()[port.StartIndex..(port.StartIndex + port.BitSize)]);
+                        expandedValue.Bits.CopyTo(machine.Inputs.AsSpan()[vectorStart..(vectorStart + port.BitSize)]);
+                    }
                 }
 
                 try
@@ -57,25 +61,28 @@ namespace LogicScript.Testing
                 hasRunStartup = true;
                 stepsRan++;
 
-                var mismatchedOutputs = new Dictionary<string, BitsValue>();
+                var mismatchedOutputs = new Dictionary<string, BitsValue[]>();
                 foreach (var output in step.Outputs)
                 {
                     if (!script.Outputs.TryGetValue(output.Name, out var port))
                         throw new ArgumentException($"Unknown output port '{output.Name}'");
 
-                    var machineValue = new BitsValue(machine.Outputs[port.StartIndex..(port.StartIndex + port.BitSize)]);
-
-                    var expandedValue = new BitsValue(output.Value.Number, port.BitSize);
-                    if (output.Value != machineValue)
+                    var machineValues = Enumerable.Range(0, output.Values.Length).Select(i =>
                     {
-                        mismatchedOutputs[output.Name] = machineValue;
-                    }
+                        int vectorStart = port.StartIndex + i * port.BitSize;
+                        return new BitsValue(machine.Outputs[vectorStart..(vectorStart + port.BitSize)]);
+                    });
+
+                    bool mismatched = !machineValues.SequenceEqual(output.Values.Select(v => v.Value));
+
+                    if (mismatched)
+                        mismatchedOutputs.Add(output.Name, machineValues.ToArray());
                 }
 
                 if (mismatchedOutputs.Count > 0)
                 {
-                    var resultInputs = step.Inputs.ToDictionary(o => o.Name, o => o.Value);
-                    var resultOutputs = step.Outputs.ToDictionary(o => o.Name, o => o.Value);
+                    var resultInputs = step.Inputs.ToDictionary(o => o.Name, o => o.Values.Select(v => v.Value).ToArray());
+                    var resultOutputs = step.Outputs.ToDictionary(o => o.Name, o => o.Values.Select(v => v.Value).ToArray());
 
                     return new FailedStepCaseResult(this, [.. machine.PrintOutput], stepsRan, step.Span, resultInputs, resultOutputs, mismatchedOutputs);
                 }

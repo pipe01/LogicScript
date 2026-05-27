@@ -99,12 +99,12 @@ namespace LogicScript.Parsing.Visitors
 
         private void Visit(LogicScriptParser.Port_infoContext context, IDictionary<string, MachinePortInfo> dic, MachinePorts target)
         {
-            int size = context.size == null ? 1 : context.size.GetConstantValue(Context);
+            int size = context.size == null ? 1 : (int)context.size.GetConstantValue(Context);
 
             if (size > BitsValue.BitSize)
                 Errors.AddError($"The maximum bit size is {BitsValue.BitSize}", context.Span());
 
-            int length = context.simple_indexer() == null ? 1 : context.simple_indexer().index.GetConstantValue(Context);
+            int length = context.simple_indexer() == null ? 1 : (int)context.simple_indexer().index.GetConstantValue(Context);
 
             if (length <= 0)
             {

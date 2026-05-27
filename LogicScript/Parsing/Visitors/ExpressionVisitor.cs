@@ -118,7 +118,7 @@ namespace LogicScript.Parsing.Visitors
                 offset = new ExpressionVisitor(Context).Visit(context.slice_indexer().offset);
             }
 
-            var length = context.slice_indexer().len == null ? 1 : context.slice_indexer().len.GetConstantValue(Context.Script);
+            var length = context.slice_indexer().len == null ? 1 : (int)context.slice_indexer().len.GetConstantValue(Context.Script);
             var sliceExpr = new SliceExpression(context.Span(), operand, start, offset, length);
 
             if (length == 0)
@@ -279,7 +279,7 @@ namespace LogicScript.Parsing.Visitors
         {
             // Create a new unbounded expression visitor since we don't care about length
             var operand = new ExpressionVisitor(Context).Visit(context.expression(0));
-            var size = context.size.GetConstantValue(Context.Script);
+            var size = (int)context.size.GetConstantValue(Context.Script);
 
             return new TruncateExpression(context.Span(), operand, size);
         }

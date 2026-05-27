@@ -1,23 +1,19 @@
 input one
 input'2 two
-output'7 out1
-output'7 out2
-output'7 out3
-output'7 out4
-output'7 out5
+output'7 out[5]
 
 reg'4 register
 
-assign out1 = len(out1)
-assign out2 = len(one)
-assign out3 = len(two)
-assign out4 = len(register)
+assign out[0] = len(out) / len(out[0])
+assign out[1] = len(one)
+assign out[2] = len(two)
+assign out[3] = len(register)
 
 when *
     local $local'5
-    out5 = len($local)
+    out[4] = len($local)
 end
 
 @test (
-    => out1(7) out2(1) out3(2) out4(4) out5(5),
+    => out(5, 1, 2, 4, 5),
 )
