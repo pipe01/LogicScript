@@ -1,7 +1,4 @@
-﻿using LogicScript.Parsing.Structures.Expressions;
-using System.Collections.Generic;
-
-namespace LogicScript.Parsing.Visitors
+﻿namespace LogicScript.Parsing.Visitors
 {
     internal sealed class ScriptContext(Script script, ErrorSink errors)
     {

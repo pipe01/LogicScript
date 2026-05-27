@@ -1,12 +1,8 @@
-﻿using LogicScript.Parsing.Structures;
-using LogicScript.Testing;
-using LogicScript.Utils;
-using OmniSharp.Extensions.LanguageServer.Protocol.Client.Capabilities;
+﻿using OmniSharp.Extensions.LanguageServer.Protocol.Client.Capabilities;
 using OmniSharp.Extensions.LanguageServer.Protocol.Document;
 using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 using System.Threading;
 using System.Threading.Tasks;
-using Range = OmniSharp.Extensions.LanguageServer.Protocol.Models.Range;
 
 namespace LogicScript.DX.LSP.Handlers
 {
