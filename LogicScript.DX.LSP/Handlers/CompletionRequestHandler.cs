@@ -40,8 +40,6 @@ namespace LogicScript.DX.LSP
                 inLoop = false,
                 inIf = false;
 
-            var locals = new List<LocalInfo>();
-
             foreach (var node in script.VisitAll())
             {
                 if (node is PlaceholderExpression)
@@ -62,7 +60,6 @@ namespace LogicScript.DX.LSP
                 }
                 else if (node is BlockStatement block)
                 {
-                    locals.AddRange(block.Locals);
                     addWritables = true;
                 }
                 else if (node is ForStatement or WhileStatement)
@@ -75,17 +72,10 @@ namespace LogicScript.DX.LSP
                 }
             }
 
+            var locals = script.VisitAll().OfType<BlockStatement>().Where(s => s.Span.Contains(location)).SelectMany(b => b.Locals);
+
             if (addWritables)
             {
-                foreach (var local in locals)
-                {
-                    completions.Add(new()
-                    {
-                        Label = local.Name,
-                        Kind = CompletionItemKind.Variable,
-                    });
-                }
-
                 AddPorts(script.Outputs, true);
             }
             if (addReadables)
@@ -115,6 +105,19 @@ namespace LogicScript.DX.LSP
             }
             if (addReadables || addWritables)
             {
+                foreach (var local in locals)
+                {
+                    completions.Add(new()
+                    {
+                        Label = local.Name,
+                        Kind = CompletionItemKind.Variable,
+                        LabelDetails = new()
+                        {
+                            Description = $"'{local.BitSize}"
+                        }
+                    });
+                }
+
                 AddPorts(script.Registers, addWritables);
             }
 
@@ -187,7 +190,7 @@ namespace LogicScript.DX.LSP
                         InsertText = writable ? item.Key + " = " : null,
                         LabelDetails = new()
                         {
-                            Description = $"{item.Value.Target}'{item.Value.BitSize}"
+                            Description = $"{item.Value.Target.ToString().ToLowerInvariant()}'{item.Value.BitSize}"
                         }
                     });
                 }
