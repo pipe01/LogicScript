@@ -74,12 +74,17 @@ namespace LogicScript.Parsing.Visitors
 
         public override object? VisitDecl_assign([NotNull] LogicScriptParser.Decl_assignContext context)
         {
-            var body = new StatementVisitor(Context).Visit(context.stmt_assign());
+            var body = context.stmt_assign() == null ? null : new StatementVisitor(Context).Visit(context.stmt_assign());
 
             if (body is AssignStatement assign)
+            {
                 Script.Blocks.Add(new AssignBlock(context.Span(), assign));
+            }
             else
-                Errors.AddError("Assignment block must contain an assignment", body);
+            {
+                Script.Blocks.Add(new PlaceholderAssignBlock(context.Span()));
+                Errors.AddError("Assignment block must contain an assignment", context.Span());
+            }
 
             return null;
         }

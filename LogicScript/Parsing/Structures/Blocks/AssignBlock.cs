@@ -12,4 +12,11 @@ namespace LogicScript.Parsing.Structures.Blocks
             yield return Assignment;
         }
     }
+
+    /// <summary>
+    /// Used for partial parsing
+    /// </summary>
+    internal sealed class PlaceholderAssignBlock(SourceSpan span) : Block(span)
+    {
+    }
 }

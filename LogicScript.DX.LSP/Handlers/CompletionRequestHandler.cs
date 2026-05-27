@@ -48,6 +48,13 @@ namespace LogicScript.DX.LSP
                     addBlockLevelKeywords = false;
                     break;
                 }
+                if (node is PlaceholderAssignBlock)
+                {
+                    addWritables = true;
+                    addTopLevelKeywords = false;
+                    addBlockLevelKeywords = false;
+                    break;
+                }
 
                 if (!node.Span.Contains(location))
                     continue;
@@ -166,6 +173,14 @@ namespace LogicScript.DX.LSP
             if (addTopLevelKeywords)
             {
                 keywords.AddRange(["const", "input", "output", "reg", "when", "startup", "assign", "@test"]);
+
+                completions.Add(new()
+                {
+                    Label = "test",
+                    Kind = CompletionItemKind.Snippet,
+                    InsertTextFormat = InsertTextFormat.Snippet,
+                    InsertText = "@test (\n\t$0\n)\n"
+                });
             }
             foreach (var item in keywords)
             {
