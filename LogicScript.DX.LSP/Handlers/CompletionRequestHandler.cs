@@ -37,7 +37,8 @@ namespace LogicScript.DX.LSP
                 addBlockLevelKeywords = false,
                 addWritables = false,
                 addReadables = false,
-                inLoop = false;
+                inLoop = false,
+                inIf = false;
 
             var locals = new List<LocalInfo>();
 
@@ -67,6 +68,10 @@ namespace LogicScript.DX.LSP
                 else if (node is ForStatement or WhileStatement)
                 {
                     inLoop = true;
+                }
+                else if (node is IfStatement)
+                {
+                    inIf = true;
                 }
             }
 
@@ -116,8 +121,9 @@ namespace LogicScript.DX.LSP
             var keywords = new List<string>();
             if (addBlockLevelKeywords)
             {
-                keywords.AddRange(["else", "from", "to", "end", "@print", "@queueUpdate", "local"]);
+                keywords.AddRange(["if", "for", "while", "local", "from", "to", "end", "@print", "@queueUpdate"]);
                 if (inLoop) keywords.Add("break");
+                if (inIf) keywords.Add("else");
 
                 completions.Add(new()
                 {
@@ -139,6 +145,20 @@ namespace LogicScript.DX.LSP
                     Kind = CompletionItemKind.Snippet,
                     InsertTextFormat = InsertTextFormat.Snippet,
                     InsertText = "while ${1:condition}\n\t$0\nend"
+                });
+                completions.Add(new()
+                {
+                    Label = "localinit",
+                    Kind = CompletionItemKind.Snippet,
+                    InsertTextFormat = InsertTextFormat.Snippet,
+                    InsertText = "local $$1 = $0"
+                });
+                completions.Add(new()
+                {
+                    Label = "localsize",
+                    Kind = CompletionItemKind.Snippet,
+                    InsertTextFormat = InsertTextFormat.Snippet,
+                    InsertText = "local $$1'$0"
                 });
             }
             if (addTopLevelKeywords)
