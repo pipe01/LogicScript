@@ -22,7 +22,7 @@ namespace LogicScript.DX.LSP.Handlers
 
         public override Task<LocationContainer?> Handle(ReferenceParams request, CancellationToken cancellationToken)
         {
-            var port = Workspace.GetPortAt(request.TextDocument.Uri, request.Position.ToLocation());
+            var port = Workspace.GetPortAt(request.TextDocument.Uri, request.Position.ToLocation(request.TextDocument.Uri));
 
             if (port == null)
                 return Task.FromResult<LocationContainer?>(LocationContainer.From(Array.Empty<Location>()));

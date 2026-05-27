@@ -25,7 +25,7 @@ namespace LogicScript.DX.LSP
 
         public override async Task<CompletionList> Handle(CompletionParams request, CancellationToken cancellationToken)
         {
-            var script = workspace.ParsePartial(request.TextDocument.Uri, request.Position.ToLocation());
+            var script = workspace.ParsePartial(request.TextDocument.Uri, request.Position.ToLocation(request.TextDocument.Uri));
 
             if (script == null)
                 return new();

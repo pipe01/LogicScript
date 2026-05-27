@@ -14,7 +14,7 @@ namespace LogicScript.DX.LSP
 
         public static SourceLocation ToLocation(this Position pos, DocumentUri uri)
             => pos.ToLocation(uri.ToString());
-        public static SourceLocation ToLocation(this Position pos, string fileName = "")
+        public static SourceLocation ToLocation(this Position pos, string fileName)
             => new(fileName, pos.Line + 1, pos.Character + 1);
     }
 }
