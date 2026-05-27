@@ -33,10 +33,12 @@ namespace LogicScript.DX.LSP
 
             var cases = caseIndices == null ? script.TestCases : script.TestCases.Where(c => caseIndices.Contains(c.Index));
 
+            var runner = LogicScript.Runner.Interpreted(debugger, statementLimit);
+
             int successCount = 0, failCount = 0;
             foreach (var testCase in cases)
             {
-                var result = await testCase.Run(script, debugger, statementLimit);
+                var result = await testCase.Run(runner, script);
                 if (result.Success)
                 {
                     successCount++;

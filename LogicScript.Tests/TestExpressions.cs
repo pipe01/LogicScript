@@ -7,12 +7,8 @@ using NUnit.Framework;
 
 namespace LogicScript.Tests
 {
-    internal class TestExpressions : BaseTest
+    internal class TestExpressions(RunnerType runnerType) : BaseTest(runnerType)
     {
-        public TestExpressions(IRunner runner) : base(runner)
-        {
-        }
-
         [Test]
         [TestCase(5, 3, Operator.And, 1)]
         [TestCase(5, 3, Operator.Or, 7)]
@@ -38,9 +34,7 @@ namespace LogicScript.Tests
         [TestCase(3, 3, Operator.Lesser, 0)]
         public void BinaryOperators(int a, int b, Operator op, int result)
         {
-            var machine = new DummyMachine();
-
-            Runner.Run(new Script()
+            Run(new Script()
             {
                 Blocks = {
                     new StartupBlock(default,
@@ -52,7 +46,7 @@ namespace LogicScript.Tests
                         )
                     ),
                 }
-            }, machine);
+            }, out var machine);
 
             machine.AssertPrinted(result.ToString());
         }
@@ -66,9 +60,7 @@ namespace LogicScript.Tests
         [TestCase(7, 3, Operator.AllOnes, 1)]
         public void UnaryOperators(int val, int len, Operator op, int result)
         {
-            var machine = new DummyMachine();
-
-            Runner.Run(new Script()
+            Run(new Script()
             {
                 Blocks = {
                     new StartupBlock(default,
@@ -79,7 +71,7 @@ namespace LogicScript.Tests
                         )
                     ),
                 }
-            }, machine);
+            }, out var machine);
 
             machine.AssertPrinted(result.ToString());
         }
@@ -87,12 +79,12 @@ namespace LogicScript.Tests
         [Test]
         public void AddInputs()
         {
-            var machine = new DummyMachine(new[] { true, true, false });
+            var machine = new DummyMachine(new[] { false, true, true });
 
             var a = new MachinePortInfo(MachinePorts.Input, 0, 1, default);
             var b = new MachinePortInfo(MachinePorts.Input, 1, 2, default);
 
-            Runner.Run(new Script()
+            Run(new Script()
             {
                 Inputs = {
                     { "a", a },
@@ -121,7 +113,7 @@ namespace LogicScript.Tests
             var a = new MachinePortInfo(MachinePorts.Register, 0, 1, default);
             var b = new MachinePortInfo(MachinePorts.Register, 1, 1, default);
 
-            Runner.Run(new Script()
+            Run(new Script()
             {
                 Registers =
                 {
@@ -146,9 +138,7 @@ namespace LogicScript.Tests
         [Test]
         public void LiteralSliceRight()
         {
-            var machine = new DummyMachine();
-
-            Runner.Run(new Script()
+            Run(new Script()
             {
                 Blocks = {
                     new StartupBlock(default,
@@ -162,7 +152,7 @@ namespace LogicScript.Tests
                         )
                     )
                 }
-            }, machine);
+            }, out var machine);
 
             machine.AssertPrinted("2");
         }
@@ -170,9 +160,7 @@ namespace LogicScript.Tests
         [Test]
         public void LiteralSliceLeft()
         {
-            var machine = new DummyMachine();
-
-            Runner.Run(new Script()
+            Run(new Script()
             {
                 Blocks = {
                     new StartupBlock(default,
@@ -186,7 +174,7 @@ namespace LogicScript.Tests
                         )
                     )
                 }
-            }, machine);
+            }, out var machine);
 
             machine.AssertPrinted("2");
         }
@@ -194,9 +182,7 @@ namespace LogicScript.Tests
         [Test]
         public void TernaryTrue()
         {
-            var machine = new DummyMachine();
-
-            Runner.Run(new Script()
+            Run(new Script()
             {
                 Blocks = {
                     new StartupBlock(default,
@@ -209,7 +195,7 @@ namespace LogicScript.Tests
                         )
                     )
                 }
-            }, machine);
+            }, out var machine);
 
             machine.AssertPrinted("10");
         }
@@ -217,9 +203,7 @@ namespace LogicScript.Tests
         [Test]
         public void TernaryFalse()
         {
-            var machine = new DummyMachine();
-
-            Runner.Run(new Script()
+            Run(new Script()
             {
                 Blocks = {
                     new StartupBlock(default,
@@ -232,7 +216,7 @@ namespace LogicScript.Tests
                         )
                     )
                 }
-            }, machine);
+            }, out var machine);
 
             machine.AssertPrinted("20");
         }
@@ -240,9 +224,7 @@ namespace LogicScript.Tests
         [Test]
         public void InvertNumber()
         {
-            var machine = new DummyMachine();
-
-            Runner.Run(new Script()
+            Run(new Script()
             {
                 Blocks = {
                     new StartupBlock(default,
@@ -254,7 +236,7 @@ namespace LogicScript.Tests
                         )
                     )
                 }
-            }, machine);
+            }, out var machine);
 
             machine.AssertPrinted("7");
         }

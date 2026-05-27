@@ -18,14 +18,14 @@ namespace LogicScript.Testing
             return Steps;
         }
 
-        public async Task<CaseResult> Run(Script script, IDebugger? debugger, int statementLimit)
+        public async Task<CaseResult> Run(Runner runner, Script script)
         {
             var machine = new TestingMachine(script.RegisteredInputLength, script.RegisteredOutputLength);
 
-            return await Run(script, machine, debugger, statementLimit);
+            return await Run(runner, script, machine);
         }
 
-        internal async Task<CaseResult> Run(Script script, TestingMachine machine, IDebugger? debugger, int statementLimit)
+        internal async Task<CaseResult> Run(Runner runner, Script script, TestingMachine machine)
         {
             var hasRunStartup = false;
             int stepsRan = 0;
@@ -42,13 +42,16 @@ namespace LogicScript.Testing
                     expandedValue.Bits.CopyTo(machine.Inputs.AsSpan()[port.StartIndex..(port.StartIndex + port.BitSize)]);
                 }
 
-                var exitReason = await new Interpreter(script, machine, !hasRunStartup, debugger: debugger).RunToEndAsync(statementLimit);
-                if (exitReason != ExitReason.Ended)
+                try
                 {
-                    if (exitReason == ExitReason.LimitReached)
-                    {
-                        return new LimitReachedCaseResult(this, [.. machine.PrintOutput], stepsRan);
-                    }
+                    if (runner.CanRunAsync)
+                        await runner.RunAsync(machine, script, !hasRunStartup);
+                    else
+                        runner.Run(machine, script, !hasRunStartup);
+                }
+                catch (InterpreterLimitReachedException)
+                {
+                    return new LimitReachedCaseResult(this, [.. machine.PrintOutput], stepsRan);
                 }
 
                 hasRunStartup = true;

@@ -19,6 +19,9 @@ namespace LogicScript.Interpreting
         LimitReached,
     }
 
+    [Serializable]
+    public class InterpreterLimitReachedException : Exception;
+
     public partial class Interpreter
     {
         private readonly struct Operation(ICodeNode? node, bool breakBarrier = false, Func<bool>? before = null, Action? after = null)
@@ -117,15 +120,17 @@ namespace LogicScript.Interpreting
             return ExitReason.Ended;
         }
 
-        public async Task<ExitReason> RunToEndAsync(int statementLimit = -1)
+        public async Task RunToEndAsync(int statementLimit = -1)
         {
             while (true)
             {
                 var exitReason = Run(statementLimit);
                 if (exitReason == ExitReason.Debugger && Debugger != null)
                     await Debugger.WaitForResumeAsync();
+                else if (exitReason == ExitReason.LimitReached)
+                    throw new InterpreterLimitReachedException();
                 else
-                    return exitReason;
+                    break;
             }
         }
 

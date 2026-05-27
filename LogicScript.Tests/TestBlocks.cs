@@ -5,25 +5,19 @@ using NUnit.Framework;
 
 namespace LogicScript.Tests
 {
-    public class TestBlocks : BaseTest
+    public class TestBlocks(RunnerType runnerType) : BaseTest(runnerType)
     {
-        public TestBlocks(IRunner runner) : base(runner)
-        {
-        }
-
         [Test]
         public void Blocks_Print()
         {
-            var machine = new DummyMachine();
-
-            Runner.Run(new Script()
+            Run(new Script()
             {
                 Blocks = {
                     new StartupBlock(default, new PrintTaskStatement("nice1")),
                     new WhenBlock(default, null, new PrintTaskStatement("nice2")),
                     new WhenBlock(default, new NumberLiteralExpression(default, 1), new PrintTaskStatement("nice3")),
                 }
-            }, machine);
+            }, out var machine);
 
             machine.AssertPrinted("nice1", "nice2", "nice3");
         }
@@ -31,14 +25,12 @@ namespace LogicScript.Tests
         [Test]
         public void Startup_ShouldRun()
         {
-            var machine = new DummyMachine();
-
-            Runner.Run(new Script()
+            Run(new Script()
             {
                 Blocks = {
                     new StartupBlock(default, new PrintTaskStatement("yes")),
                 }
-            }, machine, runStartup: true);
+            }, out var machine, runStartup: true);
 
             machine.AssertPrinted("yes");
         }
@@ -46,14 +38,12 @@ namespace LogicScript.Tests
         [Test]
         public void Startup_ShouldNotRun()
         {
-            var machine = new DummyMachine();
-
-            Runner.Run(new Script()
+            Run(new Script()
             {
                 Blocks = {
                     new StartupBlock(default, new PrintTaskStatement("yes")),
                 }
-            }, machine, runStartup: false);
+            }, out var machine, runStartup: false);
 
             machine.AssertPrinted();
         }

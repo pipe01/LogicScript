@@ -34,13 +34,14 @@ namespace LogicScript.DX.CLI.Commands
                 }
             }
 
+            var runner = Runner.Interpreted(debugger);
             foreach (var file in Files)
             {
-                await RunFileAsync(Path.GetFullPath(file), new PrettyTestLogger(), debugger);
+                await RunFileAsync(Path.GetFullPath(file), new PrettyTestLogger(), runner, debugger);
             }
         }
 
-        private async Task RunFileAsync(string scriptPath, ITestLogger logger, IDebugger? debugger)
+        private async Task RunFileAsync(string scriptPath, ITestLogger logger, Runner runner, IDebugger? debugger)
         {
             var (script, errors) = Script.Parse(File.ReadAllText(scriptPath), scriptPath);
             if (errors != null && errors.Count > 0)
@@ -64,7 +65,7 @@ namespace LogicScript.DX.CLI.Commands
 
             debugger?.LoadedScript(script);
 
-            var results = bench.Run(script, debugger);
+            var results = bench.Run(runner, script);
             int successful = 0, failed = 0;
 
             await foreach (var result in results)

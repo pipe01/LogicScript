@@ -26,13 +26,20 @@ namespace LogicScript.Tests
                 {
                     var script = ParseScript(lsxFile);
 
-                    return script.TestCases.Select((@case, i) =>
+                    return script.TestCases.SelectMany((@case, i) =>
                     {
                         var caseName = @case.Name ?? $"Case {i}";
 
-                        return new TestCaseParameters([lsxFile, i])
+                        return new TestCaseParameters[]
                         {
-                            TestName = $"{lsxFile[prefix.Length..^".lsx".Length]}.{caseName}"
+                            new([true, lsxFile, i])
+                            {
+                                TestName = $"{lsxFile[prefix.Length..^".lsx".Length]}.{caseName}.Interpreted"
+                            },
+                            new([false, lsxFile, i])
+                            {
+                                TestName = $"{lsxFile[prefix.Length..^".lsx".Length]}.{caseName}.Compiled"
+                            },
                         };
                     });
                 });
@@ -52,10 +59,11 @@ namespace LogicScript.Tests
         }
 
         [TestCaseSource(nameof(Benches))]
-        public async Task Run(string lsbenchFile, int caseIndex)
+        public async Task Run(bool interpreted, string lsbenchFile, int caseIndex)
         {
+            var runner = interpreted ? Runner.Interpreted() : Runner.Compiled();
             var script = ParseScript(lsbenchFile);
-            var result = await script.TestCases[caseIndex].Run(script, null, -1);
+            var result = await script.TestCases[caseIndex].Run(runner, script);
 
             foreach (var line in result.PrintedLines)
             {
