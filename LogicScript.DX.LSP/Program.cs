@@ -43,6 +43,7 @@ namespace LogicScript.DX.LSP
                 .WithHandler<CodeLensHandler>()
                 .WithHandler<ExecuteCommandHandler>()
                 .WithHandler<StartTestDebugHandler>()
+                .WithHandler<CompletionRequestHandler>()
             );
 
             await server.Initialize(CancellationToken.None);

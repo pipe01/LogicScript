@@ -11,7 +11,7 @@ namespace LogicScript.DX.LSP
         public static Position ToPosition(this SourceLocation loc)
             => new(loc.Line - 1, loc.Column - 1);
 
-        public static SourceLocation ToLocation(this Position pos)
-            => new("", pos.Line + 1, pos.Character + 1);
+        public static SourceLocation ToLocation(this Position pos, string fileName = "")
+            => new(fileName, pos.Line + 1, pos.Character + 1);
     }
 }
