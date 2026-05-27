@@ -2,6 +2,8 @@
 using LogicScript.Parsing.Structures;
 using LogicScript.Parsing.Structures.Expressions;
 using LogicScript.Parsing.Structures.Statements;
+using LogicScript.Testing;
+using LogicScript.Utils;
 using OmniSharp.Extensions.LanguageServer.Protocol;
 using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 using System;
@@ -126,6 +128,8 @@ namespace LogicScript.DX.LSP
             {
                 Reference r => r.Port,
                 IPortInfo p => p,
+                PrintStringFormat.Interpolation interp => interp.Local,
+                PortValue portValue when TryGetScript(uri, out var script) && script.TryGetPort(portValue.Name, portValue.Ports, out var port) => port,
                 _ => null
             };
         }

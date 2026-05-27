@@ -24,35 +24,15 @@ namespace LogicScript.DX.LSP.Handlers
 
         public override async Task<LocationOrLocationLinks?> Handle(DefinitionParams request, CancellationToken cancellationToken)
         {
-            var node = Workspace.GetNodeAt(request.TextDocument.Uri, request.Position);
+            var port = Workspace.GetPortAt(request.TextDocument.Uri, request.Position.ToLocation(request.TextDocument.Uri));
 
-            Range range;
-
-            switch (node)
-            {
-                case Reference @ref:
-                    range = @ref.Port.Span.ToRange();
-                    break;
-
-                case PrintStringFormat.Interpolation interp:
-                    range = interp.Local.Span.ToRange();
-                    break;
-
-                case PortValue portValue:
-                    if (Workspace.TryGetScript(request.TextDocument.Uri, out var script) && script.TryGetPort(portValue.Name, portValue.Ports, out var port))
-                        range = port.Span.ToRange();
-                    else
-                        return new();
-                    break;
-
-                default:
-                    return new();
-            }
+            if (port == null)
+                return new();
 
             return new(new LocationOrLocationLink(new Location
             {
                 Uri = request.TextDocument.Uri,
-                Range = range
+                Range = port.Span.ToRange()
             }));
         }
     }

@@ -36,9 +36,9 @@ namespace LogicScript.Parsing
         {
         }
 
-        public bool Contains(SourceLocation loc)
+        public bool Contains(SourceLocation loc, bool sameFile = true)
         {
-            if (loc.FileName != Start.FileName)
+            if (sameFile && loc.FileName != Start.FileName)
                 return false;
 
             if (loc.Line < Start.Line || loc.Line > End.Line)

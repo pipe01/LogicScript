@@ -31,7 +31,7 @@ namespace LogicScript.DX.LSP
                 return new();
 
             var completions = new List<CompletionItem>();
-            var location = request.Position.ToLocation(request.TextDocument.Uri.ToString());
+            var location = request.Position.ToLocation(request.TextDocument.Uri);
 
             bool addTopLevelKeywords = true,
                 addBlockLevelKeywords = false,
