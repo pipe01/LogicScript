@@ -176,7 +176,7 @@ namespace LogicScript.DX.LSP
 
             return new(completions);
 
-            void AddPorts(IEnumerable<KeyValuePair<string, PortInfo>> ports, bool writable)
+            void AddPorts(IEnumerable<KeyValuePair<string, MachinePortInfo>> ports, bool writable)
             {
                 foreach (var item in ports)
                 {

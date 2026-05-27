@@ -92,7 +92,7 @@ namespace LogicScript.Parsing.Visitors
             return null;
         }
 
-        private void Visit(LogicScriptParser.Port_infoContext context, IDictionary<string, PortInfo> dic, MachinePorts target)
+        private void Visit(LogicScriptParser.Port_infoContext context, IDictionary<string, MachinePortInfo> dic, MachinePorts target)
         {
             var size = context.size == null ? 1 : context.size.GetConstantValue(Context);
 
@@ -114,7 +114,7 @@ namespace LogicScript.Parsing.Visitors
 
             int startIndex = dic.Values.Sum(o => o.BitSize);
 
-            dic.Add(name, new PortInfo(target, startIndex, size, new(context.IDENT().Symbol)));
+            dic.Add(name, new MachinePortInfo(target, startIndex, size, new(context.IDENT().Symbol)));
         }
     }
 }

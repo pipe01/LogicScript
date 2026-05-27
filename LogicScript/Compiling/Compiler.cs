@@ -279,7 +279,7 @@ namespace LogicScript.Compiling
         {
             switch (stmt.Reference.Port)
             {
-                case PortInfo port:
+                case MachinePortInfo port:
                     switch (port.Target)
                     {
                         case MachinePorts.Output:
@@ -481,7 +481,7 @@ namespace LogicScript.Compiling
         {
             return expr.Reference.Port switch
             {
-                PortInfo port => port.Target switch
+                MachinePortInfo port => port.Target switch
                 {
                     MachinePorts.Input => expr.BitSize == 1 && canReturnBool
                         ? Expression.Call(

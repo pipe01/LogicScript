@@ -15,7 +15,7 @@ namespace LogicScript.Parsing.Structures
         Register
     }
 
-    public readonly struct PortInfo : IPortInfo
+    public readonly struct MachinePortInfo : IPortInfo
     {
         public MachinePorts Target { get; }
         public int StartIndex { get; }
@@ -23,7 +23,7 @@ namespace LogicScript.Parsing.Structures
 
         public SourceSpan Span { get; }
 
-        internal PortInfo(MachinePorts target, int index, int bitSize, SourceSpan span)
+        internal MachinePortInfo(MachinePorts target, int index, int bitSize, SourceSpan span)
         {
             this.Target = target;
             this.StartIndex = index;
@@ -40,7 +40,7 @@ namespace LogicScript.Parsing.Structures
 
         public bool Equals(IPortInfo? other)
         {
-            return other is PortInfo port
+            return other is MachinePortInfo port
                 && port.Target == Target
                 && port.StartIndex == StartIndex
                 && port.BitSize == BitSize

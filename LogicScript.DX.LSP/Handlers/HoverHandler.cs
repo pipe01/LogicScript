@@ -30,7 +30,7 @@ namespace LogicScript.DX.LSP.Handlers
         {
             var node = Workspace.GetNodeAt(request.TextDocument.Uri, request.Position, [
                 typeof(PrintStringFormat.Interpolation),
-                typeof(PortInfo),
+                typeof(MachinePortInfo),
                 typeof(Reference),
                 typeof(Expression),
                 typeof(DeclareLocalStatement),
@@ -42,7 +42,7 @@ namespace LogicScript.DX.LSP.Handlers
 
             switch (node)
             {
-                case PortInfo port:
+                case MachinePortInfo port:
                     lines.Add(GetPortDescription(port));
                     size = port.BitSize;
                     span = port.Span;
@@ -104,7 +104,7 @@ namespace LogicScript.DX.LSP.Handlers
             });
         }
 
-        private static string GetPortDescription(PortInfo port)
+        private static string GetPortDescription(MachinePortInfo port)
         {
             return port.BitSize == 1
                 ? $"**{port.Target} index {port.StartIndex}**"

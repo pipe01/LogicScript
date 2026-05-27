@@ -12,7 +12,7 @@ namespace LogicScript.Parsing.Structures.Blocks
         public Expression? Condition { get; } = condition;
         public Statement Body { get; } = body;
 
-        public IDictionary<string, PortInfo> Locals { get; } = new Dictionary<string, PortInfo>();
+        public IDictionary<string, MachinePortInfo> Locals { get; } = new Dictionary<string, MachinePortInfo>();
 
         public override IEnumerable<ICodeNode> GetChildren()
         {

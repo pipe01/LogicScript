@@ -89,8 +89,8 @@ namespace LogicScript.Tests
         {
             var machine = new DummyMachine(new[] { true, true, false });
 
-            var a = new PortInfo(MachinePorts.Input, 0, 1, default);
-            var b = new PortInfo(MachinePorts.Input, 1, 2, default);
+            var a = new MachinePortInfo(MachinePorts.Input, 0, 1, default);
+            var b = new MachinePortInfo(MachinePorts.Input, 1, 2, default);
 
             Runner.Run(new Script()
             {
@@ -118,8 +118,8 @@ namespace LogicScript.Tests
         {
             var machine = new DummyMachine(registers: [1, 2]);
 
-            var a = new PortInfo(MachinePorts.Register, 0, 1, default);
-            var b = new PortInfo(MachinePorts.Register, 1, 1, default);
+            var a = new MachinePortInfo(MachinePorts.Register, 0, 1, default);
+            var b = new MachinePortInfo(MachinePorts.Register, 1, 1, default);
 
             Runner.Run(new Script()
             {

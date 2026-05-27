@@ -10,7 +10,7 @@ namespace LogicScript.Parsing.Visitors
         public override Reference VisitRefPort([NotNull] LogicScriptParser.RefPortContext context)
         {
             var identName = context.IDENT().GetText();
-            PortInfo port;
+            MachinePortInfo port;
 
             MachinePorts? target =
                           Context.Script.Script.Inputs.TryGetValue(identName, out port) ? MachinePorts.Input

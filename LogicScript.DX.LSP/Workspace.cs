@@ -139,7 +139,7 @@ namespace LogicScript.DX.LSP
             if (!TryGetScript(uri, out var script))
                 return null;
 
-            if (types == null || types.Contains(typeof(PortInfo)))
+            if (types == null || types.Contains(typeof(MachinePortInfo)))
             {
                 foreach (var port in script.Inputs.Values.Concat(script.Outputs.Values).Concat(script.Registers.Values))
                 {

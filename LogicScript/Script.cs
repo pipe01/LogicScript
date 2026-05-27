@@ -17,9 +17,9 @@ namespace LogicScript
 {
     public class Script
     {
-        public IDictionary<string, PortInfo> Inputs { get; } = new Dictionary<string, PortInfo>();
-        public IDictionary<string, PortInfo> Outputs { get; } = new Dictionary<string, PortInfo>();
-        public IDictionary<string, PortInfo> Registers { get; } = new Dictionary<string, PortInfo>();
+        public IDictionary<string, MachinePortInfo> Inputs { get; } = new Dictionary<string, MachinePortInfo>();
+        public IDictionary<string, MachinePortInfo> Outputs { get; } = new Dictionary<string, MachinePortInfo>();
+        public IDictionary<string, MachinePortInfo> Registers { get; } = new Dictionary<string, MachinePortInfo>();
         public IDictionary<string, BitsValue> Constants { get; } = new Dictionary<string, BitsValue>();
         public IList<TestCase> TestCases { get; } = [];
 
@@ -51,7 +51,7 @@ namespace LogicScript
             return Blocks.Cast<ICodeNode>().Concat(TestCases.Cast<ICodeNode>()).SelectMany(o => o.GetDescendants(depthFirst));
         }
 
-        public bool TryGetPort(string name, MachinePorts ports, [MaybeNullWhen(false)] out PortInfo portInfo)
+        public bool TryGetPort(string name, MachinePorts ports, [MaybeNullWhen(false)] out MachinePortInfo portInfo)
         {
             switch (ports)
             {
