@@ -69,7 +69,7 @@ expression          : LPAREN wsnl expression wsnl RPAREN                        
                       | COMPARE_GREATER
                       | COMPARE_LESSER
                     ) wsnl expression                                           # exprCompare
-                    | cond=expression wsnl '?' wsnl
+                    | <assoc=right> cond=expression wsnl '?' wsnl
                       ifTrue=expression wsnl ':' wsnl
                       ifFalse=expression                                        # exprTernary
                     | atom                                                      # exprAtom
