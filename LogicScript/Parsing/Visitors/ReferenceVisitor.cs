@@ -28,12 +28,13 @@ namespace LogicScript.Parsing.Visitors
 
         public override Reference VisitRefPort([NotNull] LogicScriptParser.RefPortContext context)
         {
-            var portInfo = GetPortInfo(context.IDENT().GetText(), context.IDENT().Symbol.Span());
+            var nameSpan = context.IDENT().Symbol.Span();
+            var portInfo = GetPortInfo(context.IDENT().GetText(), nameSpan);
 
             if (portInfo.VectorLength > 1 && !allowRawVectors)
                 Context.Errors.AddError("Vectored port must be indexed", context.Span());
 
-            return new PortReference(context.Span(), portInfo, null);
+            return new PortReference(context.Span(), nameSpan, portInfo, null);
         }
 
         public override Reference VisitRefLocal([NotNull] LogicScriptParser.RefLocalContext context)
@@ -51,12 +52,13 @@ namespace LogicScript.Parsing.Visitors
 
         public override Reference VisitRefIndex([NotNull] LogicScriptParser.RefIndexContext context)
         {
-            var portInfo = GetPortInfo(context.IDENT().GetText(), context.IDENT().Symbol.Span());
+            var nameSpan = context.IDENT().Symbol.Span();
+            var portInfo = GetPortInfo(context.IDENT().GetText(), nameSpan);
 
             int maxIndexerBitSize = (int)Math.Ceiling(Math.Log(portInfo.VectorLength, 2));
             var index = new ExpressionVisitor(Context, maxIndexerBitSize).Visit(context.simple_indexer().index);
 
-            return new PortReference(context.Span(), portInfo, index);
+            return new PortReference(context.Span(), nameSpan, portInfo, index);
         }
     }
 }

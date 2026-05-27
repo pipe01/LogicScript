@@ -20,9 +20,10 @@ namespace LogicScript.Parsing.Structures
         }
     }
 
-    internal sealed class PortReference(SourceSpan span, MachinePortInfo port, Expression? vectorIndex) : Reference(span)
+    internal sealed class PortReference(SourceSpan span, SourceSpan portSpan, MachinePortInfo port, Expression? vectorIndex) : Reference(span)
     {
         public MachinePortInfo PortInfo { get; } = port;
+        public SourceSpan PortSpan { get; } = portSpan;
 
         public override IPortInfo Port => PortInfo;
 
