@@ -31,7 +31,7 @@ namespace LogicScript.Parsing.Visitors
 
         public override Statement VisitAssignRegular([NotNull] LogicScriptParser.AssignRegularContext context)
         {
-            var @ref = new ReferenceVisitor(BlockContext).Visit(context.reference());
+            var @ref = new ReferenceVisitor(BlockContext, 0).Visit(context.reference());
 
             if (!@ref.IsWritable)
                 Context.Errors.AddError("The left hand side of an assignment must be writable", context.reference().Span());
@@ -43,7 +43,7 @@ namespace LogicScript.Parsing.Visitors
 
         public override Statement VisitAssignTruncate([NotNull] LogicScriptParser.AssignTruncateContext context)
         {
-            var @ref = new ReferenceVisitor(BlockContext).Visit(context.reference());
+            var @ref = new ReferenceVisitor(BlockContext, 0).Visit(context.reference());
 
             if (!@ref.IsWritable)
                 Context.Errors.AddError("The left hand side of an assignment must be writable", context.reference().Span());
