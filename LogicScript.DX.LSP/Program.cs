@@ -44,6 +44,7 @@ namespace LogicScript.DX.LSP
                 .WithHandler<ExecuteCommandHandler>()
                 .WithHandler<StartTestDebugHandler>()
                 .WithHandler<CompletionRequestHandler>()
+                .WithHandler<DocumentHighlightHandler>()
             );
 
             await server.Initialize(CancellationToken.None);
