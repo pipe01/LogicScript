@@ -104,6 +104,21 @@ export async function activate(context: vscode.ExtensionContext) {
 		},
 	}));
 
+	const runTestsButton = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left);
+	runTestsButton.text = "$(run-all) Run all tests";
+	runTestsButton.command = "logicscript.tests.runFile";
+	context.subscriptions.push(runTestsButton);
+
+	if (vscode.window.activeTextEditor?.document.languageId === "logicscript")
+		runTestsButton.show();
+
+	context.subscriptions.push(vscode.window.onDidChangeActiveTextEditor((editor) => {
+		if (editor?.document.languageId === "logicscript")
+			runTestsButton.show();
+		else
+			runTestsButton.hide();
+	}));
+
 	// Start the client. This will also launch the server
 	await client.start();
 }
