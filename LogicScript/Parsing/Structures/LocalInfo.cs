@@ -21,11 +21,10 @@ namespace LogicScript.Parsing.Structures
         public bool Equals(IPortInfo? other)
         {
             return other is LocalInfo local
-                && local.Name == Name
-                && local.BitSize == BitSize;
+                && local.ID == ID;
         }
 
-        public override int GetHashCode() => HashCode.Combine(BitSize, Name, Span);
+        public override int GetHashCode() => ID.GetHashCode();
 
         public override string ToString() => Name;
     }
