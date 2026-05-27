@@ -14,7 +14,7 @@ namespace LogicScript.Parsing
                 throw new ArgumentException("Start and end locations must be in the same file");
 
             if (start.Line > end.Line || (start.Line == end.Line && start.Column > end.Column))
-                throw new ArgumentException("Start location must be before end location");
+                (start, end) = (end, start);
 
             this.Start = start;
             this.End = end;
