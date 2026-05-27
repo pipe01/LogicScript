@@ -181,6 +181,13 @@ namespace LogicScript.DX.LSP
                     InsertTextFormat = InsertTextFormat.Snippet,
                     InsertText = "@test (\n\t$0\n)\n"
                 });
+                completions.Add(new()
+                {
+                    Label = "always",
+                    Kind = CompletionItemKind.Snippet,
+                    InsertTextFormat = InsertTextFormat.Snippet,
+                    InsertText = "when *\n\t$0\nend"
+                });
             }
             foreach (var item in keywords)
             {
