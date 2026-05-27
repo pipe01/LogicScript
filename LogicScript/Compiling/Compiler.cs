@@ -277,10 +277,12 @@ namespace LogicScript.Compiling
 
         private Expression Compile(AssignStatement stmt)
         {
-            switch (stmt.Reference.Port)
+            switch (stmt.Reference)
             {
-                case MachinePortInfo port:
-                    switch (port.Target)
+                case PortReference port:
+                    var startIndex = ComputePortOffset(port);
+
+                    switch (port.PortInfo.Target)
                     {
                         case MachinePorts.Output:
                             var value = Compile(stmt.Value, port.BitSize == 1);
@@ -290,7 +292,7 @@ namespace LogicScript.Compiling
                                 return Expression.Call(
                                     Machine,
                                     typeof(IMachine).GetMethod(nameof(IMachine.WriteOutput))!,
-                                    Expression.Constant(port.StartIndex),
+                                    startIndex,
                                     value
                                 );
                             }
@@ -299,7 +301,7 @@ namespace LogicScript.Compiling
                                 return Expression.Call(
                                     Machine,
                                     typeof(IMachine).GetMethod(nameof(IMachine.WriteOutputs)),
-                                    Expression.Constant(port.StartIndex),
+                                    startIndex,
                                     Expression.New(
                                         typeof(BitsValue).GetConstructor([typeof(ulong), typeof(int)])!,
                                         value,
@@ -312,15 +314,15 @@ namespace LogicScript.Compiling
                             return Expression.Call(
                                 Machine,
                                 typeof(IMachine).GetMethod(nameof(IMachine.WriteRegister)),
-                                Expression.Constant(port.StartIndex),
+                                startIndex,
                                 Compile(stmt.Value, false)
                             );
                     }
                     throw new NotImplementedException();
 
-                case LocalInfo local:
+                case LocalReference local:
                     {
-                        var localVar = FindLocal(local);
+                        var localVar = FindLocal(local.LocalInfo);
                         var value = Compile(stmt.Value, false);
 
                         return Expression.Assign(localVar, value);
@@ -351,7 +353,7 @@ namespace LogicScript.Compiling
                 TernaryOperatorExpression t => Compile(t, canReturnBool),
                 TruncateExpression t => Compile(t.Operand, canReturnBool), // Truncating is a no-op at runtime since bit size is determined at compile-time
                 UnaryOperatorExpression u => Compile(u, canReturnBool),
-                ReferenceLengthExpression r => Expression.Constant((ulong)r.Reference.BitSize),
+                ReferenceLengthExpression r => Expression.Constant((ulong)r.Value),
                 _ => throw new NotImplementedException()
             };
         }
@@ -480,27 +482,34 @@ namespace LogicScript.Compiling
 
         private Expression Compile(ReferenceExpression expr, bool canReturnBool)
         {
-            return expr.Reference.Port switch
+            switch (expr.Reference)
             {
-                MachinePortInfo port => port.Target switch
-                {
-                    MachinePorts.Input => expr.BitSize == 1 && canReturnBool
-                        ? Expression.Call(
+                case LocalReference local:
+                    return FindLocal(local.LocalInfo);
+
+                case PortReference port:
+                    var startIndex = ComputePortOffset(port);
+
+                    return port.PortInfo.Target switch
+                    {
+                        MachinePorts.Input => expr.BitSize == 1 && canReturnBool
+                            ? Expression.Call(
+                                Machine,
+                                typeof(IMachine).GetMethod(nameof(IMachine.ReadInput)),
+                                startIndex
+                            )
+                            : ReadInput(startIndex, port.BitSize),
+                        MachinePorts.Register => Expression.Call(
                             Machine,
-                            typeof(IMachine).GetMethod(nameof(IMachine.ReadInput)),
-                            Expression.Constant(port.StartIndex)
-                        )
-                        : ReadInput(port.StartIndex, port.BitSize),
-                    MachinePorts.Register => Expression.Call(
-                        Machine,
-                        typeof(IMachine).GetMethod(nameof(IMachine.ReadRegister)),
-                        Expression.Constant(port.StartIndex)
-                    ),
-                    _ => throw new NotImplementedException()
-                },
-                LocalInfo local => FindLocal(local),
-                _ => throw new NotImplementedException()
-            };
+                            typeof(IMachine).GetMethod(nameof(IMachine.ReadRegister)),
+                            startIndex
+                        ),
+                        _ => throw new NotImplementedException()
+                    };
+
+                default:
+                    throw new NotImplementedException();
+            }
         }
 
         private ParameterExpression FindLocal(LocalInfo info)
@@ -561,7 +570,7 @@ namespace LogicScript.Compiling
             return convert ? Expression.Condition(boolExpr, Expression.Constant(1UL), Expression.Constant(0UL)) : boolExpr;
         }
 
-        private Expression ReadInput(int start, int size)
+        private Expression ReadInput(Expression start, int size)
         {
             return Expression.Field(
                 Expression.Call(
@@ -570,11 +579,38 @@ namespace LogicScript.Compiling
                         typeof(IMachine).GetMethod(nameof(IMachine.ReadInputs))
                     ),
                     typeof(BitsValue).GetMethod(nameof(BitsValue.Slice)),
-                    Expression.Constant(start),
+                    start,
                     Expression.Constant(size)
                 ),
                 typeof(BitsValue).GetField(nameof(BitsValue.Number))
             );
+        }
+
+
+        private Expression ComputePortOffset(PortReference port)
+        {
+            if (port.VectorIndex == null)
+            {
+                return Expression.Constant(port.StartIndex);
+            }
+            else
+            {
+                if (port.VectorIndex.IsConstant)
+                {
+                    var vectorIndex = (int)GetConstantValue(port.VectorIndex);
+                    return Expression.Constant(port.StartIndex + port.BitSize * vectorIndex);
+                }
+                else
+                {
+                    return Expression.Add(
+                        Expression.Constant(port.StartIndex),
+                        Expression.Multiply(
+                            Expression.Constant(port.BitSize),
+                            Compile(port.VectorIndex, false)
+                        )
+                    );
+                }
+            }
         }
     }
 }

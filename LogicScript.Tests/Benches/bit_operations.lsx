@@ -1,0 +1,18 @@
+input'8 a
+input'8 b
+output'8 out
+
+reg'5 step
+
+assign out =
+    step == 0 ? a & b :
+    step == 1 ? a | b : 0;
+
+when *
+    step '= step + 1
+end
+
+@test (
+    a(0101b) b(1111b) => out(0101b),
+    a(0101b) b(1010b) => out(1111b),
+)
