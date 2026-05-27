@@ -151,7 +151,7 @@ namespace LogicScript.Interpreting
             if (Script == null)
                 throw new InvalidOperationException("Can't evaluate in constant context");
 
-            var (parsed, errors) = Script.ParseExpression(expression, Script, Locals.Keys);
+            var (parsed, errors) = Script.ParseExpression(expression, Locals.Keys);
             if (errors.Count > 0)
             {
                 return (0, errors);

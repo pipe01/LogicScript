@@ -123,10 +123,10 @@ namespace LogicScript
             return (script, errors);
         }
 
-        internal static (Expression? Parsed, IReadOnlyCollection<Error> Errors) ParseExpression(string expression, Script script, IReadOnlyCollection<LocalInfo> locals)
+        internal (Expression? Parsed, IReadOnlyCollection<Error> Errors) ParseExpression(string expression, IReadOnlyCollection<LocalInfo> locals)
         {
             var errors = new ErrorSink();
-            var scriptContext = new ScriptContext(script, errors);
+            var scriptContext = new ScriptContext(this, errors);
             var blockContext = new BlockContext(scriptContext);
 
             foreach (var local in locals)
