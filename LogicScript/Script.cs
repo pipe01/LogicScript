@@ -28,35 +28,27 @@ namespace LogicScript
 
         internal IList<Block> Blocks { get; } = [];
 
+        public string Source { get; }
         public string FileName { get; }
         public IReadOnlyList<Error> Errors { get; }
 
         public bool HasErrors => Errors.Count > 0;
 
-        internal Script(string fileName, IReadOnlyList<Error> errors)
+        internal Script(string source, string fileName, IReadOnlyList<Error> errors)
         {
+            this.Source = source;
             this.FileName = fileName;
             this.Errors = errors;
         }
 
         // For tests
-        internal Script() : this("", [])
+        internal Script() : this("", "", [])
         {
         }
 
         public IEnumerable<ICodeNode> VisitAll(bool depthFirst = true)
         {
-            return Blocks.Cast<ICodeNode>().Concat(TestCases.Cast<ICodeNode>()).SelectMany(Inner);
-
-            IEnumerable<ICodeNode> Inner(ICodeNode parent)
-            {
-                if (parent == null)
-                    return [];
-
-                var children = parent.GetChildren().SelectMany(Inner);
-
-                return depthFirst ? children.Append(parent) : children.Prepend(parent);
-            }
+            return Blocks.Cast<ICodeNode>().Concat(TestCases.Cast<ICodeNode>()).SelectMany(o => o.GetDescendants(depthFirst));
         }
 
         public bool TryGetPort(string name, MachinePorts ports, [MaybeNullWhen(false)] out PortInfo portInfo)
@@ -113,7 +105,7 @@ namespace LogicScript
                 }
                 else
                 {
-                    script = new ScriptVisitor(errors).Visit(scriptCtx);
+                    script = new ScriptVisitor(errors, source).Visit(scriptCtx);
                 }
             }
             catch (ParseException ex)

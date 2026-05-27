@@ -173,7 +173,7 @@ namespace LogicScript.Data
         public static bool operator ==(BitsValue left, BitsValue right) => left.Number == right.Number;
         public static bool operator !=(BitsValue left, BitsValue right) => left.Number != right.Number;
         public static bool operator ==(BitsValue left, int right) => left.Number == (ulong)right;
-        public static bool operator !=(BitsValue left, int right) => left.Number == (ulong)right;
+        public static bool operator !=(BitsValue left, int right) => left.Number != (ulong)right;
         public static bool operator >(BitsValue left, BitsValue right) => left.Number > right.Number;
         public static bool operator <(BitsValue left, BitsValue right) => left.Number < right.Number;
     }

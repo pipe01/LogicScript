@@ -1,8 +1,11 @@
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using LogicScript.Parsing.Structures;
 using LogicScript.Parsing.Structures.Blocks;
+using LogicScript.Parsing.Structures.Expressions;
 using LogicScript.Parsing.Structures.Statements;
 using OmniSharp.Extensions.LanguageServer.Protocol.Client.Capabilities;
 using OmniSharp.Extensions.LanguageServer.Protocol.Document;
@@ -22,54 +25,66 @@ namespace LogicScript.DX.LSP
 
         public override async Task<CompletionList> Handle(CompletionParams request, CancellationToken cancellationToken)
         {
-            if (!workspace.TryGetScript(request.TextDocument.Uri, out var script))
+            var script = workspace.ParsePartial(request.TextDocument.Uri, request.Position.ToLocation());
+
+            if (script == null)
                 return new();
 
             var completions = new List<CompletionItem>();
             var location = request.Position.ToLocation(request.TextDocument.Uri.ToString());
 
-            bool inBlock = false;
+            bool addTopLevelKeywords = true,
+                addBlockLevelKeywords = false,
+                addWritables = false,
+                addReadables = false,
+                inLoop = false;
+
+            var locals = new List<LocalInfo>();
 
             foreach (var node in script.VisitAll())
             {
+                if (node is PlaceholderExpression)
+                {
+                    addReadables = true;
+                    addTopLevelKeywords = false;
+                    addBlockLevelKeywords = false;
+                    break;
+                }
+
                 if (!node.Span.Contains(location))
                     continue;
 
                 if (node is Block)
                 {
-                    inBlock = true;
+                    addTopLevelKeywords = false;
+                    addBlockLevelKeywords = true;
                 }
                 else if (node is BlockStatement block)
                 {
-                    foreach (var local in block.Locals)
-                    {
-                        completions.Add(new()
-                        {
-                            Label = local.Name,
-                            Kind = CompletionItemKind.Variable,
-                        });
-                    }
+                    locals.AddRange(block.Locals);
+                    addWritables = true;
+                }
+                else if (node is ForStatement or WhileStatement)
+                {
+                    inLoop = true;
                 }
             }
 
-            var keywords = new List<string>();
-            if (inBlock)
+            if (addWritables)
             {
-                keywords.AddRange(["if", "else", "for", "from", "to", "end", "break", "while", "@print", "@queueUpdate", "local"]);
-
-                foreach (var item in script.Inputs.Concat(script.Outputs).Concat(script.Registers))
+                foreach (var local in locals)
                 {
                     completions.Add(new()
                     {
-                        Label = item.Key,
+                        Label = local.Name,
                         Kind = CompletionItemKind.Variable,
-                        LabelDetails = new()
-                        {
-                            Description = item.Value.Target.ToString()
-                        }
                     });
                 }
 
+                AddPorts(script.Outputs, true);
+            }
+            if (addReadables)
+            {
                 foreach (var item in script.Constants)
                 {
                     completions.Add(new()
@@ -79,12 +94,57 @@ namespace LogicScript.DX.LSP
                         Detail = "Value: " + item.Value,
                     });
                 }
+
+                foreach (var item in new string[] { "len", "allOnes" })
+                {
+                    completions.Add(new()
+                    {
+                        Label = item,
+                        Kind = CompletionItemKind.Keyword,
+                        InsertText = item + "($0)",
+                        InsertTextFormat = InsertTextFormat.Snippet,
+                    });
+                }
+
+                AddPorts(script.Inputs, false);
             }
-            else
+            if (addReadables || addWritables)
+            {
+                AddPorts(script.Registers, addWritables);
+            }
+
+            var keywords = new List<string>();
+            if (addBlockLevelKeywords)
+            {
+                keywords.AddRange(["else", "from", "to", "end", "@print", "@queueUpdate", "local"]);
+                if (inLoop) keywords.Add("break");
+
+                completions.Add(new()
+                {
+                    Label = "if",
+                    Kind = CompletionItemKind.Snippet,
+                    InsertTextFormat = InsertTextFormat.Snippet,
+                    InsertText = "if ${1:condition}\n\t$0\nend"
+                });
+                completions.Add(new()
+                {
+                    Label = "for",
+                    Kind = CompletionItemKind.Snippet,
+                    InsertTextFormat = InsertTextFormat.Snippet,
+                    InsertText = "for $${1:i} to ${2}\n\t$0\nend"
+                });
+                completions.Add(new()
+                {
+                    Label = "while",
+                    Kind = CompletionItemKind.Snippet,
+                    InsertTextFormat = InsertTextFormat.Snippet,
+                    InsertText = "while ${1:condition}\n\t$0\nend"
+                });
+            }
+            if (addTopLevelKeywords)
             {
                 keywords.AddRange(["const", "input", "output", "reg", "when", "startup", "assign", "@test"]);
             }
-
             foreach (var item in keywords)
             {
                 completions.Add(new()
@@ -95,6 +155,23 @@ namespace LogicScript.DX.LSP
             }
 
             return new(completions);
+
+            void AddPorts(IEnumerable<KeyValuePair<string, PortInfo>> ports, bool writable)
+            {
+                foreach (var item in ports)
+                {
+                    completions.Add(new()
+                    {
+                        Label = item.Key,
+                        Kind = CompletionItemKind.Variable,
+                        InsertText = writable ? item.Key + " = " : null,
+                        LabelDetails = new()
+                        {
+                            Description = $"{item.Value.Target}'{item.Value.BitSize}"
+                        }
+                    });
+                }
+            }
         }
 
         public override Task<CompletionItem> Handle(CompletionItem request, CancellationToken cancellationToken)

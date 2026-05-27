@@ -22,5 +22,8 @@ namespace LogicScript.Parsing
         public override int GetHashCode() => HashCode.Combine(ID);
 
         public override bool Equals(object? obj) => obj is NodeID other && this.ID == other.ID;
+
+        public static bool operator ==(NodeID a, NodeID b) => a.ID == b.ID;
+        public static bool operator !=(NodeID a, NodeID b) => a.ID != b.ID;
     }
 }

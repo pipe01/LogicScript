@@ -60,10 +60,13 @@ namespace LogicScript.Parsing.Visitors
             else
             {
                 Context.Errors.AddError("Missing 'when' condition", context.Span());
-                return null;
+
+                cond = new PlaceholderExpression(new(context.space.Span().Start, context.space.Span().End));
             }
 
-            var body = new StatementVisitor(Context).Visit(context.block());
+            var body = context.block() == null
+                ? new BlockStatement(context.Span(), [], [])
+                : new StatementVisitor(Context).Visit(context.block());
 
             Script.Blocks.Add(new WhenBlock(context.Span(), cond, body));
             return null;

@@ -1,4 +1,5 @@
 ﻿using Antlr4.Runtime.Misc;
+using LogicScript.Parsing.Structures;
 using LogicScript.Parsing.Structures.Expressions;
 using LogicScript.Parsing.Structures.Statements;
 using LogicScript.Utils;
@@ -60,17 +61,23 @@ namespace LogicScript.Parsing.Visitors
 
         private IfStatement VisitIfBody(SourceSpan span, LogicScriptParser.If_bodyContext context)
         {
-            var cond = new ExpressionVisitor(BlockContext).Visit(context.expression());
-            var body = Visit(context.block());
+            var cond = new ExpressionVisitor(BlockContext).VisitOrPlaceholder(context.expression(), context.Span());
+            var body = context.block() == null
+                ? new BlockStatement(span, [], [])
+                : Visit(context.block());
             Statement? @else = null;
 
             if (context.stmt_else() != null)
             {
-                @else = Visit(context.stmt_else().block());
+                @else = context.stmt_else().block() == null
+                    ? new BlockStatement(context.stmt_else().Span(), [], [])
+                    : Visit(context.stmt_else().block());
             }
             else if (context.stmt_elseif() != null)
             {
-                @else = VisitIfBody(context.stmt_elseif().Span(), context.stmt_elseif().if_body());
+                @else = context.stmt_elseif().if_body() == null
+                    ? new BlockStatement(context.stmt_elseif().Span(), [], [])
+                    : VisitIfBody(context.stmt_elseif().Span(), context.stmt_elseif().if_body());
             }
 
             return new IfStatement(span, cond, body, @else);
@@ -82,12 +89,14 @@ namespace LogicScript.Parsing.Visitors
 
             var varName = context.VARIABLE().GetText();
             var from = context.from == null ? null : new ExpressionVisitor(BlockContext).Visit(context.from);
-            var to = new ExpressionVisitor(BlockContext).Visit(context.to);
+            var to = new ExpressionVisitor(BlockContext).VisitOrPlaceholder(context.to, context.Span());
 
             var outerContext = new BlockContext(Context, BlockContext, BlockContext.IsInConstant, id);
             var local = outerContext.AddLocal(varName, to.BitSize, new SourceSpan(context.VARIABLE().Symbol));
 
-            var body = (BlockStatement)VisitBlock(context.block(), id, outerContext);
+            var body = context.block() == null
+                ? new BlockStatement(context.Span(), [], [])
+                : (BlockStatement)VisitBlock(context.block(), id, outerContext);
             var forStmt = new ForStatement(id, context.Span(), local, from, to, body);
 
             return new BlockStatement(context.Span(), [forStmt], outerContext.Locals.ToArray());
@@ -95,17 +104,22 @@ namespace LogicScript.Parsing.Visitors
 
         public override Statement VisitStmt_while([NotNull] LogicScriptParser.Stmt_whileContext context)
         {
-            var cond = new ExpressionVisitor(BlockContext).Visit(context.expression());
+            var cond = new ExpressionVisitor(BlockContext).VisitOrPlaceholder(context.expression(), context.Span());
 
             var id = NodeID.Next();
-            var body = VisitBlock(context.block(), id);
+            var body = context.block() == null
+                ? new BlockStatement(context.Span(), [], [])
+                : VisitBlock(context.block(), id);
+
+            if (cond.IsConstant && cond.GetConstantValue() != 0 && !body.GetDescendants().Any(n => n is BreakStatement b && b.TargetID == id))
+                Context.Errors.AddError("Infinite loop detected", context.Span(), severity: Severity.Warning);
 
             return new WhileStatement(id, context.Span(), cond, body);
         }
 
         public override Statement VisitStmt_vardecl([NotNull] LogicScriptParser.Stmt_vardeclContext context)
         {
-            var name = context.VARIABLE().GetText();
+            var name = context.VARIABLE()?.GetText() ?? "";
 
             Expression? value = null;
 

@@ -7,45 +7,92 @@ using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
+using System.IO;
 using System.Linq;
+using System.Text;
+using System.Threading;
 
 namespace LogicScript.DX.LSP
 {
     internal class Workspace
     {
         private readonly Dictionary<DocumentUri, Script> Scripts = [];
+        private readonly Mutex ScriptsLock = new();
 
         public IReadOnlyList<Diagnostic>? LoadScript(DocumentUri uri, string text)
         {
-            var (script, errors) = Script.Parse(text, uri.ToString());
-
-            if (script != null)
-                Scripts[uri] = script;
-
-            return errors.Select(item =>
+            ScriptsLock.WaitOne();
+            try
             {
-                return new Diagnostic()
+                var (script, errors) = Script.Parse(text, uri.ToString());
+
+                if (script != null)
+                    Scripts[uri] = script;
+
+                return errors.Select(item =>
                 {
-                    Message = item.Message,
-                    Severity = item.Severity switch
+                    return new Diagnostic()
                     {
-                        Severity.Error => DiagnosticSeverity.Error,
-                        Severity.Warning => DiagnosticSeverity.Warning,
-                        _ => DiagnosticSeverity.Error
-                    },
-                    Range = item.Span.ToRange()
-                };
-            }).ToArray();
+                        Message = item.Message,
+                        Severity = item.Severity switch
+                        {
+                            Severity.Error => DiagnosticSeverity.Error,
+                            Severity.Warning => DiagnosticSeverity.Warning,
+                            _ => DiagnosticSeverity.Error
+                        },
+                        Range = item.Span.ToRange()
+                    };
+                }).ToArray();
+            }
+            finally
+            {
+                ScriptsLock.ReleaseMutex();
+            }
+        }
+
+        public Script? ParsePartial(DocumentUri uri, SourceLocation until)
+        {
+            if (!TryGetScript(uri, out var origScript))
+                return null;
+
+            var source = new StringBuilder();
+            var reader = new StringReader(origScript.Source);
+
+            string? line;
+            int lineIndex = 1;
+            while (lineIndex <= until.Line && (line = reader.ReadLine()) != null)
+            {
+                if (lineIndex == until.Line && line.Length > until.Column - 1)
+                {
+                    line = line[..(until.Column - 1)];
+                }
+
+                source.AppendLine(line);
+
+                lineIndex++;
+            }
+
+            var (script, _) = Script.Parse(source.ToString(), uri.ToString());
+
+            return script;
         }
 
         public bool TryGetScript(DocumentUri uri, [MaybeNullWhen(false)] out Script script)
         {
-            return Scripts.TryGetValue(uri, out script);
+            ScriptsLock.WaitOne();
+            try
+            {
+                return Scripts.TryGetValue(uri, out script);
+            }
+            finally
+            {
+                ScriptsLock.ReleaseMutex();
+            }
         }
 
         public IEnumerable<ICodeNode> VisitAll(DocumentUri uri)
         {
-            if (Scripts.TryGetValue(uri, out var script))
+            if (TryGetScript(uri, out var script))
                 return script.Blocks.SelectMany(Visit);
 
             return [];
@@ -85,7 +132,7 @@ namespace LogicScript.DX.LSP
 
         public ICodeNode? GetNodeAt(DocumentUri uri, SourceLocation location, Type[]? types = null)
         {
-            if (!Scripts.TryGetValue(uri, out var script))
+            if (!TryGetScript(uri, out var script))
                 return null;
 
             if (types == null || types.Contains(typeof(PortInfo)))

@@ -1,4 +1,5 @@
 ﻿using System;
+using Antlr4.Runtime;
 using Antlr4.Runtime.Misc;
 using Antlr4.Runtime.Tree;
 using LogicScript.Data;
@@ -12,12 +13,24 @@ namespace LogicScript.Parsing.Visitors
         private readonly BlockContext Context = context;
         private readonly int MaxBitSize = maxBitSize;
 
+        public Expression VisitOrPlaceholder(IParseTree tree, SourceSpan defaultSpan)
+        {
+            if (tree == null)
+                return new PlaceholderExpression(defaultSpan, MaxBitSize);
+            return Visit(tree);
+        }
+
         public override Expression Visit([NotNull] IParseTree tree)
         {
             var expr = base.Visit(tree);
 
             if (expr == null)
-                throw new ParseCanceledException();
+            {
+                if (tree is ParserRuleContext ctx)
+                    return new PlaceholderExpression(ctx.Span(), MaxBitSize);
+                else
+                    throw new ParseCanceledException();
+            }
 
             if (MaxBitSize != 0 && expr.BitSize > MaxBitSize)
                 Context.Errors.AddError($"Cannot fit a {expr.BitSize} bits long number into {MaxBitSize} bits", expr);

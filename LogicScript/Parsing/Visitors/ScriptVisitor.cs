@@ -2,11 +2,11 @@
 
 namespace LogicScript.Parsing.Visitors
 {
-    internal class ScriptVisitor(ErrorSink errors) : LogicScriptBaseVisitor<Script>
+    internal class ScriptVisitor(ErrorSink errors, string source) : LogicScriptBaseVisitor<Script>
     {
         public override Script VisitScript([NotNull] LogicScriptParser.ScriptContext context)
         {
-            var script = new Script(context.Start.TokenSource.SourceName, errors);
+            var script = new Script(source, context.Start.TokenSource.SourceName, errors);
             var ctx = new ScriptContext(script, errors);
 
             var declVisitor = new DeclarationVisitor(ctx, errors);
