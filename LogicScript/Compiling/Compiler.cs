@@ -47,7 +47,7 @@ namespace LogicScript.Compiling
                     Expression.Call(
                         Machine,
                         typeof(IMachine).GetMethod(nameof(IMachine.AllocateRegisters)),
-                        Expression.Constant(script.Registers.Count)
+                        Expression.Constant(script.Registers.Sum(r => r.Value.VectorLength))
                     )
                 )
             };
@@ -598,16 +598,20 @@ namespace LogicScript.Compiling
                 if (port.VectorIndex.IsConstant)
                 {
                     var vectorIndex = (int)GetConstantValue(port.VectorIndex);
-                    return Expression.Constant(port.StartIndex + port.BitSize * vectorIndex);
+                    return port.PortInfo.Target == MachinePorts.Register
+                        ? Expression.Constant(port.StartIndex + vectorIndex)
+                        : Expression.Constant(port.StartIndex + port.BitSize * vectorIndex);
                 }
                 else
                 {
                     return Expression.Add(
                         Expression.Constant(port.StartIndex),
-                        Expression.Multiply(
-                            Expression.Constant(port.BitSize),
-                            Compile(port.VectorIndex, false)
-                        )
+                        port.PortInfo.Target == MachinePorts.Register
+                            ? Compile(port.VectorIndex, false)
+                            : Expression.Multiply(
+                                Expression.Constant(port.BitSize),
+                                Compile(port.VectorIndex, false)
+                            )
                     );
                 }
             }

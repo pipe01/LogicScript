@@ -36,7 +36,7 @@ namespace LogicScript.Interpreting
                 {
                     MachinePorts.Output => throw new InterpreterException("Cannot read from output", expr.Span),
                     MachinePorts.Input => new BitsValue(Machine!.ReadInputs().Slice(port.StartIndex + port.BitSize * vectorIndex, port.BitSize)),
-                    MachinePorts.Register => Machine!.ReadRegister(port.StartIndex + port.BitSize * vectorIndex),
+                    MachinePorts.Register => Machine!.ReadRegister(port.StartIndex + vectorIndex),
                     _ => throw new InterpreterException("Unknown reference target", expr.Span),
                 };
             }
