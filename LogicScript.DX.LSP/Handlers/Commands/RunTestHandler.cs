@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -47,13 +48,13 @@ namespace LogicScript.DX.LSP.Commands
             CaseResult result;
             if (debug)
             {
-                await DebugSession.Current!.Debugger.WaitForAttachedAsync();
-                result = await RunTestAsync(scriptUri, testCase, statementLimit, DebugSession.Current.Debugger, workspace, DebugSession.Current.CancellationToken);
+                await DebugSession.Current!.Debugger.WaitForAttachedAsync(cancellationToken);
+                result = await RunTestAsync(scriptUri, testCase, statementLimit, DebugSession.Current.Debugger, workspace, cancellationToken);
             }
             else
             {
                 var runner = Runner.Interpreted(statementLimit: statementLimit);
-                result = await testCase.Run(runner, script);
+                result = await testCase.Run(runner, script, cancellationToken);
             }
 
             return new
@@ -73,7 +74,7 @@ namespace LogicScript.DX.LSP.Commands
 
             var runner = Runner.Interpreted(debugger, statementLimit);
 
-            return await testCase.Run(runner, script);
+            return await testCase.Run(runner, script, cancellationToken);
         }
 
         private async Task<int> RequestStatementLimitAsync(CancellationToken cancellationToken)

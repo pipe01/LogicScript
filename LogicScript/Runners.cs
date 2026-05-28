@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 using LogicScript.Compiling;
 using LogicScript.Interpreting;
@@ -17,7 +18,7 @@ namespace LogicScript
         }
 
         public virtual void Run(IMachine machine, Script script, bool runStartup) => throw new NotImplementedException();
-        public virtual Task RunAsync(IMachine machine, Script script, bool runStartup) => throw new NotImplementedException();
+        public virtual Task RunAsync(IMachine machine, Script script, bool runStartup, CancellationToken cancellationToken = default) => throw new NotImplementedException();
 
         public static Runner Compiled() => new CompiledRunner();
         public static Runner Interpreted(IDebugger? debugger = null, int statementLimit = -1) => new InterpretedRunner(debugger, statementLimit);
@@ -51,9 +52,9 @@ namespace LogicScript
             new Interpreter(script, machine, runStartup, debugger: debugger).Run(statementLimit);
         }
 
-        public override async Task RunAsync(IMachine machine, Script script, bool runStartup)
+        public override async Task RunAsync(IMachine machine, Script script, bool runStartup, CancellationToken cancellationToken)
         {
-            await new Interpreter(script, machine, runStartup, debugger: debugger).RunToEndAsync(statementLimit);
+            await new Interpreter(script, machine, runStartup, debugger: debugger).RunToEndAsync(cancellationToken, statementLimit);
         }
     }
 }

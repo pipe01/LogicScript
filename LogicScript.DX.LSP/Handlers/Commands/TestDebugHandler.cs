@@ -11,12 +11,13 @@ namespace LogicScript.DX.LSP.Commands
     class StartTestDebugHandler : ExecuteCommandHandlerBase<object>
     {
         public const string StartTestDebugCommand = "logicscript/startTestDebug";
+        public const string StopTestDebugCommand = "logicscript/stopTestDebug";
 
         protected override ExecuteCommandRegistrationOptions CreateRegistrationOptions(ExecuteCommandCapability capability, ClientCapabilities clientCapabilities)
         {
             return new()
             {
-                Commands = new([StartTestDebugCommand]),
+                Commands = new([StartTestDebugCommand, StopTestDebugCommand]),
             };
         }
 
@@ -34,6 +35,10 @@ namespace LogicScript.DX.LSP.Commands
                         host = endpoint.Address.ToString(),
                         port = endpoint.Port,
                     };
+
+                case StopTestDebugCommand:
+                    DebugSession.Current?.Stop();
+                    return new();
             }
 
             throw new ArgumentException("Unknown command");

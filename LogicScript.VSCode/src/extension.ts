@@ -109,6 +109,7 @@ export async function deactivate() {
 
 function runTests(debug: boolean, testsController: vscode.TestController, mapFileTests: Map<string, vscode.TestItem>) {
 	return async (request: vscode.TestRunRequest, token: vscode.CancellationToken) => {
+		const disposables: vscode.Disposable[] = [];
 		const run = testsController.createTestRun(request);
 
 		const tests: vscode.TestItem[] = [];
@@ -124,10 +125,14 @@ function runTests(debug: boolean, testsController: vscode.TestController, mapFil
 				}
 			}
 		}
-		else
-		{
+		else {
 			[...mapFileTests.values()].forEach(m => m.children.forEach(t => tests.push(t)));
 		}
+
+		const cts = new vscode.CancellationTokenSource();
+		disposables.push(cts);
+		disposables.push(token.onCancellationRequested(() => cts.cancel()));
+		token = cts.token;
 
 		if (debug) {
 			await vscode.debug.startDebugging(undefined, {
@@ -135,9 +140,16 @@ function runTests(debug: boolean, testsController: vscode.TestController, mapFil
 				request: "attach",
 				type: "logicscript-test",
 			})
+
+			disposables.push(vscode.debug.onDidTerminateDebugSession(() => cts.cancel()));
 		}
 
 		for (const item of tests) {
+			if (token.isCancellationRequested) {
+				run.skipped(item);
+				continue;
+			}
+
 			run.started(item);
 
 			try {
@@ -146,7 +158,7 @@ function runTests(debug: boolean, testsController: vscode.TestController, mapFil
 					arguments: [
 						item.uri?.toString(),
 						item.id,
-						debug,
+						!!vscode.debug.activeDebugSession,
 					]
 				}, token);
 
@@ -160,7 +172,7 @@ function runTests(debug: boolean, testsController: vscode.TestController, mapFil
 				else
 					run.failed(item, new vscode.TestMessage("Test failed"));
 			} catch (err) {
-				run.failed(item, new vscode.TestMessage(String(err)));
+				run.errored(item, new vscode.TestMessage(String(err)));
 			}
 		}
 
@@ -168,5 +180,7 @@ function runTests(debug: boolean, testsController: vscode.TestController, mapFil
 			await vscode.debug.stopDebugging();
 
 		run.end();
+
+		disposables.forEach(o => o.dispose());
 	};
 }

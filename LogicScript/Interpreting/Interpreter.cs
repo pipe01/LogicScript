@@ -8,6 +8,7 @@ using LogicScript.Parsing.Structures.Statements;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace LogicScript.Interpreting
@@ -120,13 +121,13 @@ namespace LogicScript.Interpreting
             return ExitReason.Ended;
         }
 
-        public async Task RunToEndAsync(int statementLimit = -1)
+        public async Task RunToEndAsync(CancellationToken cancellationToken = default, int statementLimit = -1)
         {
             while (true)
             {
                 var exitReason = Run(statementLimit);
                 if (exitReason == ExitReason.Debugger && Debugger != null)
-                    await Debugger.WaitForResumeAsync();
+                    await Debugger.WaitForResumeAsync().WaitOrCancel(cancellationToken);
                 else if (exitReason == ExitReason.LimitReached)
                     throw new InterpreterLimitReachedException();
                 else

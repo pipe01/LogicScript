@@ -87,7 +87,12 @@
                 ]
             },
             {
-                "type": "logicscript-test"
+                "type": "logicscript-test",
+                "label": "Debug LogicScript tests",
+
+                "configurationAttributes": {
+                    "attach": {}
+                }
             }
         ]
     },

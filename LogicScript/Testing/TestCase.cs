@@ -7,6 +7,7 @@ using LogicScript.Interpreting;
 using LogicScript.Testing.Results;
 using LogicScript.Parsing;
 using LogicScript.Parsing.Structures;
+using System.Threading;
 
 namespace LogicScript.Testing
 {
@@ -17,14 +18,14 @@ namespace LogicScript.Testing
             return Steps;
         }
 
-        public async Task<CaseResult> Run(Runner runner, Script script)
+        public async Task<CaseResult> Run(Runner runner, Script script, CancellationToken cancellationToken = default)
         {
             var machine = new TestingMachine(script.RegisteredInputLength, script.RegisteredOutputLength);
 
-            return await Run(runner, script, machine);
+            return await Run(runner, script, machine, cancellationToken);
         }
 
-        internal async Task<CaseResult> Run(Runner runner, Script script, TestingMachine machine)
+        internal async Task<CaseResult> Run(Runner runner, Script script, TestingMachine machine, CancellationToken cancellationToken = default)
         {
             var hasRunStartup = false;
             int stepsRan = 0;
@@ -48,7 +49,7 @@ namespace LogicScript.Testing
                 try
                 {
                     if (runner.CanRunAsync)
-                        await runner.RunAsync(machine, script, !hasRunStartup);
+                        await runner.RunAsync(machine, script, !hasRunStartup, cancellationToken);
                     else
                         runner.Run(machine, script, !hasRunStartup);
                 }
