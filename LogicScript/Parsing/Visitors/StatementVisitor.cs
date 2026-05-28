@@ -1,4 +1,5 @@
 ﻿using Antlr4.Runtime.Misc;
+using LogicScript.Data;
 using LogicScript.Parsing.Structures;
 using LogicScript.Parsing.Structures.Expressions;
 using LogicScript.Parsing.Structures.Statements;
@@ -91,8 +92,23 @@ namespace LogicScript.Parsing.Visitors
             var from = context.from == null ? null : new ExpressionVisitor(BlockContext).Visit(context.from);
             var to = new ExpressionVisitor(BlockContext).VisitOrPlaceholder(context.to, context.Span());
 
+            int toSize;
+            if (to.IsConstant)
+            {
+                // The loop variable will never actually reach the "to" value since it's exclusive,
+                // so if the "to" value is constant we can determine the actual bit length it will be
+                // once the loop variable reaches its maximum value, which is one less than "to".
+
+                var toValue = to.GetConstantValue();
+                toSize = new BitsValue(toValue.Number - 1).Length;
+            }
+            else
+            {
+                toSize = to.BitSize;
+            }
+
             var outerContext = new BlockContext(Context, BlockContext, BlockContext.IsInConstant, id);
-            var local = outerContext.AddLocal(varName, to.BitSize, new SourceSpan(context.VARIABLE().Symbol));
+            var local = outerContext.AddLocal(varName, toSize, new SourceSpan(context.VARIABLE().Symbol));
 
             var body = context.block() == null
                 ? new BlockStatement(context.Span(), [], [])
