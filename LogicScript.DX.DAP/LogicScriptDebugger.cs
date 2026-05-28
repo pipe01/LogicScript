@@ -5,6 +5,7 @@ using LogicScript.Data;
 using LogicScript.Interpreting;
 using LogicScript.Interpreting.Debugging;
 using LogicScript.Parsing;
+using LogicScript.Parsing.Structures;
 using LogicScript.Parsing.Structures.Statements;
 using OmniSharp.Extensions.DebugAdapter.Protocol.Events;
 using OmniSharp.Extensions.DebugAdapter.Protocol.Models;
@@ -453,20 +454,60 @@ public class LogicScriptDebugger : IDebugger, IAttachHandler, IDisconnectHandler
                         Value = FormatBitsValue(l.Value, l.Local.BitSize)
                     })),
                 InputsReference when EnsureInterpreter.Machine != null && EnsureInterpreter.Script != null
-                    => new(EnsureInterpreter.Script.Inputs.Select(i => new Variable
-                    {
-                        Name = i.Key,
-                        Value = FormatBitsValue(EnsureInterpreter.Machine.ReadInputs().Slice(i.Value.StartIndex, i.Value.BitSize), i.Value.BitSize)
-                    })),
+                    => new(EnsureInterpreter.Script.Inputs.Select(p => PortVariable(p.Key, p.Value))),
                 RegistersReference when EnsureInterpreter.Machine != null && EnsureInterpreter.Script != null
-                    => new(EnsureInterpreter.Script.Registers.Select(i => new Variable
-                    {
-                        Name = i.Key,
-                        Value = FormatBitsValue(EnsureInterpreter.Machine.ReadRegister(i.Value.StartIndex), i.Value.BitSize)
-                    })),
-                _ => new()
+                    => new(EnsureInterpreter.Script.Registers.Select(p => PortVariable(p.Key, p.Value))),
+                _ => new(PortVectorVariables(request.VariablesReference, (int)(request.Start ?? 0), (int)(request.Count ?? int.MaxValue)))
             }
         };
+
+        Variable PortVariable(string name, MachinePortInfo port)
+        {
+            if (port.VectorLength != 1)
+            {
+                return new Variable
+                {
+                    Name = name,
+                    Value = $"[{port.VectorLength}]",
+                    VariablesReference = Math.Abs((long)port.GetHashCode()),
+                    IndexedVariables = port.VectorLength,
+                };
+            }
+
+            return new Variable
+            {
+                Name = name,
+                Value = FormatBitsValue(port.Target switch
+                {
+                    MachinePorts.Input => EnsureInterpreter.Machine.ReadInputs().Slice(port.StartIndex, port.BitSize),
+                    MachinePorts.Register => EnsureInterpreter.Machine.ReadRegister(port.StartIndex),
+                    _ => throw new NotImplementedException()
+                }, port.BitSize)
+            };
+        }
+
+        IEnumerable<Variable> PortVectorVariables(long reference, int start, int count)
+        {
+            MachinePortInfo port =
+                EnsureInterpreter.Script!.Inputs.Values
+                .Concat(EnsureInterpreter.Script.Registers.Values)
+                .FirstOrDefault(p => Math.Abs((long)p.GetHashCode()) == reference);
+
+            if (port.Target == MachinePorts.Placeholder)
+                return [];
+
+            return Enumerable.Range(start, Math.Min(count, port.VectorLength))
+                .Select(vi => new Variable()
+                {
+                    Name = $"[{vi}]",
+                    Value = FormatBitsValue(port.Target switch
+                    {
+                        MachinePorts.Input => EnsureInterpreter.Machine!.ReadInputs().Slice(port.StartIndex + vi * port.BitSize, port.BitSize),
+                        MachinePorts.Register => EnsureInterpreter.Machine!.ReadRegister(port.StartIndex + vi),
+                        _ => throw new NotImplementedException()
+                    }, port.BitSize)
+                });
+        }
     }
 
     public async Task<ContinueResponse> Handle(ContinueArguments request, CancellationToken cancellationToken)

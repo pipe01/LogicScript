@@ -10,10 +10,10 @@ namespace LogicScript.Parsing.Structures
 
     public enum MachinePorts
     {
+        Placeholder,
         Input,
         Output,
         Register,
-        Placeholder
     }
 
     public readonly struct MachinePortInfo : IPortInfo
