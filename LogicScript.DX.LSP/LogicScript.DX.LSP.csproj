@@ -9,6 +9,7 @@
 
     <ItemGroup>
         <PackageReference Include="OmniSharp.Extensions.LanguageServer" Version="0.19.9" />
+        <PackageReference Include="ThrottleDebounce" Version="2.0.2" />
     </ItemGroup>
 
     <ItemGroup>
