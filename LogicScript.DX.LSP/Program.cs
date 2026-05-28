@@ -1,4 +1,5 @@
-﻿using LogicScript.DX.LSP.Handlers;
+﻿using LogicScript.DX.LSP.Commands;
+using LogicScript.DX.LSP.Handlers;
 using Microsoft.Extensions.DependencyInjection;
 using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 using OmniSharp.Extensions.LanguageServer.Server;

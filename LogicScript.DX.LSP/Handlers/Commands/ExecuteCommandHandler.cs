@@ -9,7 +9,7 @@ using OmniSharp.Extensions.LanguageServer.Protocol.Server;
 using OmniSharp.Extensions.LanguageServer.Protocol.Server.WorkDone;
 using OmniSharp.Extensions.LanguageServer.Protocol.Workspace;
 
-namespace LogicScript.DX.LSP
+namespace LogicScript.DX.LSP.Commands
 {
     class ExecuteCommandHandler(Workspace workspace, ILanguageServerFacade server, IServerWorkDoneManager workDoneManager) : ExecuteCommandHandlerBase
     {
