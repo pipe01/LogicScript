@@ -100,7 +100,7 @@ namespace LogicScript.DX.LSP.Handlers
         private RateLimitedAction<string> ThrottlerFor(DocumentUri uri)
         {
             if (!SendDiagnosticsThrottled.TryGetValue(uri, out var throttler))
-                SendDiagnosticsThrottled[uri] = throttler = Throttler.Throttle<string>(source => SendDiagnostics(source, uri), TimeSpan.FromSeconds(1));
+                SendDiagnosticsThrottled[uri] = throttler = Throttler.Throttle<string>(source => SendDiagnostics(source, uri), TimeSpan.FromSeconds(0.5));
 
             return throttler;
         }
