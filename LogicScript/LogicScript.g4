@@ -3,8 +3,8 @@ grammar LogicScript;
 script              : wsnl (wsnl declaration NL+)* (wsnl test_case NL+)* wsnl EOF ;
 test_bench          : (test_case NL+)* EOF ;
 
-test_case           : '@test' WS+ (name=TEXT WS+)? LPAREN wsnl (test_step NL+)* RPAREN wsnl ;
-test_step           : WS* (step_action | step_repeat) COMMA ;
+test_case           : '@test' WS+ (name=TEXT WS+)? LPAREN wsnl (test_step NL+)* wsnl RPAREN wsnl ;
+test_step           : wsnl (step_action | step_repeat) wsnl COMMA ;
 
 step_action         : inputs=step_ports WS* ARROW WS* outputs=step_ports ;
 step_repeat         : '+' DEC_NUMBER ;
