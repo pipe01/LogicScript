@@ -36,12 +36,19 @@ namespace LogicScript.Parsing.Visitors
 
         public override object? VisitDecl_const([NotNull] LogicScriptParser.Decl_constContext context)
         {
-            var value = new ExpressionVisitor(new BlockContext(Context, null, true)).Visit(context.expression());
+            var value = new ExpressionVisitor(new BlockContext(Context, null, true)).VisitOrPlaceholder(context.expression(), context.Span());
+            var name = context.IDENT().GetText();
 
-            if (!value.IsConstant)
+            if (value.IsConstant)
+            {
+                Context.Script.Constants.Add(name, new(value.GetConstantValue(), value));
+            }
+            else
+            {
                 Errors.AddError("Const declarations must have a constant value", value);
 
-            Context.Script.Constants.Add(context.IDENT().GetText(), value.GetConstantValue());
+                Context.Script.Constants.Add(name, new(0, new PlaceholderExpression(context.Span())));
+            }
             return null;
         }
 
@@ -122,6 +129,11 @@ namespace LogicScript.Parsing.Visitors
             if (Script.Inputs.TryGetValue(name, out var port) || Script.Outputs.TryGetValue(name, out port) || Script.Registers.TryGetValue(name, out port))
             {
                 Errors.AddError($"The name '{name}' is already taken by previous declaration at line {port.Span.Start.Line}", new SourceSpan(context.IDENT().Symbol));
+                return;
+            }
+            if (Script.Constants.TryGetValue(name, out var @const))
+            {
+                Errors.AddError($"The name '{name}' is already taken by previous constant at line {@const.Expression.Span.Start.Line}", new SourceSpan(context.IDENT().Symbol));
                 return;
             }
 

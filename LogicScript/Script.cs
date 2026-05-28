@@ -20,7 +20,7 @@ namespace LogicScript
         public IDictionary<string, MachinePortInfo> Inputs { get; } = new Dictionary<string, MachinePortInfo>();
         public IDictionary<string, MachinePortInfo> Outputs { get; } = new Dictionary<string, MachinePortInfo>();
         public IDictionary<string, MachinePortInfo> Registers { get; } = new Dictionary<string, MachinePortInfo>();
-        public IDictionary<string, BitsValue> Constants { get; } = new Dictionary<string, BitsValue>();
+        public IDictionary<string, Constant> Constants { get; } = new Dictionary<string, Constant>();
         public IList<TestCase> TestCases { get; } = [];
 
         internal int RegisteredInputLength => Inputs.Values.Sum(o => o.BitSize * o.VectorLength);
@@ -48,7 +48,7 @@ namespace LogicScript
 
         public IEnumerable<ICodeNode> VisitAll(bool depthFirst = true)
         {
-            return Blocks.Cast<ICodeNode>().Concat(TestCases.Cast<ICodeNode>()).SelectMany(o => o.GetDescendants(depthFirst));
+            return Blocks.Cast<ICodeNode>().Concat(TestCases.Cast<ICodeNode>()).Concat(Constants.Values.Cast<ICodeNode>()).SelectMany(o => o.GetDescendants(depthFirst));
         }
 
         public bool TryGetPort(string name, MachinePorts ports, [MaybeNullWhen(false)] out MachinePortInfo portInfo)
