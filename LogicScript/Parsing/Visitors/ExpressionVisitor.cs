@@ -252,6 +252,10 @@ namespace LogicScript.Parsing.Visitors
 
             if (context.reference() != null)
             {
+                var name = context.reference().GetText();
+                if (Context.Script.Script.Constants.TryGetValue(name, out var @const))
+                    return new UnaryOperatorExpression(context.Span(), Operator.Length, @const.Expression);
+
                 var reference = new ReferenceVisitor(Context, MaxBitSize, true).Visit(context.reference());
                 return new ReferenceLengthExpression(context.Span(), reference);
             }
@@ -263,7 +267,7 @@ namespace LogicScript.Parsing.Visitors
             }
 
             // For partial parsing
-            return new NumberLiteralExpression(context.Span(), 0);
+            return new UnaryOperatorExpression(context.Span(), Operator.Length, new PlaceholderExpression(context.Span()));
         }
 
         public override Expression VisitExprTernary([NotNull] LogicScriptParser.ExprTernaryContext context)

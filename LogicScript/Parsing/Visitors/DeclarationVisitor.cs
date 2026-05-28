@@ -45,10 +45,12 @@ namespace LogicScript.Parsing.Visitors
             }
             else
             {
-                Errors.AddError("Const declarations must have a constant value", value);
+                if (value is not PlaceholderExpression)
+                    Errors.AddError("Const declarations must have a constant value", value);
 
                 Context.Script.Constants.Add(name, new(0, new PlaceholderExpression(context.Span())));
             }
+
             return null;
         }
 
