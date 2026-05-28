@@ -53,7 +53,7 @@ namespace LogicScript
 
         public override async Task RunAsync(IMachine machine, Script script, bool runStartup)
         {
-            await new Interpreter(script, machine, runStartup, debugger: debugger).RunToEndAsync();
+            await new Interpreter(script, machine, runStartup, debugger: debugger).RunToEndAsync(statementLimit);
         }
     }
 }

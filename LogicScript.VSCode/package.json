@@ -41,12 +41,6 @@
                 "path": "./syntaxes/logicscript.tmLanguage.json"
             }
         ],
-        "commands": [
-            {
-                "command": "logicscript.tests.runFile",
-                "title": "LogicScript: Run all tests in current file"
-            }
-        ],
         "configuration": {
             "title": "LogicScript Language Support",
             "properties": {
@@ -61,16 +55,10 @@
                     "default": "off",
                     "description": "Traces the communication between VS Code and the language server."
                 },
-                "logicscript.test.focusOnFail": {
-                    "scope": "window",
-                    "type": "boolean",
-                    "default": true,
-                    "description": "Focus the test output window when a test fails"
-                },
                 "logicscript.test.statementLimit": {
                     "scope": "window",
                     "type": "integer",
-                    "default": 10000,
+                    "default": 100000,
                     "description": "Limit the number of statements that can run per test case to prevent infinite loops"
                 }
             }
@@ -82,7 +70,7 @@
         ],
         "debuggers": [
             {
-                "type": "logicscript-attach",
+                "type": "logicscript",
                 "label": "Attach to LogicScript",
 
                 "configurationAttributes": {
@@ -91,36 +79,15 @@
 
                 "initialConfigurations": [
                     {
-                        "type": "logicscript-attach",
+                        "type": "logicscript",
                         "request": "attach",
                         "name": "Attach to running LogicScript",
-                        "debugServer": 43532
+                        "debugServer": 23475
                     }
                 ]
             },
             {
-                "type": "logicscript-test",
-                "label": "Debug LogicScript tests",
-
-                "configurationAttributes": {
-                    "attach": {
-                        "properties": {
-                            "script": {
-                                "type": "string",
-                                "description": "Path to a .lsx file with tests or .lsbench file to run and debug.",
-                                "default": "${file}"
-                            }
-                        }
-                    }
-                },
-
-                "initialConfigurations": [
-                    {
-                        "type": "logicscript-test",
-                        "request": "launch",
-                        "name": "Debug LogicScript tests"
-                    }
-                ]
+                "type": "logicscript-test"
             }
         ]
     },

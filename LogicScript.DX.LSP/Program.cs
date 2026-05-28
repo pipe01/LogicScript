@@ -41,11 +41,10 @@ namespace LogicScript.DX.LSP
                 .WithHandler<RenameHandler>()
                 .WithHandler<ReferencesHandler>()
                 .WithHandler<InlayHintsHandler>()
-                .WithHandler<CodeLensHandler>()
-                .WithHandler<ExecuteCommandHandler>()
                 .WithHandler<StartTestDebugHandler>()
                 .WithHandler<CompletionRequestHandler>()
                 .WithHandler<DocumentHighlightHandler>()
+                .WithHandler<RunTestHandler>()
             );
 
             await server.Initialize(CancellationToken.None);

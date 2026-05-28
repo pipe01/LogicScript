@@ -54,50 +54,45 @@ export async function activate(context: vscode.ExtensionContext) {
 
 	const config = vscode.workspace.getConfiguration("logicscript");
 
-	vscode.commands.registerCommand("logicscript.tests.runFile", () => {
-		const currentDocument = vscode.window.activeTextEditor?.document;
-		if (!currentDocument) return;
+	const testsController = vscode.tests.createTestController("logicscriptTests", "LogicScript Tests");
+	context.subscriptions.push(testsController);
 
-		client.sendRequest("workspace/executeCommand", {
-			command: "logicscript.runtestsfile",
-			arguments: [
-				currentDocument.uri.toString(),
-				config.get("test.statementLimit")
-			]
-		})
+	const mapFileTests = new Map<string, vscode.TestItem>();
+	client.onNotification("logicscript/foundTests", (args: { uri: string, tests: { id: string, name: string, range: vscode.Range }[] }) => {
+		const uri = vscode.Uri.parse(args.uri, true);
+
+		var fileTest = mapFileTests.get(args.uri);
+		if (!fileTest) {
+			fileTest = testsController.createTestItem(args.uri, path.basename(uri.path), uri);
+			testsController.items.add(fileTest);
+
+			mapFileTests.set(args.uri, fileTest);
+		}
+		fileTest.children.forEach(i => fileTest!.children.delete(i.id));
+
+		for (const test of args.tests) {
+			const testItem = testsController.createTestItem(test.id, test.name, vscode.Uri.parse(args.uri, true));
+			testItem.range = test.range;
+			fileTest.children.add(testItem);
+		}
 	});
 
-	vscode.commands.registerCommand("logicscript.tests.debugFile", (script, caseIndex) => {
-		vscode.debug.startDebugging(undefined, {
-			name: "Test debug",
-			request: "attach",
-			type: "logicscript-test",
-			script,
-			caseIndices: typeof caseIndex == "number" ? [caseIndex] : null,
-		})
-	})
-
-	const testOutput = vscode.window.createOutputChannel("LogicScript Tests");
-	client.onNotification("logicscript/clearTestOutput", () => testOutput.clear());
-	client.onNotification("logicscript/logTestOutput", params => {
-		testOutput.appendLine(params);
-
-		if (config.get<boolean>("test.focusOnFail"))
-			testOutput.show(true);
-	});
-	context.subscriptions.push(testOutput);
+	testsController.createRunProfile(
+		'Run',
+		vscode.TestRunProfileKind.Run,
+		runTests(false, testsController, mapFileTests),
+		true
+	);
+	testsController.createRunProfile(
+		'Debug',
+		vscode.TestRunProfileKind.Debug,
+		runTests(true, testsController, mapFileTests),
+	);
 
 	context.subscriptions.push(vscode.debug.registerDebugAdapterDescriptorFactory("logicscript-test", {
 		async createDebugAdapterDescriptor(session, _) {
-			const scriptPath = (session.configuration.script as string) ?? vscode.window.activeTextEditor?.document.uri.toString();
-			const caseIndices = session.configuration.caseIndices as number[] | undefined;
-
 			const dapEndpoint: { host: string, port: number } = await client.sendRequest("workspace/executeCommand", {
-				command: "logicscript/startTestDebug",
-				arguments: [
-					scriptPath,
-					...(caseIndices ? [caseIndices] : [])
-				]
+				command: "logicscript/startTestDebug"
 			});
 
 			return new vscode.DebugAdapterServer(dapEndpoint.port);
@@ -118,20 +113,17 @@ export async function activate(context: vscode.ExtensionContext) {
 	};
 	context.subscriptions.push(debugTestsButton);
 
-	if (vscode.window.activeTextEditor?.document.languageId === "logicscript")
-	{
+	if (vscode.window.activeTextEditor?.document.languageId === "logicscript") {
 		runTestsButton.show();
 		debugTestsButton.show();
 	}
 
 	context.subscriptions.push(vscode.window.onDidChangeActiveTextEditor((editor) => {
-		if (editor?.document.languageId === "logicscript")
-		{
+		if (editor?.document.languageId === "logicscript") {
 			runTestsButton.show();
 			debugTestsButton.show();
 		}
-		else
-		{
+		else {
 			runTestsButton.hide();
 			debugTestsButton.show();
 		}
@@ -143,4 +135,68 @@ export async function activate(context: vscode.ExtensionContext) {
 
 export async function deactivate() {
 	await client?.stop();
+}
+
+function runTests(debug: boolean, testsController: vscode.TestController, mapFileTests: Map<string, vscode.TestItem>) {
+	return async (request: vscode.TestRunRequest, token: vscode.CancellationToken) => {
+		const run = testsController.createTestRun(request);
+
+		const tests: vscode.TestItem[] = [];
+
+		if (request.include) {
+			for (const include of request.include) {
+				if (mapFileTests.has(include.id)) {
+					const file = mapFileTests.get(include.id)!;
+					file.children.forEach(t => tests.push(t));
+				}
+				else {
+					tests.push(include);
+				}
+			}
+		}
+		else
+		{
+			[...mapFileTests.values()].forEach(m => m.children.forEach(t => tests.push(t)));
+		}
+
+		if (debug) {
+			await vscode.debug.startDebugging(undefined, {
+				name: "Test debug",
+				request: "attach",
+				type: "logicscript-test",
+			})
+		}
+
+		for (const item of tests) {
+			run.started(item);
+
+			try {
+				const resp: { success: boolean; scriptOutput: string[]; result: string; } = await client.sendRequest("workspace/executeCommand", {
+					command: "logicscript/runTest",
+					arguments: [
+						item.uri?.toString(),
+						item.id,
+						debug,
+					]
+				}, token);
+
+				run.appendOutput(resp.scriptOutput.join("\n"), undefined, item);
+
+				run.appendOutput(resp.result);
+
+				if (resp.success)
+					run.passed(item);
+
+				else
+					run.failed(item, new vscode.TestMessage("Test failed"));
+			} catch (err) {
+				run.failed(item, new vscode.TestMessage(String(err)));
+			}
+		}
+
+		if (debug)
+			await vscode.debug.stopDebugging();
+
+		run.end();
+	};
 }

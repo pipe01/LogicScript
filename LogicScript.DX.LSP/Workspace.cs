@@ -21,7 +21,7 @@ namespace LogicScript.DX.LSP
         private readonly Dictionary<DocumentUri, Script> Scripts = [];
         private readonly Mutex ScriptsLock = new();
 
-        public IReadOnlyList<Diagnostic>? LoadScript(DocumentUri uri, string text)
+        public IReadOnlyList<Diagnostic>? LoadScript(DocumentUri uri, string text, out Script? parsedScript)
         {
             ScriptsLock.WaitOne();
             try
@@ -30,6 +30,8 @@ namespace LogicScript.DX.LSP
 
                 if (script != null)
                     Scripts[uri] = script;
+
+                parsedScript = script;
 
                 return errors.Select(item =>
                 {
@@ -78,6 +80,9 @@ namespace LogicScript.DX.LSP
 
             return script;
         }
+
+        public bool TryGetScript(string uri, [MaybeNullWhen(false)] out Script script)
+            => TryGetScript(DocumentUri.From(uri), out script);
 
         public bool TryGetScript(DocumentUri uri, [MaybeNullWhen(false)] out Script script)
         {

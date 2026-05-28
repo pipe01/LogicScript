@@ -55,7 +55,7 @@ public class LogicScriptDebugger : IDebugger, IAttachHandler, IDisconnectHandler
         Continue();
     }
 
-    public static LogicScriptDebugger Launch(int port = 43532, bool singleClient = false) => Launch(new TcpListener(IPAddress.Loopback, port), singleClient);
+    public static LogicScriptDebugger Launch(int port = 23475, bool singleClient = false) => Launch(new TcpListener(IPAddress.Loopback, port), singleClient);
 
     public static LogicScriptDebugger Launch(TcpListener listener, bool singleClient = false)
     {
@@ -93,7 +93,7 @@ public class LogicScriptDebugger : IDebugger, IAttachHandler, IDisconnectHandler
         return debugger;
     }
 
-    public static async Task<LogicScriptDebugger> LaunchAndWaitForAttachedAsync(int port = 43532)
+    public static async Task<LogicScriptDebugger> LaunchAndWaitForAttachedAsync(int port = 23475)
     {
         var debugger = Launch(port);
 

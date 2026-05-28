@@ -4,7 +4,6 @@ using System.Linq;
 using System.Threading.Tasks;
 using LogicScript.Data;
 using LogicScript.Interpreting;
-using LogicScript.Interpreting.Debugging;
 using LogicScript.Testing.Results;
 using LogicScript.Parsing;
 using LogicScript.Parsing.Structures;

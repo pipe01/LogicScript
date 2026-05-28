@@ -27,7 +27,7 @@ namespace LogicScript.DX.LSP.Debugging
             if (Current != null) throw new InvalidOperationException("Session already in progress");
 
             var listener = new TcpListener(IPAddress.Loopback, 0);
-            var debugger = LogicScriptDebugger.Launch(listener, true);
+            var debugger = LogicScriptDebugger.Launch(listener, singleClient: true);
 
             Current = new(debugger, listener);
 
