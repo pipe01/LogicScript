@@ -19,7 +19,7 @@ public class LogicScriptDebugger : IDebugger, IAttachHandler, IDisconnectHandler
 
     private bool Attached;
 
-    private readonly record struct PendingBreakpoint(int Number, SourceLocation Location);
+    private readonly record struct PendingBreakpoint(int Number, SourceLocation Location, string? Condition);
     private readonly HashSet<PendingBreakpoint> PendingBreakpoints = [];
 
     private Interpreter EnsureInterpreter => CurrentPause?.Interpreter ?? throw new InvalidOperationException("Not currently paused");
@@ -102,10 +102,10 @@ public class LogicScriptDebugger : IDebugger, IAttachHandler, IDisconnectHandler
         return debugger;
     }
 
-    public async Task WaitForAttachedAsync()
+    public async Task WaitForAttachedAsync(CancellationToken cancellationToken = default)
     {
         while (!Attached)
-            await Task.Delay(100); // This is stupid and hacky but async in C# makes completely no sense and it's the only way I could find to make this work
+            await Task.Delay(100, cancellationToken); // This is stupid and hacky but async in C# makes completely no sense and it's the only way I could find to make this work
     }
 
     private void Pause(PauseState state)
@@ -128,7 +128,7 @@ public class LogicScriptDebugger : IDebugger, IAttachHandler, IDisconnectHandler
 
     #region Debugger
 
-    private readonly record struct StatementBreakpoint(int Number, Statement Statement);
+    private readonly record struct StatementBreakpoint(int Number, Statement Statement, string? Condition);
 
     private readonly record struct PauseState(int? BreakpointNumber, Statement Statement, Interpreter Interpreter)
     {
@@ -147,9 +147,9 @@ public class LogicScriptDebugger : IDebugger, IAttachHandler, IDisconnectHandler
     private bool IgnoreNext;
     private bool PauseNext;
 
-    private Breakpoint AddBreakpoint(SourceLocation location, int? wantNumber = null)
+    private Breakpoint AddBreakpoint(SourceLocation location, string? condition, int? wantNumber = null)
     {
-        var verified = TryAddBreakpoint(location, out var id, out var realLocation, wantNumber);
+        var verified = TryAddBreakpoint(location, condition, out var id, out var realLocation, wantNumber);
         if (!verified)
             return new Breakpoint
             {
@@ -166,7 +166,7 @@ public class LogicScriptDebugger : IDebugger, IAttachHandler, IDisconnectHandler
         };
     }
 
-    private bool TryAddBreakpoint(SourceLocation location, out int number, out SourceLocation realLocation, int? wantNumber = null)
+    private bool TryAddBreakpoint(SourceLocation location, string? condition, out int number, out SourceLocation realLocation, int? wantNumber = null)
     {
         BreakpointsMutex.WaitOne();
         number = wantNumber ?? BreakpointCounter++;
@@ -177,13 +177,13 @@ public class LogicScriptDebugger : IDebugger, IAttachHandler, IDisconnectHandler
             {
                 realLocation = stmt.Span.Start;
 
-                Breakpoints.Add(number, new(number, stmt));
+                Breakpoints.Add(number, new(number, stmt, condition));
 
                 return true;
             }
             else
             {
-                PendingBreakpoints.Add(new(number, location));
+                PendingBreakpoints.Add(new(number, location, condition));
             }
         }
         finally
@@ -289,6 +289,13 @@ public class LogicScriptDebugger : IDebugger, IAttachHandler, IDisconnectHandler
             {
                 if (bp.Statement == stmt)
                 {
+                    if (bp.Condition != null)
+                    {
+                        var (value, errors) = interpreter.Evaluate(bp.Condition);
+                        if (errors.Count == 0 && value == 0)
+                            continue;
+                    }
+
                     Pause(new(bp.Number, stmt, interpreter));
                     pause = true;
                     break;
@@ -320,7 +327,7 @@ public class LogicScriptDebugger : IDebugger, IAttachHandler, IDisconnectHandler
 
         foreach (var pending in PendingBreakpoints.ToArray())
         {
-            var bp = AddBreakpoint(pending.Location, pending.Number);
+            var bp = AddBreakpoint(pending.Location, pending.Condition, pending.Number);
 
             if (bp.Verified)
             {
@@ -347,7 +354,9 @@ public class LogicScriptDebugger : IDebugger, IAttachHandler, IDisconnectHandler
 
     public async Task<DisconnectResponse> Handle(DisconnectArguments request, CancellationToken cancellationToken)
     {
+        Attached = false;
         SessionDone.TrySetResult(true);
+
         return new();
     }
 
@@ -362,7 +371,7 @@ public class LogicScriptDebugger : IDebugger, IAttachHandler, IDisconnectHandler
 
         return new()
         {
-            Breakpoints = new(request.Breakpoints.Select(b => AddBreakpoint(new SourceLocation(documentUri, b.Line, b.Column ?? 0))))
+            Breakpoints = new(request.Breakpoints.Select(b => AddBreakpoint(new SourceLocation(documentUri, b.Line, b.Column ?? 0), b.Condition)))
         };
     }
 
