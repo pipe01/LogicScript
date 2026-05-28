@@ -69,7 +69,12 @@ namespace LogicScript.Interpreting
         private BitsValue Visit(UnaryOperatorExpression expr)
         {
             if (expr.Operator == Operator.Length)
+            {
+                if (expr.Operand.IsConstant)
+                    return GetConstantValue(expr.Operand).Length;
+
                 return new BitsValue((ulong)expr.Operand.BitSize, 7);
+            }
 
             var operand = Visit(expr.Operand);
 
