@@ -41,7 +41,11 @@ namespace LogicScript.Parsing.Visitors
 
             if (value.IsConstant)
             {
-                Context.Script.Constants.Add(name, new(value.GetConstantValue(), value));
+                if (!Context.Script.Constants.TryAdd(name, new(value.GetConstantValue(), value)))
+                {
+                    var prevLine = Context.Script.Constants[name].Expression.Span.Start.Line;
+                    Errors.AddError($"The name '{name}' is already taken by previous constant at line {prevLine}", new SourceSpan(context.IDENT().Symbol));
+                }
             }
             else
             {
