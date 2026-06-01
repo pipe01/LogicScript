@@ -4,7 +4,6 @@
     {
         public Script Script { get; } = script;
         public ErrorSink Errors { get; } = errors;
-        public int LocalCounter { get; set; }
 
         public bool DoesIdentifierExist(string iden)
             => Script.Inputs.ContainsKey(iden)
