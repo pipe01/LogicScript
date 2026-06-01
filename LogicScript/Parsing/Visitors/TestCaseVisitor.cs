@@ -6,7 +6,7 @@ using LogicScript.Testing;
 
 namespace LogicScript.Parsing.Visitors
 {
-    internal class TestCaseVisitor(ScriptContext? script, int index, ErrorSink errors) : LogicScriptBaseVisitor<TestCase>
+    internal class TestCaseVisitor(ScriptContext? script, int index, ErrorSink errors) : LogicScriptParserBaseVisitor<TestCase>
     {
         public override TestCase VisitTest_case([NotNull] LogicScriptParser.Test_caseContext context)
         {

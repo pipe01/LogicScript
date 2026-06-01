@@ -8,7 +8,7 @@ using System.Linq;
 
 namespace LogicScript.Parsing.Visitors
 {
-    class StatementVisitor(ScriptContext context, BlockContext? blockContext = null) : LogicScriptBaseVisitor<Statement>
+    class StatementVisitor(ScriptContext context, BlockContext? blockContext = null) : LogicScriptParserBaseVisitor<Statement>
     {
         private readonly ScriptContext Context = context;
         private readonly BlockContext BlockContext = blockContext ?? new BlockContext(context);

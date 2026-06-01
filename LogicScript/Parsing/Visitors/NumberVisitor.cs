@@ -4,7 +4,7 @@ using System;
 
 namespace LogicScript.Parsing.Visitors
 {
-    internal class NumberVisitor : LogicScriptBaseVisitor<BitsValue>
+    internal class NumberVisitor : LogicScriptParserBaseVisitor<BitsValue>
     {
         public override BitsValue VisitNumber([NotNull] LogicScriptParser.NumberContext context)
         {

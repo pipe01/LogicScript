@@ -4,7 +4,7 @@ using LogicScript.Parsing.Structures;
 
 namespace LogicScript.Parsing.Visitors
 {
-    internal class ReferenceVisitor(BlockContext context, int defaultBitSize = 0, bool allowRawVectors = false) : LogicScriptBaseVisitor<Reference>
+    internal class ReferenceVisitor(BlockContext context, int defaultBitSize = 0, bool allowRawVectors = false) : LogicScriptParserBaseVisitor<Reference>
     {
         private readonly BlockContext Context = context;
 

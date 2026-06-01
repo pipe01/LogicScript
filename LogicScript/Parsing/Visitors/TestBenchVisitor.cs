@@ -4,7 +4,7 @@ using LogicScript.Testing;
 
 namespace LogicScript.Parsing.Visitors
 {
-    internal class TestBenchVisitor(ErrorSink errors) : LogicScriptBaseVisitor<TestBench>
+    internal class TestBenchVisitor(ErrorSink errors) : LogicScriptParserBaseVisitor<TestBench>
     {
         public override TestBench VisitTest_bench([NotNull] LogicScriptParser.Test_benchContext context)
         {

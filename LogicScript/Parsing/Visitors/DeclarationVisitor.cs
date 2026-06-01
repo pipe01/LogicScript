@@ -9,7 +9,7 @@ using System.Linq;
 
 namespace LogicScript.Parsing.Visitors
 {
-    internal class DeclarationVisitor(ScriptContext context, ErrorSink errors) : LogicScriptBaseVisitor<object?>
+    internal class DeclarationVisitor(ScriptContext context, ErrorSink errors) : LogicScriptParserBaseVisitor<object?>
     {
         private readonly ScriptContext Context = context;
         private readonly ErrorSink Errors = errors;

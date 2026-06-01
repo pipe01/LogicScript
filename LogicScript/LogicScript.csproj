@@ -18,7 +18,8 @@
     </ItemGroup>
 
     <ItemGroup>
-        <Antlr4 Include="LogicScript.g4" />
+        <Antlr4 Include="LogicScriptLexer.g4" />
+        <Antlr4 Include="LogicScriptParser.g4" />
     </ItemGroup>
 
 </Project>

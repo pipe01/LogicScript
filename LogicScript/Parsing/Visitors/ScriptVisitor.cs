@@ -4,7 +4,7 @@ using LogicScript.Testing;
 
 namespace LogicScript.Parsing.Visitors
 {
-    internal class ScriptVisitor(ErrorSink errors, string source) : LogicScriptBaseVisitor<Script>
+    internal class ScriptVisitor(ErrorSink errors, string source) : LogicScriptParserBaseVisitor<Script>
     {
         public override Script VisitScript([NotNull] LogicScriptParser.ScriptContext context)
         {

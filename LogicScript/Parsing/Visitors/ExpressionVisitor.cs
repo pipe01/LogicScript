@@ -8,7 +8,7 @@ using LogicScript.Parsing.Structures.Expressions;
 
 namespace LogicScript.Parsing.Visitors
 {
-    class ExpressionVisitor(BlockContext context, int maxBitSize = 0) : LogicScriptBaseVisitor<Expression>
+    class ExpressionVisitor(BlockContext context, int maxBitSize = 0) : LogicScriptParserBaseVisitor<Expression>
     {
         private readonly BlockContext Context = context;
         private readonly int MaxBitSize = maxBitSize;
