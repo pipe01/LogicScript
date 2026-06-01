@@ -117,7 +117,15 @@ namespace LogicScript.Parsing.Visitors
             if (size > BitsValue.BitSize)
                 Errors.AddError($"The maximum bit size is {BitsValue.BitSize}", context.Span());
 
-            int length = context.simple_indexer() == null ? 1 : (int)context.simple_indexer().index.GetConstantValue(Context);
+            int length = 1;
+
+            if (context.simple_indexer()?.index != null)
+            {
+                var indexExpr = new ExpressionVisitor(new(Context, isInConstant: true)).Visit(context.simple_indexer().index);
+
+                if (indexExpr is not PlaceholderExpression)
+                    length = (int)indexExpr.GetConstantValue().Number;
+            }
 
             if (length <= 0)
             {
