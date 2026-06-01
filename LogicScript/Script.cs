@@ -80,11 +80,15 @@ namespace LogicScript
             return null;
         }
 
-        public static (Script? Script, IReadOnlyList<Error> Errors) Parse(string source, string fileName = "<script>")
+        public static (Script? Script, IReadOnlyList<Error> Errors) Parse(string source, string fileName = "<script>", bool addNewline = true)
         {
             var errors = new ErrorSink();
 
-            var input = new AntlrInputStream(source.Replace("\r\n", "\n") + "\n")
+            var normSource = source.Replace("\r\n", "\n");
+            if (addNewline)
+                normSource += "\n";
+
+            var input = new AntlrInputStream(normSource)
             {
                 name = fileName
             };

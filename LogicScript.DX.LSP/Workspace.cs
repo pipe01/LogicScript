@@ -76,7 +76,7 @@ namespace LogicScript.DX.LSP
                 lineIndex++;
             }
 
-            var (script, _) = Script.Parse(source.ToString(), uri.ToString());
+            var (script, _) = Script.Parse(source.ToString(), uri.ToString(), addNewline: false);
 
             return script;
         }
