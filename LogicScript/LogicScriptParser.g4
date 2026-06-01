@@ -11,7 +11,7 @@ test_step           : wsnl (step_action | step_repeat) wsnl COMMA ;
 step_action         : inputs=step_ports WS* ARROW WS* outputs=step_ports ;
 step_repeat         : PLUS DEC_NUMBER ;
 step_ports          : (step_portvalue (WS+ step_portvalue)*)? ;
-step_portvalue      : port=IDENT LPAREN expression (wsnl ',' wsnl expression)* RPAREN ;
+step_portvalue      : port=IDENT LPAREN expression (wsnl COMMA wsnl expression)* RPAREN ;
 
 declaration         : decl_const | decl_input | decl_output | decl_register | decl_when | decl_startup | decl_assign ;
 decl_const          : CONST WS+ IDENT WS+ EQUALS WS+ expression ;
@@ -51,7 +51,7 @@ stmt_task           : (task_print | task_update) ;
 task_print          : AT_PRINT wsnl_req (expression | TEXT) ;
 task_update         : AT_QUEUEUPDATE ;
 
-stmt_vardecl        : LOCAL WS+ VARIABLE (SQUOTE size=atom)? (wsnl '=' wsnl expression)? ;
+stmt_vardecl        : LOCAL WS+ VARIABLE (SQUOTE size=atom)? (wsnl EQUALS wsnl expression)? ;
 
 expression          : LPAREN wsnl expression wsnl RPAREN                        # exprParen
                     | LPAREN wsnl expression wsnl RPAREN SQUOTE size=expression # exprTrunc
