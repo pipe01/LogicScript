@@ -507,6 +507,11 @@ namespace LogicScript.Compiling
                         _ => throw new NotImplementedException()
                     };
 
+                case ConstantReference cnst:
+                    return cnst.BitSize == 1 && canReturnBool
+                        ? Expression.Constant(cnst.Constant.Value != 0)
+                        : Expression.Constant(cnst.Constant.Value.Number);
+
                 default:
                     throw new NotImplementedException();
             }

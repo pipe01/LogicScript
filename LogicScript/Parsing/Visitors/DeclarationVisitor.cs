@@ -38,13 +38,14 @@ namespace LogicScript.Parsing.Visitors
         {
             var value = new ExpressionVisitor(new BlockContext(Context, null, true)).VisitOrPlaceholder(context.expression(), context.Span());
             var name = context.IDENT().GetText();
+            var nameSpan = context.IDENT().Symbol.Span();
 
             if (value.IsConstant)
             {
-                if (!Context.Script.Constants.TryAdd(name, new(value.GetConstantValue(), value)))
+                if (!Context.Script.Constants.TryAdd(name, new(value.GetConstantValue(), value, nameSpan)))
                 {
                     var prevLine = Context.Script.Constants[name].Expression.Span.Start.Line;
-                    Errors.AddError($"The name '{name}' is already taken by previous constant at line {prevLine}", new SourceSpan(context.IDENT().Symbol));
+                    Errors.AddError($"The name '{name}' is already taken by previous constant at line {prevLine}", nameSpan);
                 }
             }
             else
@@ -52,7 +53,7 @@ namespace LogicScript.Parsing.Visitors
                 if (value is not PlaceholderExpression)
                     Errors.AddError("Const declarations must have a constant value", value);
 
-                Context.Script.Constants.Add(name, new(0, new PlaceholderExpression(context.Span())));
+                Context.Script.Constants.Add(name, new(0, new PlaceholderExpression(context.Span()), nameSpan));
             }
 
             return null;

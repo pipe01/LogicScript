@@ -9,6 +9,7 @@ namespace LogicScript.Parsing.Structures
 
         public abstract bool IsWritable { get; }
         public abstract bool IsReadable { get; }
+        public virtual bool IsConstant => false;
 
         public int BitSize => Port.BitSize;
 
@@ -61,5 +62,16 @@ namespace LogicScript.Parsing.Structures
         public override bool IsReadable => true;
 
         public override string ToString() => $"${Name}'{BitSize}";
+    }
+
+    internal sealed class ConstantReference(SourceSpan span, Constant constant) : Reference(span)
+    {
+        public override IPortInfo Port => constant;
+
+        public override bool IsWritable => false;
+        public override bool IsReadable => true;
+        public override bool IsConstant => true;
+
+        public Constant Constant => constant;
     }
 }

@@ -1,4 +1,5 @@
-﻿using LogicScript.Parsing;
+﻿using LogicScript.Data;
+using LogicScript.Parsing;
 using LogicScript.Parsing.Structures;
 using LogicScript.Parsing.Structures.Expressions;
 using LogicScript.Parsing.Structures.Statements;
@@ -39,6 +40,7 @@ namespace LogicScript.DX.LSP.Handlers
             var lines = new List<string>();
             int size;
             SourceSpan span;
+            BitsValue? constValue = null;
 
             switch (node)
             {
@@ -51,6 +53,8 @@ namespace LogicScript.DX.LSP.Handlers
                 case Reference @ref:
                     if (@ref is PortReference portRef)
                         lines.Add(GetPortDescription(portRef.PortInfo));
+                    if (@ref is ConstantReference cnst)
+                        constValue = cnst.Constant.Value;
 
                     size = @ref.BitSize;
                     span = @ref.Span;
@@ -69,7 +73,7 @@ namespace LogicScript.DX.LSP.Handlers
                     {
                         try
                         {
-                            lines.Add($"Constant: `{expr.GetConstantValue()}`");
+                            constValue = expr.GetConstantValue();
                         }
                         catch { }
                     }
@@ -89,6 +93,9 @@ namespace LogicScript.DX.LSP.Handlers
                 default:
                     return Task.FromResult<Hover?>(null);
             }
+
+            if (constValue != null)
+                lines.Add($"Constant: `{constValue}`");
 
             if (size != 0)
                 lines.Add($"Size: `{size}` bit" + (size != 1 ? "s" : ""));

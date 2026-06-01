@@ -26,23 +26,28 @@ namespace LogicScript.Interpreting
 
         private BitsValue Visit(ReferenceExpression expr)
         {
-            if (expr.Reference is PortReference port)
+            switch (expr.Reference)
             {
-                var vectorIndex = port.VectorIndex == null ? 0 : (int)Visit(port.VectorIndex).Number;
-                if (vectorIndex >= port.PortInfo.VectorLength)
-                    throw new InterpreterException("Vector index out of range", port.VectorIndex!.Span);
+                case PortReference port:
+                    {
+                        var vectorIndex = port.VectorIndex == null ? 0 : (int)Visit(port.VectorIndex).Number;
+                        if (vectorIndex >= port.PortInfo.VectorLength)
+                            throw new InterpreterException("Vector index out of range", port.VectorIndex!.Span);
 
-                return port.PortInfo.Target switch
-                {
-                    MachinePorts.Output => throw new InterpreterException("Cannot read from output", expr.Span),
-                    MachinePorts.Input => new BitsValue(Machine!.ReadInputs().Slice(port.StartIndex + port.BitSize * vectorIndex, port.BitSize)),
-                    MachinePorts.Register => new BitsValue(Machine!.ReadRegister(port.StartIndex + vectorIndex), expr.BitSize),
-                    _ => throw new InterpreterException("Unknown reference target", expr.Span),
-                };
-            }
-            else if (expr.Reference is LocalReference local)
-            {
-                return Locals[local.LocalInfo];
+                        return port.PortInfo.Target switch
+                        {
+                            MachinePorts.Output => throw new InterpreterException("Cannot read from output", expr.Span),
+                            MachinePorts.Input => new BitsValue(Machine!.ReadInputs().Slice(port.StartIndex + port.BitSize * vectorIndex, port.BitSize)),
+                            MachinePorts.Register => new BitsValue(Machine!.ReadRegister(port.StartIndex + vectorIndex), expr.BitSize),
+                            _ => throw new InterpreterException("Unknown reference target", expr.Span),
+                        };
+                    }
+
+                case LocalReference local:
+                    return Locals[local.LocalInfo];
+
+                case ConstantReference cnst:
+                    return cnst.Constant.Value;
             }
 
             throw new InterpreterException("Unknown reference type", expr.Span);
