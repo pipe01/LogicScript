@@ -23,6 +23,8 @@ namespace LogicScript
         public IDictionary<string, Constant> Constants { get; } = new Dictionary<string, Constant>();
         public IList<TestCase> TestCases { get; } = [];
 
+        public MachineRegister[] MachineRegisters => Registers.Values.Select(r => new MachineRegister(r.BitSize, r.VectorLength)).ToArray();
+
         internal int RegisteredInputLength => Inputs.Values.Sum(o => o.BitSize * o.VectorLength);
         internal int RegisteredOutputLength => Outputs.Values.Sum(o => o.BitSize * o.VectorLength);
 

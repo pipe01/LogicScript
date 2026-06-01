@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using LogicScript.Data;
 
 namespace LogicScript.Testing
@@ -23,11 +24,13 @@ namespace LogicScript.Testing
             PrintOutput.Clear();
         }
 
-        public void AllocateRegisters(int count)
+        public void AllocateRegisters(MachineRegister[] registers)
         {
-            if (count > Memory.Length)
+            int totalCount = registers.Sum(r => r.VectorLength);
+
+            if (totalCount > Memory.Length)
             {
-                Array.Resize(ref Memory, count);
+                Array.Resize(ref Memory, totalCount);
             }
         }
 

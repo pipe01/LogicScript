@@ -37,7 +37,7 @@ namespace LogicScript.Parsing.Structures
             this.Span = span;
         }
 
-        public IEnumerable<ICodeNode> GetChildren()
+        IEnumerable<ICodeNode> ICodeNode.GetChildren()
         {
             yield break;
         }

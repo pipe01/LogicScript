@@ -63,7 +63,7 @@ namespace LogicScript.Interpreting
                     throw new InterpreterException($"Output length mismatch: script requires {script.RegisteredOutputLength} but machine has {machine.OutputCount}");
             }
 
-            machine.AllocateRegisters(script.Registers.Sum(r => r.Value.VectorLength));
+            machine.AllocateRegisters(script.MachineRegisters);
 
             foreach (var block in script.Blocks.Reverse())
             {
