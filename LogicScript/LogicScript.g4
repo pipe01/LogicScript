@@ -1,6 +1,6 @@
 grammar LogicScript;
 
-script              : wsnl (wsnl declaration NL+)* (wsnl test_case NL+)* wsnl EOF ;
+script              : (wsnl declaration WS* NL+ wsnl)* (wsnl test_case NL+)* wsnl EOF ;
 test_bench          : (test_case NL+)* EOF ;
 
 test_case           : '@test' WS+ (name=TEXT WS+)? LPAREN wsnl (test_step NL+)* wsnl RPAREN wsnl ;
@@ -104,7 +104,7 @@ fragment HEX_DIGIT  : [a-fA-F0-9] ;
 fragment INPUT      : 'input' ;
 fragment OUTPUT     : 'output' ;
 
-LINE_COMMENT        : '//' .*? '\n' -> channel(HIDDEN) ;
+LINE_COMMENT        : '//' ~('\n')* -> channel(HIDDEN) ;
 COMMENT             : '/*' .*? '*/' -> channel(HIDDEN) ;
 
 DEC_NUMBER          : DEC_DIGIT+ ;
