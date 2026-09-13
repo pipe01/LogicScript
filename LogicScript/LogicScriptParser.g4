@@ -59,19 +59,11 @@ expression          : LPAREN wsnl expression wsnl RPAREN                        
                     | LEN LPAREN wsnl (reference | expression) wsnl RPAREN    # exprLength
                     | expression slice_indexer                                  # exprSlice
                     | NOT expression                                            # exprNegate
-                    | expression wsnl op=(OR | AND) wsnl expression             # exprAndOr
-                    | expression wsnl XOR wsnl expression                       # exprXor
-                    | expression wsnl POW wsnl expression                       # exprPower
-                    | expression wsnl op=(PLUS | MINUS) wsnl expression         # exprPlusMinus
-                    | expression wsnl op=(MULT | DIVIDE) wsnl expression        # exprMultDiv
-                    | expression wsnl MOD wsnl expression                       # exprModulus
-                    | expression wsnl op=(LSHIFT | RSHIFT) wsnl expression      # exprShift
                     | expression wsnl op=(
-                        COMPARE_EQUALS
-                      | COMPARE_NOTEQUALS
-                      | COMPARE_GREATER
-                      | COMPARE_LESSER
-                    ) wsnl expression                                           # exprCompare
+                          OR | AND | XOR | POW | PLUS | MINUS |
+                          MULT | DIVIDE | MOD | LSHIFT | RSHIFT |
+                          COMPARE_EQUALS | COMPARE_NOTEQUALS | COMPARE_GREATER |
+                          COMPARE_LESSER) wsnl expression             # exprBinOp
                     | <assoc=right> cond=expression wsnl QMARK wsnl
                       ifTrue=expression wsnl COLON wsnl
                       ifFalse=expression                                        # exprTernary
