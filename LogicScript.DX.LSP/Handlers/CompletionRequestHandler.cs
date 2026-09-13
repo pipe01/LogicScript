@@ -82,7 +82,7 @@ namespace LogicScript.DX.LSP
 
             if (addWritables)
             {
-                AddPorts(script.Outputs, true);
+                AddPorts(script.Outputs);
             }
             if (addReadables)
             {
@@ -107,7 +107,7 @@ namespace LogicScript.DX.LSP
                     });
                 }
 
-                AddPorts(script.Inputs, false);
+                AddPorts(script.Inputs);
             }
             if (addReadables || addWritables)
             {
@@ -124,7 +124,7 @@ namespace LogicScript.DX.LSP
                     });
                 }
 
-                AddPorts(script.Registers, addWritables);
+                AddPorts(script.Registers);
             }
 
             var keywords = new List<string>();
@@ -207,7 +207,7 @@ namespace LogicScript.DX.LSP
 
             return new(completions);
 
-            void AddPorts(IEnumerable<KeyValuePair<string, MachinePortInfo>> ports, bool writable)
+            void AddPorts(IEnumerable<KeyValuePair<string, MachinePortInfo>> ports)
             {
                 foreach (var item in ports)
                 {
@@ -215,7 +215,7 @@ namespace LogicScript.DX.LSP
                     {
                         Label = item.Key,
                         Kind = CompletionItemKind.Variable,
-                        InsertText = writable ? item.Key + " = " : null,
+                        InsertText = item.Key,
                         LabelDetails = new()
                         {
                             Description = $"{item.Value.Target.ToString().ToLowerInvariant()}'{item.Value.BitSize}"
