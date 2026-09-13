@@ -32,9 +32,9 @@ AT_QUEUEUPDATE      : '@queueUpdate' ;
 LINE_COMMENT        : '//' ~('\n')* -> channel(HIDDEN) ;
 COMMENT             : '/*' .*? '*/' -> channel(HIDDEN) ;
 
-DEC_NUMBER          : DEC_DIGIT+ ;
-BIN_NUMBER          : BIN_DIGIT+ 'b' ;
-HEX_NUMBER          : '0x' HEX_DIGIT+ ;
+DEC_NUMBER          : (DEC_DIGIT | '_')+ ;
+BIN_NUMBER          : (BIN_DIGIT | '_')+ 'b' ;
+HEX_NUMBER          : '0x' (HEX_DIGIT | '_')+ ;
 IDENT               : (LOWERCASE | UPPERCASE | '_') (LOWERCASE | UPPERCASE | DEC_DIGIT | '_')* ;
 WS                  : ' ' ;
 NL                  : [\n;] ;
