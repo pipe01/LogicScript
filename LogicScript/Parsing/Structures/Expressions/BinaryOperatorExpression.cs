@@ -13,8 +13,8 @@ namespace LogicScript.Parsing.Structures.Expressions
         public override int BitSize => Operator switch
         {
             Operator.And or Operator.Or or Operator.Xor or Operator.Subtract or Operator.Divide => Left.BitSize > Right.BitSize ? Left.BitSize : Right.BitSize,
-            Operator.ShiftLeft => Left.BitSize + (Right.IsConstant ? (int)Right.GetConstantValue().Number : ((1 << Right.BitSize) - 1)),
-            Operator.ShiftRight => Left.BitSize - (Right.IsConstant ? (int)Right.GetConstantValue().Number : Right.BitSize),
+            Operator.ShiftLeft => Right.IsConstant ? Left.BitSize + (int)Right.GetConstantValue().Number : Left.BitSize + (1 << Right.BitSize) - 1,
+            Operator.ShiftRight => Right.IsConstant ? Left.BitSize - (int)Right.GetConstantValue().Number : Left.BitSize,
             Operator.EqualsCompare or Operator.NotEqualsCompare or Operator.Greater or Operator.Lesser => 1,
             Operator.Add => Left.BitSize > Right.BitSize ? Left.BitSize + 1 : Right.BitSize + 1,
             Operator.Multiply => Left.BitSize + Right.BitSize,
