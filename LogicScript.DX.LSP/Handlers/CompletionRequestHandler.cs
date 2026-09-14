@@ -19,62 +19,78 @@ namespace LogicScript.DX.LSP
             return new()
             {
                 DocumentSelector = Program.Selector,
+                TriggerCharacters = new("$"),
             };
         }
 
         public override async Task<CompletionList> Handle(CompletionParams request, CancellationToken cancellationToken)
         {
-            var script = workspace.ParsePartial(request.TextDocument.Uri, request.Position.ToLocation(request.TextDocument.Uri));
-
-            if (script == null)
+            if (!workspace.TryParsePartial(request.TextDocument.Uri, request.Position.ToLocation(request.TextDocument.Uri), out var script, out var lastLine))
                 return new();
 
             var completions = new List<CompletionItem>();
-            var location = request.Position.ToLocation(request.TextDocument.Uri);
+            var location = request.Position.ToLocation(request.TextDocument.Uri, -1);
 
             bool addTopLevelKeywords = true,
                 addBlockLevelKeywords = false,
                 addWritables = false,
                 addReadables = false,
+                addLocals = false,
                 inLoop = false,
                 inIf = false;
 
-            foreach (var node in script.VisitAll())
+            int dollarIndex = lastLine.LastIndexOf('$');
+            int spaceIndex = lastLine.LastIndexOf(' ');
+            if (dollarIndex > spaceIndex)
             {
-                if (node is PlaceholderExpression)
-                {
-                    addReadables = true;
-                    addTopLevelKeywords = false;
-                    addBlockLevelKeywords = false;
-                    break;
-                }
-                if (node is PlaceholderAssignBlock)
-                {
-                    addWritables = true;
-                    addTopLevelKeywords = false;
-                    addBlockLevelKeywords = false;
-                    break;
-                }
+                // Inside a local identifier, e.g. "$foo"
+                //                                      ^
 
-                if (!node.Span.Contains(location))
-                    continue;
+                addLocals = true;
+                addTopLevelKeywords = false;
+            }
+            else
+            {
+                foreach (var node in script.VisitAll())
+                {
+                    if (node is PlaceholderExpression)
+                    {
+                        addReadables = true;
+                        addLocals = true;
+                        addTopLevelKeywords = false;
+                        addBlockLevelKeywords = false;
+                        break;
+                    }
+                    if (node is PlaceholderAssignBlock)
+                    {
+                        addWritables = true;
+                        addLocals = true;
+                        addTopLevelKeywords = false;
+                        addBlockLevelKeywords = false;
+                        break;
+                    }
 
-                if (node is Block)
-                {
-                    addTopLevelKeywords = false;
-                    addBlockLevelKeywords = true;
-                }
-                else if (node is BlockStatement block)
-                {
-                    addWritables = true;
-                }
-                else if (node is ForStatement or WhileStatement)
-                {
-                    inLoop = true;
-                }
-                else if (node is IfStatement)
-                {
-                    inIf = true;
+                    if (!node.Span.Contains(location))
+                        continue;
+
+                    if (node is Block)
+                    {
+                        addTopLevelKeywords = false;
+                        addBlockLevelKeywords = true;
+                    }
+                    else if (node is BlockStatement block)
+                    {
+                        addWritables = true;
+                        addLocals = true;
+                    }
+                    else if (node is ForStatement or WhileStatement)
+                    {
+                        inLoop = true;
+                    }
+                    else if (node is IfStatement)
+                    {
+                        inIf = true;
+                    }
                 }
             }
 
@@ -111,11 +127,21 @@ namespace LogicScript.DX.LSP
             }
             if (addReadables || addWritables)
             {
+                AddPorts(script.Registers);
+            }
+            if (addLocals)
+            {
+                var range = new Range(request.Position.Line, dollarIndex > spaceIndex ? dollarIndex : lastLine.Length, request.Position.Line, lastLine.Length);
+
                 foreach (var local in locals)
                 {
                     completions.Add(new()
                     {
                         Label = local.Name,
+                        TextEdit = new TextEditOrInsertReplaceEdit(new TextEdit
+                        {
+                            Range = range
+                        }),
                         Kind = CompletionItemKind.Variable,
                         LabelDetails = new()
                         {
@@ -123,8 +149,6 @@ namespace LogicScript.DX.LSP
                         }
                     });
                 }
-
-                AddPorts(script.Registers);
             }
 
             var keywords = new List<string>();

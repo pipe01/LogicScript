@@ -54,15 +54,19 @@ namespace LogicScript.DX.LSP
             }
         }
 
-        public Script? ParsePartial(DocumentUri uri, SourceLocation until)
+        public bool TryParsePartial(DocumentUri uri, SourceLocation until, [MaybeNullWhen(false)] out Script script, [MaybeNullWhen(false)] out string lastLine)
         {
             if (!TryGetScript(uri, out var origScript))
-                return null;
+            {
+                script = null;
+                lastLine = null;
+                return false;
+            }
 
             var source = new StringBuilder();
             var reader = new StringReader(origScript.Source);
 
-            string? line;
+            string? line = null;
             int lineIndex = 1;
             while (lineIndex <= until.Line && (line = reader.ReadLine()) != null)
             {
@@ -75,10 +79,13 @@ namespace LogicScript.DX.LSP
 
                 lineIndex++;
             }
+            lastLine = line ?? "";
 
-            var (script, _) = Script.Parse(source.ToString(), uri.ToString(), addNewline: false);
+            // When typing a single '$' to start autocompleting variable names we must remove the lone dollar sign as ANTLR cannot parse it
+            string sourceStr = source.ToString();
 
-            return script;
+            (script, _) = Script.Parse(sourceStr, uri.ToString(), addNewline: false);
+            return script != null;
         }
 
         public bool TryGetScript(string uri, [MaybeNullWhen(false)] out Script script)
