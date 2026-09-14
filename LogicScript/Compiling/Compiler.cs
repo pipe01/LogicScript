@@ -351,7 +351,7 @@ namespace LogicScript.Compiling
                 ReferenceExpression r => Compile(r, canReturnBool),
                 SliceExpression s => Compile(s),
                 TernaryOperatorExpression t => Compile(t, canReturnBool),
-                TruncateExpression t => Compile(t.Operand, canReturnBool), // Truncating is a no-op at runtime since bit size is determined at compile-time
+                TruncateExpression t => Compile(t),
                 UnaryOperatorExpression u => Compile(u, canReturnBool),
                 ReferenceLengthExpression r => Expression.Constant((ulong)r.Value),
                 _ => throw new NotImplementedException()
@@ -515,6 +515,14 @@ namespace LogicScript.Compiling
                 default:
                     throw new NotImplementedException();
             }
+        }
+
+        private Expression Compile(TruncateExpression expr)
+        {
+            ulong mask = 1UL << expr.BitSize;
+            var operand = Compile(expr, false);
+
+            return Expression.And(operand, Expression.Constant(mask));
         }
 
         private ParameterExpression FindLocal(LocalInfo info)
