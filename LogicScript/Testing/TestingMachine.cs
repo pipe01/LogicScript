@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using LogicScript.Compiling;
 using LogicScript.Data;
 
 namespace LogicScript.Testing
@@ -16,22 +17,14 @@ namespace LogicScript.Testing
         private ulong[] Memory = [];
         public readonly IList<string> PrintOutput = [];
 
+        public IRegisters? Registers { get; set; }
+
         public void Reset()
         {
             Array.Clear(Inputs, 0, Inputs.Length);
             Array.Clear(Outputs, 0, Outputs.Length);
             Memory = [];
             PrintOutput.Clear();
-        }
-
-        public void AllocateRegisters(MachineRegister[] registers)
-        {
-            int totalCount = registers.Sum(r => r.VectorLength);
-
-            if (totalCount > Memory.Length)
-            {
-                Array.Resize(ref Memory, totalCount);
-            }
         }
 
         public void Print(string msg)
@@ -65,16 +58,6 @@ namespace LogicScript.Testing
         public void WriteOutput(int index, bool value)
         {
             Outputs[index] = value;
-        }
-
-        public ulong ReadRegister(int index)
-        {
-            return Memory[index];
-        }
-
-        public void WriteRegister(int index, ulong value)
-        {
-            Memory[index] = value;
         }
     }
 }

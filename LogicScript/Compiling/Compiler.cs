@@ -28,32 +28,55 @@ namespace LogicScript.Compiling
             public readonly IDictionary<LocalInfo, ParameterExpression> Locals = locals;
         }
 
+        private readonly Script Script;
+
         private readonly ParameterExpression Machine = Expression.Parameter(typeof(IMachine), "machine");
         private readonly ParameterExpression Scratch = Expression.Parameter(typeof(bool[]), "scratch");
         private readonly ParameterExpression FirstRun = Expression.Parameter(typeof(bool), "firstRun");
 
+        private readonly ParameterExpression Registers;
+
         private readonly Stack<Scope> Stack = new();
         private readonly Dictionary<NodeID, LabelTarget> LoopBreaks = [];
 
-        private CompiledScript CompileScript(Script script)
+        private Compiler(Script script)
         {
-            if (script.HasErrors)
+            this.Script = script;
+
+            this.Registers = Expression.Parameter(script.RegistersType, "registers");
+        }
+
+        private CompiledScript Compile()
+        {
+            if (Script.HasErrors)
                 throw new Exception("Script has errors");
 
             var body = new List<Expression>
             {
                 Expression.IfThen(
                     FirstRun,
-                    Expression.Call(
-                        Machine,
-                        typeof(IMachine).GetMethod(nameof(IMachine.AllocateRegisters)),
-                        Expression.Constant(script.Registers.Sum(r => r.Value.VectorLength))
+                    Expression.Assign(
+                        Expression.Property(
+                            Machine,
+                            nameof(IMachine.Registers)
+                        ),
+                        Expression.New(Script.RegistersType)
+                    )
+                ),
+                Expression.Assign(
+                    Registers,
+                    Expression.Convert(
+                        Expression.Property(
+                            Machine,
+                            nameof(IMachine.Registers)
+                        ),
+                        Script.RegistersType
                     )
                 )
             };
-            body.AddRange(script.Blocks.Select(Compile));
+            body.AddRange(Script.Blocks.Select(Compile));
 
-            var ts = Expression.Lambda<CompiledScript>(Expression.Block(body), Machine, Scratch, FirstRun)
+            var ts = Expression.Lambda<CompiledScript>(Expression.Block([Registers], body), Machine, Scratch, FirstRun)
 #if USE_FAST_EXPRESSIONS
             .CompileFast(flags: CompilerFlags.EnableDelegateDebugInfo);
 #else
@@ -75,7 +98,7 @@ namespace LogicScript.Compiling
 
         public static CompiledScript Compile(Script script)
         {
-            return new Compiler().CompileScript(script);
+            return new Compiler(script).Compile();
         }
 
         private Expression Compile(Block block)
@@ -311,11 +334,13 @@ namespace LogicScript.Compiling
                             }
 
                         case MachinePorts.Register:
-                            return Expression.Call(
-                                Machine,
-                                typeof(IMachine).GetMethod(nameof(IMachine.WriteRegister)),
-                                startIndex,
-                                Compile(stmt.Value, false)
+                            var field = Script.RegistersType.GetField($"Register{port.PortInfo.StartIndex}");
+                            return Expression.Assign(
+                                Expression.Field(Registers, field),
+                                Expression.Convert(
+                                    Compile(stmt.Value, false),
+                                    field.FieldType
+                                )
                             );
                     }
                     throw new NotImplementedException();
@@ -499,10 +524,9 @@ namespace LogicScript.Compiling
                                 startIndex
                             )
                             : ReadInput(startIndex, port.BitSize),
-                        MachinePorts.Register => Expression.Call(
-                            Machine,
-                            typeof(IMachine).GetMethod(nameof(IMachine.ReadRegister)),
-                            startIndex
+                        MachinePorts.Register => Expression.Field(
+                            Registers,
+                            $"Register{port.PortInfo.StartIndex}"
                         ),
                         _ => throw new NotImplementedException()
                     };

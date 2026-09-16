@@ -19,6 +19,9 @@ namespace LogicScript.Compiling
 
         void Decode(ReadOnlySpan<byte> data);
         void Encode(Span<byte> data);
+
+        ulong GetRegister(int index, int vector);
+        void SetRegister(int index, int vector, ulong value);
     }
 
     internal static class RegistersStruct
@@ -74,6 +77,22 @@ namespace LogicScript.Compiling
             );
             Expression.Lambda(Expression.Constant(totalBytes)).CompileFastToIL(getSizeMethod.GetILGenerator());
             sizeProperty.SetGetMethod(getSizeMethod);
+
+            var getRegisterMethod = tb.DefineMethod(
+                nameof(IRegisters.GetRegister),
+                MethodAttributes.Public | MethodAttributes.Virtual | MethodAttributes.Final | MethodAttributes.HideBySig | MethodAttributes.NewSlot,
+                typeof(ulong),
+                [typeof(int), typeof(int)]
+            );
+            GenerateGetRegisterMethod(getRegisterMethod);
+
+            var setRegisterMethod = tb.DefineMethod(
+                nameof(IRegisters.SetRegister),
+                MethodAttributes.Public | MethodAttributes.Virtual | MethodAttributes.Final | MethodAttributes.HideBySig | MethodAttributes.NewSlot,
+                typeof(void),
+                [typeof(int), typeof(int), typeof(ulong)]
+            );
+            GenerateSetRegisterMethod(setRegisterMethod);
 
             return tb.CreateType();
 
@@ -210,9 +229,71 @@ namespace LogicScript.Compiling
 
                 Expression.Lambda(block, [thisParam, dataParam]).CompileFastToIL(builder.GetILGenerator());
             }
+
+            void GenerateGetRegisterMethod(MethodBuilder builder)
+            {
+                var thisParam = Expression.Parameter(tb, "this");
+                var indexParam = Expression.Parameter(typeof(int), "index");
+                var vectorParam = Expression.Parameter(typeof(int), "vector");
+
+                var block = computedRegisters.Aggregate(
+                    (Expression)Expression.Constant(0UL),
+                    (acum, reg) => Expression.Condition(
+                        Expression.Equal(
+                            indexParam,
+                            Expression.Constant(reg.ByteStart)
+                        ),
+                        Expression.Convert(
+                            reg.MachineRegister.VectorLength == 1
+                                ? Expression.Field(thisParam, reg.Field)
+                                : Expression.ArrayAccess(
+                                    Expression.Field(thisParam, reg.Field),
+                                    vectorParam
+                                ),
+                            typeof(ulong)
+                        ),
+                        acum
+                    )
+                );
+
+                Expression.Lambda(block, [thisParam, indexParam, vectorParam]).CompileFastToIL(builder.GetILGenerator());
+            }
+
+            void GenerateSetRegisterMethod(MethodBuilder builder)
+            {
+                var thisParam = Expression.Parameter(tb, "this");
+                var indexParam = Expression.Parameter(typeof(int), "index");
+                var vectorParam = Expression.Parameter(typeof(int), "vector");
+                var valueParam = Expression.Parameter(typeof(ulong), "value");
+
+                var block = computedRegisters.Aggregate(
+                    (Expression)Expression.Empty(),
+                    (acum, reg) => Expression.IfThenElse(
+                        Expression.Equal(
+                            indexParam,
+                            Expression.Constant(reg.ByteStart)
+                        ),
+                        Expression.Assign(
+                            reg.MachineRegister.VectorLength == 1
+                                ? Expression.Field(thisParam, reg.Field)
+                                : Expression.ArrayAccess(
+                                    Expression.Field(thisParam, reg.Field),
+                                    vectorParam
+                                ),
+                            Expression.Convert(
+                                valueParam,
+                                reg.ItemType
+                            )
+                        ),
+                        acum
+                    )
+                );
+
+                Expression.Lambda(block, [thisParam, indexParam, vectorParam, valueParam]).CompileFastToIL(builder.GetILGenerator());
+            }
         }
 
-        private static (Type Type, int Size) GetRegisterSize(MachineRegister reg)
+        public static (Type Type, int Size) GetRegisterSize(MachineRegister reg)
         {
             return reg.BitSize switch
             {

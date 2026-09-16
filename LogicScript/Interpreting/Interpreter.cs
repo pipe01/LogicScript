@@ -1,4 +1,5 @@
-﻿using LogicScript.Data;
+﻿using LogicScript.Compiling;
+using LogicScript.Data;
 using LogicScript.Interpreting.Debugging;
 using LogicScript.Parsing;
 using LogicScript.Parsing.Structures;
@@ -63,7 +64,10 @@ namespace LogicScript.Interpreting
                     throw new InterpreterException($"Output length mismatch: script requires {script.RegisteredOutputLength} but machine has {machine.OutputCount}");
             }
 
-            machine.AllocateRegisters(script.MachineRegisters);
+            if (runStartup)
+            {
+                machine.Registers = (IRegisters)Activator.CreateInstance(script.RegistersType);
+            }
 
             foreach (var block in script.Blocks.Reverse())
             {

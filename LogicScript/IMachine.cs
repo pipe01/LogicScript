@@ -1,14 +1,17 @@
-﻿using LogicScript.Data;
+﻿using LogicScript.Compiling;
+using LogicScript.Data;
 using System;
 
 namespace LogicScript
 {
-    public readonly record struct MachineRegister(int BitSize, int VectorLength);
+    public readonly record struct MachineRegister(int BitSize, int VectorLength, int Index);
 
     public interface IMachine
     {
         int InputCount { get; }
         int OutputCount { get; }
+
+        IRegisters? Registers { get; set; }
 
         BitsValue ReadInputs();
         bool ReadInput(int index);
@@ -16,9 +19,6 @@ namespace LogicScript
         void WriteOutputs(int startIndex, BitsValue value);
         void WriteOutput(int index, bool value);
 
-        void AllocateRegisters(MachineRegister[] registers);
-        ulong ReadRegister(int index);
-        void WriteRegister(int index, ulong value);
 
         void Print(string msg);
 
