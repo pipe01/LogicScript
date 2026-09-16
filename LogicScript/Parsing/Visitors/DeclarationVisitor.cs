@@ -152,7 +152,8 @@ namespace LogicScript.Parsing.Visitors
                 return;
             }
 
-            int startIndex = dic.Values.Sum(o => o.BitSize);
+            // See MachinePortInfo.StartIndex
+            int startIndex = target == MachinePorts.Register ? dic.Count : dic.Values.Sum(o => o.BitSize);
 
             dic.Add(name, new MachinePortInfo(target, startIndex, size, length, new(context.IDENT().Symbol)));
         }

@@ -19,6 +19,11 @@ namespace LogicScript.Parsing.Structures
     public readonly struct MachinePortInfo : IPortInfo
     {
         public MachinePorts Target { get; }
+        /// <summary>
+        /// On Inputs and Outputs, this value represents the bit at which the Input/Output vector starts.
+        /// On Registers, this value represents the index of the register without taking into account vectors, i.e.
+        /// the first register is at 0, the second at 1, the third at 2, etc no matter what their vector length is.
+        /// </summary>
         public int StartIndex { get; }
         public int BitSize { get; }
         public int VectorLength { get; }

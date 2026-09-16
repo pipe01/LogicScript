@@ -1,7 +1,5 @@
 ﻿using LogicScript.Data;
-using LogicScript.Parsing.Structures;
 using System;
-using System.Collections.Generic;
 
 namespace LogicScript
 {

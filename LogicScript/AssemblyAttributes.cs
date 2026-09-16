@@ -6,4 +6,5 @@ using System.Runtime.CompilerServices;
 [assembly: InternalsVisibleTo("LogicScript.Tests")]
 [assembly: InternalsVisibleTo("LogicScript.Benchmarks")]
 [assembly: InternalsVisibleTo("<>Script")]
+[assembly: InternalsVisibleTo("<>RegistersAssembly")]
 [assembly: CLSCompliant(false)]
