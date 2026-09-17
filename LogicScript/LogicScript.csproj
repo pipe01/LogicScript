@@ -8,7 +8,7 @@
         <!-- TODO: Implement all missing members and enable this warning again. -->
         <NoWarn>CS1591</NoWarn>
         <Nullable>enable</Nullable>
-        <DefineConstants Condition="'$(Configuration)' == 'Release'">USE_FAST_EXPRESSIONS</DefineConstants>
+        <DefineConstants>USE_FAST_EXPRESSIONS</DefineConstants>
     </PropertyGroup>
 
     <ItemGroup>
@@ -16,6 +16,7 @@
         <PackageReference Include="Antlr4BuildTasks" Version="12.14.0" PrivateAssets="all" />
         <PackageReference Include="FastExpressionCompiler" Version="5.4.1" />
         <PackageReference Include="FastExpressionCompiler.LightExpression" Version="5.4.1" />
+        <PackageReference Include="Mono.Reflection" Version="2.0.0" />
     </ItemGroup>
 
     <ItemGroup>

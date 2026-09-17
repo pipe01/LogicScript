@@ -64,11 +64,6 @@ namespace LogicScript.Interpreting
                     throw new InterpreterException($"Output length mismatch: script requires {script.RegisteredOutputLength} but machine has {machine.OutputCount}");
             }
 
-            if (runStartup)
-            {
-                machine.Registers = (IRegisters)Activator.CreateInstance(script.RegistersType);
-            }
-
             foreach (var block in script.Blocks.Reverse())
             {
                 if (block is StartupBlock && !runStartup)

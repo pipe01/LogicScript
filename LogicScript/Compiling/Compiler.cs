@@ -9,17 +9,32 @@ using LogicScript.Parsing.Structures.Blocks;
 using LogicScript.Parsing.Structures.Expressions;
 using LogicScript.Parsing.Structures.Statements;
 using LExpression = LogicScript.Parsing.Structures.Expressions.Expression;
-using System.Linq.Expressions;
-using Expression = System.Linq.Expressions.Expression;
 using LogicScript.Parsing;
+using FastExpressionCompiler;
+using System.Reflection;
+using System.Reflection.Emit;
+using Mono.Reflection;
+
 
 #if USE_FAST_EXPRESSIONS
-using FastExpressionCompiler;
+using FastExpressionCompiler.LightExpression;
+using Expression = FastExpressionCompiler.LightExpression.Expression;
+#else
+using System.Linq.Expressions;
+using Expression = System.Linq.Expressions.Expression;
 #endif
 
 namespace LogicScript.Compiling
 {
-    public delegate void CompiledScript(IMachine machine, bool[] scratch, bool firstRun);
+    public interface ICompiledScript
+    {
+        IRegisters Registers { get; }
+        bool HasRun { get; set; }
+
+        void Run(IMachine machine);
+    }
+
+    // public delegate void CompiledScript(IMachine machine, bool[] scratch, bool firstRun);
 
     public class Compiler
     {
@@ -30,11 +45,13 @@ namespace LogicScript.Compiling
 
         private readonly Script Script;
 
-        private readonly ParameterExpression Machine = Expression.Parameter(typeof(IMachine), "machine");
-        private readonly ParameterExpression Scratch = Expression.Parameter(typeof(bool[]), "scratch");
-        private readonly ParameterExpression FirstRun = Expression.Parameter(typeof(bool), "firstRun");
+        private readonly ParameterExpression ThisParameter;
+        private readonly ParameterExpression MachineParameter = Expression.Parameter(typeof(IMachine), "machine");
 
-        private readonly ParameterExpression Registers;
+        private readonly TypeBuilder TypeBuilder;
+        private readonly FieldInfo HasRunField;
+        private readonly FieldInfo RegistersField;
+        private readonly MethodBuilder RunMethodBuilder;
 
         private readonly Stack<Scope> Stack = new();
         private readonly Dictionary<NodeID, LabelTarget> LoopBreaks = [];
@@ -43,60 +60,59 @@ namespace LogicScript.Compiling
         {
             this.Script = script;
 
-            this.Registers = Expression.Parameter(script.RegistersType, "registers");
+            var ab = AssemblyBuilder.DefineDynamicAssembly(new AssemblyName("<>ScriptAssembly"), AssemblyBuilderAccess.Run);
+            var mb = ab.DefineDynamicModule("Module");
+            var tb = mb.DefineType("CompiledScript", TypeAttributes.Class);
+            tb.AddInterfaceImplementation(typeof(ICompiledScript));
+
+            this.ThisParameter = Expression.Parameter(tb, "this");
+
+            this.HasRunField = tb.DefineField("_hasRun", typeof(bool), FieldAttributes.Private);
+            this.RegistersField = tb.DefineField("_registers", script.RegistersType, FieldAttributes.Private);
+            this.RunMethodBuilder = tb.DefineMethod(
+                nameof(ICompiledScript.Run),
+                MethodAttributes.Public | MethodAttributes.Virtual | MethodAttributes.Final | MethodAttributes.HideBySig | MethodAttributes.NewSlot,
+                typeof(void),
+                [typeof(IMachine)]
+            );
+
+            tb.DefineProperty(nameof(ICompiledScript.Registers), typeof(IRegisters), RegistersField, false);
+            tb.DefineProperty(nameof(ICompiledScript.HasRun), typeof(bool), HasRunField, true);
+
+            var ctorMethod = tb.DefineConstructor(MethodAttributes.Public, CallingConventions.HasThis, Type.EmptyTypes);
+            var ctorIL = ctorMethod.GetILGenerator();
+            ctorIL.Emit(OpCodes.Ldarg_0);
+            ctorIL.Emit(OpCodes.Newobj, script.RegistersType.GetConstructor(Type.EmptyTypes));
+            ctorIL.Emit(OpCodes.Stfld, RegistersField);
+            ctorIL.Emit(OpCodes.Ret);
+
+            this.TypeBuilder = tb;
         }
 
-        private CompiledScript Compile()
+        private Expression Field(FieldInfo field) => Expression.Field(ThisParameter, field);
+
+        private ICompiledScript Compile()
         {
             if (Script.HasErrors)
                 throw new Exception("Script has errors");
 
-            var body = new List<Expression>
+            var body = Script.Blocks.Select(Compile).ToArray();
+
+            Expression.Lambda(body.Length == 0 ? Expression.Empty() : Expression.Block(typeof(void), body), [ThisParameter, MachineParameter])
+                .CompileFastToIL(RunMethodBuilder.GetILGenerator());
+
+            var type = TypeBuilder.CreateType();
+
+            var insts = type.GetMethod("Run").GetInstructions();
+            foreach (var inst in insts)
             {
-                Expression.IfThen(
-                    FirstRun,
-                    Expression.Assign(
-                        Expression.Property(
-                            Machine,
-                            nameof(IMachine.Registers)
-                        ),
-                        Expression.New(Script.RegistersType)
-                    )
-                ),
-                Expression.Assign(
-                    Registers,
-                    Expression.Convert(
-                        Expression.Property(
-                            Machine,
-                            nameof(IMachine.Registers)
-                        ),
-                        Script.RegistersType
-                    )
-                )
-            };
-            body.AddRange(Script.Blocks.Select(Compile));
+                Console.WriteLine(inst);
+            }
 
-            var ts = Expression.Lambda<CompiledScript>(Expression.Block([Registers], body), Machine, Scratch, FirstRun)
-#if USE_FAST_EXPRESSIONS
-            .CompileFast(flags: CompilerFlags.EnableDelegateDebugInfo);
-#else
-            .Compile();
-#endif
-
-#if USE_FAST_EXPRESSIONS
-            TestTools.AllowPrintExpression = true;
-            TestTools.AllowPrintCS = true;
-            TestTools.AllowPrintIL = true;
-
-            var d = ts.TryGetDebugInfo();
-            d.PrintIL();
-            // d.PrintCSharp();
-#endif
-
-            return ts;
+            return (ICompiledScript)Activator.CreateInstance(type);
         }
 
-        public static CompiledScript Compile(Script script)
+        public static ICompiledScript Compile(Script script)
         {
             return new Compiler(script).Compile();
         }
@@ -114,7 +130,7 @@ namespace LogicScript.Compiling
 
         private Expression Compile(StartupBlock block)
         {
-            return Expression.IfThen(FirstRun, Compile(block.Body));
+            return Expression.IfThen(Expression.Not(Field(HasRunField)), Compile(block.Body));
         }
 
         private Expression Compile(WhenBlock block)
@@ -173,7 +189,7 @@ namespace LogicScript.Compiling
                         }
 
                         return Expression.Call(
-                            Machine,
+                            ThisParameter,
                             typeof(IMachine).GetMethod(nameof(IMachine.Print)),
                             text
                         );
@@ -181,7 +197,7 @@ namespace LogicScript.Compiling
 
                 case ShowTaskStatement show:
                     return Expression.Call(
-                        Machine,
+                        MachineParameter,
                         typeof(IMachine).GetMethod(nameof(IMachine.Print)),
                         Expression.Call(
                             Compile(show.Value, false),
@@ -191,7 +207,7 @@ namespace LogicScript.Compiling
 
                 case UpdateTaskStatement:
                     return Expression.Call(
-                        Machine,
+                        ThisParameter,
                         typeof(IMachine).GetMethod(nameof(IMachine.QueueUpdate))
                     );
             }
@@ -313,7 +329,7 @@ namespace LogicScript.Compiling
                             if (value.IsBool())
                             {
                                 return Expression.Call(
-                                    Machine,
+                                    ThisParameter,
                                     typeof(IMachine).GetMethod(nameof(IMachine.WriteOutput))!,
                                     startIndex,
                                     value
@@ -322,7 +338,7 @@ namespace LogicScript.Compiling
                             else
                             {
                                 return Expression.Call(
-                                    Machine,
+                                    ThisParameter,
                                     typeof(IMachine).GetMethod(nameof(IMachine.WriteOutputs)),
                                     startIndex,
                                     Expression.New(
@@ -336,7 +352,7 @@ namespace LogicScript.Compiling
                         case MachinePorts.Register:
                             var field = Script.RegistersType.GetField($"Register{port.PortInfo.StartIndex}");
                             return Expression.Assign(
-                                Expression.Field(Registers, field),
+                                Expression.Field(Field(RegistersField), field),
                                 Expression.Convert(
                                     Compile(stmt.Value, false),
                                     field.FieldType
@@ -519,13 +535,13 @@ namespace LogicScript.Compiling
                     {
                         MachinePorts.Input => expr.BitSize == 1 && canReturnBool
                             ? Expression.Call(
-                                Machine,
+                                ThisParameter,
                                 typeof(IMachine).GetMethod(nameof(IMachine.ReadInput)),
                                 startIndex
                             )
                             : ReadInput(startIndex, port.BitSize),
                         MachinePorts.Register => Expression.Field(
-                            Registers,
+                            Field(RegistersField),
                             $"Register{port.PortInfo.StartIndex}"
                         ),
                         _ => throw new NotImplementedException()
@@ -612,7 +628,7 @@ namespace LogicScript.Compiling
             return Expression.Field(
                 Expression.Call(
                     Expression.Call(
-                        Machine,
+                        ThisParameter,
                         typeof(IMachine).GetMethod(nameof(IMachine.ReadInputs))
                     ),
                     typeof(BitsValue).GetMethod(nameof(BitsValue.Slice)),

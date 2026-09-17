@@ -17,6 +17,8 @@ namespace LogicScript.Compiling
         /// </summary>
         int Size { get; }
 
+        void Reset();
+
         void Decode(ReadOnlySpan<byte> data);
         void Encode(Span<byte> data);
 
@@ -32,7 +34,7 @@ namespace LogicScript.Compiling
         {
             var ab = AssemblyBuilder.DefineDynamicAssembly(new AssemblyName("<>RegistersAssembly"), AssemblyBuilderAccess.Run);
             var mb = ab.DefineDynamicModule("Module");
-            var tb = mb.DefineType("RegistersStruct", TypeAttributes.Class);
+            var tb = mb.DefineType("RegistersStruct", TypeAttributes.Class | TypeAttributes.Public);
             tb.AddInterfaceImplementation(typeof(IRegisters));
 
             var computedRegisters = new List<ComputedRegister>();
@@ -93,6 +95,14 @@ namespace LogicScript.Compiling
                 [typeof(int), typeof(int), typeof(ulong)]
             );
             GenerateSetRegisterMethod(setRegisterMethod);
+
+            var resetMethod = tb.DefineMethod(
+                nameof(IRegisters.Reset),
+                MethodAttributes.Public | MethodAttributes.Virtual | MethodAttributes.Final | MethodAttributes.HideBySig | MethodAttributes.NewSlot,
+                typeof(void),
+                Type.EmptyTypes
+            );
+            GenerateResetMethod(resetMethod);
 
             return tb.CreateType();
 
@@ -290,6 +300,27 @@ namespace LogicScript.Compiling
                 );
 
                 Expression.Lambda(block, [thisParam, indexParam, vectorParam, valueParam]).CompileFastToIL(builder.GetILGenerator());
+            }
+
+            void GenerateResetMethod(MethodBuilder builder)
+            {
+                var thisParam = Expression.Parameter(tb, "this");
+
+                var block = Expression.Block(computedRegisters.Select(
+                    (reg) => reg.MachineRegister.VectorLength == 1
+                        ? (Expression)Expression.Assign(
+                            Expression.Field(thisParam, reg.Field),
+                            Expression.Default(reg.ItemType)
+                        )
+                        : Expression.Call(
+                            typeof(Array).GetMethod(nameof(Array.Fill), [
+                                Type.MakeGenericMethodParameter(0).MakeArrayType(),
+                                Type.MakeGenericMethodParameter(0)
+                            ]).MakeGenericMethod(reg.ItemType)
+                        )
+                ));
+
+                Expression.Lambda(block, [thisParam]).CompileFastToIL(builder.GetILGenerator());
             }
         }
 

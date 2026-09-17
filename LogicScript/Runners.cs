@@ -28,17 +28,14 @@ namespace LogicScript
     {
         public override bool CanRun => true;
 
-        private readonly Dictionary<Script, CompiledScript> CompiledScripts = [];
-        private bool[] Scratch = [];
+        private readonly Dictionary<Script, ICompiledScript> CompiledScripts = [];
 
         public override void Run(IMachine machine, Script script, bool runStartup)
         {
             if (!CompiledScripts.TryGetValue(script, out var compiledScript))
                 CompiledScripts[script] = compiledScript = Compiler.Compile(script);
 
-            Array.Resize(ref Scratch, Math.Max(machine.InputCount, machine.OutputCount));
-
-            compiledScript(machine, Scratch, runStartup);
+            compiledScript.Run(machine);
         }
     }
 

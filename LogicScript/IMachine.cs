@@ -1,6 +1,5 @@
-﻿using LogicScript.Compiling;
+﻿using System;
 using LogicScript.Data;
-using System;
 
 namespace LogicScript
 {
@@ -10,8 +9,6 @@ namespace LogicScript
     {
         int InputCount { get; }
         int OutputCount { get; }
-
-        IRegisters? Registers { get; set; }
 
         BitsValue ReadInputs();
         bool ReadInput(int index);

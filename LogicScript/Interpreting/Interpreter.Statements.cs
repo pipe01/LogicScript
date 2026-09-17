@@ -77,7 +77,7 @@ namespace LogicScript.Interpreting
                         break;
 
                     case MachinePorts.Register:
-                        Machine!.Registers!.SetRegister(port.StartIndex, vectorIndex, value);
+                        // Machine!.Registers!.SetRegister(port.StartIndex, vectorIndex, value);
                         break;
 
                     default:
