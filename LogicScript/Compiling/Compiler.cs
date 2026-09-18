@@ -16,6 +16,8 @@ using Sigil.NonGeneric;
 using Sigil;
 using LogicScript.Parsing.Visitors;
 using System.Diagnostics;
+using System.Text;
+using LogicScript.Utils;
 
 namespace LogicScript.Compiling
 {
@@ -255,35 +257,50 @@ namespace LogicScript.Compiling
             {
                 case PrintTaskStatement print:
                     {
-                        throw new NotImplementedException(); // TODO: implement
-                        // Expression text;
+                        Emitter.LoadArgument(ArgumentMachine);
 
-                        // Emitter.LoadArgument(ArgumentMachine);
+                        if (print.String.Parts.Count == 0)
+                        {
+                            Emitter.LoadConstant(print.String.Text);
+                        }
+                        else
+                        {
+                            using var builder = Emitter.DeclareLocal<StringBuilder>();
 
-                        // if (print.String.Interpolations.Count == 0)
-                        // {
-                        //     Emitter.LoadConstant(print.String.Text);
-                        // }
-                        // else
-                        // {
-                        //     var locals = print.String.Interpolations.Select(l => FindLocal(l.Local));
-                        //     var fmtString = print.String.ToFormattable();
+                            Emitter.NewObject<StringBuilder>();
+                            Emitter.StoreLocal(builder);
 
-                        //     // TODO: optimize this to make less allocations
-                        //     text = Expression.Call(
-                        //         typeof(string).GetMethod(nameof(string.Format), [typeof(string), typeof(object[])]),
-                        //         [
-                        //             Expression.Constant(fmtString),
-                        //             Expression.NewArrayInit(typeof(object), locals.Select(l => Expression.Convert(l, typeof(object))))
-                        //         ]
-                        //     );
-                        // }
+                            foreach (var part in print.String.Parts)
+                            {
+                                Emitter.LoadLocal(builder);
 
-                        // return Expression.Call(
-                        //     ThisParameter,
-                        //     typeof(IMachine).GetMethod(nameof(IMachine.Print)),
-                        //     text
-                        // );
+                                if (part is PrintStringFormat.PartLiteral lit)
+                                {
+                                    Emitter.LoadConstant(lit.String);
+                                }
+                                else if (part is PrintStringFormat.PartInterpolate interp)
+                                {
+                                    Emitter.LoadLocalAddress(FindLocal(interp.LocalInfo));
+                                    Emitter.LoadConstant(interp.Format switch
+                                    {
+                                        PrintStringFormat.NumberFormat.Hexadecimal => "X",
+                                        PrintStringFormat.NumberFormat.Binary => "b",
+                                        _ => "",
+                                    });
+                                    Emitter.Call(typeof(ulong).GetMethod(nameof(ToString), [typeof(string)]));
+                                }
+
+                                Emitter.Call(typeof(StringBuilder).GetMethod(nameof(StringBuilder.Append), [typeof(string)]));
+                                Emitter.Pop();
+                            }
+
+                            Emitter.LoadLocal(builder);
+                            Emitter.Call(typeof(StringBuilder).GetMethod(nameof(StringBuilder.ToString), Type.EmptyTypes));
+                        }
+
+                        Emitter.CallVirtual(typeof(IMachine).GetMethod(nameof(IMachine.Print)));
+
+                        return Result.Empty;
                     }
 
                 case ShowTaskStatement show:

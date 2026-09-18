@@ -10,16 +10,23 @@ namespace LogicScript.Tests
         [Test]
         public void Blocks_Print()
         {
-            Run(new Script()
-            {
-                Blocks = {
-                    new StartupBlock(default, new PrintTaskStatement(default, "nice1")),
-                    new WhenBlock(default, null, new PrintTaskStatement(default, "nice2")),
-                    new WhenBlock(default, new NumberLiteralExpression(default, 1), new PrintTaskStatement(default, "nice3")),
-                }
-            }, out var machine);
+            Run(@"
+startup
+    @print ""plain""
 
-            machine.AssertPrinted("nice1", "nice2", "nice3");
+    local $a = 10
+    @print $a
+
+    @print ""dec: $a m""
+    @print ""bin: $a:b m""
+    @print ""hex: $a:x m""
+
+    local $b = 321
+    @print ""multiple: $a hello $b bye""
+end
+", out var machine);
+
+            machine.AssertPrinted("plain", "10", "dec: 10 m", "bin: 1010 m", "hex: A m", "multiple: 10 hello 321 bye");
         }
 
         [Test]

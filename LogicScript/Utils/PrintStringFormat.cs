@@ -8,46 +8,31 @@ using LogicScript.Parsing.Structures;
 
 namespace LogicScript.Utils
 {
-    public readonly struct PrintStringFormat(SourceSpan span, string text, IReadOnlyCollection<PrintStringFormat.Interpolation> interpolations) : ICodeNode
+    public readonly struct PrintStringFormat(SourceSpan span, string text, IReadOnlyCollection<PrintStringFormat.Part> parts) : ICodeNode
     {
-        public readonly struct Interpolation(SourceSpan span, int position, LocalInfo local, string? format) : ICodeNode
+        public enum NumberFormat
         {
-            public int Position { get; } = position;
-            internal LocalInfo Local { get; } = local;
-            public string? Format { get; } = format;
+            Decimal,
+            Hexadecimal,
+            Binary,
+        }
 
-            public SourceSpan Span => span;
+        public abstract record Part;
 
+        public sealed record PartLiteral(string String) : Part;
+
+        public sealed record PartInterpolate(SourceSpan Span, LocalInfo LocalInfo, NumberFormat Format) : Part, ICodeNode
+        {
             public IEnumerable<ICodeNode> GetChildren()
             {
-                yield return Local;
+                yield return LocalInfo;
             }
         }
 
         public string Text { get; } = text;
-        public IReadOnlyCollection<Interpolation> Interpolations { get; } = interpolations;
+        public IReadOnlyCollection<Part> Parts { get; } = parts;
 
         public SourceSpan Span => span;
-
-        public string ToFormattable()
-        {
-            var str = new StringBuilder(Text);
-
-            int offset = 0;
-
-            int i = 0;
-            foreach (var intp in Interpolations)
-            {
-                var format = intp.Format != null ? $":{intp.Format}" : string.Empty;
-                var interpString = $"{{{i++}{format}}}";
-
-                str.Insert(intp.Position + offset, interpString);
-
-                offset += interpString.Length;
-            }
-
-            return str.ToString();
-        }
 
         internal static PrintStringFormat Parse(SourceSpan span, string format)
             => Parse(span, format, _ => throw new InvalidOperationException("Can't access locals"));
@@ -55,7 +40,7 @@ namespace LogicScript.Utils
         internal static PrintStringFormat Parse(SourceSpan span, string format, Func<string, LocalInfo> fetchLocal)
         {
             var str = new StringBuilder();
-            var interpolations = new List<Interpolation>();
+            var parts = new List<Part>();
 
             int removed = 0;
 
@@ -65,15 +50,27 @@ namespace LogicScript.Utils
 
                 if (c == '$')
                 {
+                    if (str.Length > 0)
+                    {
+                        parts.Add(new PartLiteral(str.ToString()));
+                        str.Clear();
+                    }
+
                     var match = Regex.Match(format[i..], @"(\$[a-zA-Z_][a-zA-Z0-9_]*)(:(?<base>b|x))?");
 
                     if (match.Success)
                     {
                         var local = fetchLocal(match.Groups[1].Value);
-                        var fmt = match.Groups["base"].Success ? match.Groups["base"].Value : null;
+                        var fmtStr = match.Groups["base"].Success ? match.Groups["base"].Value : null;
+                        var fmt = fmtStr switch
+                        {
+                            "b" => NumberFormat.Binary,
+                            "x" => NumberFormat.Hexadecimal,
+                            _ => NumberFormat.Decimal,
+                        };
 
                         var interpSpan = new SourceSpan(span.Start.FileName, span.Start.Line, span.Start.Column + i + 1, span.Start.Line, span.Start.Column + i + 1 + match.Length);
-                        interpolations.Add(new(interpSpan, i - removed, local, fmt));
+                        parts.Add(new PartInterpolate(interpSpan, local, fmt));
 
                         removed += match.Length;
                         i += match.Length - 1;
@@ -89,9 +86,12 @@ namespace LogicScript.Utils
                 }
             }
 
-            return new(span, str.ToString(), interpolations);
+            if (str.Length > 0)
+                parts.Add(new PartLiteral(str.ToString()));
+
+            return new(span, str.ToString(), parts);
         }
 
-        public IEnumerable<ICodeNode> GetChildren() => Interpolations.Cast<ICodeNode>();
+        public IEnumerable<ICodeNode> GetChildren() => Parts.OfType<PartInterpolate>();
     }
 }
