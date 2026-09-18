@@ -112,6 +112,10 @@ namespace LogicScript.Compiling
             {
                 Compile(block);
             }
+
+            Emitter.LoadArgument(ArgumentThis);
+            Emitter.LoadConstant(true);
+            Emitter.StoreField(HasRunField);
             Emitter.Return();
 
             Emitter.CreateMethod(out var str, OptimizationOptions.All);
