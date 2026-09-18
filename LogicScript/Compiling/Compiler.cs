@@ -62,7 +62,6 @@ namespace LogicScript.Compiling
         private readonly TypeBuilder TypeBuilder;
         private readonly FieldInfo HasRunField;
         private readonly FieldInfo RegistersField;
-        private readonly MethodBuilder RunMethodBuilder;
 
         private readonly Stack<Scope> Stack = new();
         private readonly Dictionary<NodeID, Sigil.Label> LoopBreaks = [];
@@ -80,13 +79,14 @@ namespace LogicScript.Compiling
 
             this.HasRunField = tb.DefineField("_hasRun", typeof(bool), FieldAttributes.Private);
             this.RegistersField = tb.DefineField("_registers", script.RegistersType, FieldAttributes.Private);
-            this.RunMethodBuilder = tb.DefineMethod(
-                nameof(ICompiledScript.Run),
-                MethodAttributes.Public | MethodAttributes.Virtual | MethodAttributes.Final | MethodAttributes.HideBySig | MethodAttributes.NewSlot,
+            Emitter = Emit.BuildMethod(
                 typeof(void),
-                [typeof(IMachine)]
+                [typeof(IMachine)],
+                tb,
+                nameof(ICompiledScript.Run),
+                MethodAttributes.Public | MethodAttributes.Virtual | MethodAttributes.NewSlot,
+                CallingConventions.Standard | CallingConventions.HasThis
             );
-            Emitter = Emit.NewDynamicMethod(typeof(void), [typeof(IMachine)], "Run", mb);
 
             tb.DefineProperty(nameof(ICompiledScript.Registers), typeof(IRegisters), RegistersField, false);
             tb.DefineProperty(nameof(ICompiledScript.HasRun), typeof(bool), HasRunField, true);
@@ -140,6 +140,10 @@ namespace LogicScript.Compiling
             {
                 Compile(block);
             }
+            Emitter.Return();
+
+            Emitter.CreateMethod(out var str, OptimizationOptions.All);
+            System.Console.WriteLine(str);
 
             return (ICompiledScript)Activator.CreateInstance(TypeBuilder.CreateType());
         }
@@ -250,8 +254,14 @@ namespace LogicScript.Compiling
                 case ShowTaskStatement show:
                     Emitter.LoadArgument(ArgumentMachine);
                     Compile(show.Value);
-                    Emitter.Call(typeof(object).GetMethod(nameof(object.ToString)));
-                    Emitter.Call(typeof(IMachine).GetMethod(nameof(IMachine.Print)));
+
+                    using (var local = Emitter.DeclareLocal<ulong>())
+                    {
+                        Emitter.StoreLocal(local);
+                        Emitter.LoadLocalAddress(local);
+                        Emitter.Call(typeof(ulong).GetMethod(nameof(ToString), Type.EmptyTypes));
+                        Emitter.Call(typeof(IMachine).GetMethod(nameof(IMachine.Print)));
+                    }
 
                     return Result.Empty;
 
@@ -277,34 +287,35 @@ namespace LogicScript.Compiling
         {
             //TODO: optimize: compute 'to' once on loop enter and don't recompute on each iteration
 
-            var from = stmt.From != null
-                ? stmt.From.IsConstant
-                    ? Expression.Constant(GetConstantValue(stmt.From))
-                    : Compile(stmt.From, false)
-                : Expression.Constant(0UL);
-            var to = stmt.To.IsConstant ? Expression.Constant(GetConstantValue(stmt.To)) : Compile(stmt.To, false);
-            var local = FindLocal(stmt.Variable);
+            return Result.Empty;
+            // var from = stmt.From != null
+            //     ? stmt.From.IsConstant
+            //         ? Expression.Constant(GetConstantValue(stmt.From))
+            //         : Compile(stmt.From, false)
+            //     : Expression.Constant(0UL);
+            // var to = stmt.To.IsConstant ? Expression.Constant(GetConstantValue(stmt.To)) : Compile(stmt.To, false);
+            // var local = FindLocal(stmt.Variable);
 
-            var breakLabel = Expression.Label("loop_break");
+            // var breakLabel = Expression.Label("loop_break");
 
-            LoopBreaks[stmt.ID] = breakLabel;
-            var body = Compile(stmt.Body);
-            LoopBreaks.Remove(stmt.ID);
+            // LoopBreaks[stmt.ID] = breakLabel;
+            // var body = Compile(stmt.Body);
+            // LoopBreaks.Remove(stmt.ID);
 
-            return Expression.Block(
-                Expression.Assign(local, from),
-                Expression.Loop(
-                    Expression.IfThenElse(
-                        Expression.LessThan(local, to),
-                        Expression.Block(
-                            body,
-                            Expression.PostIncrementAssign(local)
-                        ),
-                        Expression.Break(breakLabel)
-                    ),
-                    breakLabel
-                )
-            );
+            // return Expression.Block(
+            //     Expression.Assign(local, from),
+            //     Expression.Loop(
+            //         Expression.IfThenElse(
+            //             Expression.LessThan(local, to),
+            //             Expression.Block(
+            //                 body,
+            //                 Expression.PostIncrementAssign(local)
+            //             ),
+            //             Expression.Break(breakLabel)
+            //         ),
+            //         breakLabel
+            //     )
+            // );
         }
 
         private Result Compile(WhileStatement stmt)

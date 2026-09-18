@@ -59,5 +59,10 @@ namespace LogicScript.Testing
         {
             Outputs[index] = value;
         }
+
+        public BitsValue ReadInputs(int startIndex, int count)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

@@ -29,13 +29,13 @@ namespace Tester
                 OutputCount = script.RegisteredOutputLength
             };
 
-            new Interpreter(script, machine, true).Run();
+            // new Interpreter(script, machine, true).Run();
 
             var program = Compiler.Compile(script);
 
             var scratch = new bool[Math.Max(machine.InputCount, machine.OutputCount)];
 
-            program(machine, scratch, true);
+            program.Run(machine);
 
             // new CPU(program, new MyMachine()).Run(true);
 
@@ -99,6 +99,11 @@ namespace Tester
 
             public void QueueUpdate()
             {
+            }
+
+            public BitsValue ReadInputs(int startIndex, int count)
+            {
+                throw new NotImplementedException();
             }
         }
     }
