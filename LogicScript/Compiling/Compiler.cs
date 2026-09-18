@@ -24,7 +24,7 @@ namespace LogicScript.Compiling
         IRegisters Registers { get; }
         bool HasRun { get; set; }
 
-        void Run(IMachine machine, IDebugger2? debugger = null);
+        void Run(IMachine machine, IDebugger? debugger = null);
     }
 
     public class Compiler
@@ -82,7 +82,7 @@ namespace LogicScript.Compiling
 
             Emitter = Emit.BuildMethod(
                 typeof(void),
-                [typeof(IMachine), typeof(IDebugger2)],
+                [typeof(IMachine), typeof(IDebugger)],
                 tb,
                 nameof(ICompiledScript.Run),
                 MethodAttributes.Public | MethodAttributes.Virtual | MethodAttributes.NewSlot,
@@ -126,7 +126,7 @@ namespace LogicScript.Compiling
             {
                 Emitter.LoadConstant(localInfo.ID.ID);
                 Emitter.NewObject<NodeID, int>();
-                Emitter.CallVirtual(typeof(IDebugger2).GetMethod(nameof(IDebugger2.PushLocal)));
+                Emitter.CallVirtual(typeof(IDebugger).GetMethod(nameof(IDebugger.PushLocal)));
             });
         }
 
@@ -136,7 +136,7 @@ namespace LogicScript.Compiling
             {
                 Emitter.LoadConstant(localInfo.ID.ID);
                 Emitter.NewObject<NodeID, int>();
-                Emitter.CallVirtual(typeof(IDebugger2).GetMethod(nameof(IDebugger2.PopLocal)));
+                Emitter.CallVirtual(typeof(IDebugger).GetMethod(nameof(IDebugger.PopLocal)));
             });
         }
 
@@ -149,7 +149,7 @@ namespace LogicScript.Compiling
                 Emitter.LoadConstant(localInfo.ID.ID);
                 Emitter.NewObject<NodeID, int>();
                 Emitter.LoadLocal(local);
-                Emitter.CallVirtual(typeof(IDebugger2).GetMethod(nameof(IDebugger2.SetLocal)));
+                Emitter.CallVirtual(typeof(IDebugger).GetMethod(nameof(IDebugger.SetLocal)));
             });
         }
 
@@ -232,7 +232,7 @@ namespace LogicScript.Compiling
                 Emitter.LoadArgument(ArgumentMachine);
                 Emitter.LoadConstant(stmt.ID.ID);
                 Emitter.NewObject<NodeID, int>();
-                Emitter.CallVirtual(typeof(IDebugger2).GetMethod(nameof(IDebugger2.TraceStatement)));
+                Emitter.CallVirtual(typeof(IDebugger).GetMethod(nameof(IDebugger.TraceStatement)));
             });
 
             return stmt switch

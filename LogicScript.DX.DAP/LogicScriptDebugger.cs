@@ -14,7 +14,7 @@ using OmniSharp.Extensions.DebugAdapter.Server;
 
 namespace LogicScript.DX.DAP;
 
-public class LogicScriptDebugger : IDebugger2, IAttachHandler, IDisconnectHandler, ISetBreakpointsHandler, IThreadsHandler, IStackTraceHandler, IScopesHandler, IVariablesHandler, IContinueHandler, INextHandler, IStepInHandler, IPauseHandler
+public class LogicScriptDebugger : IDebugger, IAttachHandler, IDisconnectHandler, ISetBreakpointsHandler, IThreadsHandler, IStackTraceHandler, IScopesHandler, IVariablesHandler, IContinueHandler, INextHandler, IStepInHandler, IPauseHandler
 {
     private TaskCompletionSource<bool> SessionDone = new();
 

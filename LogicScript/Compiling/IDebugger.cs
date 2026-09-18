@@ -2,7 +2,7 @@ using LogicScript.Parsing;
 
 namespace LogicScript.Compiling
 {
-    public interface IDebugger2
+    public interface IDebugger
     {
         void PushLocal(NodeID id);
         void SetLocal(NodeID id, ulong value);

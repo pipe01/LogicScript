@@ -145,7 +145,7 @@ end
         }
     }
 
-    class DummyDebugger : IDebugger2
+    class DummyDebugger : IDebugger
     {
         public void PopLocal(NodeID id)
         {
