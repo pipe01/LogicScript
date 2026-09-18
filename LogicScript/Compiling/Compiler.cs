@@ -8,7 +8,6 @@ using LogicScript.Parsing.Structures;
 using LogicScript.Parsing.Structures.Blocks;
 using LogicScript.Parsing.Structures.Expressions;
 using LogicScript.Parsing.Structures.Statements;
-using LExpression = LogicScript.Parsing.Structures.Expressions.Expression;
 using LogicScript.Parsing;
 using System.Reflection;
 using System.Reflection.Emit;
@@ -541,7 +540,7 @@ namespace LogicScript.Compiling
             return Result.Empty;
         }
 
-        private Result Compile(LExpression expr)
+        private Result Compile(Expression expr)
         {
             if (expr.IsConstant)
                 return EmitConstant(expr.GetConstantValue());
