@@ -17,6 +17,7 @@
         <PackageReference Include="FastExpressionCompiler" Version="5.4.1" />
         <PackageReference Include="FastExpressionCompiler.LightExpression" Version="5.4.1" />
         <PackageReference Include="Mono.Reflection" Version="2.0.0" />
+        <PackageReference Include="Sigil" Version="5.0.0" />
     </ItemGroup>
 
     <ItemGroup>

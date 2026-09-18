@@ -10,7 +10,7 @@ namespace LogicScript
         int InputCount { get; }
         int OutputCount { get; }
 
-        BitsValue ReadInputs();
+        BitsValue ReadInputs(int startIndex, int count);
         bool ReadInput(int index);
 
         void WriteOutputs(int startIndex, BitsValue value);

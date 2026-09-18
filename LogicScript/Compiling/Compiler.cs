@@ -14,6 +14,12 @@ using FastExpressionCompiler;
 using System.Reflection;
 using System.Reflection.Emit;
 using Mono.Reflection;
+using Sigil.NonGeneric;
+using Sigil;
+using LogicScript.Parsing.Visitors;
+
+
+
 
 
 #if USE_FAST_EXPRESSIONS
@@ -38,15 +44,20 @@ namespace LogicScript.Compiling
 
     public class Compiler
     {
-        private class Scope(IDictionary<LocalInfo, ParameterExpression> locals)
+        private enum Result
         {
-            public readonly IDictionary<LocalInfo, ParameterExpression> Locals = locals;
+            Empty,
         }
 
-        private readonly Script Script;
+        private class Scope(IDictionary<LocalInfo, Local> locals)
+        {
+            public readonly IDictionary<LocalInfo, Local> Locals = locals;
+        }
 
-        private readonly ParameterExpression ThisParameter;
-        private readonly ParameterExpression MachineParameter = Expression.Parameter(typeof(IMachine), "machine");
+        private const int ArgumentThis = 0;
+        private const int ArgumentMachine = 1;
+
+        private readonly Script Script;
 
         private readonly TypeBuilder TypeBuilder;
         private readonly FieldInfo HasRunField;
@@ -54,7 +65,9 @@ namespace LogicScript.Compiling
         private readonly MethodBuilder RunMethodBuilder;
 
         private readonly Stack<Scope> Stack = new();
-        private readonly Dictionary<NodeID, LabelTarget> LoopBreaks = [];
+        private readonly Dictionary<NodeID, Sigil.Label> LoopBreaks = [];
+
+        private readonly Emit Emitter;
 
         private Compiler(Script script)
         {
@@ -65,8 +78,6 @@ namespace LogicScript.Compiling
             var tb = mb.DefineType("CompiledScript", TypeAttributes.Class);
             tb.AddInterfaceImplementation(typeof(ICompiledScript));
 
-            this.ThisParameter = Expression.Parameter(tb, "this");
-
             this.HasRunField = tb.DefineField("_hasRun", typeof(bool), FieldAttributes.Private);
             this.RegistersField = tb.DefineField("_registers", script.RegistersType, FieldAttributes.Private);
             this.RunMethodBuilder = tb.DefineMethod(
@@ -75,6 +86,7 @@ namespace LogicScript.Compiling
                 typeof(void),
                 [typeof(IMachine)]
             );
+            Emitter = Emit.NewDynamicMethod(typeof(void), [typeof(IMachine)], "Run", mb);
 
             tb.DefineProperty(nameof(ICompiledScript.Registers), typeof(IRegisters), RegistersField, false);
             tb.DefineProperty(nameof(ICompiledScript.HasRun), typeof(bool), HasRunField, true);
@@ -89,27 +101,47 @@ namespace LogicScript.Compiling
             this.TypeBuilder = tb;
         }
 
-        private Expression Field(FieldInfo field) => Expression.Field(ThisParameter, field);
+        private void EmitThisField(FieldInfo field)
+        {
+            Emitter.LoadArgument(ArgumentThis);
+            Emitter.LoadField(field);
+        }
+
+        private Result EmitConstant(BitsValue value)
+        {
+            switch (value.Length)
+            {
+                case <= 8:
+                    Emitter.LoadConstant((byte)value.Number);
+                    break;
+                case <= 16:
+                    Emitter.LoadConstant((ushort)value.Number);
+                    break;
+                case <= 32:
+                    Emitter.LoadConstant((uint)value.Number);
+                    break;
+                case <= 64:
+                    Emitter.LoadConstant(value.Number);
+                    break;
+
+                default:
+                    throw new NotImplementedException("how");
+            }
+
+            return Result.Empty;
+        }
 
         private ICompiledScript Compile()
         {
             if (Script.HasErrors)
                 throw new Exception("Script has errors");
 
-            var body = Script.Blocks.Select(Compile).ToArray();
-
-            Expression.Lambda(body.Length == 0 ? Expression.Empty() : Expression.Block(typeof(void), body), [ThisParameter, MachineParameter])
-                .CompileFastToIL(RunMethodBuilder.GetILGenerator());
-
-            var type = TypeBuilder.CreateType();
-
-            var insts = type.GetMethod("Run").GetInstructions();
-            foreach (var inst in insts)
+            foreach (var block in Script.Blocks)
             {
-                Console.WriteLine(inst);
+                Compile(block);
             }
 
-            return (ICompiledScript)Activator.CreateInstance(type);
+            return (ICompiledScript)Activator.CreateInstance(TypeBuilder.CreateType());
         }
 
         public static ICompiledScript Compile(Script script)
@@ -117,7 +149,7 @@ namespace LogicScript.Compiling
             return new Compiler(script).Compile();
         }
 
-        private Expression Compile(Block block)
+        private Result Compile(Block block)
         {
             return block switch
             {
@@ -128,24 +160,41 @@ namespace LogicScript.Compiling
             };
         }
 
-        private Expression Compile(StartupBlock block)
+        private Result Compile(StartupBlock block)
         {
-            return Expression.IfThen(Expression.Not(Field(HasRunField)), Compile(block.Body));
+            var end = Emitter.DefineLabel("startup_end");
+
+            EmitThisField(HasRunField);
+            Emitter.BranchIfTrue(end);
+
+            Compile(block.Body);
+
+            Emitter.MarkLabel(end);
+
+            return Result.Empty;
         }
 
-        private Expression Compile(WhenBlock block)
+        private Result Compile(WhenBlock block)
         {
-            var body = Compile(block.Body);
+            if (block.Condition == null || (block.Condition.IsConstant == true && block.Condition.GetConstantValue() != 0))
+            {
+                // Always true
 
-            var isConstantlyTrue = block.Condition?.IsConstant == true && GetConstantValue(block.Condition) != 0;
+                Compile(block.Body);
+                return Result.Empty;
+            }
 
-            return block.Condition == null || isConstantlyTrue ? body : Expression.IfThen(
-                IsTruthy(Compile(block.Condition, true)),
-                body
-            );
+            var whenFalse = Emitter.DefineLabel("when_false");
+
+            Compile(block.Condition);
+            Emitter.BranchIfFalse(whenFalse);
+            Compile(block.Body);
+            Emitter.MarkLabel(whenFalse);
+
+            return Result.Empty;
         }
 
-        private Expression Compile(Statement stmt)
+        private Result Compile(Statement stmt)
         {
             return stmt switch
             {
@@ -161,68 +210,70 @@ namespace LogicScript.Compiling
             };
         }
 
-        private Expression Compile(TaskStatement stmt)
+        private Result Compile(TaskStatement stmt)
         {
             switch (stmt)
             {
                 case PrintTaskStatement print:
                     {
-                        Expression text;
+                        throw new NotImplementedException(); // TODO: implement
+                        // Expression text;
 
-                        if (print.String.Interpolations.Count == 0)
-                        {
-                            text = Expression.Constant(print.String.Text);
-                        }
-                        else
-                        {
-                            var locals = print.String.Interpolations.Select(l => FindLocal(l.Local));
-                            var fmtString = print.String.ToFormattable();
+                        // Emitter.LoadArgument(ArgumentMachine);
 
-                            // TODO: optimize this to make less allocations
-                            text = Expression.Call(
-                                typeof(string).GetMethod(nameof(string.Format), [typeof(string), typeof(object[])]),
-                                [
-                                    Expression.Constant(fmtString),
-                                    Expression.NewArrayInit(typeof(object), locals.Select(l => Expression.Convert(l, typeof(object))))
-                                ]
-                            );
-                        }
+                        // if (print.String.Interpolations.Count == 0)
+                        // {
+                        //     Emitter.LoadConstant(print.String.Text);
+                        // }
+                        // else
+                        // {
+                        //     var locals = print.String.Interpolations.Select(l => FindLocal(l.Local));
+                        //     var fmtString = print.String.ToFormattable();
 
-                        return Expression.Call(
-                            ThisParameter,
-                            typeof(IMachine).GetMethod(nameof(IMachine.Print)),
-                            text
-                        );
+                        //     // TODO: optimize this to make less allocations
+                        //     text = Expression.Call(
+                        //         typeof(string).GetMethod(nameof(string.Format), [typeof(string), typeof(object[])]),
+                        //         [
+                        //             Expression.Constant(fmtString),
+                        //             Expression.NewArrayInit(typeof(object), locals.Select(l => Expression.Convert(l, typeof(object))))
+                        //         ]
+                        //     );
+                        // }
+
+                        // return Expression.Call(
+                        //     ThisParameter,
+                        //     typeof(IMachine).GetMethod(nameof(IMachine.Print)),
+                        //     text
+                        // );
                     }
 
                 case ShowTaskStatement show:
-                    return Expression.Call(
-                        MachineParameter,
-                        typeof(IMachine).GetMethod(nameof(IMachine.Print)),
-                        Expression.Call(
-                            Compile(show.Value, false),
-                            typeof(object).GetMethod(nameof(object.ToString))
-                        )
-                    );
+                    Emitter.LoadArgument(ArgumentMachine);
+                    Compile(show.Value);
+                    Emitter.Call(typeof(object).GetMethod(nameof(object.ToString)));
+                    Emitter.Call(typeof(IMachine).GetMethod(nameof(IMachine.Print)));
+
+                    return Result.Empty;
 
                 case UpdateTaskStatement:
-                    return Expression.Call(
-                        ThisParameter,
-                        typeof(IMachine).GetMethod(nameof(IMachine.QueueUpdate))
-                    );
+                    Emitter.LoadArgument(ArgumentMachine);
+                    Emitter.Call(typeof(IMachine).GetMethod(nameof(IMachine.QueueUpdate)));
+
+                    return Result.Empty;
             }
 
             throw new NotImplementedException();
         }
 
-        private Expression Compile(BreakStatement stmt)
+        private Result Compile(BreakStatement stmt)
         {
             var label = LoopBreaks[stmt.TargetID]; // No need to check presence, the parser takes care of it
 
-            return Expression.Break(label);
+            Emitter.Branch(label);
+            return Result.Empty;
         }
 
-        private Expression Compile(ForStatement stmt)
+        private Result Compile(ForStatement stmt)
         {
             //TODO: optimize: compute 'to' once on loop enter and don't recompute on each iteration
 
@@ -256,316 +307,375 @@ namespace LogicScript.Compiling
             );
         }
 
-        private Expression Compile(WhileStatement stmt)
+        private Result Compile(WhileStatement stmt)
         {
-            var breakLabel = Expression.Label("loop_break");
+            var startLabel = Emitter.DefineLabel("while_start");
+            var breakLabel = Emitter.DefineLabel("while_break");
+
+            Emitter.MarkLabel(startLabel);
+            Compile(stmt.Condition);
+            Emitter.BranchIfFalse(breakLabel);
 
             LoopBreaks[stmt.ID] = breakLabel;
-            var body = Compile(stmt.Body);
+            Compile(stmt.Body);
             LoopBreaks.Remove(stmt.ID);
 
-            return Expression.Loop(
-                Expression.IfThenElse(
-                    IsTruthy(Compile(stmt.Condition, true)),
-                    body,
-                    Expression.Break(breakLabel)
-                ),
-                breakLabel
-            );
+            Emitter.Branch(startLabel);
+            Emitter.MarkLabel(breakLabel);
+
+            return Result.Empty;
         }
 
-        private Expression Compile(IfStatement stmt)
+        private Result Compile(IfStatement stmt)
         {
             if (stmt.Condition.IsConstant)
             {
-                var condConst = GetConstantValue(stmt.Condition);
+                var condConst = stmt.Condition.GetConstantValue();
 
                 if (condConst != 0)
                     return Compile(stmt.Body);
                 else if (stmt.Else != null)
                     return Compile(stmt.Else);
                 else
-                    return Expression.Empty();
+                    return Result.Empty;
             }
 
-            var cond = IsTruthy(Compile(stmt.Condition, true));
-            var then = Compile(stmt.Body);
+            var falseLabel = Emitter.DefineLabel("if_false");
+
+            Compile(stmt.Condition);
+            Emitter.BranchIfFalse(falseLabel);
+            Compile(stmt.Body);
 
             if (stmt.Else != null)
             {
-                var @else = Compile(stmt.Else);
+                var endLabel = Emitter.DefineLabel("if_end");
 
-                return Expression.IfThenElse(cond, then, @else);
+                Emitter.Branch(endLabel);
+                Emitter.MarkLabel(falseLabel);
+                Compile(stmt.Else);
+                Emitter.MarkLabel(endLabel);
+            }
+            else
+            {
+                Emitter.MarkLabel(falseLabel);
             }
 
-            return Expression.IfThen(cond, then);
+            return Result.Empty;
         }
 
-        private Expression Compile(BlockStatement stmt)
+        private Result Compile(BlockStatement stmt)
         {
-            var locals = stmt.Locals.ToDictionary(l => l, l => Expression.Variable(typeof(ulong), l.Name));
+            var locals = stmt.Locals.ToDictionary(l => l, l => Emitter.DeclareLocal<ulong>(l.Name));
 
             Stack.Push(new(locals));
 
-            var statements = stmt.Statements.Select(Compile).ToArray();
+            foreach (var child in stmt.Statements)
+            {
+                Compile(child);
+            }
 
-            Stack.Pop();
+            var poppedScope = Stack.Pop();
+            foreach (var local in poppedScope.Locals.Values)
+            {
+                local.Dispose();
+            }
 
-            return Expression.Block(locals.Values, statements);
+            return Result.Empty;
         }
 
-        private Expression Compile(AssignStatement stmt)
+        private Result Compile(AssignStatement stmt)
         {
             switch (stmt.Reference)
             {
                 case PortReference port:
-                    var startIndex = ComputePortOffset(port);
-
                     switch (port.PortInfo.Target)
                     {
                         case MachinePorts.Output:
-                            var value = Compile(stmt.Value, port.BitSize == 1);
-
-                            if (value.IsBool())
+                            if (stmt.Value.BitSize == 1)
                             {
-                                return Expression.Call(
-                                    ThisParameter,
-                                    typeof(IMachine).GetMethod(nameof(IMachine.WriteOutput))!,
-                                    startIndex,
-                                    value
-                                );
+                                Emitter.LoadArgument(ArgumentMachine);
+                                Emitter.LoadConstant(port.StartIndex); // TODO: vector
+                                Compile(stmt.Value);
+                                Emitter.Call(typeof(IMachine).GetMethod(nameof(IMachine.WriteOutput)));
                             }
                             else
                             {
-                                return Expression.Call(
-                                    ThisParameter,
-                                    typeof(IMachine).GetMethod(nameof(IMachine.WriteOutputs)),
-                                    startIndex,
-                                    Expression.New(
-                                        typeof(BitsValue).GetConstructor([typeof(ulong), typeof(int)])!,
-                                        value,
-                                        Expression.Constant(port.BitSize)
-                                    )
-                                );
+                                Emitter.LoadArgument(ArgumentMachine);
+                                Emitter.LoadConstant(port.StartIndex); // TODO: vector
+
+                                Compile(stmt.Value);
+                                Emitter.LoadConstant(port.BitSize);
+                                Emitter.NewObject(typeof(BitsValue), [typeof(ulong), typeof(int)]);
+
+                                Emitter.Call(typeof(IMachine).GetMethod(nameof(IMachine.WriteOutputs)));
                             }
+                            return Result.Empty;
 
                         case MachinePorts.Register:
+                            EmitThisField(RegistersField);
+
                             var field = Script.RegistersType.GetField($"Register{port.PortInfo.StartIndex}");
-                            return Expression.Assign(
-                                Expression.Field(Field(RegistersField), field),
-                                Expression.Convert(
-                                    Compile(stmt.Value, false),
-                                    field.FieldType
-                                )
-                            );
+
+                            if (port.VectorIndex != null)
+                            {
+                                Emitter.LoadField(field);
+                                Compile(port.VectorIndex);
+                                Compile(stmt.Value);
+                                Emitter.StoreElement(field.FieldType);
+                            }
+                            else
+                            {
+                                Compile(stmt.Value);
+                                Emitter.StoreField(field);
+                            }
+                            return Result.Empty;
                     }
                     throw new NotImplementedException();
 
                 case LocalReference local:
                     {
                         var localVar = FindLocal(local.LocalInfo);
-                        var value = Compile(stmt.Value, false);
 
-                        return Expression.Assign(localVar, value);
+                        Compile(stmt.Value);
+                        Emitter.StoreLocal(localVar);
+
+                        return Result.Empty;
                     }
             }
 
             throw new NotImplementedException();
         }
 
-        private Expression Compile(DeclareLocalStatement stmt)
+        private Result Compile(DeclareLocalStatement stmt)
         {
             if (stmt.Initializer is null)
-                return Expression.Empty();
+                return Result.Empty;
 
             var localVar = FindLocal(stmt.Local);
 
-            return Expression.Assign(localVar, Compile(stmt.Initializer, false));
+            Compile(stmt.Initializer);
+            Emitter.StoreLocal(localVar);
+
+            return Result.Empty;
         }
 
-        private Expression Compile(LExpression expr, bool canReturnBool)
+        private Result Compile(LExpression expr)
         {
             return expr switch
             {
-                BinaryOperatorExpression b => Compile(b, canReturnBool),
-                NumberLiteralExpression n => canReturnBool ? Expression.Constant(n.Value != 0) : Expression.Constant(n.Value.Number),
-                ReferenceExpression r => Compile(r, canReturnBool),
+                BinaryOperatorExpression b => Compile(b),
+                NumberLiteralExpression n => EmitConstant(n.Value),
+                ReferenceExpression r => Compile(r),
                 SliceExpression s => Compile(s),
-                TernaryOperatorExpression t => Compile(t, canReturnBool),
+                TernaryOperatorExpression t => Compile(t),
                 TruncateExpression t => Compile(t),
-                UnaryOperatorExpression u => Compile(u, canReturnBool),
-                ReferenceLengthExpression r => Expression.Constant((ulong)r.Value),
+                UnaryOperatorExpression u => Compile(u),
+                ReferenceLengthExpression r => EmitConstant((ulong)r.Value),
                 _ => throw new NotImplementedException()
             };
         }
 
-        private Expression Compile(TernaryOperatorExpression expr, bool canReturnBool)
+        private Result Compile(TernaryOperatorExpression expr)
         {
             if (expr.Condition.IsConstant)
             {
-                var condConst = GetConstantValue(expr.Condition);
+                var condConst = expr.Condition.GetConstantValue();
 
                 if (condConst != 0)
                 {
                     if (expr.IfTrue.IsConstant)
-                        return Expression.Constant(GetConstantValue(expr.IfTrue));
+                        return EmitConstant(expr.IfTrue.GetConstantValue());
                     else
-                        return Compile(expr.IfTrue, canReturnBool);
+                        return Compile(expr.IfTrue);
                 }
                 else
                 {
                     if (expr.IfFalse.IsConstant)
-                        return Expression.Constant(GetConstantValue(expr.IfFalse));
+                        return EmitConstant(expr.IfFalse.GetConstantValue());
                     else
-                        return Compile(expr.IfFalse, canReturnBool);
+                        return Compile(expr.IfFalse);
                 }
             }
 
-            var cond = IsTruthy(Compile(expr.Condition, true));
+            var ifFalse = Emitter.DefineLabel("if_false");
+            var end = Emitter.DefineLabel("end");
 
-            return Expression.Condition(
-                cond,
-                Compile(expr.IfTrue, canReturnBool),
-                Compile(expr.IfFalse, canReturnBool)
-            );
+            Compile(expr.Condition);
+            Emitter.BranchIfFalse(ifFalse);
+            Compile(expr.IfTrue);
+            Emitter.Branch(end);
+            Emitter.MarkLabel(ifFalse);
+            Compile(expr.IfFalse);
+            Emitter.MarkLabel(end);
+
+            return Result.Empty;
         }
 
-        private Expression Compile(SliceExpression expr)
+        private Result Compile(SliceExpression expr)
         {
             // TODO: check that this is right
 
-            var operand = Compile(expr.Operand, false);
-
-            var offset = expr.Start switch
+            Compile(expr.Operand);
+            if (expr.Start == IndexStart.Right)
             {
-                IndexStart.Left => Compile(expr.Offset, false),
-                IndexStart.Right => Expression.Subtract(
-                    Expression.Constant((ulong)(expr.Operand.BitSize - expr.Length)),
-                    Compile(expr.Offset, false)
-                ),
-                _ => throw new NotImplementedException(),
-            };
+                Compile(expr.Offset);
+            }
+            else
+            {
+                EmitConstant(expr.Operand.BitSize - expr.Length);
+                Compile(expr.Offset);
+                Emitter.Subtract();
+            }
+            Emitter.UnsignedShiftRight();
 
-            return Slice(operand, offset, expr.Length);
+            Emitter.LoadConstant((1UL << expr.Length) - 1);
+            Emitter.And();
+
+            return Result.Empty;
         }
 
-        private Expression Compile(UnaryOperatorExpression expr, bool canReturnBool)
+        private Result Compile(UnaryOperatorExpression expr)
         {
-            var inner = Compile(expr.Operand, canReturnBool && expr.Operator == Operator.Not);
-
-            return expr.Operator switch
+            switch (expr.Operator)
             {
-                Operator.Not => inner.IsBool()
-                    ? Expression.Not(inner)
-                    : Negate(inner, expr.Operand.BitSize),
-                Operator.Rise => throw new NotImplementedException(),
-                Operator.Fall => throw new NotImplementedException(),
-                Operator.Change => throw new NotImplementedException(),
-                Operator.Length => Expression.Constant((ulong)expr.Operand.BitSize),
-                Operator.AllOnes => BoolToNumberIf(AllOnes(inner, expr.Operand.BitSize), !canReturnBool),
-                _ => throw new InterpreterException("Unknown operand", expr.Span),
-            };
-        }
+                case Operator.Not:
+                    Compile(expr.Operand);
+                    Emitter.Not();
+                    break;
 
-        private Expression Compile(BinaryOperatorExpression expr, bool canReturnBool)
-        {
-            if (expr.Left.BitSize == 1 && expr.Right.BitSize == 1 && canReturnBool)
-            {
-                var leftBool = Compile(expr.Left, true);
-                var rightBool = Compile(expr.Right, true);
+                case Operator.Length:
+                    EmitConstant(expr.Operand.BitSize);
+                    break;
 
-                if (leftBool.IsBool() && rightBool.IsBool())
-                {
-                    switch (expr.Operator)
-                    {
-                        case Operator.And:
-                            return Expression.AndAlso(leftBool, rightBool);
-                        case Operator.Or:
-                            return Expression.OrElse(leftBool, rightBool);
-                        case Operator.EqualsCompare:
-                            return Expression.Equal(leftBool, rightBool);
-                        case Operator.NotEqualsCompare:
-                        case Operator.Xor:
-                            return Expression.NotEqual(leftBool, rightBool);
-                    }
-                }
+                case Operator.AllOnes:
+                    Compile(expr.Operand);
+                    EmitAllOnes(expr.Operand.BitSize);
+                    break;
+
+                default:
+                    throw new InterpreterException("Unknown operand", expr.Span);
             }
 
-            var left = Compile(expr.Left, false);
-            var right = Compile(expr.Right, false);
-
-            return expr.Operator switch
-            {
-                Operator.And => Expression.And(left, right),
-                Operator.Or => Expression.Or(left, right),
-                Operator.Xor => Expression.ExclusiveOr(left, right),
-                Operator.ShiftLeft => Expression.LeftShift(left, Expression.Convert(right, typeof(int))),
-                Operator.ShiftRight => Expression.RightShift(left, Expression.Convert(right, typeof(int))),
-                Operator.Add => Expression.Add(left, right),
-                Operator.Subtract => Expression.Subtract(left, right),
-                Operator.Multiply => Expression.Multiply(left, right),
-                Operator.Divide => Expression.Divide(left, right),
-                Operator.Power => Expression.Convert(
-                    Expression.Power(
-                        Expression.Convert(left, typeof(double)),
-                        Expression.Convert(right, typeof(double))
-                    ),
-                    typeof(ulong)
-                ),
-                Operator.Modulus => Expression.Modulo(left, right),
-                Operator.EqualsCompare => BoolToNumberIf(Expression.Equal(left, right), !canReturnBool),
-                Operator.NotEqualsCompare => BoolToNumberIf(Expression.NotEqual(left, right), !canReturnBool),
-                Operator.Greater => BoolToNumberIf(Expression.GreaterThan(left, right), !canReturnBool),
-                Operator.Lesser => BoolToNumberIf(Expression.LessThan(left, right), !canReturnBool),
-                _ => throw new InterpreterException("Unknown operator", expr.Span)
-            };
+            return Result.Empty;
         }
 
-        private Expression Compile(ReferenceExpression expr, bool canReturnBool)
+        private Result Compile(BinaryOperatorExpression expr)
+        {
+            switch (expr.Operator)
+            {
+                case Operator.And or Operator.Or or Operator.Xor or Operator.Add or Operator.Subtract or Operator.Multiply
+                    or Operator.Divide or Operator.Modulus or Operator.EqualsCompare or Operator.NotEqualsCompare or Operator.Greater or Operator.Lesser:
+                    Compile(expr.Left);
+                    Compile(expr.Right);
+
+                    _ = expr.Operator switch
+                    {
+                        Operator.And => Emitter.And(),
+                        Operator.Or => Emitter.Or(),
+                        Operator.Xor => Emitter.Xor(),
+                        Operator.Add => Emitter.Add(),
+                        Operator.Subtract => Emitter.Subtract(),
+                        Operator.Multiply => Emitter.Multiply(),
+                        Operator.Divide => Emitter.UnsignedDivide(),
+                        Operator.Modulus => Emitter.Remainder(),
+                        Operator.EqualsCompare => Emitter.CompareEqual(),
+                        Operator.NotEqualsCompare => Emitter.CompareEqual().LoadConstant(0UL).CompareEqual(),
+                        Operator.Greater => Emitter.CompareGreaterThan(),
+                        Operator.Lesser => Emitter.CompareLessThan(),
+                        _ => throw new NotImplementedException()
+                    };
+                    break;
+
+                case Operator.ShiftLeft:
+                    Compile(expr.Left);
+                    Compile(expr.Right);
+                    Emitter.Convert<int>();
+                    Emitter.ShiftLeft();
+                    break;
+
+                case Operator.ShiftRight:
+                    Compile(expr.Left);
+                    Compile(expr.Right);
+                    Emitter.Convert<int>();
+                    Emitter.UnsignedShiftRight();
+                    break;
+
+                case Operator.Power:
+                    throw new NotImplementedException("TODO: implement power");
+
+                default:
+                    throw new InterpreterException("Unknown operator", expr.Span);
+            }
+
+            return Result.Empty;
+        }
+
+        private Result Compile(ReferenceExpression expr)
         {
             switch (expr.Reference)
             {
                 case LocalReference local:
-                    return FindLocal(local.LocalInfo);
+                    var sLocal = FindLocal(local.LocalInfo);
+                    Emitter.LoadLocal(sLocal);
+
+                    return Result.Empty;
 
                 case PortReference port:
-                    var startIndex = ComputePortOffset(port);
-
-                    return port.PortInfo.Target switch
+                    switch (port.PortInfo.Target)
                     {
-                        MachinePorts.Input => expr.BitSize == 1 && canReturnBool
-                            ? Expression.Call(
-                                ThisParameter,
-                                typeof(IMachine).GetMethod(nameof(IMachine.ReadInput)),
-                                startIndex
-                            )
-                            : ReadInput(startIndex, port.BitSize),
-                        MachinePorts.Register => Expression.Field(
-                            Field(RegistersField),
-                            $"Register{port.PortInfo.StartIndex}"
-                        ),
-                        _ => throw new NotImplementedException()
-                    };
+                        case MachinePorts.Input:
+                            Emitter.LoadArgument(ArgumentMachine);
+                            Emitter.LoadConstant(port.PortInfo.StartIndex);
+                            // TODO: vector
+                            Emitter.LoadConstant(port.PortInfo.BitSize);
+                            Emitter.Call(typeof(IMachine).GetMethod(nameof(IMachine.ReadInputs)));
+                            Emitter.LoadField(typeof(BitsValue).GetField(nameof(BitsValue.Number))); // TODO: make ReadInputs return a ulong directly
+                            return Result.Empty;
+
+                        case MachinePorts.Register:
+                            EmitThisField(RegistersField);
+
+                            var field = Script.RegistersType.GetField($"Register{port.PortInfo.StartIndex}");
+                            Emitter.LoadField(field);
+
+                            var elemType = field.FieldType;
+                            if (port.VectorIndex != null)
+                            {
+                                elemType = elemType.GetElementType();
+
+                                Compile(port.VectorIndex);
+                                Emitter.LoadElement(elemType);
+                            }
+
+                            if (elemType != typeof(ulong))
+                                Emitter.Convert<ulong>();
+
+                            return Result.Empty;
+
+                        default:
+                            throw new NotImplementedException();
+                    }
 
                 case ConstantReference cnst:
-                    return cnst.BitSize == 1 && canReturnBool
-                        ? Expression.Constant(cnst.Constant.Value != 0)
-                        : Expression.Constant(cnst.Constant.Value.Number);
+                    return EmitConstant(cnst.Constant.Value);
 
                 default:
                     throw new NotImplementedException();
             }
         }
 
-        private Expression Compile(TruncateExpression expr)
+        private Result Compile(TruncateExpression expr)
         {
             ulong mask = 1UL << expr.BitSize;
-            var operand = Compile(expr, false);
 
-            return Expression.And(operand, Expression.Constant(mask));
+            Compile(expr);
+            EmitConstant(mask);
+            Emitter.And();
+
+            return Result.Empty;
         }
 
-        private ParameterExpression FindLocal(LocalInfo info)
+        private Local FindLocal(LocalInfo info)
         {
             foreach (var scope in Stack)
             {
@@ -576,98 +686,41 @@ namespace LogicScript.Compiling
             throw new Exception($"Local {info} not found");
         }
 
-        private static Expression IsTruthy(Expression value)
+        private Result EmitAllOnes(int length)
         {
-            if (value.IsBool()) return value;
-
-            return Expression.NotEqual(value, Expression.Constant(0UL));
+            EmitConstant((1UL << length) - 1);
+            Emitter.CompareEqual(); // TODO: this is an int32
+            return Result.Empty;
         }
 
-        private ulong GetConstantValue(LExpression expr) => GetConstantValue(Compile(expr, false));
-        private static ulong GetConstantValue(Expression expr)
-        {
-            return Expression.Lambda<Func<ulong>>(expr)
-#if USE_FAST_EXPRESSIONS
-                .TryCompile<Func<ulong>>()();
-#else
-                .Compile()();
-#endif
-        }
-
-        private static Expression Slice(Expression value, Expression start, int length)
-        {
-            return Expression.And(
-                Expression.RightShift(value, Expression.Convert(start, typeof(int))),
-                Expression.Constant((1UL << length) - 1)
-            );
-        }
-
-        private static Expression AllOnes(Expression value, int length)
-        {
-            return Expression.Equal(
-                value,
-                Expression.Constant((1UL << length) - 1)
-            );
-        }
-
-        private static Expression Negate(Expression value, int length)
-        {
-            return Expression.And(
-                Expression.OnesComplement(value),
-                Expression.Constant((1UL << length) - 1)
-            );
-        }
-
-        private static Expression BoolToNumberIf(Expression boolExpr, bool convert)
-        {
-            return convert ? Expression.Condition(boolExpr, Expression.Constant(1UL), Expression.Constant(0UL)) : boolExpr;
-        }
-
-        private Expression ReadInput(Expression start, int size)
-        {
-            return Expression.Field(
-                Expression.Call(
-                    Expression.Call(
-                        ThisParameter,
-                        typeof(IMachine).GetMethod(nameof(IMachine.ReadInputs))
-                    ),
-                    typeof(BitsValue).GetMethod(nameof(BitsValue.Slice)),
-                    start,
-                    Expression.Constant(size)
-                ),
-                typeof(BitsValue).GetField(nameof(BitsValue.Number))
-            );
-        }
-
-
-        private Expression ComputePortOffset(PortReference port)
-        {
-            if (port.VectorIndex == null)
-            {
-                return Expression.Constant(port.StartIndex);
-            }
-            else
-            {
-                if (port.VectorIndex.IsConstant)
-                {
-                    var vectorIndex = (int)GetConstantValue(port.VectorIndex);
-                    return port.PortInfo.Target == MachinePorts.Register
-                        ? Expression.Constant(port.StartIndex + vectorIndex)
-                        : Expression.Constant(port.StartIndex + port.BitSize * vectorIndex);
-                }
-                else
-                {
-                    return Expression.Add(
-                        Expression.Constant(port.StartIndex),
-                        port.PortInfo.Target == MachinePorts.Register
-                            ? Compile(port.VectorIndex, false)
-                            : Expression.Multiply(
-                                Expression.Constant(port.BitSize),
-                                Compile(port.VectorIndex, false)
-                            )
-                    );
-                }
-            }
-        }
+        // private Result ComputePortOffset(PortReference port)
+        // {
+        //     if (port.VectorIndex == null)
+        //     {
+        //         Emitter.LoadConstant(port.StartIndex);
+        //     }
+        //     else
+        //     {
+        //         if (port.VectorIndex.IsConstant)
+        //         {
+        //             var vectorIndex = (int)GetConstantValue(port.VectorIndex);
+        //             return port.PortInfo.Target == MachinePorts.Register
+        //                 ? Expression.Constant(port.StartIndex + vectorIndex)
+        //                 : Expression.Constant(port.StartIndex + port.BitSize * vectorIndex);
+        //         }
+        //         else
+        //         {
+        //             return Expression.Add(
+        //                 Expression.Constant(port.StartIndex),
+        //                 port.PortInfo.Target == MachinePorts.Register
+        //                     ? Compile(port.VectorIndex, false)
+        //                     : Expression.Multiply(
+        //                         Expression.Constant(port.BitSize),
+        //                         Compile(port.VectorIndex, false)
+        //                     )
+        //             );
+        //         }
+        //     }
+        // }
     }
 }
