@@ -10,25 +10,11 @@ using LogicScript.Parsing.Structures.Expressions;
 using LogicScript.Parsing.Structures.Statements;
 using LExpression = LogicScript.Parsing.Structures.Expressions.Expression;
 using LogicScript.Parsing;
-using FastExpressionCompiler;
 using System.Reflection;
 using System.Reflection.Emit;
-using Mono.Reflection;
 using Sigil.NonGeneric;
 using Sigil;
 using LogicScript.Parsing.Visitors;
-
-
-
-
-
-#if USE_FAST_EXPRESSIONS
-using FastExpressionCompiler.LightExpression;
-using Expression = FastExpressionCompiler.LightExpression.Expression;
-#else
-using System.Linq.Expressions;
-using Expression = System.Linq.Expressions.Expression;
-#endif
 
 namespace LogicScript.Compiling
 {
@@ -39,8 +25,6 @@ namespace LogicScript.Compiling
 
         void Run(IMachine machine);
     }
-
-    // public delegate void CompiledScript(IMachine machine, bool[] scratch, bool firstRun);
 
     public class Compiler
     {
