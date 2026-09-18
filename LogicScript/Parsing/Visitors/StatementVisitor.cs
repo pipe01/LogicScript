@@ -27,7 +27,7 @@ namespace LogicScript.Parsing.Visitors
 
             var stmts = context.stmt().Select(visitor.Visit).ToArray();
 
-            return new BlockStatement(context.Span(), stmts, blockContext.Locals.ToArray());
+            return new BlockStatement(NodeID.Next(), context.Span(), stmts, blockContext.Locals.ToArray());
         }
 
         public override Statement VisitAssignRegular([NotNull] LogicScriptParser.AssignRegularContext context)
@@ -39,7 +39,7 @@ namespace LogicScript.Parsing.Visitors
 
             var value = new ExpressionVisitor(BlockContext, @ref.BitSize).Visit(context.expression());
 
-            return new AssignStatement(context.Span(), @ref, value);
+            return new AssignStatement(NodeID.Next(), context.Span(), @ref, value);
         }
 
         public override Statement VisitAssignTruncate([NotNull] LogicScriptParser.AssignTruncateContext context)
@@ -52,7 +52,7 @@ namespace LogicScript.Parsing.Visitors
             var value = new ExpressionVisitor(BlockContext).Visit(context.expression());
             var truncated = new TruncateExpression(context.Span(), value, @ref.BitSize);
 
-            return new AssignStatement(context.Span(), @ref, truncated);
+            return new AssignStatement(NodeID.Next(), context.Span(), @ref, truncated);
         }
 
         public override Statement VisitStmt_if([NotNull] LogicScriptParser.Stmt_ifContext context)
@@ -64,24 +64,24 @@ namespace LogicScript.Parsing.Visitors
         {
             var cond = new ExpressionVisitor(BlockContext).VisitOrPlaceholder(context.expression(), context.Span());
             var body = context.block() == null
-                ? new BlockStatement(span, [], [])
+                ? new BlockStatement(NodeID.Next(), span, [], [])
                 : Visit(context.block());
             Statement? @else = null;
 
             if (context.stmt_else() != null)
             {
                 @else = context.stmt_else().block() == null
-                    ? new BlockStatement(context.stmt_else().Span(), [], [])
+                    ? new BlockStatement(NodeID.Next(), context.stmt_else().Span(), [], [])
                     : Visit(context.stmt_else().block());
             }
             else if (context.stmt_elseif() != null)
             {
                 @else = context.stmt_elseif().if_body() == null
-                    ? new BlockStatement(context.stmt_elseif().Span(), [], [])
+                    ? new BlockStatement(NodeID.Next(), context.stmt_elseif().Span(), [], [])
                     : VisitIfBody(context.stmt_elseif().Span(), context.stmt_elseif().if_body());
             }
 
-            return new IfStatement(span, cond, body, @else);
+            return new IfStatement(NodeID.Next(), span, cond, body, @else);
         }
 
         public override Statement VisitStmt_for([NotNull] LogicScriptParser.Stmt_forContext context)
@@ -111,11 +111,11 @@ namespace LogicScript.Parsing.Visitors
             var local = outerContext.AddLocal(varName, toSize, new SourceSpan(context.VARIABLE().Symbol));
 
             var body = context.block() == null
-                ? new BlockStatement(context.Span(), [], [])
+                ? new BlockStatement(NodeID.Next(), context.Span(), [], [])
                 : (BlockStatement)VisitBlock(context.block(), id, outerContext);
             var forStmt = new ForStatement(id, context.Span(), local, from, to, body);
 
-            return new BlockStatement(context.Span(), [forStmt], outerContext.Locals.ToArray());
+            return new BlockStatement(NodeID.Next(), context.Span(), [forStmt], outerContext.Locals.ToArray());
         }
 
         public override Statement VisitStmt_while([NotNull] LogicScriptParser.Stmt_whileContext context)
@@ -124,7 +124,7 @@ namespace LogicScript.Parsing.Visitors
 
             var id = NodeID.Next();
             var body = context.block() == null
-                ? new BlockStatement(context.Span(), [], [])
+                ? new BlockStatement(NodeID.Next(), context.Span(), [], [])
                 : VisitBlock(context.block(), id);
 
             if (cond.IsConstant && cond.GetConstantValue() != 0 && !body.GetDescendants().Any(n => n is BreakStatement b && b.TargetID == id))
@@ -157,12 +157,12 @@ namespace LogicScript.Parsing.Visitors
             if (BlockContext.TryGetLocal(name, out var existingLocal, checkOuter: false))
             {
                 BlockContext.Errors.AddError($"Identifier {name} already taken by declaration at line {existingLocal.Span.Start.Line}", new SourceSpan(context.VARIABLE().Symbol));
-                return new DeclareLocalStatement(context.Span(), existingLocal, value, context.size != null);
+                return new DeclareLocalStatement(NodeID.Next(), context.Span(), existingLocal, value, context.size != null);
             }
 
             var localInfo = BlockContext.AddLocal(name, size, new SourceSpan(context.VARIABLE().Symbol));
 
-            return new DeclareLocalStatement(context.Span(), localInfo, value, context.size != null);
+            return new DeclareLocalStatement(NodeID.Next(), context.Span(), localInfo, value, context.size != null);
         }
 
         public override Statement VisitTask_print([NotNull] LogicScriptParser.Task_printContext context)
@@ -171,7 +171,7 @@ namespace LogicScript.Parsing.Visitors
             {
                 var value = new ExpressionVisitor(BlockContext).Visit(context.expression());
 
-                return new ShowTaskStatement(context.Span(), value);
+                return new ShowTaskStatement(NodeID.Next(), context.Span(), value);
             }
             else if (context.TEXT() != null)
             {
@@ -185,7 +185,7 @@ namespace LogicScript.Parsing.Visitors
                     throw new ParseException($"Unknown local '{name}' in format string", context.Span());
                 });
 
-                return new PrintTaskStatement(context.Span(), formatString);
+                return new PrintTaskStatement(NodeID.Next(), context.Span(), formatString);
             }
 
             throw new ParseException("Invalid print value", context.Span());
@@ -193,7 +193,7 @@ namespace LogicScript.Parsing.Visitors
 
         public override Statement VisitTask_update([NotNull] LogicScriptParser.Task_updateContext context)
         {
-            return new UpdateTaskStatement(context.Span());
+            return new UpdateTaskStatement(NodeID.Next(), context.Span());
         }
 
         public override Statement VisitStmt_break([NotNull] LogicScriptParser.Stmt_breakContext context)
@@ -201,7 +201,7 @@ namespace LogicScript.Parsing.Visitors
             if (BlockContext.LoopID == null)
                 Context.Errors.AddError("Break statements can only be used inside loops", context.Span());
 
-            return new BreakStatement(context.Span(), BlockContext.LoopID.GetValueOrDefault());
+            return new BreakStatement(NodeID.Next(), context.Span(), BlockContext.LoopID.GetValueOrDefault());
         }
     }
 }

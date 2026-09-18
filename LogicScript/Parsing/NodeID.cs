@@ -7,9 +7,9 @@ namespace LogicScript.Parsing
     {
         private static int NextID = 999;
 
-        private readonly int ID;
+        internal readonly int ID;
 
-        private NodeID(int id)
+        internal NodeID(int id)
         {
             this.ID = id;
         }
@@ -22,6 +22,8 @@ namespace LogicScript.Parsing
         public override int GetHashCode() => HashCode.Combine(ID);
 
         public override bool Equals(object? obj) => obj is NodeID other && this.ID == other.ID;
+
+        public override string ToString() => ID.ToString();
 
         public static bool operator ==(NodeID a, NodeID b) => a.ID == b.ID;
         public static bool operator !=(NodeID a, NodeID b) => a.ID != b.ID;

@@ -79,7 +79,7 @@ namespace LogicScript.Parsing.Visitors
             }
 
             var body = context.block() == null
-                ? new BlockStatement(context.Span(), [], [])
+                ? new BlockStatement(NodeID.Next(), context.Span(), [], [])
                 : new StatementVisitor(Context).Visit(context.block());
 
             Script.Blocks.Add(new WhenBlock(context.Span(), cond, body));

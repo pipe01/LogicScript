@@ -2,7 +2,7 @@
 
 namespace LogicScript.Parsing.Structures.Statements
 {
-    internal class BlockStatement(SourceSpan span, IReadOnlyList<Statement> statements, IReadOnlyCollection<LocalInfo> locals) : Statement(span)
+    internal class BlockStatement(NodeID id, SourceSpan span, IReadOnlyList<Statement> statements, IReadOnlyCollection<LocalInfo> locals) : Statement(id, span)
     {
         public IReadOnlyList<Statement> Statements { get; set; } = statements;
         public IReadOnlyCollection<LocalInfo> Locals { get; } = locals;

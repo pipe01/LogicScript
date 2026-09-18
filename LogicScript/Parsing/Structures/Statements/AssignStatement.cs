@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace LogicScript.Parsing.Structures.Statements
 {
-    internal sealed class AssignStatement(SourceSpan span, Reference target, Expression value) : Statement(span)
+    internal sealed class AssignStatement(NodeID id, SourceSpan span, Reference target, Expression value) : Statement(id, span)
     {
         public Reference Reference { get; } = target;
         public Expression Value { get; } = value;

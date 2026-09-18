@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace LogicScript.Parsing.Structures.Statements
 {
-    internal sealed class IfStatement(SourceSpan span, Expression condition, Statement body, Statement? @else) : Statement(span)
+    internal sealed class IfStatement(NodeID id, SourceSpan span, Expression condition, Statement body, Statement? @else) : Statement(id, span)
     {
         public Expression Condition { get; set; } = condition;
         public Statement Body { get; set; } = body;

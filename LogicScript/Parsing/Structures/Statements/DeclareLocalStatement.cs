@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace LogicScript.Parsing.Structures.Statements
 {
-    internal sealed class DeclareLocalStatement(SourceSpan span, LocalInfo local, Expression? initializer, bool hasExplicitSize) : Statement(span)
+    internal sealed class DeclareLocalStatement(NodeID id, SourceSpan span, LocalInfo local, Expression? initializer, bool hasExplicitSize) : Statement(id, span)
     {
         public LocalInfo Local { get; } = local;
         public Expression? Initializer { get; } = initializer;

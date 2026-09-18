@@ -23,7 +23,7 @@ namespace LogicScript.Compiling
         IRegisters Registers { get; }
         bool HasRun { get; set; }
 
-        void Run(IMachine machine);
+        void Run(IMachine machine, IDebugger2? debugger = null);
     }
 
     public class Compiler
@@ -40,8 +40,10 @@ namespace LogicScript.Compiling
 
         private const int ArgumentThis = 0;
         private const int ArgumentMachine = 1;
+        private const int ArgumentDebugger = 2;
 
         private readonly Script Script;
+        private readonly bool EmitDebug;
 
         private readonly TypeBuilder TypeBuilder;
         private readonly FieldInfo HasRunField;
@@ -53,9 +55,10 @@ namespace LogicScript.Compiling
         private readonly Emit Emitter;
         private readonly Local RegistersLocal;
 
-        private Compiler(Script script)
+        private Compiler(Script script, bool emitDebug)
         {
             this.Script = script;
+            this.EmitDebug = emitDebug;
 
             var ab = AssemblyBuilder.DefineDynamicAssembly(new AssemblyName("<>ScriptAssembly"), AssemblyBuilderAccess.Run);
             var mb = ab.DefineDynamicModule("Module");
@@ -78,7 +81,7 @@ namespace LogicScript.Compiling
 
             Emitter = Emit.BuildMethod(
                 typeof(void),
-                [typeof(IMachine)],
+                [typeof(IMachine), typeof(IDebugger2)],
                 tb,
                 nameof(ICompiledScript.Run),
                 MethodAttributes.Public | MethodAttributes.Virtual | MethodAttributes.NewSlot,
@@ -88,7 +91,6 @@ namespace LogicScript.Compiling
             Emitter.LoadArgument(ArgumentThis);
             Emitter.LoadField(RegistersField);
             Emitter.StoreLocal(RegistersLocal);
-
         }
 
         private void EmitThisField(FieldInfo field)
@@ -101,6 +103,46 @@ namespace LogicScript.Compiling
         {
             Emitter.LoadConstant(value.Number);
             return Result.Empty;
+        }
+
+        private void DebugEmit(Action body)
+        {
+            if (!EmitDebug)
+                return;
+
+            var skip = Emitter.DefineLabel();
+
+            Emitter.LoadArgument(ArgumentDebugger);
+            Emitter.BranchIfFalse(skip);
+            Emitter.LoadArgument(ArgumentDebugger);
+            body();
+            Emitter.MarkLabel(skip);
+        }
+
+        private void DebugEmitPushLocal(string name)
+        {
+            DebugEmit(() =>
+            {
+                Emitter.LoadConstant(name);
+                Emitter.CallVirtual(typeof(IDebugger2).GetMethod(nameof(IDebugger2.PushLocal)));
+            });
+        }
+
+        private void DebugEmitPopLocal()
+        {
+            DebugEmit(() => Emitter.CallVirtual(typeof(IDebugger2).GetMethod(nameof(IDebugger2.PopLocal))));
+        }
+
+        private void DebugEmitSetLocal(LocalInfo localInfo)
+        {
+            var local = FindLocal(localInfo);
+
+            DebugEmit(() =>
+            {
+                Emitter.LoadConstant(localInfo.Name);
+                Emitter.LoadLocal(local);
+                Emitter.CallVirtual(typeof(IDebugger2).GetMethod(nameof(IDebugger2.SetLocal)));
+            });
         }
 
         private ICompiledScript Compile()
@@ -124,9 +166,9 @@ namespace LogicScript.Compiling
             return (ICompiledScript)Activator.CreateInstance(TypeBuilder.CreateType());
         }
 
-        public static ICompiledScript Compile(Script script)
+        public static ICompiledScript Compile(Script script, bool emitDebug = false)
         {
-            return new Compiler(script).Compile();
+            return new Compiler(script, emitDebug).Compile();
         }
 
         private Result Compile(Block block)
@@ -176,6 +218,13 @@ namespace LogicScript.Compiling
 
         private Result Compile(Statement stmt)
         {
+            DebugEmit(() =>
+            {
+                Emitter.LoadConstant(stmt.ID.ID);
+                Emitter.NewObject<NodeID, int>();
+                Emitter.CallVirtual(typeof(IDebugger2).GetMethod(nameof(IDebugger2.TraceStatement)));
+            });
+
             return stmt switch
             {
                 AssignStatement a => Compile(a),
@@ -286,6 +335,7 @@ namespace LogicScript.Compiling
             EmitConstant(1);
             Emitter.Add();
             Emitter.StoreLocal(loopLocal);
+            DebugEmitSetLocal(stmt.Variable);
 
             Emitter.MarkLabel(head);
             Emitter.LoadLocal(loopLocal);
@@ -357,6 +407,11 @@ namespace LogicScript.Compiling
         {
             var locals = stmt.Locals.ToDictionary(l => l, l => Emitter.DeclareLocal<ulong>(l.Name));
 
+            foreach (var local in locals)
+            {
+                DebugEmitPushLocal(local.Value.Name);
+            }
+
             Stack.Push(new(locals));
 
             foreach (var child in stmt.Statements)
@@ -367,6 +422,7 @@ namespace LogicScript.Compiling
             var poppedScope = Stack.Pop();
             foreach (var local in poppedScope.Locals.Values)
             {
+                DebugEmitPopLocal();
                 local.Dispose();
             }
 
@@ -431,6 +487,8 @@ namespace LogicScript.Compiling
                         Compile(stmt.Value);
                         Emitter.StoreLocal(localVar);
 
+                        DebugEmitSetLocal(local.LocalInfo);
+
                         return Result.Empty;
                     }
             }
@@ -447,6 +505,8 @@ namespace LogicScript.Compiling
 
             Compile(stmt.Initializer);
             Emitter.StoreLocal(localVar);
+
+            DebugEmitSetLocal(stmt.Local);
 
             return Result.Empty;
         }

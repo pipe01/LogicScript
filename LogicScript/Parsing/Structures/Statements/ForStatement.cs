@@ -3,10 +3,8 @@ using System.Collections.Generic;
 
 namespace LogicScript.Parsing.Structures.Statements
 {
-    internal sealed class ForStatement(NodeID id, SourceSpan span, LocalInfo variable, Expression? from, Expression to, Statement body) : Statement(span), IIdentifiableCodeNode
+    internal sealed class ForStatement(NodeID id, SourceSpan span, LocalInfo variable, Expression? from, Expression to, Statement body) : Statement(id, span)
     {
-        public NodeID ID { get; } = id;
-
         public LocalInfo Variable { get; set; } = variable;
         public Expression? From { get; set; } = from;
         public Expression To { get; set; } = to;

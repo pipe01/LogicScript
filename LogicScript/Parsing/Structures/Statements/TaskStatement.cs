@@ -4,14 +4,14 @@ using System.Collections.Generic;
 
 namespace LogicScript.Parsing.Structures.Statements
 {
-    internal abstract class TaskStatement(SourceSpan span) : Statement(span)
+    internal abstract class TaskStatement(NodeID id, SourceSpan span) : Statement(id, span)
     {
     }
 
-    internal sealed class PrintTaskStatement(SourceSpan span, PrintStringFormat str) : TaskStatement(span)
+    internal sealed class PrintTaskStatement(NodeID id, SourceSpan span, PrintStringFormat str) : TaskStatement(id, span)
     {
         // For tests only
-        public PrintTaskStatement(string str) : this(default, PrintStringFormat.Parse(default, str)) { }
+        public PrintTaskStatement(NodeID id, string str) : this(id, default, PrintStringFormat.Parse(default, str)) { }
 
         public PrintStringFormat String { get; set; } = str;
 
@@ -21,7 +21,7 @@ namespace LogicScript.Parsing.Structures.Statements
         }
     }
 
-    internal sealed class ShowTaskStatement(SourceSpan span, Expression value) : TaskStatement(span)
+    internal sealed class ShowTaskStatement(NodeID id, SourceSpan span, Expression value) : TaskStatement(id, span)
     {
         public Expression Value { get; set; } = value;
 
@@ -31,7 +31,7 @@ namespace LogicScript.Parsing.Structures.Statements
         }
     }
 
-    internal sealed class UpdateTaskStatement(SourceSpan span) : TaskStatement(span)
+    internal sealed class UpdateTaskStatement(NodeID id, SourceSpan span) : TaskStatement(id, span)
     {
     }
 }
