@@ -4,7 +4,7 @@ namespace LogicScript.Tests
 {
     public abstract class BaseTest
     {
-        protected void Run(string source, DummyMachine machine, bool runStartup = true)
+        protected static void Run(string source, DummyMachine machine, bool runStartup = true)
         {
             var (script, errors) = Script.Parse(source);
             if (errors.Count > 0)
@@ -13,20 +13,21 @@ namespace LogicScript.Tests
             Run(script!, machine, runStartup);
         }
 
-        protected void Run(string source, out DummyMachine machine, bool runStartup = true)
+        protected static void Run(string source, out DummyMachine machine, bool runStartup = true)
         {
             machine = new DummyMachine();
 
             Run(source, machine, runStartup);
         }
 
-        protected void Run(Script script, DummyMachine machine, bool runStartup = true)
+        protected static void Run(Script script, DummyMachine machine, bool runStartup = true)
         {
-            var compiled = Compiler.Compile(script);
-            compiled.Run(machine);
+            var instance = Compiler.Compile(script).Instantiate();
+            instance.HasRun = !runStartup;
+            instance.Run(machine);
         }
 
-        protected void Run(Script script, out DummyMachine machine, bool runStartup = true)
+        protected static void Run(Script script, out DummyMachine machine, bool runStartup = true)
         {
             machine = new DummyMachine();
 

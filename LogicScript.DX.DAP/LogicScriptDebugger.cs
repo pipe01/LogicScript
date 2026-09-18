@@ -152,7 +152,7 @@ public class LogicScriptDebugger : IDebugger, IAttachHandler, IDisconnectHandler
 
     private readonly record struct StatementBreakpoint(int Number, Statement Statement);
 
-    private record class PauseState(int? BreakpointNumber, Statement Statement, ICompiledScript CompiledScript, IMachine Machine, Script Script)
+    private record class PauseState(int? BreakpointNumber, Statement Statement, IScriptInstance CompiledScript, IMachine Machine, Script Script)
     {
         public readonly TaskCompletionSource<bool> PauseBarrier = new(TaskCreationOptions.RunContinuationsAsynchronously);
 
@@ -291,7 +291,7 @@ public class LogicScriptDebugger : IDebugger, IAttachHandler, IDisconnectHandler
         CurrentLocals.Remove(id);
     }
 
-    public void TraceStatement(ICompiledScript compiledScript, IMachine machine, NodeID id)
+    public void TraceStatement(IScriptInstance compiledScript, IMachine machine, NodeID id)
     {
         if (!Attached || !TryFindNode<Statement>(id, out var stmt, out var script) || stmt is BlockStatement)
             return;

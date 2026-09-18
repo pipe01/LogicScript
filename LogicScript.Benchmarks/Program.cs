@@ -61,7 +61,7 @@ end
         private TestCase Case;
         private IMachine Machine;
         private Script Script;
-        private ICompiledScript CompiledScript, CompiledScriptDebug;
+        private IScriptInstance CompiledScript, CompiledScriptDebug;
 
         [GlobalSetup]
         public void GlobalSetup()
@@ -85,8 +85,8 @@ end
 
             this.Machine = new DummyMachine(Case.Inputs, Case.Outputs);
 
-            this.CompiledScript = Compiler.Compile(script);
-            this.CompiledScriptDebug = Compiler.Compile(script, true);
+            this.CompiledScript = Compiler.Compile(script).Instantiate();
+            this.CompiledScriptDebug = Compiler.Compile(script, true).Instantiate();
         }
 
         [Benchmark(Baseline = true)]
@@ -101,11 +101,11 @@ end
             CompiledScriptDebug.Run(Machine);
         }
 
-        // [Benchmark(Baseline = true)]
-        // public void RunRaw()
-        // {
-        //     Machine.WriteOutput(0, Machine.ReadInput(0) && Machine.ReadInput(1));
-        // }
+        [Benchmark]
+        public void RunCompiledDebugWithDebugger()
+        {
+            CompiledScriptDebug.Run(Machine, DummyDebugger.Instance);
+        }
     }
 
     class DummyMachine(int inputCount, int outputCount) : IMachine
@@ -147,6 +147,8 @@ end
 
     class DummyDebugger : IDebugger
     {
+        public static readonly DummyDebugger Instance = new();
+
         public void PopLocal(NodeID id)
         {
         }
@@ -159,7 +161,7 @@ end
         {
         }
 
-        public void TraceStatement(ICompiledScript compiledScript, IMachine machine, NodeID id)
+        public void TraceStatement(IScriptInstance compiledScript, IMachine machine, NodeID id)
         {
         }
     }

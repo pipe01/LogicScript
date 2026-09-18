@@ -20,15 +20,19 @@ using LogicScript.Utils;
 
 namespace LogicScript.Compiling
 {
-    public interface ICompiledScript
+    public sealed class CompiledScript
     {
-        IRegisters Registers { get; }
-        bool HasRun { get; set; }
+        private readonly Type Type;
 
-        void Run(IMachine machine, IDebugger? debugger = null);
+        internal CompiledScript(Type type)
+        {
+            this.Type = type;
+        }
+
+        public IScriptInstance Instantiate() => (IScriptInstance)Activator.CreateInstance(Type);
     }
 
-    public class Compiler
+    public sealed class Compiler
     {
         private enum Result
         {
@@ -65,14 +69,14 @@ namespace LogicScript.Compiling
             var ab = AssemblyBuilder.DefineDynamicAssembly(new AssemblyName("<>ScriptAssembly"), AssemblyBuilderAccess.Run);
             var mb = ab.DefineDynamicModule("Module");
             var tb = mb.DefineType("CompiledScript", TypeAttributes.Class);
-            tb.AddInterfaceImplementation(typeof(ICompiledScript));
+            tb.AddInterfaceImplementation(typeof(IScriptInstance));
             TypeBuilder = tb;
 
             HasRunField = tb.DefineField("_hasRun", typeof(bool), FieldAttributes.Private);
             RegistersField = tb.DefineField("_registers", script.RegistersType, FieldAttributes.Private);
 
-            tb.DefineProperty(nameof(ICompiledScript.Registers), typeof(IRegisters), RegistersField, false);
-            tb.DefineProperty(nameof(ICompiledScript.HasRun), typeof(bool), HasRunField, true);
+            tb.DefineProperty(nameof(IScriptInstance.Registers), typeof(IRegisters), RegistersField, false);
+            tb.DefineProperty(nameof(IScriptInstance.HasRun), typeof(bool), HasRunField, true);
 
             var ctorMethod = tb.DefineConstructor(MethodAttributes.Public, CallingConventions.HasThis, Type.EmptyTypes);
             var ctorIL = ctorMethod.GetILGenerator();
@@ -85,7 +89,7 @@ namespace LogicScript.Compiling
                 typeof(void),
                 [typeof(IMachine), typeof(IDebugger)],
                 tb,
-                nameof(ICompiledScript.Run),
+                nameof(IScriptInstance.Run),
                 MethodAttributes.Public | MethodAttributes.Virtual | MethodAttributes.NewSlot,
                 CallingConventions.Standard | CallingConventions.HasThis
             );
@@ -154,7 +158,7 @@ namespace LogicScript.Compiling
             });
         }
 
-        private ICompiledScript Compile()
+        private CompiledScript Compile()
         {
             if (Script.HasErrors)
                 throw new Exception("Script has errors");
@@ -172,10 +176,10 @@ namespace LogicScript.Compiling
             Emitter.CreateMethod(out var str, OptimizationOptions.All);
             Debug.WriteLine(str);
 
-            return (ICompiledScript)Activator.CreateInstance(TypeBuilder.CreateType());
+            return new(TypeBuilder.CreateType());
         }
 
-        public static ICompiledScript Compile(Script script, bool emitDebug = false)
+        public static CompiledScript Compile(Script script, bool emitDebug = false)
         {
             return new Compiler(script, emitDebug).Compile();
         }

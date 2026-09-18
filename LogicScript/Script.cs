@@ -1,7 +1,6 @@
 ﻿using Antlr4.Runtime;
 using Antlr4.Runtime.Misc;
 using LogicScript.Compiling;
-using LogicScript.Interpreting;
 using LogicScript.Parsing;
 using LogicScript.Parsing.Structures;
 using LogicScript.Parsing.Structures.Blocks;
@@ -164,5 +163,13 @@ namespace LogicScript
 
             return (parsed, errors);
         }
+    }
+
+    public interface IScriptInstance
+    {
+        IRegisters Registers { get; }
+        bool HasRun { get; set; }
+
+        void Run(IMachine machine, IDebugger? debugger = null);
     }
 }

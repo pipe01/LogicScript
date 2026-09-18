@@ -128,7 +128,7 @@ namespace LogicScript.DX.LSP
                 else if (node is AssignStatement assign && assign.Reference.Port.Equals(port))
                     refs.Add(assign.Reference);
                 else if (node is PrintTaskStatement print && port is LocalInfo local)
-                    refs.AddRange(print.String.Interpolations.Where(i => i.Local.Equals(local)).Cast<ICodeNode>());
+                    refs.AddRange(print.String.Parts.OfType<PrintStringFormat.PartInterpolate>().Where(i => i.LocalInfo.Equals(local)).Cast<ICodeNode>());
             }
 
             return refs;
@@ -140,7 +140,7 @@ namespace LogicScript.DX.LSP
             {
                 Reference r => r.Port,
                 IPortInfo p => p,
-                PrintStringFormat.Interpolation interp => interp.Local,
+                PrintStringFormat.PartInterpolate interp => interp.LocalInfo,
                 PortValues portValue when TryGetScript(uri, out var script) && script.TryGetPort(portValue.Name, portValue.Ports, out var port) => port,
                 _ => null
             };

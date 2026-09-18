@@ -19,14 +19,14 @@ namespace LogicScript.Testing
             return Steps;
         }
 
-        public async Task<CaseResult> Run(ICompiledScript runner, Script script, IDebugger? debugger = null, CancellationToken cancellationToken = default)
+        public async Task<CaseResult> Run(IScriptInstance instance, Script script, IDebugger? debugger = null, CancellationToken cancellationToken = default)
         {
             var machine = new TestingMachine(script.RegisteredInputLength, script.RegisteredOutputLength);
 
-            return await Run(runner, script, machine, debugger, cancellationToken);
+            return await Run(instance, script, machine, debugger, cancellationToken);
         }
 
-        internal async Task<CaseResult> Run(ICompiledScript runner, Script script, TestingMachine machine, IDebugger? debugger, CancellationToken cancellationToken = default)
+        internal async Task<CaseResult> Run(IScriptInstance instance, Script script, TestingMachine machine, IDebugger? debugger, CancellationToken cancellationToken = default)
         {
             int stepsRan = 0;
 
@@ -46,7 +46,7 @@ namespace LogicScript.Testing
                     }
                 }
 
-                await Task.Factory.StartNew(() => runner.Run(machine, debugger), TaskCreationOptions.LongRunning);
+                await Task.Factory.StartNew(() => instance.Run(machine, debugger), TaskCreationOptions.LongRunning);
 
                 stepsRan++;
 

@@ -8,6 +8,6 @@ namespace LogicScript.Compiling
         void SetLocal(NodeID id, ulong value);
         void PopLocal(NodeID id);
 
-        void TraceStatement(ICompiledScript compiledScript, IMachine machine, NodeID id);
+        void TraceStatement(IScriptInstance compiledScript, IMachine machine, NodeID id);
     }
 }
