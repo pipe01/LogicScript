@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
+using LogicScript.Compiling;
 using LogicScript.Testing.Results;
 using NUnit.Framework;
 using NUnit.Framework.Internal;
@@ -32,11 +33,7 @@ namespace LogicScript.Tests
 
                         return new TestCaseParameters[]
                         {
-                            new([true, lsxFile, i])
-                            {
-                                TestName = $"{lsxFile[prefix.Length..^".lsx".Length]}.{caseName}.Interpreted"
-                            },
-                            new([false, lsxFile, i])
+                            new([lsxFile, i])
                             {
                                 TestName = $"{lsxFile[prefix.Length..^".lsx".Length]}.{caseName}.Compiled"
                             },
@@ -59,11 +56,10 @@ namespace LogicScript.Tests
         }
 
         [TestCaseSource(nameof(Benches))]
-        public async Task Run(bool interpreted, string lsbenchFile, int caseIndex)
+        public async Task Run(string lsbenchFile, int caseIndex)
         {
-            var runner = interpreted ? Runner.Interpreted() : Runner.Compiled();
             var script = ParseScript(lsbenchFile);
-            var result = await script.TestCases[caseIndex].Run(runner, script);
+            var result = await script.TestCases[caseIndex].Run(Compiler.Compile(script), script);
 
             foreach (var line in result.PrintedLines)
             {

@@ -6,6 +6,7 @@ using LogicScript.Data;
 using LogicScript.Interpreting;
 using LogicScript.Compiling;
 using System.Runtime.CompilerServices;
+using LogicScript.Parsing;
 
 namespace LogicScript.Benchmarks
 {
@@ -15,52 +16,52 @@ namespace LogicScript.Benchmarks
         private record struct TestCase(int Inputs, int Outputs, string Source);
 
         private static readonly TestCase[] TestCases = [
-            new(2, 1, @"input a
-input b
-output c
+            new(0, 0, @"
+reg a
+reg b
+reg c
 
 when 1
     c = a & b
 end
 "),
-            new(8 * 3, 8, @"input'8 a
-input'8 b
-input'8 c
-output'8 out
+//             new(8 * 3, 8, @"input'8 a
+// input'8 b
+// input'8 c
+// output'8 out
 
-when 1
-    out = b & c
-    out = b | c
-    out = b ^ c
-    out '= b << 3
-    out = b >> 3
+// when 1
+//     out = b & c
+//     out = b | c
+//     out = b ^ c
+//     out '= b << 3
+//     out = b >> 3
 
-    out '= b + c
-    out '= b * c
-    out '= b / (c + 1)
-    out '= b ** c
-    out '= b % (c + 1)
+//     out '= b + c
+//     out '= b * c
+//     out '= b / (c + 1)
+//     // out '= b ** c
+//     out '= b % (c + 1)
 
-    out = b == c
-    out = b != c
-    out = b > c
-    out = b < c
-    out = b < c
+//     out = b == c
+//     out = b != c
+//     out = b > c
+//     out = b < c
+//     out = b < c
 
-    out = !b
-    out = len(b)
-    out = allOnes(b)
-end"),
+//     out = !b
+//     out = len(b)
+//     out = allOnes(b)
+// end"),
         ];
 
-        [Params(0, 1)]
+        [Params(0)]
         public int TestIndex { get; set; }
 
         private TestCase Case;
         private IMachine Machine;
         private Script Script;
-        private CompiledScript CompiledScript, CompiledScriptDebug;
-        private bool[] Scratch;
+        private ICompiledScript CompiledScript, CompiledScriptDebug;
 
         [GlobalSetup]
         public void GlobalSetup()
@@ -84,28 +85,27 @@ end"),
 
             this.Machine = new DummyMachine(Case.Inputs, Case.Outputs);
 
-            this.Scratch = new bool[Math.Max(Machine.InputCount, Machine.OutputCount)];
             this.CompiledScript = Compiler.Compile(script);
-            this.CompiledScriptDebug = Compiler.Compile(script);
-        }
-
-        [Benchmark]
-        public void RunCompiledNoDebug()
-        {
-            CompiledScript(Machine, Scratch, false);
-        }
-
-        [Benchmark]
-        public void RunInterpreted()
-        {
-            new Interpreter(Script, Machine, false).Run();
+            this.CompiledScriptDebug = Compiler.Compile(script, true);
         }
 
         [Benchmark(Baseline = true)]
-        public void RunRaw()
+        public void RunCompiledNoDebug()
         {
-            Machine.WriteOutput(0, Machine.ReadInput(0) && Machine.ReadInput(1));
+            CompiledScript.Run(Machine);
         }
+
+        [Benchmark]
+        public void RunCompiledDebug()
+        {
+            CompiledScriptDebug.Run(Machine);
+        }
+
+        // [Benchmark(Baseline = true)]
+        // public void RunRaw()
+        // {
+        //     Machine.WriteOutput(0, Machine.ReadInput(0) && Machine.ReadInput(1));
+        // }
     }
 
     class DummyMachine(int inputCount, int outputCount) : IMachine
@@ -116,15 +116,13 @@ end"),
         private readonly bool[] Inputs = new bool[inputCount];
         private readonly bool[] Outputs = new bool[outputCount];
 
-        private ulong[] Registers = [];
-
         public void Print(string msg)
         {
         }
 
-        public BitsValue ReadInputs()
+        public BitsValue ReadInputs(int startIndex, int count)
         {
-            return new(Inputs);
+            return new(Inputs.AsSpan()[startIndex..(startIndex + count)]);
         }
 
         public bool ReadInput(int index)
@@ -142,22 +140,26 @@ end"),
             Outputs[index] = value;
         }
 
-        public void AllocateRegisters(int count)
-        {
-            Array.Resize(ref Registers, count);
-        }
-
-        public ulong ReadRegister(int index)
-        {
-            return Registers[index];
-        }
-
-        public void WriteRegister(int index, ulong value)
-        {
-            Registers[index] = value;
-        }
-
         public void QueueUpdate()
+        {
+        }
+    }
+
+    class DummyDebugger : IDebugger2
+    {
+        public void PopLocal(NodeID id)
+        {
+        }
+
+        public void PushLocal(NodeID id)
+        {
+        }
+
+        public void SetLocal(NodeID id, ulong value)
+        {
+        }
+
+        public void TraceStatement(ICompiledScript compiledScript, IMachine machine, NodeID id)
         {
         }
     }

@@ -24,11 +24,6 @@ namespace LogicScript.Tests
             this.OutputCount = outputCount;
         }
 
-        public void AllocateRegisters(int count)
-        {
-            Array.Resize(ref Registers, count);
-        }
-
         public void Print(string msg)
         {
             Printed.Add(msg);
@@ -39,16 +34,6 @@ namespace LogicScript.Tests
             return Inputs[index];
         }
 
-        public BitsValue ReadInputs()
-        {
-            return new(Inputs);
-        }
-
-        public ulong ReadRegister(int index)
-        {
-            return Registers[index];
-        }
-
         public void WriteOutputs(int startIndex, BitsValue value)
         {
         }
@@ -57,14 +42,14 @@ namespace LogicScript.Tests
         {
         }
 
-        public void WriteRegister(int index, ulong value)
-        {
-            Registers[index] = value;
-        }
-
         public void AssertPrinted(params string[] lines)
         {
             Assert.AreEqual(lines, Printed);
+        }
+
+        public BitsValue ReadInputs(int startIndex, int count)
+        {
+            return new(Inputs.AsSpan()[startIndex..(startIndex + count)]);
         }
     }
 }

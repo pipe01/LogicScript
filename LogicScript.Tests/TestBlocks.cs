@@ -5,7 +5,7 @@ using NUnit.Framework;
 
 namespace LogicScript.Tests
 {
-    public class TestBlocks(RunnerType runnerType) : BaseTest(runnerType)
+    public class TestBlocks : BaseTest
     {
         [Test]
         public void Blocks_Print()
@@ -13,9 +13,9 @@ namespace LogicScript.Tests
             Run(new Script()
             {
                 Blocks = {
-                    new StartupBlock(default, new PrintTaskStatement("nice1")),
-                    new WhenBlock(default, null, new PrintTaskStatement("nice2")),
-                    new WhenBlock(default, new NumberLiteralExpression(default, 1), new PrintTaskStatement("nice3")),
+                    new StartupBlock(default, new PrintTaskStatement(default, "nice1")),
+                    new WhenBlock(default, null, new PrintTaskStatement(default, "nice2")),
+                    new WhenBlock(default, new NumberLiteralExpression(default, 1), new PrintTaskStatement(default, "nice3")),
                 }
             }, out var machine);
 
@@ -28,7 +28,7 @@ namespace LogicScript.Tests
             Run(new Script()
             {
                 Blocks = {
-                    new StartupBlock(default, new PrintTaskStatement("yes")),
+                    new StartupBlock(default, new PrintTaskStatement(default, "yes")),
                 }
             }, out var machine, runStartup: true);
 
@@ -41,7 +41,7 @@ namespace LogicScript.Tests
             Run(new Script()
             {
                 Blocks = {
-                    new StartupBlock(default, new PrintTaskStatement("yes")),
+                    new StartupBlock(default, new PrintTaskStatement(default, "yes")),
                 }
             }, out var machine, runStartup: false);
 

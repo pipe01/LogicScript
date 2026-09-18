@@ -3,7 +3,7 @@ using NUnit.Framework;
 
 namespace LogicScript.Tests
 {
-    internal class TestExpressions(RunnerType runnerType) : BaseTest(runnerType)
+    internal class TestExpressions : BaseTest
     {
         private void AssertExpression(string expr, ulong value)
         {

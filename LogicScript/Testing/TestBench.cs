@@ -2,7 +2,6 @@ using System.Collections.Generic;
 using System.Linq;
 using Antlr4.Runtime;
 using LogicScript.Compiling;
-using LogicScript.Interpreting.Debugging;
 using LogicScript.Parsing;
 using LogicScript.Parsing.Visitors;
 using LogicScript.Testing.Results;

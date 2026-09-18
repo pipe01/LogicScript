@@ -1,166 +1,118 @@
 ﻿using LogicScript.Compiling;
 using LogicScript.Data;
-using LogicScript.Interpreting.Debugging;
-using LogicScript.Parsing;
 using LogicScript.Parsing.Structures;
-using LogicScript.Parsing.Structures.Blocks;
 using LogicScript.Parsing.Structures.Expressions;
-using LogicScript.Parsing.Structures.Statements;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace LogicScript.Interpreting
 {
-    public enum ExitReason
+    internal readonly record struct InterpreterContext(IMachine? Machine, IRegisters? Registers, IReadOnlyDictionary<LocalInfo, ulong>? Locals);
+
+    internal class Interpreter
     {
-        Ended,
-        Debugger,
-        LimitReached,
-    }
-
-    [Serializable]
-    public class InterpreterLimitReachedException : Exception;
-
-    public partial class Interpreter
-    {
-        private readonly struct Operation(ICodeNode? node, bool breakBarrier = false, Func<bool>? before = null, Action? after = null)
+        public static BitsValue Visit(Expression expr, InterpreterContext context = default)
         {
-            public readonly bool BreakBarrier = breakBarrier;
-            public readonly ICodeNode? Node = node;
-            public readonly Func<bool>? Before = before;
-            public readonly Action? After = after;
-        }
-
-        public IMachine? Machine { get; }
-        public Script? Script { get; }
-        private readonly IDebugger? Debugger;
-        private readonly IRegisters Registers;
-
-        private readonly Stack<Operation> OpStack = [];
-        private readonly Dictionary<LocalInfo, BitsValue> Locals = [];
-
-        public Statement? CurrentLocation => OpStack.TryPeek(out var op) && op.Node is Statement stmt ? stmt : null;
-
-        private Interpreter(Script? script, IMachine? machine, IDebugger? debugger, IRegisters registers)
-        {
-            this.Script = script;
-            this.Machine = machine;
-            this.Debugger = debugger;
-            this.Registers = registers;
-        }
-
-        public Interpreter(Script script, IMachine machine, bool runStartup, bool checkPortCount = true, IDebugger? debugger = null, IRegisters? registers = null)
-            : this(script, machine, debugger, registers ?? new EmptyRegisters())
-        {
-            if (script.HasErrors)
-                throw new InterpreterException("Script has errors");
-
-            if (checkPortCount)
+            return expr switch
             {
-                if (machine.InputCount != script.RegisteredInputLength)
-                    throw new InterpreterException($"Input length mismatch: script requires {script.RegisteredInputLength} but machine has {machine.InputCount}");
-
-                if (machine.OutputCount != script.RegisteredOutputLength)
-                    throw new InterpreterException($"Output length mismatch: script requires {script.RegisteredOutputLength} but machine has {machine.OutputCount}");
-            }
-
-            foreach (var block in script.Blocks.Reverse())
-            {
-                if (block is StartupBlock && !runStartup)
-                    continue;
-
-                Push(block);
-            }
+                NumberLiteralExpression lit => lit.Value,
+                BinaryOperatorExpression binOp => Visit(binOp, context),
+                ReferenceExpression refExpr => Visit(refExpr, context),
+                TernaryOperatorExpression tern => Visit(tern, context),
+                UnaryOperatorExpression unary => Visit(unary, context),
+                TruncateExpression trunc => Visit(trunc, context),
+                SliceExpression slice => Visit(slice, context),
+                ReferenceLengthExpression len => len.Value,
+                PlaceholderExpression => throw new InterpreterException("Tried to execute placeholder"),
+                _ => throw new InterpreterException("Unknown expression", expr.Span.Start),
+            };
         }
 
-        internal static BitsValue GetConstantValue(Expression expr)
+        private static BitsValue Visit(ReferenceExpression expr, InterpreterContext context)
         {
-            if (!expr.IsConstant)
-                throw new InvalidOperationException("Expression is not constant");
-
-            return new Interpreter(null, null, null, new EmptyRegisters()).Visit(expr);
-        }
-
-        public ExitReason Run(int statementLimit = -1)
-        {
-            while (OpStack.TryPop(out var op))
+            switch (expr.Reference)
             {
-                if (op.Node is Statement s && op.Node is not BlockStatement && Debugger != null)
-                {
-                    Debugger.TraceStatement(this, s, out var pause);
-                    if (pause)
+                case PortReference port:
                     {
-                        OpStack.Push(op);
-                        return ExitReason.Debugger;
+                        var vectorIndex = port.VectorIndex == null ? 0 : (int)Visit(port.VectorIndex, context).Number;
+                        if (vectorIndex >= port.PortInfo.VectorLength)
+                            throw new InterpreterException("Vector index out of range", port.VectorIndex!.Span);
+
+                        return port.PortInfo.Target switch
+                        {
+                            MachinePorts.Output => throw new InterpreterException("Cannot read from output", expr.Span),
+                            MachinePorts.Input => context.Machine == null
+                                ? throw new InterpreterException("Can't access inputs on this interpreter runner")
+                                : context.Machine.ReadInputs(port.StartIndex + port.BitSize * vectorIndex, port.BitSize),
+                            MachinePorts.Register => context.Registers == null
+                                ? throw new InterpreterException("Can't access registers on this interpreter runner")
+                                : context.Registers.GetRegister(port.StartIndex, vectorIndex),
+                            _ => throw new InterpreterException("Unknown reference target", expr.Span),
+                        };
                     }
-                }
 
-                if (op.Before?.Invoke() != false)
-                {
-                    switch (op.Node)
-                    {
-                        case Block b:
-                            Visit(b);
-                            break;
+                case LocalReference localReference:
+                    if (context.Locals == null)
+                        throw new InterpreterException("Can't access locals on interpreter runner");
+                    else
+                        return context.Locals[localReference.LocalInfo];
 
-                        case Statement stmt:
-                            ExecuteStatement(stmt);
-                            break;
-                    }
-                }
-
-                op.After?.Invoke();
-
-                if (statementLimit >= 0 && --statementLimit == 0)
-                {
-                    return ExitReason.LimitReached;
-                }
+                case ConstantReference cnst:
+                    return cnst.Constant.Value;
             }
 
-            return ExitReason.Ended;
+            throw new InterpreterException("Unknown reference type", expr.Span);
         }
 
-        public async Task RunToEndAsync(CancellationToken cancellationToken = default, int statementLimit = -1)
+        private static BitsValue Visit(BinaryOperatorExpression expr, InterpreterContext context)
         {
-            while (true)
+            var left = Visit(expr.Left, context);
+            var right = Visit(expr.Right, context);
+
+            return Operations.DoOperation(left, right, expr.Operator);
+        }
+
+        private static BitsValue Visit(TernaryOperatorExpression expr, InterpreterContext context)
+        {
+            var cond = Visit(expr.Condition, context);
+
+            if (cond.Number != 0)
+                return Visit(expr.IfTrue, context);
+            else
+                return Visit(expr.IfFalse, context);
+        }
+
+        private static BitsValue Visit(UnaryOperatorExpression expr, InterpreterContext context)
+        {
+            if (expr.Operator == Operator.Length)
+                return new BitsValue((ulong)expr.Operand.BitSize, 7);
+
+            var operand = Visit(expr.Operand, context);
+
+            return expr.Operator switch
             {
-                var exitReason = Run(statementLimit);
-                if (exitReason == ExitReason.Debugger && Debugger != null)
-                    await Debugger.WaitForResumeAsync().WaitOrCancel(cancellationToken);
-                else if (exitReason == ExitReason.LimitReached)
-                    throw new InterpreterLimitReachedException();
-                else
-                    break;
-            }
+                Operator.Not => operand.Negated,
+                Operator.Rise => throw new NotImplementedException(),
+                Operator.Fall => throw new NotImplementedException(),
+                Operator.Change => throw new NotImplementedException(),
+                Operator.AllOnes => (BitsValue)operand.AreAllBitsSet,
+                _ => throw new InterpreterException("Unknown operand", expr.Span),
+            };
         }
 
-        public IReadOnlyCollection<(LocalInfo Local, BitsValue Value)> GetAllLocals()
+        private static BitsValue Visit(TruncateExpression expr, InterpreterContext context)
         {
-            return [.. Locals.Select(e => (e.Key, e.Value))];
+            var operand = Visit(expr.Operand, context);
+
+            return operand.Resize(expr.Size);
         }
 
-        private void Push(ICodeNode node) => OpStack.Push(new(node));
-
-        private void ClearToBreak()
+        private static BitsValue Visit(SliceExpression expr, InterpreterContext context)
         {
-            while (!OpStack.Pop().BreakBarrier) { }
-        }
+            var operand = Visit(expr.Operand, context);
+            var offset = (int)Visit(expr.Offset, context).Number;
 
-        public (BitsValue Value, IReadOnlyCollection<Error> ParseErrors) Evaluate(string expression)
-        {
-            if (Script == null)
-                throw new InvalidOperationException("Can't evaluate in constant context");
-
-            var (parsed, errors) = Script.ParseExpression(expression, Locals.Keys);
-            if (errors.Count > 0)
-            {
-                return (0, errors);
-            }
-
-            return (Visit(parsed!), []);
+            return Operations.Slice(operand, expr.Start, offset, (byte)expr.Length);
         }
     }
 }

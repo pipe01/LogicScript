@@ -19,7 +19,7 @@ namespace LogicScript.Testing
             return Steps;
         }
 
-        public async Task<CaseResult> Run(ICompiledScript runner, Script script, IDebugger2? debugger, CancellationToken cancellationToken = default)
+        public async Task<CaseResult> Run(ICompiledScript runner, Script script, IDebugger2? debugger = null, CancellationToken cancellationToken = default)
         {
             var machine = new TestingMachine(script.RegisteredInputLength, script.RegisteredOutputLength);
 
@@ -46,14 +46,7 @@ namespace LogicScript.Testing
                     }
                 }
 
-                try
-                {
-                    await Task.Factory.StartNew(() => runner.Run(machine, debugger), TaskCreationOptions.LongRunning);
-                }
-                catch (InterpreterLimitReachedException)
-                {
-                    return new LimitReachedCaseResult(this, [.. machine.PrintOutput], stepsRan);
-                }
+                await Task.Factory.StartNew(() => runner.Run(machine, debugger), TaskCreationOptions.LongRunning);
 
                 stepsRan++;
 

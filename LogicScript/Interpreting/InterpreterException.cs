@@ -3,7 +3,7 @@ using System;
 
 namespace LogicScript.Interpreting
 {
-    public class InterpreterException : Exception
+    internal class InterpreterException : Exception
     {
         public SourceLocation? Location { get; } = null;
 

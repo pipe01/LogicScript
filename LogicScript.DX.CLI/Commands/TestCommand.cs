@@ -1,5 +1,5 @@
+using LogicScript.Compiling;
 using LogicScript.DX.DAP;
-using LogicScript.Interpreting.Debugging;
 using LogicScript.Testing;
 
 namespace LogicScript.DX.CLI.Commands
@@ -12,7 +12,7 @@ namespace LogicScript.DX.CLI.Commands
 
         public async Task RunAsync()
         {
-            IDebugger? debugger = null;
+            LogicScriptDebugger? debugger = null;
             if (Debug)
             {
                 Console.WriteLine("Waiting for debugger connection...");
@@ -34,14 +34,13 @@ namespace LogicScript.DX.CLI.Commands
                 }
             }
 
-            var runner = Runner.Interpreted(debugger);
             foreach (var file in Files)
             {
-                await RunFileAsync(Path.GetFullPath(file), new PrettyTestLogger(), runner, debugger);
+                await RunFileAsync(Path.GetFullPath(file), new PrettyTestLogger(), debugger);
             }
         }
 
-        private async Task RunFileAsync(string scriptPath, ITestLogger logger, Runner runner, IDebugger? debugger)
+        private async Task RunFileAsync(string scriptPath, ITestLogger logger, LogicScriptDebugger? debugger)
         {
             var (script, errors) = Script.Parse(File.ReadAllText(scriptPath), scriptPath);
             if (errors != null && errors.Count > 0)
@@ -63,9 +62,11 @@ namespace LogicScript.DX.CLI.Commands
 
             logger.LogStartBench(bench);
 
+            var compiled = Compiler.Compile(script, debugger != null);
+
             debugger?.LoadedScript(script);
 
-            var results = bench.Run(runner, script);
+            var results = bench.Run(compiled, script, debugger);
             int successful = 0, failed = 0;
 
             await foreach (var result in results)
