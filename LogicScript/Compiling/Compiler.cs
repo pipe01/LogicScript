@@ -489,19 +489,9 @@ namespace LogicScript.Compiling
                 var condConst = expr.Condition.GetConstantValue();
 
                 if (condConst != 0)
-                {
-                    if (expr.IfTrue.IsConstant)
-                        return EmitConstant(expr.IfTrue.GetConstantValue());
-                    else
-                        return Compile(expr.IfTrue);
-                }
+                    return Compile(expr.IfTrue);
                 else
-                {
-                    if (expr.IfFalse.IsConstant)
-                        return EmitConstant(expr.IfFalse.GetConstantValue());
-                    else
-                        return Compile(expr.IfFalse);
-                }
+                    return Compile(expr.IfFalse);
             }
 
             var ifFalse = Emitter.DefineLabel();
