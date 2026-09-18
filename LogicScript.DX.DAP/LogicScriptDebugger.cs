@@ -4,6 +4,7 @@ using System.Net;
 using System.Net.Sockets;
 using LogicScript.Compiling;
 using LogicScript.Data;
+using LogicScript.Interpreting;
 using LogicScript.Parsing;
 using LogicScript.Parsing.Structures;
 using LogicScript.Parsing.Structures.Statements;
@@ -14,7 +15,7 @@ using OmniSharp.Extensions.DebugAdapter.Server;
 
 namespace LogicScript.DX.DAP;
 
-public class LogicScriptDebugger : IDebugger, IAttachHandler, IDisconnectHandler, ISetBreakpointsHandler, IThreadsHandler, IStackTraceHandler, IScopesHandler, IVariablesHandler, IContinueHandler, INextHandler, IStepInHandler, IPauseHandler
+public class LogicScriptDebugger : IDebugger, IAttachHandler, IDisconnectHandler, ISetBreakpointsHandler, IThreadsHandler, IStackTraceHandler, IScopesHandler, IVariablesHandler, IContinueHandler, INextHandler, IStepInHandler, IPauseHandler, IEvaluateHandler
 {
     private TaskCompletionSource<bool> SessionDone = new();
 
@@ -164,7 +165,7 @@ public class LogicScriptDebugger : IDebugger, IAttachHandler, IDisconnectHandler
     private readonly List<Script> LoadedScripts = [];
     private PauseState? CurrentPause;
 
-    private readonly Dictionary<NodeID, ulong> LocalsStack = [];
+    private readonly Dictionary<NodeID, ulong> CurrentLocals = [];
 
     private int BreakpointCounter = 0;
     private bool PauseNext;
@@ -277,17 +278,17 @@ public class LogicScriptDebugger : IDebugger, IAttachHandler, IDisconnectHandler
 
     public void PushLocal(NodeID id)
     {
-        LocalsStack.Add(id, 0);
+        CurrentLocals.Add(id, 0);
     }
 
     public void SetLocal(NodeID id, ulong value)
     {
-        LocalsStack[id] = value;
+        CurrentLocals[id] = value;
     }
 
     public void PopLocal(NodeID id)
     {
-        LocalsStack.Remove(id);
+        CurrentLocals.Remove(id);
     }
 
     public void TraceStatement(ICompiledScript compiledScript, IMachine machine, NodeID id)
@@ -469,7 +470,7 @@ public class LogicScriptDebugger : IDebugger, IAttachHandler, IDisconnectHandler
             {
                 LocalsReference
                     => new(
-                        LocalsStack
+                        CurrentLocals
                         .Select(l =>
                         {
                             if (!TryFindNode<LocalInfo>(l.Key, out var localInfo, out _))
@@ -563,6 +564,30 @@ public class LogicScriptDebugger : IDebugger, IAttachHandler, IDisconnectHandler
         PauseNext = true;
 
         return new();
+    }
+
+    public async Task<EvaluateResponse> Handle(EvaluateArguments request, CancellationToken cancellationToken)
+    {
+        if (CurrentPause == null)
+            throw new InvalidOperationException("Can't evaluate expression while program is running");
+
+        var locals = CurrentLocals.Select(o => (CurrentPause.Script.VisitAll().OfType<LocalInfo>().First(f => f.ID == o.Key), o.Value));
+
+        var (parsed, errors) = CurrentPause.Script.ParseExpression(request.Expression, [.. locals.Select(p => p.Item1)]);
+        if (parsed == null)
+        {
+            return new()
+            {
+                Result = $"Failed to parse: {string.Join(", ", [.. errors.Select(o => o.ToString())])}"
+            };
+        }
+
+        var result = Interpreter.Visit(parsed, new(CurrentPause.Machine, CurrentPause.CompiledScript.Registers, locals.ToDictionary(p => p.Item1, p => p.Value)));
+
+        return new()
+        {
+            Result = result.ToString()
+        };
     }
 
     #endregion
