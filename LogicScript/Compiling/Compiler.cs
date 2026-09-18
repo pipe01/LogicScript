@@ -67,6 +67,7 @@ namespace LogicScript.Compiling
         private readonly Dictionary<NodeID, Sigil.Label> LoopBreaks = [];
 
         private readonly Emit Emitter;
+        private readonly Local RegistersLocal;
 
         private Compiler(Script script)
         {
@@ -77,19 +78,8 @@ namespace LogicScript.Compiling
             var tb = mb.DefineType("CompiledScript", TypeAttributes.Class);
             tb.AddInterfaceImplementation(typeof(ICompiledScript));
 
-            this.HasRunField = tb.DefineField("_hasRun", typeof(bool), FieldAttributes.Private);
-            this.RegistersField = tb.DefineField("_registers", script.RegistersType, FieldAttributes.Private);
-            Emitter = Emit.BuildMethod(
-                typeof(void),
-                [typeof(IMachine)],
-                tb,
-                nameof(ICompiledScript.Run),
-                MethodAttributes.Public | MethodAttributes.Virtual | MethodAttributes.NewSlot,
-                CallingConventions.Standard | CallingConventions.HasThis
-            );
-
-            tb.DefineProperty(nameof(ICompiledScript.Registers), typeof(IRegisters), RegistersField, false);
-            tb.DefineProperty(nameof(ICompiledScript.HasRun), typeof(bool), HasRunField, true);
+            HasRunField = tb.DefineField("_hasRun", typeof(bool), FieldAttributes.Private);
+            RegistersField = tb.DefineField("_registers", script.RegistersType, FieldAttributes.Private);
 
             var ctorMethod = tb.DefineConstructor(MethodAttributes.Public, CallingConventions.HasThis, Type.EmptyTypes);
             var ctorIL = ctorMethod.GetILGenerator();
@@ -98,7 +88,23 @@ namespace LogicScript.Compiling
             ctorIL.Emit(OpCodes.Stfld, RegistersField);
             ctorIL.Emit(OpCodes.Ret);
 
-            this.TypeBuilder = tb;
+            Emitter = Emit.BuildMethod(
+                typeof(void),
+                [typeof(IMachine)],
+                tb,
+                nameof(ICompiledScript.Run),
+                MethodAttributes.Public | MethodAttributes.Virtual | MethodAttributes.NewSlot,
+                CallingConventions.Standard | CallingConventions.HasThis
+            );
+            RegistersLocal = Emitter.DeclareLocal(script.RegistersType);
+            Emitter.LoadArgument(ArgumentThis);
+            Emitter.LoadField(RegistersField);
+            Emitter.StoreLocal(RegistersLocal);
+
+            tb.DefineProperty(nameof(ICompiledScript.Registers), typeof(IRegisters), RegistersField, false);
+            tb.DefineProperty(nameof(ICompiledScript.HasRun), typeof(bool), HasRunField, true);
+
+            TypeBuilder = tb;
         }
 
         private void EmitThisField(FieldInfo field)
@@ -109,25 +115,7 @@ namespace LogicScript.Compiling
 
         private Result EmitConstant(BitsValue value)
         {
-            switch (value.Length)
-            {
-                case <= 8:
-                    Emitter.LoadConstant((byte)value.Number);
-                    break;
-                case <= 16:
-                    Emitter.LoadConstant((ushort)value.Number);
-                    break;
-                case <= 32:
-                    Emitter.LoadConstant((uint)value.Number);
-                    break;
-                case <= 64:
-                    Emitter.LoadConstant(value.Number);
-                    break;
-
-                default:
-                    throw new NotImplementedException("how");
-            }
-
+            Emitter.LoadConstant(value.Number);
             return Result.Empty;
         }
 
@@ -260,14 +248,14 @@ namespace LogicScript.Compiling
                         Emitter.StoreLocal(local);
                         Emitter.LoadLocalAddress(local);
                         Emitter.Call(typeof(ulong).GetMethod(nameof(ToString), Type.EmptyTypes));
-                        Emitter.Call(typeof(IMachine).GetMethod(nameof(IMachine.Print)));
+                        Emitter.CallVirtual(typeof(IMachine).GetMethod(nameof(IMachine.Print)));
                     }
 
                     return Result.Empty;
 
                 case UpdateTaskStatement:
                     Emitter.LoadArgument(ArgumentMachine);
-                    Emitter.Call(typeof(IMachine).GetMethod(nameof(IMachine.QueueUpdate)));
+                    Emitter.CallVirtual(typeof(IMachine).GetMethod(nameof(IMachine.QueueUpdate)));
 
                     return Result.Empty;
             }
@@ -407,7 +395,7 @@ namespace LogicScript.Compiling
                                 Emitter.LoadArgument(ArgumentMachine);
                                 Emitter.LoadConstant(port.StartIndex); // TODO: vector
                                 Compile(stmt.Value);
-                                Emitter.Call(typeof(IMachine).GetMethod(nameof(IMachine.WriteOutput)));
+                                Emitter.CallVirtual(typeof(IMachine).GetMethod(nameof(IMachine.WriteOutput)));
                             }
                             else
                             {
@@ -418,12 +406,12 @@ namespace LogicScript.Compiling
                                 Emitter.LoadConstant(port.BitSize);
                                 Emitter.NewObject(typeof(BitsValue), [typeof(ulong), typeof(int)]);
 
-                                Emitter.Call(typeof(IMachine).GetMethod(nameof(IMachine.WriteOutputs)));
+                                Emitter.CallVirtual(typeof(IMachine).GetMethod(nameof(IMachine.WriteOutputs)));
                             }
                             return Result.Empty;
 
                         case MachinePorts.Register:
-                            EmitThisField(RegistersField);
+                            Emitter.LoadLocal(RegistersLocal);
 
                             var field = Script.RegistersType.GetField($"Register{port.PortInfo.StartIndex}");
 
@@ -432,11 +420,13 @@ namespace LogicScript.Compiling
                                 Emitter.LoadField(field);
                                 Compile(port.VectorIndex);
                                 Compile(stmt.Value);
+                                Emitter.Convert(field.FieldType);
                                 Emitter.StoreElement(field.FieldType);
                             }
                             else
                             {
                                 Compile(stmt.Value);
+                                Emitter.Convert(field.FieldType);
                                 Emitter.StoreField(field);
                             }
                             return Result.Empty;
@@ -639,12 +629,12 @@ namespace LogicScript.Compiling
                             Emitter.LoadConstant(port.PortInfo.StartIndex);
                             // TODO: vector
                             Emitter.LoadConstant(port.PortInfo.BitSize);
-                            Emitter.Call(typeof(IMachine).GetMethod(nameof(IMachine.ReadInputs)));
+                            Emitter.CallVirtual(typeof(IMachine).GetMethod(nameof(IMachine.ReadInputs)));
                             Emitter.LoadField(typeof(BitsValue).GetField(nameof(BitsValue.Number))); // TODO: make ReadInputs return a ulong directly
                             return Result.Empty;
 
                         case MachinePorts.Register:
-                            EmitThisField(RegistersField);
+                            Emitter.LoadLocal(RegistersLocal);
 
                             var field = Script.RegistersType.GetField($"Register{port.PortInfo.StartIndex}");
                             Emitter.LoadField(field);
