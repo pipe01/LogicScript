@@ -62,7 +62,7 @@ namespace LogicScript.Testing
 
         public BitsValue ReadInputs(int startIndex, int count)
         {
-            throw new NotImplementedException();
+            return new BitsValue(Inputs.AsSpan()[startIndex..(startIndex + count)]);
         }
     }
 }

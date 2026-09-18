@@ -35,22 +35,25 @@ namespace LogicScript.Interpreting
         }
 
         public IMachine? Machine { get; }
-        private readonly IDebugger? Debugger;
         public Script? Script { get; }
+        private readonly IDebugger? Debugger;
+        private readonly IRegisters Registers;
 
         private readonly Stack<Operation> OpStack = [];
         private readonly Dictionary<LocalInfo, BitsValue> Locals = [];
 
         public Statement? CurrentLocation => OpStack.TryPeek(out var op) && op.Node is Statement stmt ? stmt : null;
 
-        private Interpreter(Script? script, IMachine? machine, IDebugger? debugger)
+        private Interpreter(Script? script, IMachine? machine, IDebugger? debugger, IRegisters registers)
         {
             this.Script = script;
             this.Machine = machine;
             this.Debugger = debugger;
+            this.Registers = registers;
         }
 
-        public Interpreter(Script script, IMachine machine, bool runStartup, bool checkPortCount = true, IDebugger? debugger = null) : this(script, machine, debugger)
+        public Interpreter(Script script, IMachine machine, bool runStartup, bool checkPortCount = true, IDebugger? debugger = null, IRegisters? registers = null)
+            : this(script, machine, debugger, registers ?? new EmptyRegisters())
         {
             if (script.HasErrors)
                 throw new InterpreterException("Script has errors");
@@ -78,7 +81,7 @@ namespace LogicScript.Interpreting
             if (!expr.IsConstant)
                 throw new InvalidOperationException("Expression is not constant");
 
-            return new Interpreter(null, null, null).Visit(expr);
+            return new Interpreter(null, null, null, new EmptyRegisters()).Visit(expr);
         }
 
         public ExitReason Run(int statementLimit = -1)

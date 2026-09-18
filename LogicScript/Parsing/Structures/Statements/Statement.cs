@@ -2,10 +2,10 @@
 
 namespace LogicScript.Parsing.Structures.Statements
 {
-    public abstract class Statement(NodeID id, SourceSpan span) : ICodeNode, IIdentifiableCodeNode
+    public abstract class Statement(NodeID id, SourceSpan span) : IIdentifiableCodeNode
     {
-        public NodeID ID { get; } = id;
         public SourceSpan Span { get; } = span;
+        public NodeID ID { get; } = id;
 
         public virtual IEnumerable<ICodeNode> GetChildren()
         {

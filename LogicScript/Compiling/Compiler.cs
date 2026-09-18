@@ -15,6 +15,7 @@ using System.Reflection.Emit;
 using Sigil.NonGeneric;
 using Sigil;
 using LogicScript.Parsing.Visitors;
+using System.Diagnostics;
 
 namespace LogicScript.Compiling
 {
@@ -119,18 +120,24 @@ namespace LogicScript.Compiling
             Emitter.MarkLabel(skip);
         }
 
-        private void DebugEmitPushLocal(string name)
+        private void DebugEmitPushLocal(LocalInfo localInfo)
         {
             DebugEmit(() =>
             {
-                Emitter.LoadConstant(name);
+                Emitter.LoadConstant(localInfo.ID.ID);
+                Emitter.NewObject<NodeID, int>();
                 Emitter.CallVirtual(typeof(IDebugger2).GetMethod(nameof(IDebugger2.PushLocal)));
             });
         }
 
-        private void DebugEmitPopLocal()
+        private void DebugEmitPopLocal(LocalInfo localInfo)
         {
-            DebugEmit(() => Emitter.CallVirtual(typeof(IDebugger2).GetMethod(nameof(IDebugger2.PopLocal))));
+            DebugEmit(() =>
+            {
+                Emitter.LoadConstant(localInfo.ID.ID);
+                Emitter.NewObject<NodeID, int>();
+                Emitter.CallVirtual(typeof(IDebugger2).GetMethod(nameof(IDebugger2.PopLocal)));
+            });
         }
 
         private void DebugEmitSetLocal(LocalInfo localInfo)
@@ -139,7 +146,8 @@ namespace LogicScript.Compiling
 
             DebugEmit(() =>
             {
-                Emitter.LoadConstant(localInfo.Name);
+                Emitter.LoadConstant(localInfo.ID.ID);
+                Emitter.NewObject<NodeID, int>();
                 Emitter.LoadLocal(local);
                 Emitter.CallVirtual(typeof(IDebugger2).GetMethod(nameof(IDebugger2.SetLocal)));
             });
@@ -161,7 +169,7 @@ namespace LogicScript.Compiling
             Emitter.Return();
 
             Emitter.CreateMethod(out var str, OptimizationOptions.All);
-            System.Console.WriteLine(str);
+            Debug.WriteLine(str);
 
             return (ICompiledScript)Activator.CreateInstance(TypeBuilder.CreateType());
         }
@@ -177,7 +185,7 @@ namespace LogicScript.Compiling
             {
                 StartupBlock sb => Compile(sb),
                 WhenBlock w => Compile(w),
-                AssignBlock b => Compile(b.Assignment),
+                AssignBlock b => Compile((Statement)b.Assignment), // Cast to Statement to call the overload that adds debug instrumentation
                 _ => throw new NotImplementedException()
             };
         }
@@ -220,6 +228,8 @@ namespace LogicScript.Compiling
         {
             DebugEmit(() =>
             {
+                Emitter.LoadArgument(ArgumentThis);
+                Emitter.LoadArgument(ArgumentMachine);
                 Emitter.LoadConstant(stmt.ID.ID);
                 Emitter.NewObject<NodeID, int>();
                 Emitter.CallVirtual(typeof(IDebugger2).GetMethod(nameof(IDebugger2.TraceStatement)));
@@ -409,7 +419,7 @@ namespace LogicScript.Compiling
 
             foreach (var local in locals)
             {
-                DebugEmitPushLocal(local.Value.Name);
+                DebugEmitPushLocal(local.Key);
             }
 
             Stack.Push(new(locals));
@@ -422,8 +432,11 @@ namespace LogicScript.Compiling
             var poppedScope = Stack.Pop();
             foreach (var local in poppedScope.Locals.Values)
             {
-                DebugEmitPopLocal();
                 local.Dispose();
+            }
+            foreach (var local in locals)
+            {
+                DebugEmitPopLocal(local.Key);
             }
 
             return Result.Empty;
@@ -713,7 +726,7 @@ namespace LogicScript.Compiling
         {
             ulong mask = 1UL << expr.BitSize;
 
-            Compile(expr);
+            Compile(expr.Operand);
             EmitConstant(mask);
             Emitter.And();
 

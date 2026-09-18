@@ -26,12 +26,42 @@ namespace LogicScript.Compiling
         void SetRegister(int index, int vector, ulong value);
     }
 
+    public sealed class EmptyRegisters : IRegisters
+    {
+        public int Size => 0;
+
+        public void Decode(ReadOnlySpan<byte> data)
+        {
+        }
+
+        public void Encode(Span<byte> data)
+        {
+        }
+
+        public ulong GetRegister(int index, int vector)
+        {
+            throw new IndexOutOfRangeException();
+        }
+
+        public void Reset()
+        {
+        }
+
+        public void SetRegister(int index, int vector, ulong value)
+        {
+        }
+    }
+
     internal static class RegistersStruct
     {
+
         private record struct ComputedRegister(MachineRegister MachineRegister, FieldInfo Field, Type ItemType, int ByteSize, int ByteStart);
 
         public static Type Generate(MachineRegister[] registers)
         {
+            if (registers.Length == 0)
+                return typeof(EmptyRegisters);
+
             var ab = AssemblyBuilder.DefineDynamicAssembly(new AssemblyName("<>RegistersAssembly"), AssemblyBuilderAccess.Run);
             var mb = ab.DefineDynamicModule("Module");
             var tb = mb.DefineType("RegistersStruct", TypeAttributes.Class | TypeAttributes.Public);

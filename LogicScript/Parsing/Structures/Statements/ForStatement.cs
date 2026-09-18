@@ -13,6 +13,7 @@ namespace LogicScript.Parsing.Structures.Statements
 
         public override IEnumerable<ICodeNode> GetChildren()
         {
+            yield return Variable;
             if (From != null)
                 yield return From;
             yield return To;

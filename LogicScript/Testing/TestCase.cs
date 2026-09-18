@@ -8,6 +8,7 @@ using LogicScript.Testing.Results;
 using LogicScript.Parsing;
 using LogicScript.Parsing.Structures;
 using System.Threading;
+using LogicScript.Compiling;
 
 namespace LogicScript.Testing
 {
@@ -18,16 +19,15 @@ namespace LogicScript.Testing
             return Steps;
         }
 
-        public async Task<CaseResult> Run(Runner runner, Script script, CancellationToken cancellationToken = default)
+        public async Task<CaseResult> Run(ICompiledScript runner, Script script, IDebugger2? debugger, CancellationToken cancellationToken = default)
         {
             var machine = new TestingMachine(script.RegisteredInputLength, script.RegisteredOutputLength);
 
-            return await Run(runner, script, machine, cancellationToken);
+            return await Run(runner, script, machine, debugger, cancellationToken);
         }
 
-        internal async Task<CaseResult> Run(Runner runner, Script script, TestingMachine machine, CancellationToken cancellationToken = default)
+        internal async Task<CaseResult> Run(ICompiledScript runner, Script script, TestingMachine machine, IDebugger2? debugger, CancellationToken cancellationToken = default)
         {
-            var hasRunStartup = false;
             int stepsRan = 0;
 
             foreach (var step in Steps)
@@ -48,17 +48,13 @@ namespace LogicScript.Testing
 
                 try
                 {
-                    if (runner.CanRunAsync)
-                        await runner.RunAsync(machine, script, !hasRunStartup, cancellationToken);
-                    else
-                        runner.Run(machine, script, !hasRunStartup);
+                    await Task.Factory.StartNew(() => runner.Run(machine, debugger), TaskCreationOptions.LongRunning);
                 }
                 catch (InterpreterLimitReachedException)
                 {
                     return new LimitReachedCaseResult(this, [.. machine.PrintOutput], stepsRan);
                 }
 
-                hasRunStartup = true;
                 stepsRan++;
 
                 var mismatchedOutputs = new Dictionary<string, BitsValue[]>();

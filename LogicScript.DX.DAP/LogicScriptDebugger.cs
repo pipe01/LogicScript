@@ -1,9 +1,9 @@
-﻿using System.Diagnostics.CodeAnalysis;
+﻿using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Net;
 using System.Net.Sockets;
+using LogicScript.Compiling;
 using LogicScript.Data;
-using LogicScript.Interpreting;
-using LogicScript.Interpreting.Debugging;
 using LogicScript.Parsing;
 using LogicScript.Parsing.Structures;
 using LogicScript.Parsing.Structures.Statements;
@@ -14,16 +14,14 @@ using OmniSharp.Extensions.DebugAdapter.Server;
 
 namespace LogicScript.DX.DAP;
 
-public class LogicScriptDebugger : IDebugger, IAttachHandler, IDisconnectHandler, ISetBreakpointsHandler, IThreadsHandler, IStackTraceHandler, IScopesHandler, IVariablesHandler, IContinueHandler, INextHandler, IEvaluateHandler, IStepInHandler, IPauseHandler
+public class LogicScriptDebugger : IDebugger2, IAttachHandler, IDisconnectHandler, ISetBreakpointsHandler, IThreadsHandler, IStackTraceHandler, IScopesHandler, IVariablesHandler, IContinueHandler, INextHandler, IStepInHandler, IPauseHandler
 {
     private TaskCompletionSource<bool> SessionDone = new();
 
     private bool Attached;
 
-    private readonly record struct PendingBreakpoint(int Number, SourceLocation Location, string? Condition);
+    private readonly record struct PendingBreakpoint(int Number, SourceLocation Location);
     private readonly HashSet<PendingBreakpoint> PendingBreakpoints = [];
-
-    private Interpreter EnsureInterpreter => CurrentPause?.Interpreter ?? throw new InvalidOperationException("Not currently paused");
 
     private DebugAdapterServer? Server;
 
@@ -49,7 +47,7 @@ public class LogicScriptDebugger : IDebugger, IAttachHandler, IDisconnectHandler
         await server.Initialize(CancellationToken.None);
 
         if (CurrentPause != null)
-            Pause(CurrentPause.Value);
+            Pause(CurrentPause);
 
         await SessionDone.Task;
 
@@ -111,6 +109,8 @@ public class LogicScriptDebugger : IDebugger, IAttachHandler, IDisconnectHandler
 
     private void Pause(PauseState state)
     {
+        Debug.WriteLine($"  Current statement is: ({state.Statement.ID}) {state.Statement.Span}");
+
         CurrentPause = state;
 
         Server?.SendStopped(new()
@@ -127,11 +127,31 @@ public class LogicScriptDebugger : IDebugger, IAttachHandler, IDisconnectHandler
 
     private static string FormatBitsValue(BitsValue value, int length) => $"{value.ToStringBinary(length)} ({value})";
 
+    private bool TryFindNode<T>(NodeID id, [MaybeNullWhen(false)] out T node, [MaybeNullWhen(false)] out Script script) where T : IIdentifiableCodeNode
+    {
+        foreach (var sc in LoadedScripts)
+        {
+            foreach (var n in sc.VisitAll().OfType<T>())
+            {
+                if (n.ID == id)
+                {
+                    node = n;
+                    script = sc;
+                    return true;
+                }
+            }
+        }
+
+        node = default;
+        script = null;
+        return false;
+    }
+
     #region Debugger
 
-    private readonly record struct StatementBreakpoint(int Number, Statement Statement, string? Condition);
+    private readonly record struct StatementBreakpoint(int Number, Statement Statement);
 
-    private readonly record struct PauseState(int? BreakpointNumber, Statement Statement, Interpreter Interpreter)
+    private record class PauseState(int? BreakpointNumber, Statement Statement, ICompiledScript CompiledScript, IMachine Machine, Script Script)
     {
         public readonly TaskCompletionSource<bool> PauseBarrier = new(TaskCreationOptions.RunContinuationsAsynchronously);
 
@@ -144,13 +164,14 @@ public class LogicScriptDebugger : IDebugger, IAttachHandler, IDisconnectHandler
     private readonly List<Script> LoadedScripts = [];
     private PauseState? CurrentPause;
 
+    private readonly Dictionary<NodeID, ulong> LocalsStack = [];
+
     private int BreakpointCounter = 0;
-    private bool IgnoreNext;
     private bool PauseNext;
 
-    private Breakpoint AddBreakpoint(SourceLocation location, string? condition, int? wantNumber = null)
+    private Breakpoint AddBreakpoint(SourceLocation location, int? wantNumber = null)
     {
-        var verified = TryAddBreakpoint(location, condition, out var id, out var realLocation, wantNumber);
+        var verified = TryAddBreakpoint(location, out var id, out var realLocation, wantNumber);
         if (!verified)
             return new Breakpoint
             {
@@ -167,7 +188,7 @@ public class LogicScriptDebugger : IDebugger, IAttachHandler, IDisconnectHandler
         };
     }
 
-    private bool TryAddBreakpoint(SourceLocation location, string? condition, out int number, out SourceLocation realLocation, int? wantNumber = null)
+    private bool TryAddBreakpoint(SourceLocation location, out int number, out SourceLocation realLocation, int? wantNumber = null)
     {
         BreakpointsMutex.WaitOne();
         number = wantNumber ?? BreakpointCounter++;
@@ -178,13 +199,13 @@ public class LogicScriptDebugger : IDebugger, IAttachHandler, IDisconnectHandler
             {
                 realLocation = stmt.Span.Start;
 
-                Breakpoints.Add(number, new(number, stmt, condition));
+                Breakpoints.Add(number, new(number, stmt));
 
                 return true;
             }
             else
             {
-                PendingBreakpoints.Add(new(number, location, condition));
+                PendingBreakpoints.Add(new(number, location));
             }
         }
         finally
@@ -242,11 +263,7 @@ public class LogicScriptDebugger : IDebugger, IAttachHandler, IDisconnectHandler
 
     public void Continue()
     {
-        if (CurrentPause != null)
-        {
-            IgnoreNext = true;
-            CurrentPause.Value.PauseBarrier.TrySetResult(true);
-        }
+        CurrentPause?.PauseBarrier.TrySetResult(true);
     }
 
     public void Next()
@@ -258,28 +275,34 @@ public class LogicScriptDebugger : IDebugger, IAttachHandler, IDisconnectHandler
         }
     }
 
-    void IDebugger.TraceStatement(Interpreter interpreter, Statement stmt, out bool pause)
+    public void PushLocal(NodeID id)
     {
-        pause = false;
+        LocalsStack.Add(id, 0);
+    }
 
-        if (!Attached)
-        {
-            return;
-        }
+    public void SetLocal(NodeID id, ulong value)
+    {
+        LocalsStack[id] = value;
+    }
 
-        if (IgnoreNext)
-        {
-            CurrentPause = null;
-            IgnoreNext = false;
+    public void PopLocal(NodeID id)
+    {
+        LocalsStack.Remove(id);
+    }
+
+    public void TraceStatement(ICompiledScript compiledScript, IMachine machine, NodeID id)
+    {
+        if (!Attached || !TryFindNode<Statement>(id, out var stmt, out var script) || stmt is BlockStatement)
             return;
-        }
 
         if (PauseNext)
         {
+            Debug.WriteLine("Pausing due to PauseNext == true");
+
             PauseNext = false;
 
-            Pause(new(null, stmt, interpreter));
-            pause = true;
+            Pause(new(null, stmt, compiledScript, machine, script));
+            WaitForResume();
             return;
         }
 
@@ -288,17 +311,12 @@ public class LogicScriptDebugger : IDebugger, IAttachHandler, IDisconnectHandler
         {
             foreach (var bp in Breakpoints.Values)
             {
-                if (bp.Statement == stmt)
+                if (bp.Statement.ID == id)
                 {
-                    if (bp.Condition != null)
-                    {
-                        var (value, errors) = interpreter.Evaluate(bp.Condition);
-                        if (errors.Count == 0 && value == 0)
-                            continue;
-                    }
+                    Debug.WriteLine("Pausing due to hit breakpoint");
 
-                    Pause(new(bp.Number, stmt, interpreter));
-                    pause = true;
+                    Pause(new(bp.Number, bp.Statement, compiledScript, machine, script));
+                    WaitForResume();
                     break;
                 }
             }
@@ -312,7 +330,7 @@ public class LogicScriptDebugger : IDebugger, IAttachHandler, IDisconnectHandler
     public async Task WaitForResumeAsync()
     {
         if (CurrentPause != null)
-            await CurrentPause.Value.PauseBarrier.Task;
+            await CurrentPause.PauseBarrier.Task;
     }
 
     public void WaitForResume()
@@ -328,7 +346,7 @@ public class LogicScriptDebugger : IDebugger, IAttachHandler, IDisconnectHandler
 
         foreach (var pending in PendingBreakpoints.ToArray())
         {
-            var bp = AddBreakpoint(pending.Location, pending.Condition, pending.Number);
+            var bp = AddBreakpoint(pending.Location, pending.Number);
 
             if (bp.Verified)
             {
@@ -372,7 +390,7 @@ public class LogicScriptDebugger : IDebugger, IAttachHandler, IDisconnectHandler
 
         return new()
         {
-            Breakpoints = new(request.Breakpoints.Select(b => AddBreakpoint(new SourceLocation(documentUri, b.Line, b.Column ?? 0), b.Condition)))
+            Breakpoints = new(request.Breakpoints.Select(b => AddBreakpoint(new SourceLocation(documentUri, b.Line, b.Column ?? 0))))
         };
     }
 
@@ -392,7 +410,7 @@ public class LogicScriptDebugger : IDebugger, IAttachHandler, IDisconnectHandler
 
     public async Task<StackTraceResponse> Handle(StackTraceArguments request, CancellationToken cancellationToken)
     {
-        var loc = EnsureInterpreter.CurrentLocation?.Span.Start ?? throw new InvalidOperationException("No pause state found");
+        var span = CurrentPause!.Statement.Span;
 
         return new()
         {
@@ -401,10 +419,12 @@ public class LogicScriptDebugger : IDebugger, IAttachHandler, IDisconnectHandler
                 {
                     Source = new()
                     {
-                        Path = loc.FileName,
+                        Path = span.Start.FileName,
                     },
-                    Line = loc.Line,
-                    Column = loc.Column,
+                    Line = span.Start.Line,
+                    Column = span.Start.Column,
+                    EndLine = span.End.Line,
+                    EndColumn = span.End.Column,
                 }
             ])
         };
@@ -448,15 +468,22 @@ public class LogicScriptDebugger : IDebugger, IAttachHandler, IDisconnectHandler
             Variables = request.VariablesReference switch
             {
                 LocalsReference
-                    => new(EnsureInterpreter.GetAllLocals().Select(l => new Variable
-                    {
-                        Name = l.Local.Name,
-                        Value = FormatBitsValue(l.Value, l.Local.BitSize)
-                    })),
-                InputsReference when EnsureInterpreter.Machine != null && EnsureInterpreter.Script != null
-                    => new(EnsureInterpreter.Script.Inputs.Select(p => PortVariable(p.Key, p.Value))),
-                RegistersReference when EnsureInterpreter.Machine != null && EnsureInterpreter.Script != null
-                    => new(EnsureInterpreter.Script.Registers.Select(p => PortVariable(p.Key, p.Value))),
+                    => new(
+                        LocalsStack
+                        .Select(l =>
+                        {
+                            if (!TryFindNode<LocalInfo>(l.Key, out var localInfo, out _))
+                                return new();
+
+                            return new Variable
+                            {
+                                Name = localInfo.Name,
+                                Value = FormatBitsValue(l.Value, localInfo.BitSize)
+                            };
+                        })
+                    ),
+                InputsReference => new(CurrentPause!.Script.Inputs.Select(p => PortVariable(p.Key, p.Value))),
+                RegistersReference => new(CurrentPause!.Script.Registers.Select(p => PortVariable(p.Key, p.Value))),
                 _ => new(PortVectorVariables(request.VariablesReference, (int)(request.Start ?? 0), (int)(request.Count ?? int.MaxValue)))
             }
         };
@@ -479,8 +506,8 @@ public class LogicScriptDebugger : IDebugger, IAttachHandler, IDisconnectHandler
                 Name = name,
                 Value = FormatBitsValue(port.Target switch
                 {
-                    MachinePorts.Input => EnsureInterpreter.Machine.ReadInputs().Slice(port.StartIndex, port.BitSize),
-                    MachinePorts.Register => EnsureInterpreter.Machine.ReadRegister(port.StartIndex),
+                    MachinePorts.Input => CurrentPause!.Machine.ReadInputs(port.StartIndex, port.BitSize),
+                    MachinePorts.Register => CurrentPause!.CompiledScript.Registers.GetRegister(port.StartIndex, 0),
                     _ => throw new NotImplementedException()
                 }, port.BitSize)
             };
@@ -489,8 +516,8 @@ public class LogicScriptDebugger : IDebugger, IAttachHandler, IDisconnectHandler
         IEnumerable<Variable> PortVectorVariables(long reference, int start, int count)
         {
             MachinePortInfo port =
-                EnsureInterpreter.Script!.Inputs.Values
-                .Concat(EnsureInterpreter.Script.Registers.Values)
+                CurrentPause!.Script.Inputs.Values
+                .Concat(CurrentPause!.Script.Registers.Values)
                 .FirstOrDefault(p => Math.Abs((long)p.GetHashCode()) == reference);
 
             if (port.Target == MachinePorts.Placeholder)
@@ -502,8 +529,8 @@ public class LogicScriptDebugger : IDebugger, IAttachHandler, IDisconnectHandler
                     Name = $"[{vi}]",
                     Value = FormatBitsValue(port.Target switch
                     {
-                        MachinePorts.Input => EnsureInterpreter.Machine!.ReadInputs().Slice(port.StartIndex + vi * port.BitSize, port.BitSize),
-                        MachinePorts.Register => EnsureInterpreter.Machine!.ReadRegister(port.StartIndex + vi),
+                        MachinePorts.Input => CurrentPause!.Machine.ReadInputs(port.StartIndex + vi * port.BitSize, port.BitSize),
+                        MachinePorts.Register => CurrentPause!.CompiledScript.Registers.GetRegister(port.StartIndex, vi),
                         _ => throw new NotImplementedException()
                     }, port.BitSize)
                 });
@@ -529,16 +556,6 @@ public class LogicScriptDebugger : IDebugger, IAttachHandler, IDisconnectHandler
         Next();
 
         return new();
-    }
-
-    public async Task<EvaluateResponse> Handle(EvaluateArguments request, CancellationToken cancellationToken)
-    {
-        var (value, errors) = EnsureInterpreter.Evaluate(request.Expression);
-
-        return new()
-        {
-            Result = errors.Count > 0 ? $"Failed to parse: {string.Join(", ", [.. errors.Select(o => o.ToString())])}" : value.ToString()
-        };
     }
 
     public async Task<PauseResponse> Handle(PauseArguments request, CancellationToken cancellationToken)

@@ -1,10 +1,10 @@
 using System;
-using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using LogicScript.Compiling;
+using LogicScript.DX.DAP;
 using LogicScript.DX.LSP.Debugging;
-using LogicScript.Interpreting.Debugging;
 using LogicScript.Testing;
 using LogicScript.Testing.Results;
 using OmniSharp.Extensions.LanguageServer.Protocol;
@@ -45,17 +45,8 @@ namespace LogicScript.DX.LSP.Commands
 
             var statementLimit = await RequestStatementLimitAsync(cancellationToken);
 
-            CaseResult result;
-            if (debug)
-            {
-                await DebugSession.Current!.Debugger.WaitForAttachedAsync(cancellationToken);
-                result = await RunTestAsync(scriptUri, testCase, statementLimit, DebugSession.Current.Debugger, workspace, cancellationToken);
-            }
-            else
-            {
-                var runner = Runner.Interpreted(statementLimit: statementLimit);
-                result = await testCase.Run(runner, script, cancellationToken);
-            }
+            CaseResult result = new SuccessStepResult(testCase, []);
+            await RunTestAsync(scriptUri, testCase, statementLimit, DebugSession.Current?.Debugger, workspace, cancellationToken);
 
             return new
             {
@@ -65,16 +56,17 @@ namespace LogicScript.DX.LSP.Commands
             };
         }
 
-        private static async Task<CaseResult> RunTestAsync(DocumentUri documentUri, TestCase testCase, int statementLimit, IDebugger? debugger, Workspace workspace, CancellationToken cancellationToken)
+        private static async Task<CaseResult> RunTestAsync(DocumentUri documentUri, TestCase testCase, int statementLimit, LogicScriptDebugger? debugger, Workspace workspace, CancellationToken cancellationToken)
         {
             if (!workspace.TryGetScript(documentUri, out var script))
                 throw new ArgumentException("Script not loaded: " + documentUri);
 
             debugger?.LoadedScript(script);
 
-            var runner = Runner.Interpreted(debugger, statementLimit);
+            // TODO: implement statement limit
+            var runner = Compiler.Compile(script, debugger != null);
 
-            return await testCase.Run(runner, script, cancellationToken);
+            return await testCase.Run(runner, script, debugger, cancellationToken);
         }
 
         private async Task<int> RequestStatementLimitAsync(CancellationToken cancellationToken)

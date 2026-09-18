@@ -32,7 +32,7 @@ export async function activate(context: vscode.ExtensionContext) {
 		},
 		debug: {
 			command: "dotnet",
-			args: ["run", "--project", context.asAbsolutePath("../LogicScript.DX.LSP/LogicScript.DX.LSP.csproj"), ...lspArgs],
+			args: ["run", "--project", context.asAbsolutePath("../LogicScript.DX.LSP/LogicScript.DX.LSP.csproj"), "--nologo", "--property", "WarningLevel=0", "-v", "quiet", ...lspArgs],
 			transport: TransportKind.stdio,
 		}
 	};

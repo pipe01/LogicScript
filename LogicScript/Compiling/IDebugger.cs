@@ -4,10 +4,10 @@ namespace LogicScript.Compiling
 {
     public interface IDebugger2
     {
-        void PushLocal(string name);
-        void SetLocal(string name, ulong value);
-        void PopLocal();
+        void PushLocal(NodeID id);
+        void SetLocal(NodeID id, ulong value);
+        void PopLocal(NodeID id);
 
-        void TraceStatement(NodeID id);
+        void TraceStatement(ICompiledScript compiledScript, IMachine machine, NodeID id);
     }
 }
