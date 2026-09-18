@@ -154,7 +154,7 @@ namespace LogicScript.Compiling
 
         private Result Compile(StartupBlock block)
         {
-            var end = Emitter.DefineLabel("startup_end");
+            var end = Emitter.DefineLabel();
 
             EmitThisField(HasRunField);
             Emitter.BranchIfTrue(end);
@@ -176,7 +176,7 @@ namespace LogicScript.Compiling
                 return Result.Empty;
             }
 
-            var whenFalse = Emitter.DefineLabel("when_false");
+            var whenFalse = Emitter.DefineLabel();
 
             Compile(block.Condition);
             Emitter.BranchIfFalse(whenFalse);
@@ -275,41 +275,44 @@ namespace LogicScript.Compiling
         {
             //TODO: optimize: compute 'to' once on loop enter and don't recompute on each iteration
 
+            var loopLocal = FindLocal(stmt.Variable);
+
+            if (stmt.From != null)
+                Compile(stmt.From);
+            else
+                EmitConstant(0);
+            Emitter.StoreLocal(loopLocal);
+
+            var body = Emitter.DefineLabel();
+            var head = Emitter.DefineLabel();
+            var afterLoop = Emitter.DefineLabel();
+
+            Emitter.Branch(head);
+
+            Emitter.MarkLabel(body);
+            LoopBreaks[stmt.ID] = afterLoop;
+            Compile(stmt.Body);
+            LoopBreaks.Remove(stmt.ID);
+
+            Emitter.LoadLocal(loopLocal);
+            EmitConstant(1);
+            Emitter.Add();
+            Emitter.StoreLocal(loopLocal);
+
+            Emitter.MarkLabel(head);
+            Emitter.LoadLocal(loopLocal);
+            Compile(stmt.To);
+            Emitter.BranchIfLess(body);
+
+            Emitter.MarkLabel(afterLoop);
+
             return Result.Empty;
-            // var from = stmt.From != null
-            //     ? stmt.From.IsConstant
-            //         ? Expression.Constant(GetConstantValue(stmt.From))
-            //         : Compile(stmt.From, false)
-            //     : Expression.Constant(0UL);
-            // var to = stmt.To.IsConstant ? Expression.Constant(GetConstantValue(stmt.To)) : Compile(stmt.To, false);
-            // var local = FindLocal(stmt.Variable);
-
-            // var breakLabel = Expression.Label("loop_break");
-
-            // LoopBreaks[stmt.ID] = breakLabel;
-            // var body = Compile(stmt.Body);
-            // LoopBreaks.Remove(stmt.ID);
-
-            // return Expression.Block(
-            //     Expression.Assign(local, from),
-            //     Expression.Loop(
-            //         Expression.IfThenElse(
-            //             Expression.LessThan(local, to),
-            //             Expression.Block(
-            //                 body,
-            //                 Expression.PostIncrementAssign(local)
-            //             ),
-            //             Expression.Break(breakLabel)
-            //         ),
-            //         breakLabel
-            //     )
-            // );
         }
 
         private Result Compile(WhileStatement stmt)
         {
-            var startLabel = Emitter.DefineLabel("while_start");
-            var breakLabel = Emitter.DefineLabel("while_break");
+            var startLabel = Emitter.DefineLabel();
+            var breakLabel = Emitter.DefineLabel();
 
             Emitter.MarkLabel(startLabel);
             Compile(stmt.Condition);
@@ -339,7 +342,7 @@ namespace LogicScript.Compiling
                     return Result.Empty;
             }
 
-            var falseLabel = Emitter.DefineLabel("if_false");
+            var falseLabel = Emitter.DefineLabel();
 
             Compile(stmt.Condition);
             Emitter.BranchIfFalse(falseLabel);
@@ -347,7 +350,7 @@ namespace LogicScript.Compiling
 
             if (stmt.Else != null)
             {
-                var endLabel = Emitter.DefineLabel("if_end");
+                var endLabel = Emitter.DefineLabel();
 
                 Emitter.Branch(endLabel);
                 Emitter.MarkLabel(falseLabel);
@@ -462,6 +465,9 @@ namespace LogicScript.Compiling
 
         private Result Compile(LExpression expr)
         {
+            if (expr.IsConstant)
+                return EmitConstant(expr.GetConstantValue());
+
             return expr switch
             {
                 BinaryOperatorExpression b => Compile(b),
@@ -498,8 +504,8 @@ namespace LogicScript.Compiling
                 }
             }
 
-            var ifFalse = Emitter.DefineLabel("if_false");
-            var end = Emitter.DefineLabel("end");
+            var ifFalse = Emitter.DefineLabel();
+            var end = Emitter.DefineLabel();
 
             Compile(expr.Condition);
             Emitter.BranchIfFalse(ifFalse);
