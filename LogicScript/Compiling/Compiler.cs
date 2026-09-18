@@ -61,9 +61,13 @@ namespace LogicScript.Compiling
             var mb = ab.DefineDynamicModule("Module");
             var tb = mb.DefineType("CompiledScript", TypeAttributes.Class);
             tb.AddInterfaceImplementation(typeof(ICompiledScript));
+            TypeBuilder = tb;
 
             HasRunField = tb.DefineField("_hasRun", typeof(bool), FieldAttributes.Private);
             RegistersField = tb.DefineField("_registers", script.RegistersType, FieldAttributes.Private);
+
+            tb.DefineProperty(nameof(ICompiledScript.Registers), typeof(IRegisters), RegistersField, false);
+            tb.DefineProperty(nameof(ICompiledScript.HasRun), typeof(bool), HasRunField, true);
 
             var ctorMethod = tb.DefineConstructor(MethodAttributes.Public, CallingConventions.HasThis, Type.EmptyTypes);
             var ctorIL = ctorMethod.GetILGenerator();
@@ -85,10 +89,6 @@ namespace LogicScript.Compiling
             Emitter.LoadField(RegistersField);
             Emitter.StoreLocal(RegistersLocal);
 
-            tb.DefineProperty(nameof(ICompiledScript.Registers), typeof(IRegisters), RegistersField, false);
-            tb.DefineProperty(nameof(ICompiledScript.HasRun), typeof(bool), HasRunField, true);
-
-            TypeBuilder = tb;
         }
 
         private void EmitThisField(FieldInfo field)
