@@ -276,22 +276,22 @@ public class LogicScriptDebugger : IDebugger, IAttachHandler, IDisconnectHandler
         }
     }
 
-    public void PushLocal(NodeID id)
+    void IDebugger.PushLocal(NodeID id)
     {
         CurrentLocals.Add(id, 0);
     }
 
-    public void SetLocal(NodeID id, ulong value)
+    void IDebugger.SetLocal(NodeID id, ulong value)
     {
         CurrentLocals[id] = value;
     }
 
-    public void PopLocal(NodeID id)
+    void IDebugger.PopLocal(NodeID id)
     {
         CurrentLocals.Remove(id);
     }
 
-    public void TraceStatement(IScriptInstance compiledScript, IMachine machine, NodeID id)
+    void IDebugger.TraceStatement(IScriptInstance compiledScript, IMachine machine, NodeID id)
     {
         if (!Attached || !TryFindNode<Statement>(id, out var stmt, out var script) || stmt is BlockStatement)
             return;
@@ -326,6 +326,14 @@ public class LogicScriptDebugger : IDebugger, IAttachHandler, IDisconnectHandler
         {
             BreakpointsMutex.ReleaseMutex();
         }
+    }
+
+    void IDebugger.GotOutput(string line)
+    {
+        Server?.SendOutput(new()
+        {
+            Output = line,
+        });
     }
 
     public async Task WaitForResumeAsync()

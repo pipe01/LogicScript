@@ -24,6 +24,9 @@ namespace LogicScript.Testing
         {
             var machine = new TestingMachine(script.RegisteredInputLength, script.RegisteredOutputLength);
 
+            if (debugger != null)
+                machine.LineOutput += debugger.GotOutput;
+
             foreach (var @case in Cases)
             {
                 machine.Reset();

@@ -149,6 +149,10 @@ end
     {
         public static readonly DummyDebugger Instance = new();
 
+        public void GotOutput(string line)
+        {
+        }
+
         public void PopLocal(NodeID id)
         {
         }

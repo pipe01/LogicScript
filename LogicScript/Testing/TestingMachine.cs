@@ -14,22 +14,24 @@ namespace LogicScript.Testing
         public bool[] Inputs { get; } = new bool[inputCount];
         public bool[] Outputs { get; } = new bool[outputCount];
 
-        private ulong[] Memory = [];
+
         public readonly IList<string> PrintOutput = [];
 
         public IRegisters? Registers { get; set; }
+
+        public event Action<string>? LineOutput;
 
         public void Reset()
         {
             Array.Clear(Inputs, 0, Inputs.Length);
             Array.Clear(Outputs, 0, Outputs.Length);
-            Memory = [];
             PrintOutput.Clear();
         }
 
         public void Print(string msg)
         {
             PrintOutput.Add(msg);
+            LineOutput?.Invoke(msg);
         }
 
         public void QueueUpdate()

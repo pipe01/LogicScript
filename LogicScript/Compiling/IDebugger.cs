@@ -9,5 +9,7 @@ namespace LogicScript.Compiling
         void PopLocal(NodeID id);
 
         void TraceStatement(IScriptInstance compiledScript, IMachine machine, NodeID id);
+
+        void GotOutput(string line);
     }
 }

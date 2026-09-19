@@ -264,7 +264,7 @@ namespace LogicScript.Compiling
 
                         if (print.String.Parts.Count == 0)
                         {
-                            Emitter.LoadConstant(print.String.Text);
+                            Emitter.LoadConstant(print.String.Text + "\n");
                         }
                         else
                         {
@@ -296,6 +296,8 @@ namespace LogicScript.Compiling
                                 Emitter.Call(typeof(StringBuilder).GetMethod(nameof(StringBuilder.Append), [typeof(string)]));
                                 Emitter.Pop();
                             }
+
+                            Emitter.Call(typeof(StringBuilder).GetMethod(nameof(StringBuilder.AppendLine), Type.EmptyTypes));
 
                             Emitter.LoadLocal(builder);
                             Emitter.Call(typeof(StringBuilder).GetMethod(nameof(StringBuilder.ToString), Type.EmptyTypes));
