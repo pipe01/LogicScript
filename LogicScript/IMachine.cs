@@ -18,6 +18,7 @@ namespace LogicScript
 
 
         void Print(string msg);
+        void PrintLine(string msg) { Print(msg + "\n"); }
 
         void QueueUpdate() => throw new NotImplementedException("This machine cannot queue updates");
     }

@@ -16,6 +16,7 @@ using Sigil;
 using LogicScript.Parsing.Visitors;
 using System.Text;
 using LogicScript.Utils;
+using System.Diagnostics;
 
 namespace LogicScript.Compiling
 {
@@ -174,7 +175,7 @@ namespace LogicScript.Compiling
             Emitter.Return();
 
             Emitter.CreateMethod(out var str);
-            Console.WriteLine(str);
+            Debug.WriteLine(str);
 
             return new(TypeBuilder.CreateType());
         }
@@ -294,14 +295,17 @@ namespace LogicScript.Compiling
                                     });
                                     Emitter.Call(typeof(ulong).GetMethod(nameof(ToString), [typeof(string)]));
                                 }
+                                else
+                                {
+                                    throw new NotImplementedException();
+                                }
 
                                 Emitter.Call(typeof(StringBuilder).GetMethod(nameof(StringBuilder.Append), [typeof(string)]));
                                 Emitter.Pop();
                             }
 
-                            Emitter.Call(typeof(StringBuilder).GetMethod(nameof(StringBuilder.AppendLine), Type.EmptyTypes));
-
                             Emitter.LoadLocal(builder);
+                            Emitter.Call(typeof(StringBuilder).GetMethod(nameof(StringBuilder.AppendLine), Type.EmptyTypes));
                             Emitter.Call(typeof(StringBuilder).GetMethod(nameof(StringBuilder.ToString), Type.EmptyTypes));
                         }
 
@@ -319,7 +323,7 @@ namespace LogicScript.Compiling
                         Emitter.StoreLocal(local);
                         Emitter.LoadLocalAddress(local);
                         Emitter.Call(typeof(ulong).GetMethod(nameof(ToString), Type.EmptyTypes));
-                        Emitter.CallVirtual(typeof(IMachine).GetMethod(nameof(IMachine.Print)));
+                        Emitter.CallVirtual(typeof(IMachine).GetMethod(nameof(IMachine.PrintLine)));
                     }
 
                     return Result.Empty;
