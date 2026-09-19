@@ -61,6 +61,8 @@ namespace LogicScript.Compiling
         private readonly Emit Emitter;
         private readonly Local RegistersLocal;
 
+        private bool UsedHasRun;
+
         private Compiler(Script script, bool emitDebug)
         {
             this.Script = script;
@@ -168,13 +170,17 @@ namespace LogicScript.Compiling
                 Compile(block);
             }
 
-            Emitter.LoadArgument(ArgumentThis);
-            Emitter.LoadConstant(true);
-            Emitter.StoreField(HasRunField);
+            if (UsedHasRun)
+            {
+                Emitter.LoadArgument(ArgumentThis);
+                Emitter.LoadConstant(true);
+                Emitter.StoreField(HasRunField);
+            }
+
             Emitter.Return();
 
             Emitter.CreateMethod(out var str);
-            Debug.WriteLine(str);
+            Console.WriteLine(str);
 
             return new(TypeBuilder.CreateType());
         }
@@ -197,6 +203,8 @@ namespace LogicScript.Compiling
 
         private Result Compile(StartupBlock block)
         {
+            UsedHasRun = true;
+
             var end = Emitter.DefineLabel();
 
             EmitThisField(HasRunField);
