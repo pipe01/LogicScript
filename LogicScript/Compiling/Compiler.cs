@@ -14,7 +14,6 @@ using System.Reflection.Emit;
 using Sigil.NonGeneric;
 using Sigil;
 using LogicScript.Parsing.Visitors;
-using System.Diagnostics;
 using System.Text;
 using LogicScript.Utils;
 
@@ -59,7 +58,6 @@ namespace LogicScript.Compiling
         private readonly Dictionary<NodeID, Sigil.Label> LoopBreaks = [];
 
         private readonly Emit Emitter;
-        private readonly Local RegistersLocal;
 
         private bool UsedHasRun;
 
@@ -95,10 +93,6 @@ namespace LogicScript.Compiling
                 MethodAttributes.Public | MethodAttributes.Virtual | MethodAttributes.NewSlot,
                 CallingConventions.Standard | CallingConventions.HasThis
             );
-            RegistersLocal = Emitter.DeclareLocal(script.RegistersType);
-            Emitter.LoadArgument(ArgumentThis);
-            Emitter.LoadField(RegistersField);
-            Emitter.StoreLocal(RegistersLocal);
         }
 
         private void EmitThisField(FieldInfo field)
@@ -501,7 +495,8 @@ namespace LogicScript.Compiling
                             return Result.Empty;
 
                         case MachinePorts.Register:
-                            Emitter.LoadLocal(RegistersLocal);
+                            Emitter.LoadArgument(ArgumentThis);
+                            Emitter.LoadField(RegistersField);
 
                             var field = Script.RegistersType.GetField($"Register{port.PortInfo.StartIndex}");
 
@@ -728,7 +723,8 @@ namespace LogicScript.Compiling
                             return Result.Empty;
 
                         case MachinePorts.Register:
-                            Emitter.LoadLocal(RegistersLocal);
+                            Emitter.LoadArgument(ArgumentThis);
+                            Emitter.LoadField(RegistersField);
 
                             var field = Script.RegistersType.GetField($"Register{port.PortInfo.StartIndex}");
                             Emitter.LoadField(field);
