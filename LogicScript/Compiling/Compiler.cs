@@ -173,7 +173,7 @@ namespace LogicScript.Compiling
             Emitter.StoreField(HasRunField);
             Emitter.Return();
 
-            Emitter.CreateMethod(out var str, OptimizationOptions.All);
+            Emitter.CreateMethod(out var str);
             Debug.WriteLine(str);
 
             return new(TypeBuilder.CreateType());
@@ -704,7 +704,14 @@ namespace LogicScript.Compiling
                         case MachinePorts.Input:
                             Emitter.LoadArgument(ArgumentMachine);
                             Emitter.LoadConstant(port.PortInfo.StartIndex);
-                            // TODO: vector
+                            if (port.VectorIndex != null)
+                            {
+                                Emitter.LoadConstant(port.PortInfo.BitSize);
+                                Compile(port.VectorIndex);
+                                Emitter.Convert<int>();
+                                Emitter.Multiply();
+                                Emitter.Add();
+                            }
                             Emitter.LoadConstant(port.PortInfo.BitSize);
                             Emitter.CallVirtual(typeof(IMachine).GetMethod(nameof(IMachine.ReadInputs)));
                             Emitter.LoadField(typeof(BitsValue).GetField(nameof(BitsValue.Number))); // TODO: make ReadInputs return a ulong directly

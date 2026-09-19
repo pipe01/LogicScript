@@ -4,14 +4,16 @@ using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
 using System.Runtime.InteropServices;
-using FastExpressionCompiler;
-using FastExpressionCompiler.LightExpression;
+using Sigil.NonGeneric;
 
 namespace LogicScript.Compiling
 {
     internal static class RegistersStruct
     {
-        private record struct ComputedRegister(MachineRegister MachineRegister, FieldInfo Field, Type ItemType, int ByteSize, int ByteStart);
+        private record struct ComputedRegister(MachineRegister MachineRegister, FieldInfo Field, Type ItemType, int ItemByteSize, int ByteStart, int Index)
+        {
+            public readonly bool IsVector => MachineRegister.VectorLength > 1;
+        }
 
         public static Type Generate(MachineRegister[] registers)
         {
@@ -32,281 +34,311 @@ namespace LogicScript.Compiling
                 var (type, size) = GetRegisterSize(reg);
 
                 var field = tb.DefineField($"Register{i}", reg.VectorLength > 1 ? type.MakeArrayType() : type, FieldAttributes.Public);
-                computedRegisters.Add(new(reg, field, type, size, totalBytes));
+                computedRegisters.Add(new(reg, field, type, size, totalBytes, i));
 
                 totalBytes += size * reg.VectorLength;
             }
 
-            var ctorMethod = tb.DefineConstructor(MethodAttributes.Public, CallingConventions.HasThis, Type.EmptyTypes);
-            GenerateConstructorMethod(ctorMethod);
+            var ctorEmitter = Emit.BuildConstructor(Type.EmptyTypes, tb, MethodAttributes.Public);
+            GenerateConstructorMethod(ctorEmitter);
 
-            var decodeMethod = tb.DefineMethod(
+            var decodeEmitter = Emit.BuildInstanceMethod(
+                typeof(void),
+                [typeof(ReadOnlySpan<byte>)],
+                tb,
                 nameof(IRegisters.Decode),
-                MethodAttributes.Public | MethodAttributes.Virtual | MethodAttributes.Final | MethodAttributes.HideBySig | MethodAttributes.NewSlot,
-                typeof(void),
-                [typeof(ReadOnlySpan<byte>)]
+                MethodAttributes.Public | MethodAttributes.Virtual | MethodAttributes.Final | MethodAttributes.HideBySig | MethodAttributes.NewSlot
             );
-            GenerateDecodeMethod(decodeMethod);
+            GenerateDecodeMethod(decodeEmitter);
 
-            var encodeMethod = tb.DefineMethod(
-                nameof(IRegisters.Encode),
-                MethodAttributes.Public | MethodAttributes.Virtual | MethodAttributes.Final | MethodAttributes.HideBySig | MethodAttributes.NewSlot,
+            var encodeMethod = Emit.BuildInstanceMethod(
                 typeof(void),
-                [typeof(Span<byte>)]
+                [typeof(Span<byte>)],
+                tb,
+                nameof(IRegisters.Encode),
+                MethodAttributes.Public | MethodAttributes.Virtual | MethodAttributes.Final | MethodAttributes.HideBySig | MethodAttributes.NewSlot
             );
             GenerateEncodeMethod(encodeMethod);
 
             var sizeProperty = tb.DefineProperty(nameof(IRegisters.Size), PropertyAttributes.None, typeof(int), Type.EmptyTypes);
-            var getSizeMethod = tb.DefineMethod(
-                "get_" + nameof(IRegisters.Size),
-                MethodAttributes.Public | MethodAttributes.Virtual | MethodAttributes.Final | MethodAttributes.HideBySig | MethodAttributes.NewSlot,
+            var getSizeEmitter = Emit.BuildInstanceMethod(
                 typeof(int),
-                Type.EmptyTypes
+                Type.EmptyTypes,
+                tb,
+                "get_" + nameof(IRegisters.Size),
+                MethodAttributes.Public | MethodAttributes.Virtual | MethodAttributes.Final | MethodAttributes.HideBySig | MethodAttributes.NewSlot
             );
-            Expression.Lambda(Expression.Constant(totalBytes)).CompileFastToIL(getSizeMethod.GetILGenerator());
-            sizeProperty.SetGetMethod(getSizeMethod);
+            getSizeEmitter.LoadConstant(totalBytes);
+            getSizeEmitter.Return();
+            sizeProperty.SetGetMethod(getSizeEmitter.CreateMethod());
 
-            var getRegisterMethod = tb.DefineMethod(
-                nameof(IRegisters.GetRegister),
-                MethodAttributes.Public | MethodAttributes.Virtual | MethodAttributes.Final | MethodAttributes.HideBySig | MethodAttributes.NewSlot,
+            var getRegisterEmitter = Emit.BuildInstanceMethod(
                 typeof(ulong),
-                [typeof(int), typeof(int)]
+                [typeof(int), typeof(int)],
+                tb,
+                nameof(IRegisters.GetRegister),
+                MethodAttributes.Public | MethodAttributes.Virtual | MethodAttributes.Final | MethodAttributes.HideBySig | MethodAttributes.NewSlot
             );
-            GenerateGetRegisterMethod(getRegisterMethod);
+            GenerateGetRegisterMethod(getRegisterEmitter);
 
-            var setRegisterMethod = tb.DefineMethod(
+            var setRegisterEmitter = Emit.BuildInstanceMethod(
+                typeof(void),
+                [typeof(int), typeof(int), typeof(ulong)],
+                tb,
                 nameof(IRegisters.SetRegister),
-                MethodAttributes.Public | MethodAttributes.Virtual | MethodAttributes.Final | MethodAttributes.HideBySig | MethodAttributes.NewSlot,
-                typeof(void),
-                [typeof(int), typeof(int), typeof(ulong)]
+                MethodAttributes.Public | MethodAttributes.Virtual | MethodAttributes.Final | MethodAttributes.HideBySig | MethodAttributes.NewSlot
             );
-            GenerateSetRegisterMethod(setRegisterMethod);
+            GenerateSetRegisterMethod(setRegisterEmitter);
 
-            var resetMethod = tb.DefineMethod(
-                nameof(IRegisters.Reset),
-                MethodAttributes.Public | MethodAttributes.Virtual | MethodAttributes.Final | MethodAttributes.HideBySig | MethodAttributes.NewSlot,
+            var resetMethodEmitter = Emit.BuildInstanceMethod(
                 typeof(void),
-                Type.EmptyTypes
+                Type.EmptyTypes,
+                tb,
+                nameof(IRegisters.Reset),
+                MethodAttributes.Public | MethodAttributes.Virtual | MethodAttributes.Final | MethodAttributes.HideBySig | MethodAttributes.NewSlot
             );
-            GenerateResetMethod(resetMethod);
+            GenerateResetMethod(resetMethodEmitter);
 
             return tb.CreateType();
 
-            void GenerateConstructorMethod(ConstructorBuilder builder)
+            void GenerateConstructorMethod(Emit emitter)
             {
                 // Initialize all vector registers with empty arrays
 
-                var il = builder.GetILGenerator();
-                il.Emit(OpCodes.Ldarg_0);
-                il.Emit(OpCodes.Call, typeof(object).GetConstructor(Type.EmptyTypes));
+                emitter.LoadArgument(0);
+                emitter.Call(typeof(object).GetConstructor(Type.EmptyTypes));
 
-                var thisParam = Expression.Parameter(tb, "this");
+                foreach (var reg in computedRegisters.Where(reg => reg.IsVector))
+                {
+                    emitter.LoadArgument(0);
+                    emitter.LoadConstant(reg.MachineRegister.VectorLength);
+                    emitter.NewArray(reg.ItemType);
+                    emitter.StoreField(reg.Field);
+                }
 
-                var block = Expression.Block(
-                    typeof(void),
-                    computedRegisters
-                        .Where(reg => reg.MachineRegister.VectorLength > 1)
-                        .Select(reg =>
-                            Expression.Assign(
-                                Expression.Field(
-                                    thisParam,
-                                    reg.Field
-                                ),
-                                Expression.NewArrayBounds(reg.ItemType, [Expression.Constant(reg.MachineRegister.VectorLength)])
-                            )
-                        )
-                        .ToArray()
-                );
-
-                Expression.Lambda(block, [thisParam]).CompileFastToIL(il);
+                emitter.Return();
+                emitter.CreateConstructor();
             }
 
-            void GenerateDecodeMethod(MethodBuilder builder)
+            void GenerateDecodeMethod(Emit emitter)
             {
-                var thisParam = Expression.Parameter(tb, "this");
-                var dataParam = Expression.Parameter(typeof(ReadOnlySpan<byte>), "data");
+                var exit = emitter.DefineLabel();
 
-                var block = Expression.IfThen(
-                    Expression.GreaterThanOrEqual(
-                        Expression.Property(
-                            dataParam,
-                            typeof(ReadOnlySpan<byte>).GetProperty("Length")
-                        ),
-                        Expression.Constant(totalBytes)
-                    ),
-                    Expression.Block(computedRegisters.Select(reg =>
+                //= if (span.Length < totalBytes) return;
+                emitter.LoadArgumentAddress(1);
+                emitter.Call(typeof(ReadOnlySpan<byte>).GetMethod("get_Length"));
+                emitter.LoadConstant(totalBytes);
+                emitter.BranchIfLess(exit);
+
+                foreach (var reg in computedRegisters)
+                {
+                    if (reg.IsVector)
                     {
-                        if (reg.MachineRegister.VectorLength == 1)
-                        {
-                            //= this.Register = data.Read(reg.ByteStart);
-                            return Expression.Assign(
-                                Expression.Field(thisParam, reg.Field),
-                                SpanReadInteger(dataParam, reg.ItemType, Expression.Constant(reg.ByteStart))
-                            );
-                        }
+                        /*=
+                        Span<TItem> target = new Span<TItem>(this.Field);
+                        ReadOnlySpan<byte> view = data.Slice(byteStart);
+                        ReadOnlySpan<TItem> casted = MemoryMarshal.Cast<byte, TItem>(view);
+                        casted.CopyTo(target);
+                        */
 
-                        // Vectored register
+                        using var casted = emitter.DeclareLocal(typeof(ReadOnlySpan<>).MakeGenericType(reg.ItemType));
 
-                        //= for (var i = 0; i < reg.VectorLength; i++) {
-                        //=     this.Register[i] = data.Read(reg.ByteStart + reg.ByteSize * i);
-                        //= }
-                        return ForLoop(Expression.Constant(0), Expression.Constant(reg.MachineRegister.VectorLength), i =>
-                        {
-                            return Expression.Assign(
-                                Expression.ArrayAccess(
-                                    Expression.Field(thisParam, reg.Field),
-                                    i
-                                ),
-                                SpanReadInteger(
-                                    dataParam,
-                                    reg.ItemType,
-                                    Expression.Add(
-                                        Expression.Constant(reg.ByteStart),
-                                        Expression.Multiply(
-                                            Expression.Constant(reg.ByteSize),
-                                            i
-                                        )
-                                    )
-                                )
-                            );
-                        });
-                    }).ToArray())
-                );
+                        emitter.LoadArgumentAddress(1);
+                        emitter.LoadConstant(reg.ByteStart);
+                        emitter.LoadConstant(reg.ItemByteSize * reg.MachineRegister.VectorLength);
+                        emitter.Call(typeof(ReadOnlySpan<byte>).GetMethod(nameof(ReadOnlySpan<>.Slice), [typeof(int), typeof(int)]));
+                        emitter.Call(typeof(MemoryMarshal).GetMethod(nameof(MemoryMarshal.Cast), [typeof(ReadOnlySpan<>).MakeGenericType(Type.MakeGenericMethodParameter(0))]).MakeGenericMethod(typeof(byte), reg.ItemType));
+                        emitter.StoreLocal(casted);
 
-                Expression.Lambda(block, [thisParam, dataParam]).CompileFastToIL(builder.GetILGenerator());
-            }
-
-            void GenerateEncodeMethod(MethodBuilder builder)
-            {
-                var thisParam = Expression.Parameter(tb, "this");
-                var dataParam = Expression.Parameter(typeof(Span<byte>), "data");
-
-                var block = Expression.IfThen(
-                    Expression.GreaterThanOrEqual(
-                        Expression.Property(
-                            dataParam,
-                            typeof(Span<byte>).GetProperty("Length")
-                        ),
-                        Expression.Constant(totalBytes)
-                    ),
-                    Expression.Block(computedRegisters.Select(reg =>
+                        emitter.LoadLocalAddress(casted);
+                        emitter.LoadArgument(0);
+                        emitter.LoadField(reg.Field);
+                        emitter.Call(typeof(MemoryExtensions).GetMethod(nameof(MemoryExtensions.AsSpan), [Type.MakeGenericMethodParameter(0).MakeArrayType()]).MakeGenericMethod(reg.ItemType));
+                        emitter.Call(typeof(ReadOnlySpan<>).MakeGenericType(reg.ItemType).GetMethod(nameof(ReadOnlySpan<>.CopyTo)));
+                    }
+                    else
                     {
-                        if (reg.MachineRegister.VectorLength == 1)
+                        //= this.Field = MemoryMarshal.Read<TItem>(data.Slice(byteStart));
+
+                        emitter.LoadArgument(0);
+                        emitter.LoadArgumentAddress(1);
+                        emitter.LoadConstant(reg.ByteStart);
+                        emitter.Call(typeof(ReadOnlySpan<byte>).GetMethod(nameof(ReadOnlySpan<>.Slice), [typeof(int)]));
+                        emitter.Call(typeof(MemoryMarshal).GetMethod(nameof(MemoryMarshal.Read)).MakeGenericMethod(reg.ItemType));
+                        emitter.StoreField(reg.Field);
+                    }
+                }
+
+                emitter.MarkLabel(exit);
+                emitter.Return();
+                emitter.CreateMethod();
+            }
+
+            void GenerateEncodeMethod(Emit emitter)
+            {
+                var exit = emitter.DefineLabel();
+
+                //= if (span.Length < totalBytes) return;
+                emitter.LoadArgumentAddress(1);
+                emitter.Call(typeof(Span<byte>).GetMethod("get_Length"));
+                emitter.LoadConstant(totalBytes);
+                emitter.BranchIfLess(exit);
+
+                foreach (var reg in computedRegisters)
+                {
+                    if (reg.IsVector)
+                    {
+                        /*=
+                        Span<TItem> source = new Span<TItem>(this.Field);
+                        ReadOnlySpan<byte> casted = MemoryMarshal.Cast<int, byte>(this.Field);
+                        Span<byte> target = data.Slice(byteStart)
+                        casted.CopyTo(target);
+                        */
+
+                        using var casted = emitter.DeclareLocal(typeof(ReadOnlySpan<byte>));
+
+                        emitter.LoadArgument(0);
+                        emitter.LoadField(reg.Field);
+                        emitter.NewObject(typeof(ReadOnlySpan<>).MakeGenericType(reg.ItemType), [reg.ItemType.MakeArrayType()]);
+                        emitter.Call(typeof(MemoryMarshal).GetMethod(nameof(MemoryMarshal.Cast), [typeof(ReadOnlySpan<>).MakeGenericType(Type.MakeGenericMethodParameter(0))]).MakeGenericMethod(reg.ItemType, typeof(byte)));
+                        emitter.StoreLocal(casted);
+
+                        emitter.LoadLocalAddress(casted);
+                        emitter.LoadArgumentAddress(1);
+                        emitter.LoadConstant(reg.ByteStart);
+                        emitter.LoadConstant(reg.ItemByteSize * reg.MachineRegister.VectorLength);
+                        emitter.Call(typeof(Span<byte>).GetMethod(nameof(Span<>.Slice), [typeof(int), typeof(int)]));
+                        emitter.Call(typeof(ReadOnlySpan<byte>).GetMethod(nameof(ReadOnlySpan<>.CopyTo)));
+                    }
+                    else
+                    {
+                        //= MemoryMarshal.Write(data.Slice(byteStart), this.Field);
+
+                        emitter.LoadArgumentAddress(1);
+                        emitter.LoadConstant(reg.ByteStart);
+                        emitter.Call(typeof(Span<byte>).GetMethod(nameof(Span<>.Slice), [typeof(int)]));
+                        emitter.LoadArgument(0);
+                        emitter.LoadFieldAddress(reg.Field);
+                        emitter.Call(typeof(MemoryMarshal).GetMethod(nameof(MemoryMarshal.Write)).MakeGenericMethod(reg.ItemType));
+                    }
+                }
+
+                emitter.MarkLabel(exit);
+                emitter.Return();
+                emitter.CreateMethod();
+            }
+
+            void GenerateGetRegisterMethod(Emit emitter)
+            {
+                foreach (var reg in computedRegisters)
+                {
+                    var next = emitter.DefineLabel();
+
+                    emitter.LoadConstant(reg.Index);
+                    emitter.LoadArgument(1);
+                    emitter.UnsignedBranchIfNotEqual(next);
+
+                    if (reg.IsVector)
+                    {
+                        emitter.LoadArgument(0);
+                        emitter.LoadField(reg.Field);
+                        emitter.LoadArgument(2);
+                        emitter.LoadElement(reg.ItemType);
+                    }
+                    else
+                    {
+                        emitter.LoadArgument(0);
+                        emitter.LoadField(reg.Field);
+                    }
+                    emitter.Convert<ulong>();
+                    emitter.Return();
+
+                    emitter.MarkLabel(next);
+                }
+
+                emitter.NewObject<IndexOutOfRangeException>();
+                emitter.Throw();
+                emitter.CreateMethod();
+            }
+
+            void GenerateSetRegisterMethod(Emit emitter)
+            {
+                foreach (var reg in computedRegisters)
+                {
+                    var next = emitter.DefineLabel();
+
+                    emitter.LoadConstant(reg.Index);
+                    emitter.LoadArgument(1);
+                    emitter.UnsignedBranchIfNotEqual(next);
+
+                    if (reg.IsVector)
+                    {
+                        emitter.LoadArgument(0);
+                        emitter.LoadField(reg.Field);
+                        emitter.LoadArgument(2);
+                        emitter.LoadArgument(3);
+                        emitter.Convert(reg.ItemType);
+                        emitter.StoreElement(reg.ItemType);
+                    }
+                    else
+                    {
+                        emitter.LoadArgument(0);
+                        emitter.LoadArgument(3);
+                        emitter.Convert(reg.ItemType);
+                        emitter.StoreField(reg.Field);
+                    }
+                    emitter.Return();
+
+                    emitter.MarkLabel(next);
+                }
+
+                emitter.NewObject<IndexOutOfRangeException>();
+                emitter.Throw();
+                emitter.CreateMethod();
+            }
+
+            void GenerateResetMethod(Emit emitter)
+            {
+                foreach (var reg in computedRegisters)
+                {
+                    if (reg.MachineRegister.VectorLength == 1)
+                    {
+                        emitter.LoadArgument(0);
+                        switch (reg.ItemByteSize)
                         {
-                            //= data.Write(reg.ByteStart, this.Register);
-                            return SpanWriteInteger(dataParam, reg.ItemType, Expression.Constant(reg.ByteStart), Expression.Field(thisParam, reg.Field));
+                            case 1 or 2 or 4:
+                                emitter.LoadConstant(0);
+                                break;
+                            case 8:
+                                emitter.LoadConstant(0UL);
+                                break;
                         }
-
-                        // Vectored register
-
-                        //= for (var i = 0; i < reg.VectorLength; i++) {
-                        //=     data.Write(reg.ByteStart + reg.ByteSize * i, this.Register[i]);
-                        //= }
-                        return ForLoop(Expression.Constant(0), Expression.Constant(reg.MachineRegister.VectorLength), i =>
+                        emitter.StoreField(reg.Field);
+                    }
+                    else
+                    {
+                        emitter.LoadArgument(0);
+                        emitter.LoadField(reg.Field);
+                        switch (reg.ItemByteSize)
                         {
-                            return SpanWriteInteger(
-                                dataParam,
-                                reg.ItemType,
-                                Expression.Add(
-                                    Expression.Constant(reg.ByteStart),
-                                    Expression.Multiply(
-                                        Expression.Constant(reg.ByteSize),
-                                        i
-                                    )
-                                ),
-                                Expression.ArrayAccess(
-                                    Expression.Field(thisParam, reg.Field),
-                                    i
-                                )
-                            );
-                        });
-                    }).ToArray())
-                );
-
-                Expression.Lambda(block, [thisParam, dataParam]).CompileFastToIL(builder.GetILGenerator());
-            }
-
-            void GenerateGetRegisterMethod(MethodBuilder builder)
-            {
-                var thisParam = Expression.Parameter(tb, "this");
-                var indexParam = Expression.Parameter(typeof(int), "index");
-                var vectorParam = Expression.Parameter(typeof(int), "vector");
-
-                var block = computedRegisters.Aggregate(
-                    (Expression)Expression.Constant(0UL),
-                    (acum, reg) => Expression.Condition(
-                        Expression.Equal(
-                            indexParam,
-                            Expression.Constant(reg.ByteStart)
-                        ),
-                        Expression.Convert(
-                            reg.MachineRegister.VectorLength == 1
-                                ? Expression.Field(thisParam, reg.Field)
-                                : Expression.ArrayAccess(
-                                    Expression.Field(thisParam, reg.Field),
-                                    vectorParam
-                                ),
-                            typeof(ulong)
-                        ),
-                        acum
-                    )
-                );
-
-                Expression.Lambda(block, [thisParam, indexParam, vectorParam]).CompileFastToIL(builder.GetILGenerator());
-            }
-
-            void GenerateSetRegisterMethod(MethodBuilder builder)
-            {
-                var thisParam = Expression.Parameter(tb, "this");
-                var indexParam = Expression.Parameter(typeof(int), "index");
-                var vectorParam = Expression.Parameter(typeof(int), "vector");
-                var valueParam = Expression.Parameter(typeof(ulong), "value");
-
-                var block = computedRegisters.Aggregate(
-                    (Expression)Expression.Empty(),
-                    (acum, reg) => Expression.IfThenElse(
-                        Expression.Equal(
-                            indexParam,
-                            Expression.Constant(reg.ByteStart)
-                        ),
-                        Expression.Assign(
-                            reg.MachineRegister.VectorLength == 1
-                                ? Expression.Field(thisParam, reg.Field)
-                                : Expression.ArrayAccess(
-                                    Expression.Field(thisParam, reg.Field),
-                                    vectorParam
-                                ),
-                            Expression.Convert(
-                                valueParam,
-                                reg.ItemType
-                            )
-                        ),
-                        acum
-                    )
-                );
-
-                Expression.Lambda(block, [thisParam, indexParam, vectorParam, valueParam]).CompileFastToIL(builder.GetILGenerator());
-            }
-
-            void GenerateResetMethod(MethodBuilder builder)
-            {
-                var thisParam = Expression.Parameter(tb, "this");
-
-                var block = Expression.Block(computedRegisters.Select(
-                    (reg) => reg.MachineRegister.VectorLength == 1
-                        ? (Expression)Expression.Assign(
-                            Expression.Field(thisParam, reg.Field),
-                            Expression.Default(reg.ItemType)
-                        )
-                        : Expression.Call(
+                            case 1 or 2 or 4:
+                                emitter.LoadConstant(0);
+                                break;
+                            case 8:
+                                emitter.LoadConstant(0UL);
+                                break;
+                        }
+                        emitter.Call(
                             typeof(Array).GetMethod(nameof(Array.Fill), [
                                 Type.MakeGenericMethodParameter(0).MakeArrayType(),
                                 Type.MakeGenericMethodParameter(0)
                             ]).MakeGenericMethod(reg.ItemType)
-                        )
-                ));
+                        );
+                    }
+                }
 
-                Expression.Lambda(block, [thisParam]).CompileFastToIL(builder.GetILGenerator());
+                emitter.Return();
+                emitter.CreateMethod();
             }
         }
 
@@ -320,68 +352,6 @@ namespace LogicScript.Compiling
                 <= 64 => (typeof(ulong), 8),
                 _ => throw new Exception($"Too large bit size {reg.BitSize}")
             };
-        }
-
-        // Helper methods for reading and writing spans since we can't express Span indexing using System.Linq.Expressions
-        internal static byte ReadByte(ReadOnlySpan<byte> span, int index) => span[index];
-        internal static void WriteByte(Span<byte> span, int index, byte value) => span[index] = value;
-        private static readonly MethodInfo ReadByteMethod = typeof(RegistersStruct).GetMethod(nameof(ReadByte), BindingFlags.NonPublic | BindingFlags.Static);
-        private static readonly MethodInfo WriteByteMethod = typeof(RegistersStruct).GetMethod(nameof(WriteByte), BindingFlags.NonPublic | BindingFlags.Static);
-
-
-        // We need this helper method because the MemoryMarshal.Write function takes in a "ref" of the value, which we can't do with expressions
-        internal static void WriteItem<T>(Span<byte> span, int start, T value) where T : struct
-            => MemoryMarshal.Write(span[start..], ref value);
-        private static readonly MethodInfo WriteItemMethod = typeof(RegistersStruct).GetMethod(nameof(WriteItem), BindingFlags.NonPublic | BindingFlags.Static);
-
-        // I don't know why we need this one, but it's nicer
-        internal static T ReadItem<T>(Span<byte> span, int start) where T : struct
-            => MemoryMarshal.Read<T>(span[start..]);
-        private static readonly MethodInfo ReadItemMethod = typeof(RegistersStruct).GetMethod(nameof(ReadItem), BindingFlags.NonPublic | BindingFlags.Static);
-
-        private static Expression SpanReadInteger(Expression readonlySpan, Type intType, Expression start)
-        {
-            if (intType == typeof(byte))
-                return Expression.Call(ReadByteMethod, readonlySpan, start);
-
-            return Expression.Call(
-                ReadItemMethod.MakeGenericMethod(intType),
-                readonlySpan, start
-            );
-        }
-        private static Expression SpanWriteInteger(Expression span, Type intType, Expression start, Expression value)
-        {
-            if (intType == typeof(byte))
-                return Expression.Call(WriteByteMethod, span, start, value);
-
-            return Expression.Call(
-                WriteItemMethod.MakeGenericMethod(intType),
-                span, start, value
-            );
-        }
-
-        private static Expression ForLoop(Expression start, Expression end, Func<Expression, Expression> body)
-        {
-            var loopVar = Expression.Variable(typeof(int), "i");
-            var breakLabel = Expression.Label("loopBreak");
-
-            var loop = Expression.Block(
-                [loopVar],
-                Expression.Assign(loopVar, start),
-                Expression.Loop(
-                    Expression.IfThenElse(
-                        Expression.LessThan(loopVar, end),
-                        Expression.Block(
-                            body(loopVar),
-                            Expression.PostIncrementAssign(loopVar)
-                        ),
-                        Expression.Break(breakLabel)
-                    ),
-                    breakLabel
-                )
-            );
-
-            return loop;
         }
     }
 }

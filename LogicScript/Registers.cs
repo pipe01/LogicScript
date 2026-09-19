@@ -15,8 +15,8 @@ namespace LogicScript
         void Decode(ReadOnlySpan<byte> data);
         void Encode(Span<byte> data);
 
-        ulong GetRegister(int index, int vector);
-        void SetRegister(int index, int vector, ulong value);
+        ulong GetRegister(int index, int vectorIndex);
+        void SetRegister(int index, int vectorIndex, ulong value);
     }
 
     public sealed class EmptyRegisters : IRegisters
