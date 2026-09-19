@@ -1,5 +1,4 @@
-﻿using LogicScript.Compiling;
-using LogicScript.Data;
+﻿using LogicScript.Data;
 using LogicScript.Parsing.Structures;
 using LogicScript.Parsing.Structures.Expressions;
 using System;
@@ -9,6 +8,10 @@ namespace LogicScript.Interpreting
 {
     internal readonly record struct InterpreterContext(IMachine? Machine, IRegisters? Registers, IReadOnlyDictionary<LocalInfo, ulong>? Locals);
 
+    /// <summary>
+    /// We only need the interpreter for computing constant values when parsing and for executing expressions entered while debugging,
+    /// which means that no statement execution is required.
+    /// </summary>
     internal class Interpreter
     {
         public static BitsValue Visit(Expression expr, InterpreterContext context = default)
