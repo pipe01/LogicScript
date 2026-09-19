@@ -5,7 +5,7 @@ namespace LogicScript.Tests
 {
     internal class TestExpressions : BaseTest
     {
-        private void AssertExpression(string expr, ulong value)
+        private static void AssertExpression(string expr, ulong value)
         {
             Run($@"
             startup
@@ -80,10 +80,7 @@ namespace LogicScript.Tests
         [Test]
         public void AddRegisters()
         {
-            var machine = new DummyMachine(registers: [1, 2]);
-
-            var a = new MachinePortInfo(MachinePorts.Register, 0, 1, 1, default);
-            var b = new MachinePortInfo(MachinePorts.Register, 1, 1, 1, default);
+            var machine = new DummyMachine();
 
             Run(@"
             reg a
@@ -92,7 +89,7 @@ namespace LogicScript.Tests
             startup
                 @print a + b
             end
-            ", machine);
+            ", machine, [1, 2]);
 
             machine.AssertPrinted("3");
         }
@@ -129,6 +126,22 @@ namespace LogicScript.Tests
         public void InvertNumber()
         {
             AssertExpression("~(0)'3", 7);
+        }
+
+        [Test]
+        public void GetInputVector()
+        {
+            var machine = new DummyMachine([false, false, true, true, false, false]);
+
+            Run(@"
+            input'2 a[3]
+
+            startup
+                @print a[1]
+            end
+            ", machine);
+
+            machine.AssertPrinted("3");
         }
     }
 }

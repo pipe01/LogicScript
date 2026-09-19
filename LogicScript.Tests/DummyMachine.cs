@@ -14,13 +14,10 @@ namespace LogicScript.Tests
 
         public IList<string> Printed { get; set; } = new List<string>();
 
-        private ulong[] Registers;
-
-        public DummyMachine(bool[]? inputs = null, int outputCount = 0, ulong[]? registers = null)
+        public DummyMachine(bool[]? inputs = null, int outputCount = 0)
         {
             this.InputCount = inputs?.Length ?? 0;
             this.Inputs = inputs ?? Array.Empty<bool>();
-            this.Registers = registers ?? [];
             this.OutputCount = outputCount;
         }
 
