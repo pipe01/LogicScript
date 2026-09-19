@@ -60,7 +60,6 @@ end
 
         private TestCase Case;
         private IMachine Machine;
-        private Script Script;
         private IScriptInstance CompiledScript, CompiledScriptDebug;
 
         [GlobalSetup]
@@ -81,7 +80,6 @@ end
                 Environment.Exit(1);
                 return;
             }
-            this.Script = script;
 
             this.Machine = new DummyMachine(Case.Inputs, Case.Outputs);
 
@@ -89,7 +87,27 @@ end
             this.CompiledScriptDebug = Compiler.Compile(script, true).Instantiate();
         }
 
+        interface IRunner
+        {
+            void Run();
+        }
+        class Runner : IRunner
+        {
+            public byte A, B, C;
+            void IRunner.Run()
+            {
+                C = (byte)(A & B);
+            }
+        }
+
+        private IRunner _Runner = new Runner();
         [Benchmark(Baseline = true)]
+        public void RunCSharp()
+        {
+            _Runner.Run();
+        }
+
+        [Benchmark]
         public void RunCompiledNoDebug()
         {
             CompiledScript.Run(Machine);
