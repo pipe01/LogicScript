@@ -509,9 +509,10 @@ namespace LogicScript.Compiling
                             {
                                 Emitter.LoadField(field);
                                 Compile(port.VectorIndex);
+                                Emitter.Convert<int>();
                                 Compile(stmt.Value);
-                                Emitter.Convert(field.FieldType);
-                                Emitter.StoreElement(field.FieldType);
+                                Emitter.Convert(field.FieldType.GetElementType());
+                                Emitter.StoreElement(field.FieldType.GetElementType());
                             }
                             else
                             {
@@ -740,6 +741,7 @@ namespace LogicScript.Compiling
                                 elemType = elemType.GetElementType();
 
                                 Compile(port.VectorIndex);
+                                Emitter.Convert<int>();
                                 Emitter.LoadElement(elemType);
                             }
 
