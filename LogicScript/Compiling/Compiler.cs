@@ -56,6 +56,7 @@ namespace LogicScript.Compiling
         private readonly FieldInfo RegistersField;
 
         private readonly Stack<Scope> Stack = new();
+        private int LocalCounter;
         private readonly Dictionary<NodeID, Sigil.Label> LoopBreaks = [];
 
         private readonly Emit Emitter;
@@ -443,7 +444,7 @@ namespace LogicScript.Compiling
 
         private Result Compile(BlockStatement stmt)
         {
-            var locals = stmt.Locals.ToDictionary(l => l, l => Emitter.DeclareLocal<ulong>(l.Name));
+            var locals = stmt.Locals.ToDictionary(l => l, l => Emitter.DeclareLocal<ulong>($"{l.Name}_{LocalCounter++}"));
 
             foreach (var local in locals)
             {
