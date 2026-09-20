@@ -22,8 +22,6 @@ namespace LogicScript
         public IDictionary<string, Constant> Constants { get; } = new Dictionary<string, Constant>();
         public IList<TestCase> TestCases { get; } = [];
 
-        public MachineRegister[] MachineRegisters => Registers.Values.Select(r => new MachineRegister(r.BitSize, r.VectorLength, r.StartIndex)).ToArray();
-
         internal int RegisteredInputLength => Inputs.Values.Sum(o => o.BitSize * o.VectorLength);
         internal int RegisteredOutputLength => Outputs.Values.Sum(o => o.BitSize * o.VectorLength);
 
@@ -36,7 +34,7 @@ namespace LogicScript
         public bool HasErrors => Errors.Count > 0;
 
         private Type? registersType;
-        public Type RegistersType => registersType ??= RegistersStruct.Generate(MachineRegisters);
+        public Type RegistersType => registersType ??= RegistersStruct.Generate([.. Registers.Values]);
 
         internal Script(string source, string fileName, IReadOnlyList<Error> errors)
         {
