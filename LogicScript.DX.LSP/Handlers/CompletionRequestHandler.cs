@@ -235,16 +235,33 @@ namespace LogicScript.DX.LSP
             {
                 foreach (var item in ports)
                 {
-                    completions.Add(new()
+                    if (item.Value.VectorLength == 1)
                     {
-                        Label = item.Key,
-                        Kind = CompletionItemKind.Variable,
-                        InsertText = item.Key,
-                        LabelDetails = new()
+                        completions.Add(new()
                         {
-                            Description = $"{item.Value.Target.ToString().ToLowerInvariant()}'{item.Value.BitSize}"
-                        }
-                    });
+                            Label = item.Key,
+                            Kind = CompletionItemKind.Variable,
+                            InsertText = item.Key,
+                            LabelDetails = new()
+                            {
+                                Description = $"{item.Value.Target.ToString().ToLowerInvariant()}'{item.Value.BitSize}"
+                            }
+                        });
+                    }
+                    else
+                    {
+                        completions.Add(new()
+                        {
+                            Label = item.Key,
+                            Kind = CompletionItemKind.Variable,
+                            InsertText = item.Key + "[$0]",
+                            InsertTextFormat = InsertTextFormat.Snippet,
+                            LabelDetails = new()
+                            {
+                                Description = $"{item.Value.Target.ToString().ToLowerInvariant()}'{item.Value.BitSize}x{item.Value.VectorLength}"
+                            }
+                        });
+                    }
                 }
             }
         }
