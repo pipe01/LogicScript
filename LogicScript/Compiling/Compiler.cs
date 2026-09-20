@@ -484,6 +484,7 @@ namespace LogicScript.Compiling
                                 Emitter.LoadArgument(ArgumentMachine);
                                 Emitter.LoadConstant(port.StartIndex); // TODO: vector
                                 Compile(stmt.Value);
+                                Emitter.Convert<bool>();
                                 Emitter.CallVirtual(typeof(IMachine).GetMethod(nameof(IMachine.WriteOutput)));
                             }
                             else
