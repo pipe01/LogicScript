@@ -35,15 +35,17 @@ namespace LogicScript.Testing.Results
         public override bool Success => false;
 
         public int StepIndex { get; }
-        public SourceSpan StepSpan { get; }
+        public CaseStep Step { get; }
+        public string StepSource { get; }
         public IDictionary<string, BitsValue[]> Inputs { get; }
         public IDictionary<string, BitsValue[]> ExpectedOutputs { get; }
         public IDictionary<string, BitsValue[]> MismatchedOutputs { get; }
 
-        internal FailedStepCaseResult(TestCase testCase, IReadOnlyCollection<string> printedLines, int stepIndex, SourceSpan stepSpan, IDictionary<string, BitsValue[]> inputs, IDictionary<string, BitsValue[]> expectedOutputs, IDictionary<string, BitsValue[]> mismatchedOutputs) : base(testCase, printedLines)
+        internal FailedStepCaseResult(TestCase testCase, IReadOnlyCollection<string> printedLines, int stepIndex, CaseStep step, string stepSource, IDictionary<string, BitsValue[]> inputs, IDictionary<string, BitsValue[]> expectedOutputs, IDictionary<string, BitsValue[]> mismatchedOutputs) : base(testCase, printedLines)
         {
             this.StepIndex = stepIndex;
-            this.StepSpan = stepSpan;
+            this.Step = step;
+            this.StepSource = stepSource;
             this.Inputs = inputs;
             this.ExpectedOutputs = expectedOutputs;
             this.MismatchedOutputs = mismatchedOutputs;
@@ -54,8 +56,9 @@ namespace LogicScript.Testing.Results
             if (Success) throw new InvalidOperationException("Test was successful");
 
             var msg = new StringBuilder();
-            msg.AppendLine($"Failed on step {StepIndex} at {StepSpan.Start.FileName}:{StepSpan.Start}");
+            msg.AppendLine($"Failed on step {StepIndex} at {Step.Span.Start.FileName}:{Step.Span.Start}");
 
+            msg.AppendLine($"            Step: {StepSource.Trim()}");
             msg.AppendLine($"           Input: {FormatIO(Inputs)}");
             msg.AppendLine($" Expected output: {FormatIO(ExpectedOutputs)}");
             msg.AppendLine($"Disparate output: {FormatIO(MismatchedOutputs)}");

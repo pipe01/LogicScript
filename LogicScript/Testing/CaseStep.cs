@@ -12,18 +12,22 @@ namespace LogicScript.Testing
         {
             yield break;
         }
+
+        public override string ToString() => Value.ToString();
     }
 
     public readonly record struct PortValues(string Name, MachinePorts Ports, PortValue[] Values, SourceSpan NameSpan) : ICodeNode
     {
         readonly SourceSpan ICodeNode.Span => NameSpan;
 
-        public SourceSpan ValuesSpan => new(Values[0].Span.Start, Values[Values.Length - 1].Span.End);
+        public SourceSpan ValuesSpan => new(Values[0].Span.Start, Values[^1].Span.End);
 
         public IEnumerable<ICodeNode> GetChildren()
         {
             yield break;
         }
+
+        public override string ToString() => $"{Name}({string.Join(", ", Values)})";
     }
 
     public record CaseStep(IList<PortValues> Inputs, IList<PortValues> Outputs, SourceSpan Span) : ICodeNode
@@ -32,5 +36,7 @@ namespace LogicScript.Testing
         {
             return Inputs.Concat(Outputs).Cast<ICodeNode>();
         }
+
+        public override string ToString() => $"{string.Join(' ', Inputs)} => {string.Join(' ', Outputs)}";
     }
 }

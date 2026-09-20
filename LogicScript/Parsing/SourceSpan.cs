@@ -1,5 +1,6 @@
 ﻿using Antlr4.Runtime;
 using System;
+using System.Text;
 
 namespace LogicScript.Parsing
 {
@@ -60,5 +61,34 @@ namespace LogicScript.Parsing
         public bool Equals(SourceSpan other) => other.Start.Equals(Start) && other.End.Equals(End);
 
         public override int GetHashCode() => HashCode.Combine(Start, End);
+
+        public string GetText(string source)
+        {
+            if (Start.FileName != End.FileName)
+                throw new InvalidOperationException("Cannot get text for a span that spans multiple files");
+
+            var lines = source.Split('\n');
+            if (Start.Line < 1 || Start.Line > lines.Length || End.Line < 1 || End.Line > lines.Length)
+                throw new ArgumentOutOfRangeException("Span is out of range of the source text");
+
+            if (Start.Line == End.Line)
+            {
+                var line = lines[Start.Line - 1];
+                return line.Substring(Start.Column - 1, End.Column - Start.Column);
+            }
+            else
+            {
+                var sb = new StringBuilder();
+
+                sb.AppendLine(lines[Start.Line - 1][(Start.Column - 1)..]);
+
+                for (int i = Start.Line; i < End.Line - 1; i++)
+                    sb.AppendLine(lines[i]);
+
+                sb.Append(lines[End.Line - 1][..(End.Column - 1)]);
+
+                return sb.ToString();
+            }
+        }
     }
 }

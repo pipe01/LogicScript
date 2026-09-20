@@ -76,7 +76,7 @@ namespace LogicScript.Testing
                     var resultInputs = step.Inputs.ToDictionary(o => o.Name, o => o.Values.Select(v => v.Value).ToArray());
                     var resultOutputs = step.Outputs.ToDictionary(o => o.Name, o => o.Values.Select(v => v.Value).ToArray());
 
-                    return new FailedStepCaseResult(this, [.. machine.PrintOutput], stepsRan, step.Span, resultInputs, resultOutputs, mismatchedOutputs);
+                    return new FailedStepCaseResult(this, [.. machine.PrintOutput], stepsRan, step, step.Span.GetText(script.Source), resultInputs, resultOutputs, mismatchedOutputs);
                 }
             }
 
