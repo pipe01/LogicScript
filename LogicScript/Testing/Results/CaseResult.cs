@@ -37,16 +37,14 @@ namespace LogicScript.Testing.Results
         public int StepIndex { get; }
         public CaseStep Step { get; }
         public string StepSource { get; }
-        public IDictionary<string, BitsValue[]> Inputs { get; }
         public IDictionary<string, BitsValue[]> ExpectedOutputs { get; }
         public IDictionary<string, BitsValue[]> MismatchedOutputs { get; }
 
-        internal FailedStepCaseResult(TestCase testCase, IReadOnlyCollection<string> printedLines, int stepIndex, CaseStep step, string stepSource, IDictionary<string, BitsValue[]> inputs, IDictionary<string, BitsValue[]> expectedOutputs, IDictionary<string, BitsValue[]> mismatchedOutputs) : base(testCase, printedLines)
+        internal FailedStepCaseResult(TestCase testCase, IReadOnlyCollection<string> printedLines, int stepIndex, CaseStep step, string stepSource, IDictionary<string, BitsValue[]> expectedOutputs, IDictionary<string, BitsValue[]> mismatchedOutputs) : base(testCase, printedLines)
         {
             this.StepIndex = stepIndex;
             this.Step = step;
             this.StepSource = stepSource;
-            this.Inputs = inputs;
             this.ExpectedOutputs = expectedOutputs;
             this.MismatchedOutputs = mismatchedOutputs;
         }
@@ -58,16 +56,17 @@ namespace LogicScript.Testing.Results
             var msg = new StringBuilder();
             msg.AppendLine($"Failed on step {StepIndex} at {Step.Span.Start.FileName}:{Step.Span.Start}");
 
+            var mismatches = MismatchedOutputs.Keys.ToArray();
+
             msg.AppendLine($"            Step: {StepSource.Trim()}");
-            msg.AppendLine($"           Input: {FormatIO(Inputs)}");
-            msg.AppendLine($" Expected output: {FormatIO(ExpectedOutputs)}");
-            msg.AppendLine($"Disparate output: {FormatIO(MismatchedOutputs)}");
+            msg.AppendLine($" Expected output: {FormatIO(ExpectedOutputs, mismatches)}");
+            msg.AppendLine($"      Got output: {FormatIO(MismatchedOutputs, mismatches)}");
 
             return msg.ToString();
 
-            static string FormatIO(IDictionary<string, BitsValue[]> values)
+            static string FormatIO(IDictionary<string, BitsValue[]> values, IEnumerable<string> keys)
             {
-                return string.Join(' ', values.OrderBy(e => e.Key).Select(e => $"{e.Key}({string.Join(", ", e.Value)})").ToArray());
+                return string.Join(' ', keys.Select(k => $"{k}({string.Join(", ", values[k])})").ToArray());
             }
         }
     }
