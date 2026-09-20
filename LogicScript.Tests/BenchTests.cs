@@ -29,13 +29,13 @@ namespace LogicScript.Tests
 
                     return script.TestCases.SelectMany((@case, i) =>
                     {
-                        var caseName = @case.Name ?? $"Case {i}";
+                        var caseName = @case.Name ?? $"Case_{i}";
 
                         return new TestCaseParameters[]
                         {
                             new([lsxFile, i])
                             {
-                                TestName = $"{lsxFile[prefix.Length..^".lsx".Length]}.{caseName}.Compiled"
+                                TestName = $"{lsxFile[prefix.Length..^".lsx".Length]}.{caseName}"
                             },
                         };
                     });
