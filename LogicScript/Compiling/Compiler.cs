@@ -765,7 +765,7 @@ namespace LogicScript.Compiling
 
         private Result Compile(TruncateExpression expr)
         {
-            ulong mask = 1UL << expr.BitSize;
+            ulong mask = (1UL << expr.BitSize) - 1;
 
             Compile(expr.Operand);
             EmitConstant(mask);
