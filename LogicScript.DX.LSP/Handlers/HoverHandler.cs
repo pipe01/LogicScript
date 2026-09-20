@@ -103,10 +103,16 @@ namespace LogicScript.DX.LSP.Handlers
             }
 
             if (constValue != null)
-                lines.Add($"Constant: `{constValue}`");
+            {
+                lines.Add($@"```logicscript
+{constValue}
+0x{constValue.Value.ToStringHex()}
+{constValue.Value.ToStringBinary()}b
+```");
+            }
 
             if (size != 0)
-                lines.Add($"Size: `{size}` bit" + (size != 1 ? "s" : ""));
+                lines.Add($"`{size}` bit{(size != 1 ? "s" : "")} long");
 
             return Task.FromResult<Hover?>(new Hover
             {
