@@ -7,7 +7,7 @@ namespace LogicScript.Parsing.Structures.Expressions
         public Reference Reference { get; } = reference;
 
         public override bool IsConstant => true;
-        public override int BitSize => (int)Math.Ceiling(Math.Log(Value, 2));
+        public override int BitSize => (int)Math.Ceiling(Math.Log(Value, 2)) + 1;
 
         public int Value
         {
