@@ -479,20 +479,25 @@ namespace LogicScript.Compiling
                     switch (port.PortInfo.Target)
                     {
                         case MachinePorts.Output:
+                            Emitter.LoadArgument(ArgumentMachine);
+                            Emitter.LoadConstant(port.StartIndex);
+                            if (port.VectorIndex != null)
+                            {
+                                Emitter.LoadConstant(port.PortInfo.BitSize);
+                                Compile(port.VectorIndex);
+                                Emitter.Convert<int>();
+                                Emitter.Multiply();
+                                Emitter.Add();
+                            }
+                            Compile(stmt.Value);
+
                             if (stmt.Value.BitSize == 1)
                             {
-                                Emitter.LoadArgument(ArgumentMachine);
-                                Emitter.LoadConstant(port.StartIndex); // TODO: vector
-                                Compile(stmt.Value);
                                 Emitter.Convert<bool>();
                                 Emitter.CallVirtual(typeof(IMachine).GetMethod(nameof(IMachine.WriteOutput)));
                             }
                             else
                             {
-                                Emitter.LoadArgument(ArgumentMachine);
-                                Emitter.LoadConstant(port.StartIndex); // TODO: vector
-
-                                Compile(stmt.Value);
                                 Emitter.LoadConstant(port.BitSize);
                                 Emitter.NewObject(typeof(BitsValue), [typeof(ulong), typeof(int)]);
 
