@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using LogicScript.Parsing.Structures.Expressions;
 
 namespace LogicScript.Parsing.Structures
 {
@@ -18,6 +19,7 @@ namespace LogicScript.Parsing.Structures
 
     public readonly struct MachinePortInfo : IPortInfo
     {
+        public string Name { get; }
         public MachinePorts Target { get; }
         /// <summary>
         /// On Inputs and Outputs, this value represents the bit at which the Input/Output vector starts.
@@ -26,25 +28,33 @@ namespace LogicScript.Parsing.Structures
         /// </summary>
         public int StartIndex { get; }
         public int BitSize { get; }
+
+        internal Expression? VectorLengthExpression { get; }
+        /// <summary>
+        /// Same as <see cref="VectorLength"/>'s constant value.
+        /// </summary>
         public int VectorLength { get; }
 
         public SourceSpan Span { get; }
 
-        internal MachinePortInfo(MachinePorts target, int index, int bitSize, int vectorLength, SourceSpan span)
+        internal MachinePortInfo(string name, MachinePorts target, int index, int bitSize, int vectorLength, Expression? lengthExpression, SourceSpan span)
         {
             if (vectorLength <= 0)
                 throw new ArgumentOutOfRangeException(nameof(vectorLength), "Vector length must be one or greater.");
 
+            this.Name = name;
             this.Target = target;
             this.StartIndex = index;
             this.BitSize = bitSize;
             this.VectorLength = vectorLength;
+            this.VectorLengthExpression = lengthExpression;
             this.Span = span;
         }
 
         IEnumerable<ICodeNode> ICodeNode.GetChildren()
         {
-            yield break;
+            if (VectorLengthExpression != null)
+                yield return VectorLengthExpression;
         }
 
         public override bool Equals(object? obj) => obj is IPortInfo other && Equals(other);

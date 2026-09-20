@@ -50,7 +50,7 @@ namespace LogicScript.Parsing.Visitors
                 Context.Errors.AddError("The left hand side of an assignment must be writable", context.reference().Span());
 
             var value = new ExpressionVisitor(BlockContext).Visit(context.expression());
-            var truncated = new TruncateExpression(context.Span(), value, @ref.BitSize);
+            var truncated = new TruncateExpression(context.Span(), value, @ref.BitSize, null);
 
             return new AssignStatement(NodeID.Next(), context.Span(), @ref, truncated);
         }

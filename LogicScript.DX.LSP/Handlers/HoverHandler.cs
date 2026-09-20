@@ -38,7 +38,7 @@ namespace LogicScript.DX.LSP.Handlers
                 typeof(PortValues),
             ]);
             var lines = new List<string>();
-            int size;
+            int size = 0;
             SourceSpan span;
             BitsValue? constValue = null;
 
@@ -46,17 +46,25 @@ namespace LogicScript.DX.LSP.Handlers
             {
                 case MachinePortInfo port:
                     lines.Add(GetPortDescription(port));
-                    size = port.BitSize;
                     span = port.Span;
                     break;
 
                 case Reference @ref:
                     if (@ref is PortReference portRef)
+                    {
                         lines.Add(GetPortDescription(portRef.PortInfo));
-                    if (@ref is ConstantReference cnst)
-                        constValue = cnst.Constant.Value;
+                    }
+                    else if (@ref is LocalReference localRef)
+                    {
+                        lines.Add(SyntaxHighlight($"local {localRef.Name}'{localRef.BitSize}"));
+                    }
+                    else
+                    {
+                        if (@ref is ConstantReference cnst)
+                            constValue = cnst.Constant.Value;
 
-                    size = @ref.BitSize;
+                        size = @ref.BitSize;
+                    }
                     span = @ref.Span;
                     break;
 
@@ -113,9 +121,19 @@ namespace LogicScript.DX.LSP.Handlers
 
         private static string GetPortDescription(MachinePortInfo port)
         {
-            return port.BitSize == 1
-                ? $"**{port.Target} index {port.StartIndex}**"
-                : $"**{port.Target} index {port.StartIndex} to {port.StartIndex + port.BitSize - 1}**";
+            var keyword = port.Target switch
+            {
+                MachinePorts.Input => "input",
+                MachinePorts.Output => "output",
+                MachinePorts.Register => "reg",
+                _ => "",
+            };
+            var size = port.BitSize == 1 ? "" : $"'{port.BitSize}";
+            var vector = port.VectorLength == 1 ? "" : $"[{port.VectorLength}]";
+
+            return SyntaxHighlight($"{keyword}{size} {port.Name}{vector}");
         }
+
+        private static string SyntaxHighlight(string str) => $"```logicscript\n{str}\n```";
     }
 }

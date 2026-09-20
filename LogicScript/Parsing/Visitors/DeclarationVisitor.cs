@@ -119,13 +119,14 @@ namespace LogicScript.Parsing.Visitors
                 Errors.AddError($"The maximum bit size is {BitsValue.BitSize}", context.Span());
 
             int length = 1;
+            Expression? lengthExpression = null;
 
             if (context.simple_indexer()?.index != null)
             {
-                var indexExpr = new ExpressionVisitor(new(Context, isInConstant: true)).Visit(context.simple_indexer().index);
+                lengthExpression = new ExpressionVisitor(new(Context, isInConstant: true)).Visit(context.simple_indexer().index);
 
-                if (indexExpr is not PlaceholderExpression)
-                    length = (int)indexExpr.GetConstantValue().Number;
+                if (lengthExpression is not PlaceholderExpression)
+                    length = (int)lengthExpression.GetConstantValue().Number;
             }
 
             if (length <= 0)
@@ -155,7 +156,7 @@ namespace LogicScript.Parsing.Visitors
             // See MachinePortInfo.StartIndex
             int startIndex = target == MachinePorts.Register ? dic.Count : dic.Values.Sum(o => o.BitSize);
 
-            dic.Add(name, new MachinePortInfo(target, startIndex, size, length, new(context.IDENT().Symbol)));
+            dic.Add(name, new MachinePortInfo(name, target, startIndex, size, length, lengthExpression, new(context.IDENT().Symbol)));
         }
     }
 }

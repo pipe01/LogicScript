@@ -15,7 +15,7 @@ namespace LogicScript.Parsing.Structures
 
         public SourceSpan Span { get; } = span;
 
-        public IEnumerable<ICodeNode> GetChildren()
+        public virtual IEnumerable<ICodeNode> GetChildren()
         {
             yield return Port;
         }
@@ -33,6 +33,12 @@ namespace LogicScript.Parsing.Structures
 
         public override bool IsWritable => PortInfo.Target is MachinePorts.Output or MachinePorts.Register or MachinePorts.Placeholder;
         public override bool IsReadable => PortInfo.Target is MachinePorts.Input or MachinePorts.Register or MachinePorts.Placeholder;
+
+        public override IEnumerable<ICodeNode> GetChildren()
+        {
+            if (VectorIndex != null)
+                yield return VectorIndex;
+        }
 
         public override string ToString()
         {
