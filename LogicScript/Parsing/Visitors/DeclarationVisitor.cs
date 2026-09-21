@@ -118,7 +118,7 @@ namespace LogicScript.Parsing.Visitors
             var resultSize = (int)context.ret_size.GetConstantValue(Context);
             var parameters = context.param_list() == null ? [] : ParseParameters(context.param_list()).ToArray();
 
-            var blockContext = new BlockContext(Context);
+            var blockContext = new BlockContext(Context, functionResultSize: resultSize);
             blockContext.Locals.AddRange(parameters);
 
             var body = context.block() == null

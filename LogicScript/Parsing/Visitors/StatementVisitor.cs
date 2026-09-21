@@ -202,5 +202,20 @@ namespace LogicScript.Parsing.Visitors
 
             return new BreakStatement(NodeID.Next(), context.Span(), BlockContext.LoopID.GetValueOrDefault());
         }
+
+        public override Statement VisitStmt_return([NotNull] LogicScriptParser.Stmt_returnContext context)
+        {
+            int? resultSize = BlockContext.Ancestry().Select(c => c.FunctionResultSize).FirstOrDefault(r => r != null);
+
+            if (resultSize == null)
+                Context.Errors.AddError("Cannot return outside of a function", context.Span());
+
+            if (context.expression() == null)
+                Context.Errors.AddError("Missing return value", context.Span());
+
+            var returnedValue = new ExpressionVisitor(BlockContext, resultSize).VisitOrPlaceholder(context.expression(), context.Span());
+
+            return new ReturnStatement(NodeID.Next(), context.Span(), returnedValue);
+        }
     }
 }

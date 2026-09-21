@@ -27,7 +27,7 @@ port_info           : (SQUOTE size=expression)? WS+ IDENT simple_indexer? ;
 
 block               : (wsnl stmt WS* NL wsnl)* wsnl ;
 
-stmt                : stmt_if | stmt_for | stmt_assign | stmt_task | stmt_vardecl | stmt_while | stmt_break ;
+stmt                : stmt_if | stmt_for | stmt_assign | stmt_task | stmt_vardecl | stmt_while | stmt_break | stmt_return ;
 stmt_assign         : reference wsnl EQUALS wsnl expression       # assignRegular
                     | reference wsnl TRUNC_EQUALS wsnl expression # assignTruncate
                     ;
@@ -53,6 +53,8 @@ task_print          : AT_PRINT wsnl_req (expression | TEXT) ;
 task_update         : AT_QUEUEUPDATE ;
 
 stmt_vardecl        : LOCAL WS+ VARIABLE (SQUOTE size=atom)? (wsnl EQUALS wsnl expression)? ;
+
+stmt_return         : RETURN (WS+ expression)? ;
 
 expression          : LPAREN wsnl expression wsnl RPAREN                        # exprParen
                     | LPAREN wsnl expression wsnl RPAREN SQUOTE size=expression # exprTrunc

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace LogicScript.Parsing.Visitors
 {
-    internal sealed class BlockContext(ScriptContext script, BlockContext? outer = null, bool isInConstant = false, NodeID? loopID = null)
+    internal sealed class BlockContext(ScriptContext script, BlockContext? outer = null, bool isInConstant = false, NodeID? loopID = null, int? functionResultSize = null)
     {
         public ScriptContext Script { get; } = script;
         public BlockContext? Outer { get; } = outer;
@@ -12,6 +12,7 @@ namespace LogicScript.Parsing.Visitors
         public ErrorSink Errors => Script.Errors;
 
         public bool IsInConstant { get; } = isInConstant;
+        public int? FunctionResultSize { get; } = functionResultSize;
         public NodeID? LoopID { get; } = loopID;
 
         public bool DoesIdentifierExist(string iden)
@@ -41,6 +42,19 @@ namespace LogicScript.Parsing.Visitors
 
             local = default;
             return false;
+        }
+
+        public IEnumerable<BlockContext> Ancestry()
+        {
+            yield return this;
+
+            if (Outer != null)
+            {
+                foreach (var ctx in Outer.Ancestry())
+                {
+                    yield return ctx;
+                }
+            }
         }
     }
 }
