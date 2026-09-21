@@ -35,7 +35,7 @@
 			"patterns": [
 				{
 					"name": "keyword.control.logicscript",
-					"match": "\\b(when|startup|assign|if|else|for|while|from|to|end|break)\\b"
+					"match": "\\b(when|startup|assign|if|else|for|while|from|to|end|break|def)\\b"
 				},
 				{
 					"name": "keyword.other.logicscript",

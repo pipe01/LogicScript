@@ -94,8 +94,6 @@ namespace LogicScript.DX.LSP
                 }
             }
 
-            var locals = script.VisitAll().OfType<BlockStatement>().Where(s => s.Span.Contains(location)).SelectMany(b => b.Locals);
-
             if (addWritables)
             {
                 AddPorts(script.Outputs);
@@ -132,6 +130,8 @@ namespace LogicScript.DX.LSP
             if (addLocals)
             {
                 var range = new Range(request.Position.Line, dollarIndex > spaceIndex ? dollarIndex : lastLine.Length, request.Position.Line, lastLine.Length);
+                var locals = script.VisitAll().OfType<BlockStatement>().Where(s => s.Span.Contains(location)).SelectMany(b => b.Locals)
+                    .Concat(script.VisitAll().OfType<FunctionBlock>().Where(s => s.Span.Contains(location)).SelectMany(b => b.Parameters));
 
                 foreach (var local in locals)
                 {

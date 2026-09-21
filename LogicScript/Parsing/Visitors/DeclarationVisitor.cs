@@ -111,6 +111,25 @@ namespace LogicScript.Parsing.Visitors
             return null;
         }
 
+        public override object? VisitDecl_function([NotNull] LogicScriptParser.Decl_functionContext context)
+        {
+            var name = context.name.Text;
+            var resultSize = (int)context.ret_size.GetConstantValue(Context);
+            var parameters = context.param_list() == null ? [] : ParseParameters(context.param_list()).ToArray();
+
+            var blockContext = new BlockContext(Context);
+            blockContext.Locals.AddRange(parameters);
+
+            var body = context.block() == null
+                ? new BlockStatement(NodeID.Next(), new(), [], [])
+                : (BlockStatement)new StatementVisitor(Context, blockContext).Visit(context.block());
+
+            // TODO: maybe set the span as the function's name span?
+            Script.Functions.Add(name, new(context.Span(), name, resultSize, parameters, body));
+
+            return null;
+        }
+
         private void Visit(LogicScriptParser.Port_infoContext context, IDictionary<string, MachinePortInfo> dic, MachinePorts target)
         {
             int size = context.size == null ? 1 : (int)context.size.GetConstantValue(Context);
@@ -157,6 +176,22 @@ namespace LogicScript.Parsing.Visitors
             int startIndex = target == MachinePorts.Register ? dic.Count : dic.Values.Sum(o => o.BitSize);
 
             dic.Add(name, new MachinePortInfo(name, target, startIndex, size, length, lengthExpression, new(context.IDENT().Symbol)));
+        }
+
+        private IEnumerable<LocalInfo> ParseParameters(LogicScriptParser.Param_listContext context)
+        {
+            var name = context.name.Text;
+            var size = context.size == null ? 0 : (int)context.size.GetConstantValue(Context);
+
+            yield return new(NodeID.Next(), size, name, context.name.Span());
+
+            if (context.param_list() != null)
+            {
+                foreach (var param in ParseParameters(context.param_list()))
+                {
+                    yield return param;
+                }
+            }
         }
     }
 }

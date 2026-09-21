@@ -13,14 +13,15 @@ step_repeat         : PLUS DEC_NUMBER ;
 step_ports          : (step_portvalue (WS+ step_portvalue)*)? ;
 step_portvalue      : port=IDENT LPAREN expression (wsnl COMMA wsnl expression)* RPAREN ;
 
-declaration         : decl_const | decl_input | decl_output | decl_register | decl_when | decl_startup | decl_assign ;
+declaration         : decl_const | decl_input | decl_output | decl_register | decl_when | decl_startup | decl_assign | decl_function ;
 decl_const          : CONST WS+ IDENT WS+ EQUALS WS+ expression ;
 decl_input          : INPUT port_info ;
 decl_output         : OUTPUT port_info ;
 decl_register       : REG port_info ;
-decl_when           : WHEN space=WS+ (cond=expression | any='*') NL+ block END ;
+decl_when           : WHEN space=WS+ (cond=expression | any='*') WS* NL+ block END ;
 decl_startup        : STARTUP WS* NL+ block END ;
 decl_assign         : ASSIGN WS+ stmt_assign ;
+decl_function       : DEF SQUOTE ret_size=atom WS+ name=IDENT LPAREN param_list? RPAREN WS* NL+ block END;
 
 port_info           : (SQUOTE size=expression)? WS+ IDENT simple_indexer? ;
 
@@ -55,7 +56,7 @@ stmt_vardecl        : LOCAL WS+ VARIABLE (SQUOTE size=atom)? (wsnl EQUALS wsnl e
 
 expression          : LPAREN wsnl expression wsnl RPAREN                        # exprParen
                     | LPAREN wsnl expression wsnl RPAREN SQUOTE size=expression # exprTrunc
-                    | funcName=IDENT LPAREN wsnl expression wsnl RPAREN         # exprCall
+                    | funcName=IDENT LPAREN wsnl arg_list wsnl RPAREN           # exprCall
                     | LEN LPAREN wsnl (reference | expression) wsnl RPAREN      # exprLength
                     | expression slice_indexer                                  # exprSlice
                     | NOT expression                                            # exprNegate
@@ -63,7 +64,7 @@ expression          : LPAREN wsnl expression wsnl RPAREN                        
                           OR | AND | XOR | POW | PLUS | MINUS |
                           MULT | DIVIDE | MOD | LSHIFT | RSHIFT |
                           COMPARE_EQUALS | COMPARE_NOTEQUALS | COMPARE_GREATER |
-                          COMPARE_LESSER) wsnl expression             # exprBinOp
+                          COMPARE_LESSER) wsnl expression                       # exprBinOp
                     | <assoc=right> cond=expression wsnl QMARK wsnl
                       ifTrue=expression wsnl COLON wsnl
                       ifFalse=expression                                        # exprTernary
@@ -86,3 +87,6 @@ wsnl_req            : (WS | NL)+ ;
 
 slice_indexer       : LBRACE lr=(COMPARE_GREATER | COMPARE_LESSER)? WS* offset=expression wsnl (COMMA WS* len=expression)? RBRACE ;
 simple_indexer      : LBRACKET index=expression RBRACKET ;
+
+param_list          : WS* name=VARIABLE SQUOTE size=atom WS* (COMMA WS* param_list)? ;
+arg_list            : WS* value=expression WS* (COMMA WS* arg_list)? ;

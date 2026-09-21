@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using Antlr4.Runtime;
 using Antlr4.Runtime.Misc;
 using Antlr4.Runtime.Tree;
@@ -172,23 +174,30 @@ namespace LogicScript.Parsing.Visitors
             return new UnaryOperatorExpression(context.Span(), Operator.Not, Visit(context.expression()));
         }
 
+        private static readonly Dictionary<string, Operator> UnaryFunctions = new()
+        {
+            ["rise"] = Operator.Rise,
+            ["fall"] = Operator.Fall,
+            ["change"] = Operator.Change,
+            ["allOnes"] = Operator.AllOnes,
+        };
+
         public override Expression VisitExprCall([NotNull] LogicScriptParser.ExprCallContext context)
         {
-            var operand = Visit(context.expression());
+            var args = VisitArgList(context.arg_list()).ToArray();
 
-            var op = context.funcName.Text switch
+            if (UnaryFunctions.TryGetValue(context.funcName.Text, out var op))
             {
-                "rise" => Operator.Rise,
-                "fall" => Operator.Fall,
-                "change" => Operator.Change,
-                "allOnes" => Operator.AllOnes,
-                _ => throw new ParseException($"Unknown function '{context.funcName.Text}'", context.Span())
-            };
+                if (args.Length != 1)
+                    Context.Errors.AddError($"{context.funcName} takes a single parameter, {args.Length} were given", context.Span());
 
-            if (op == Operator.Rise || op == Operator.Fall || op == Operator.Change)
-                Context.Errors.AddError($"The {op.ToString().ToLower()} operator is not yet implemented", new SourceSpan(context.funcName));
+                if (op == Operator.Rise || op == Operator.Fall || op == Operator.Change)
+                    Context.Errors.AddError($"The {op.ToString().ToLower()} operator is not yet implemented", context.funcName.Span());
 
-            return new UnaryOperatorExpression(context.Span(), op, operand);
+                return new UnaryOperatorExpression(context.Span(), op, args[0]);
+            }
+
+            throw new NotImplementedException(); // TODO: implement
         }
 
         public override Expression VisitExprLength([NotNull] LogicScriptParser.ExprLengthContext context)
@@ -232,6 +241,19 @@ namespace LogicScript.Parsing.Visitors
             var size = (int)context.size.GetConstantValue(Context.Script, out var sizeExpr);
 
             return new TruncateExpression(context.Span(), operand, size, sizeExpr);
+        }
+
+        private IEnumerable<Expression> VisitArgList(LogicScriptParser.Arg_listContext context)
+        {
+            yield return Visit(context.expression());
+
+            if (context.arg_list() != null)
+            {
+                foreach (var arg in VisitArgList(context.arg_list()))
+                {
+                    yield return arg;
+                }
+            }
         }
     }
 }

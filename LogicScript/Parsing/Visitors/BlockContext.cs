@@ -7,7 +7,7 @@ namespace LogicScript.Parsing.Visitors
     {
         public ScriptContext Script { get; } = script;
         public BlockContext? Outer { get; } = outer;
-        public IList<LocalInfo> Locals { get; } = [];
+        public List<LocalInfo> Locals { get; } = [];
 
         public ErrorSink Errors => Script.Errors;
 
