@@ -20,7 +20,7 @@ namespace LogicScript.Testing
             this.Cases = cases;
         }
 
-        public async IAsyncEnumerable<CaseResult> Run(IScriptInstance runner, Script script, IDebugger? debugger)
+        public async IAsyncEnumerable<CaseResult> Run(CompiledScript compiledScript, Script script, IDebugger? debugger)
         {
             var machine = new TestingMachine(script.RegisteredInputLength, script.RegisteredOutputLength);
 
@@ -30,10 +30,11 @@ namespace LogicScript.Testing
             foreach (var @case in Cases)
             {
                 machine.Reset();
-                runner.HasRun = false;
-                runner.Registers.Reset();
 
-                yield return await @case.Run(runner, script, machine, debugger);
+                var instance = compiledScript.Instantiate(machine);
+                instance.Debugger = debugger;
+
+                yield return await @case.Run(instance, script, machine);
             }
         }
 

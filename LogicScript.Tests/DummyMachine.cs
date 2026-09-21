@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using LogicScript.Data;
 using NUnit.Framework;
 
@@ -41,7 +42,7 @@ namespace LogicScript.Tests
 
         public void AssertPrinted(params string[] lines)
         {
-            Assert.AreEqual(lines, Printed);
+            Assert.AreEqual(lines.Select(o => o + "\n"), Printed);
         }
 
         public BitsValue ReadInputs(int startIndex, int count)

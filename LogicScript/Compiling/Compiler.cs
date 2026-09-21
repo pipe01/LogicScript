@@ -29,7 +29,12 @@ namespace LogicScript.Compiling
             this.Type = type;
         }
 
-        public IScriptInstance Instantiate() => (IScriptInstance)Activator.CreateInstance(Type);
+        public IScriptInstance Instantiate(IMachine machine)
+        {
+            var instance = (IScriptInstance)Activator.CreateInstance(Type);
+            instance.Machine = machine;
+            return instance;
+        }
     }
 
     public sealed class Compiler
@@ -45,8 +50,6 @@ namespace LogicScript.Compiling
         }
 
         private const int ArgumentThis = 0;
-        private const int ArgumentMachine = 1;
-        private const int ArgumentDebugger = 2;
 
         private readonly Script Script;
         private readonly bool EmitDebug;
@@ -54,6 +57,8 @@ namespace LogicScript.Compiling
         private readonly TypeBuilder TypeBuilder;
         private readonly FieldInfo HasRunField;
         private readonly FieldInfo RegistersField;
+        private readonly FieldInfo MachineField;
+        private readonly FieldInfo DebuggerField;
 
         private readonly Stack<Scope> Stack = new();
         private int LocalCounter;
@@ -76,9 +81,13 @@ namespace LogicScript.Compiling
 
             HasRunField = tb.DefineField("_hasRun", typeof(bool), FieldAttributes.Private);
             RegistersField = tb.DefineField("_registers", script.RegistersType, FieldAttributes.Private);
+            MachineField = tb.DefineField("_machine", typeof(IMachine), FieldAttributes.Private);
+            DebuggerField = tb.DefineField("_debugger", typeof(IDebugger), FieldAttributes.Private);
 
             tb.DefineProperty(nameof(IScriptInstance.Registers), typeof(IRegisters), RegistersField, false);
             tb.DefineProperty(nameof(IScriptInstance.HasRun), typeof(bool), HasRunField, true);
+            tb.DefineProperty(nameof(IScriptInstance.Machine), typeof(IMachine), MachineField, true);
+            tb.DefineProperty(nameof(IScriptInstance.Debugger), typeof(IDebugger), DebuggerField, true);
 
             var ctorMethod = tb.DefineConstructor(MethodAttributes.Public, CallingConventions.HasThis, Type.EmptyTypes);
             var ctorIL = ctorMethod.GetILGenerator();
@@ -89,7 +98,7 @@ namespace LogicScript.Compiling
 
             Emitter = Emit.BuildMethod(
                 typeof(void),
-                [typeof(IMachine), typeof(IDebugger)],
+                [],
                 tb,
                 nameof(IScriptInstance.Run),
                 MethodAttributes.Public | MethodAttributes.Virtual | MethodAttributes.NewSlot,
@@ -116,9 +125,9 @@ namespace LogicScript.Compiling
 
             var skip = Emitter.DefineLabel();
 
-            Emitter.LoadArgument(ArgumentDebugger);
+            EmitThisField(DebuggerField);
             Emitter.BranchIfFalse(skip);
-            Emitter.LoadArgument(ArgumentDebugger);
+            EmitThisField(DebuggerField);
             body();
             Emitter.MarkLabel(skip);
         }
@@ -238,7 +247,7 @@ namespace LogicScript.Compiling
             DebugEmit(() =>
             {
                 Emitter.LoadArgument(ArgumentThis);
-                Emitter.LoadArgument(ArgumentMachine);
+                EmitThisField(MachineField);
                 Emitter.LoadConstant(stmt.ID.ID);
                 Emitter.NewObject<NodeID, int>();
                 Emitter.CallVirtual(typeof(IDebugger).GetMethod(nameof(IDebugger.TraceStatement)));
@@ -264,7 +273,7 @@ namespace LogicScript.Compiling
             {
                 case PrintTaskStatement print:
                     {
-                        Emitter.LoadArgument(ArgumentMachine);
+                        EmitThisField(MachineField);
 
                         if (print.String.Parts.Count == 0)
                         {
@@ -316,7 +325,7 @@ namespace LogicScript.Compiling
                     }
 
                 case ShowTaskStatement show:
-                    Emitter.LoadArgument(ArgumentMachine);
+                    EmitThisField(MachineField);
                     Compile(show.Value);
 
                     using (var local = Emitter.DeclareLocal<ulong>())
@@ -330,7 +339,7 @@ namespace LogicScript.Compiling
                     return Result.Empty;
 
                 case UpdateTaskStatement:
-                    Emitter.LoadArgument(ArgumentMachine);
+                    EmitThisField(MachineField);
                     Emitter.CallVirtual(typeof(IMachine).GetMethod(nameof(IMachine.QueueUpdate)));
 
                     return Result.Empty;
@@ -479,7 +488,7 @@ namespace LogicScript.Compiling
                     switch (port.PortInfo.Target)
                     {
                         case MachinePorts.Output:
-                            Emitter.LoadArgument(ArgumentMachine);
+                            EmitThisField(MachineField);
                             Emitter.LoadConstant(port.StartIndex);
                             if (port.VectorIndex != null)
                             {
@@ -719,7 +728,7 @@ namespace LogicScript.Compiling
                     switch (port.PortInfo.Target)
                     {
                         case MachinePorts.Input:
-                            Emitter.LoadArgument(ArgumentMachine);
+                            EmitThisField(MachineField);
                             Emitter.LoadConstant(port.PortInfo.StartIndex);
                             if (port.VectorIndex != null)
                             {
@@ -796,35 +805,5 @@ namespace LogicScript.Compiling
             Emitter.CompareEqual(); // TODO: this is an int32
             return Result.Empty;
         }
-
-        // private Result ComputePortOffset(PortReference port)
-        // {
-        //     if (port.VectorIndex == null)
-        //     {
-        //         Emitter.LoadConstant(port.StartIndex);
-        //     }
-        //     else
-        //     {
-        //         if (port.VectorIndex.IsConstant)
-        //         {
-        //             var vectorIndex = (int)GetConstantValue(port.VectorIndex);
-        //             return port.PortInfo.Target == MachinePorts.Register
-        //                 ? Expression.Constant(port.StartIndex + vectorIndex)
-        //                 : Expression.Constant(port.StartIndex + port.BitSize * vectorIndex);
-        //         }
-        //         else
-        //         {
-        //             return Expression.Add(
-        //                 Expression.Constant(port.StartIndex),
-        //                 port.PortInfo.Target == MachinePorts.Register
-        //                     ? Compile(port.VectorIndex, false)
-        //                     : Expression.Multiply(
-        //                         Expression.Constant(port.BitSize),
-        //                         Compile(port.VectorIndex, false)
-        //                     )
-        //             );
-        //         }
-        //     }
-        // }
     }
 }

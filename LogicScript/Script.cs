@@ -172,7 +172,9 @@ namespace LogicScript
     {
         IRegisters Registers { get; }
         bool HasRun { get; set; }
+        IMachine Machine { get; set; }
+        IDebugger? Debugger { get; set; }
 
-        void Run(IMachine machine, IDebugger? debugger = null);
+        void Run();
     }
 }
