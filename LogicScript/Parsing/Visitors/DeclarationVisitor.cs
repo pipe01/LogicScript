@@ -114,6 +114,7 @@ namespace LogicScript.Parsing.Visitors
         public override object? VisitDecl_function([NotNull] LogicScriptParser.Decl_functionContext context)
         {
             var name = context.name.Text;
+            var nameSpan = context.name.Span();
             var resultSize = (int)context.ret_size.GetConstantValue(Context);
             var parameters = context.param_list() == null ? [] : ParseParameters(context.param_list()).ToArray();
 
@@ -124,8 +125,8 @@ namespace LogicScript.Parsing.Visitors
                 ? new BlockStatement(NodeID.Next(), new(), [], [])
                 : (BlockStatement)new StatementVisitor(Context, blockContext).Visit(context.block());
 
-            // TODO: maybe set the span as the function's name span?
-            Script.Functions.Add(name, new(context.Span(), name, resultSize, parameters, body));
+            if (!Script.Functions.TryAdd(name, new(context.Span(), name, nameSpan, resultSize, parameters, body)))
+                Context.Errors.AddError($"Function \"{name}\" already defined", nameSpan);
 
             return null;
         }

@@ -140,16 +140,15 @@ namespace LogicScript.Parsing.Visitors
             Expression? value = null;
 
             // If the variable has a bit size marker, we will use that size. Otherwise, we will later infer it from the value
-            int size = context.size == null ? 0 : (int)context.size.GetConstantValue(BlockContext.Script);
+            int? size = context.size == null ? null : (int)context.size.GetConstantValue(BlockContext.Script);
 
             if (context.expression() != null)
             {
                 value = new ExpressionVisitor(BlockContext, size).Visit(context.expression());
 
-                if (size == 0)
-                    size = value.BitSize;
+                size ??= value.BitSize;
             }
-            else if (size == 0)
+            else if (size == null)
             {
                 BlockContext.Errors.AddError("You must specify a local's size or initialize it", context.Span(), true);
             }
@@ -160,7 +159,7 @@ namespace LogicScript.Parsing.Visitors
                 return new DeclareLocalStatement(NodeID.Next(), context.Span(), existingLocal, value, context.size != null);
             }
 
-            var localInfo = BlockContext.AddLocal(name, size, new SourceSpan(context.VARIABLE().Symbol));
+            var localInfo = BlockContext.AddLocal(name, size!.Value, new SourceSpan(context.VARIABLE().Symbol));
 
             return new DeclareLocalStatement(NodeID.Next(), context.Span(), localInfo, value, context.size != null);
         }

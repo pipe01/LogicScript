@@ -56,7 +56,7 @@ stmt_vardecl        : LOCAL WS+ VARIABLE (SQUOTE size=atom)? (wsnl EQUALS wsnl e
 
 expression          : LPAREN wsnl expression wsnl RPAREN                        # exprParen
                     | LPAREN wsnl expression wsnl RPAREN SQUOTE size=expression # exprTrunc
-                    | funcName=IDENT LPAREN wsnl arg_list wsnl RPAREN           # exprCall
+                    | funcName=IDENT LPAREN wsnl arg_list? wsnl RPAREN          # exprCall
                     | LEN LPAREN wsnl (reference | expression) wsnl RPAREN      # exprLength
                     | expression slice_indexer                                  # exprSlice
                     | NOT expression                                            # exprNegate

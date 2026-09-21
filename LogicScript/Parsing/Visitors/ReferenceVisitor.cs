@@ -20,7 +20,7 @@ namespace LogicScript.Parsing.Visitors
             {
                 Context.Errors.AddError($"Unknown port '{name}'", nameSpan);
 
-                return new("<>", MachinePorts.Placeholder, 0, defaultBitSize, 1, null, nameSpan);
+                return new("", MachinePorts.Placeholder, 0, defaultBitSize, 1, null, nameSpan);
             }
 
             return port;

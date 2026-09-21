@@ -3,9 +3,10 @@ using LogicScript.Parsing.Structures.Statements;
 
 namespace LogicScript.Parsing.Structures.Blocks
 {
-    internal class FunctionBlock(SourceSpan span, string name, int resultSize, LocalInfo[] parameters, BlockStatement body) : Block(span)
+    internal class FunctionBlock(SourceSpan span, string name, SourceSpan nameSpan, int resultSize, LocalInfo[] parameters, BlockStatement body) : Block(span)
     {
         public string Name { get; } = name;
+        public SourceSpan NameSpan { get; } = nameSpan;
         public int ResultSize { get; } = resultSize;
         public LocalInfo[] Parameters { get; } = parameters;
         public BlockStatement Body { get; } = body;

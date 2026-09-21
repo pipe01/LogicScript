@@ -10,15 +10,15 @@ using LogicScript.Parsing.Structures.Expressions;
 
 namespace LogicScript.Parsing.Visitors
 {
-    class ExpressionVisitor(BlockContext context, int maxBitSize = 0) : LogicScriptParserBaseVisitor<Expression>
+    class ExpressionVisitor(BlockContext context, int? maxBitSize = null) : LogicScriptParserBaseVisitor<Expression>
     {
         private readonly BlockContext Context = context;
-        private readonly int MaxBitSize = maxBitSize;
+        private readonly int? MaxBitSize = maxBitSize;
 
         public Expression VisitOrPlaceholder(IParseTree tree, SourceSpan defaultSpan)
         {
             if (tree == null)
-                return new PlaceholderExpression(defaultSpan, MaxBitSize);
+                return new PlaceholderExpression(defaultSpan, MaxBitSize ?? 0);
             return Visit(tree);
         }
 
@@ -29,12 +29,12 @@ namespace LogicScript.Parsing.Visitors
             if (expr == null)
             {
                 if (tree is ParserRuleContext ctx)
-                    return new PlaceholderExpression(ctx.Span(), MaxBitSize);
+                    return new PlaceholderExpression(ctx.Span(), MaxBitSize ?? 0);
                 else
                     throw new ParseCanceledException();
             }
 
-            if (MaxBitSize != 0 && expr.BitSize > MaxBitSize)
+            if (MaxBitSize != null && expr.BitSize > MaxBitSize)
                 Context.Errors.AddError($"Cannot fit a {expr.BitSize} bits long number into {MaxBitSize} bits", expr);
 
             return expr;
@@ -46,7 +46,7 @@ namespace LogicScript.Parsing.Visitors
             {
                 var n = new NumberVisitor().Visit(context.number());
 
-                return new NumberLiteralExpression(context.Span(), new BitsValue(n, Math.Max(MaxBitSize, n.Length)));
+                return new NumberLiteralExpression(context.Span(), new BitsValue(n, Math.Max(MaxBitSize ?? 0, n.Length)));
             }
             else if (context.reference() != null)
             {
@@ -61,7 +61,7 @@ namespace LogicScript.Parsing.Visitors
             if (Context.IsInConstant)
                 Context.Errors.AddError("You can only reference constants from other constants", context.Span(), true);
 
-            var @ref = new ReferenceVisitor(Context, MaxBitSize).Visit(context);
+            var @ref = new ReferenceVisitor(Context, MaxBitSize ?? 0).Visit(context);
 
             return new ReferenceExpression(context.Span(), @ref);
         }
@@ -74,7 +74,7 @@ namespace LogicScript.Parsing.Visitors
             if (Context.IsInConstant)
                 Context.Errors.AddError("You can only reference constants from other constants", context.Span(), true);
 
-            var @ref = new ReferenceVisitor(Context, MaxBitSize).Visit(context);
+            var @ref = new ReferenceVisitor(Context, MaxBitSize ?? 0).Visit(context);
 
             if (!@ref.IsReadable)
                 Context.Errors.AddError("An identifier in an expression must be readable", context.Span());
@@ -87,7 +87,7 @@ namespace LogicScript.Parsing.Visitors
             if (Context.IsInConstant)
                 Context.Errors.AddError("You can only reference constants from other constants", context.Span(), true);
 
-            var @ref = new ReferenceVisitor(Context, MaxBitSize).Visit(context);
+            var @ref = new ReferenceVisitor(Context, MaxBitSize ?? 0).Visit(context);
 
             return new ReferenceExpression(context.Span(), @ref);
         }
@@ -184,20 +184,41 @@ namespace LogicScript.Parsing.Visitors
 
         public override Expression VisitExprCall([NotNull] LogicScriptParser.ExprCallContext context)
         {
-            var args = VisitArgList(context.arg_list()).ToArray();
+            var name = context.funcName.Text;
 
-            if (UnaryFunctions.TryGetValue(context.funcName.Text, out var op))
+            if (UnaryFunctions.TryGetValue(name, out var op))
             {
-                if (args.Length != 1)
-                    Context.Errors.AddError($"{context.funcName} takes a single parameter, {args.Length} were given", context.Span());
+                if (context.arg_list() == null)
+                {
+                    Context.Errors.AddError($"{name} requires an operand", context.Span());
+                    return new PlaceholderExpression(context.Span());
+                }
 
-                if (op == Operator.Rise || op == Operator.Fall || op == Operator.Change)
+                if (context.arg_list().arg_list() != null)
+                    Context.Errors.AddError($"{name} takes a single parameter", context.Span());
+
+                if (op is Operator.Rise or Operator.Fall or Operator.Change)
                     Context.Errors.AddError($"The {op.ToString().ToLower()} operator is not yet implemented", context.funcName.Span());
 
-                return new UnaryOperatorExpression(context.Span(), op, args[0]);
+                var value = Visit(context.arg_list().value);
+
+                return new UnaryOperatorExpression(context.Span(), op, value);
             }
 
-            throw new NotImplementedException(); // TODO: implement
+            if (!Context.Script.Script.Functions.TryGetValue(name, out var function))
+            {
+                Context.Errors.AddError($"Function \"{name}\" not found", context.funcName.Span());
+                return new PlaceholderExpression(context.Span());
+            }
+
+            var args = Flatten(context.arg_list())
+                .Select((c, i) => new ExpressionVisitor(Context, i < function.Parameters.Length ? function.Parameters[i].BitSize : null).Visit(c))
+                .ToArray();
+
+            if (args.Length != function.Parameters.Length)
+                Context.Errors.AddError($"Function \"{name}\" takes {function.Parameters.Length} parameter(s) but {args.Length} were given", context.Span());
+
+            return new FunctionCallExpression(context.Span(), function, args);
         }
 
         public override Expression VisitExprLength([NotNull] LogicScriptParser.ExprLengthContext context)
@@ -211,7 +232,7 @@ namespace LogicScript.Parsing.Visitors
                 if (Context.Script.Script.Constants.TryGetValue(name, out var @const))
                     return new UnaryOperatorExpression(context.Span(), Operator.Length, @const.Expression);
 
-                var reference = new ReferenceVisitor(Context, MaxBitSize, true).Visit(context.reference());
+                var reference = new ReferenceVisitor(Context, MaxBitSize ?? 0, true).Visit(context.reference());
                 return new ReferenceLengthExpression(context.Span(), reference);
             }
 
@@ -243,17 +264,15 @@ namespace LogicScript.Parsing.Visitors
             return new TruncateExpression(context.Span(), operand, size, sizeExpr);
         }
 
-        private IEnumerable<Expression> VisitArgList(LogicScriptParser.Arg_listContext context)
+        private IEnumerable<LogicScriptParser.ExpressionContext> Flatten(LogicScriptParser.Arg_listContext context)
         {
-            yield return Visit(context.expression());
+            if (context == null)
+                yield break;
 
-            if (context.arg_list() != null)
-            {
-                foreach (var arg in VisitArgList(context.arg_list()))
-                {
-                    yield return arg;
-                }
-            }
+            yield return context.expression();
+
+            foreach (var arg in Flatten(context.arg_list()))
+                yield return arg;
         }
     }
 }
