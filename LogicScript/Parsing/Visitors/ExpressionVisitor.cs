@@ -259,7 +259,7 @@ namespace LogicScript.Parsing.Visitors
         {
             // Create a new unbounded expression visitor since we don't care about length
             var operand = new ExpressionVisitor(Context).Visit(context.expression(0));
-            var size = (int)context.size.GetConstantValue(Context.Script, out var sizeExpr);
+            var size = Context.Script.ParseBitSize(context.size, out var sizeExpr);
 
             return new TruncateExpression(context.Span(), operand, size, sizeExpr);
         }

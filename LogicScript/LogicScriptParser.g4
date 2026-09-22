@@ -21,7 +21,7 @@ decl_register       : REG port_info ;
 decl_when           : WHEN space=WS+ (cond=expression | any='*') WS* NL+ block END ;
 decl_startup        : STARTUP WS* NL+ block END ;
 decl_assign         : ASSIGN WS+ stmt_assign ;
-decl_function       : DEF SQUOTE ret_size=atom WS+ name=IDENT LPAREN param_list? RPAREN WS* NL+ block end=END;
+decl_function       : DEF SQUOTE ret_size=expression WS+ name=IDENT LPAREN param_list? RPAREN WS* NL+ block end=END;
 
 port_info           : (SQUOTE size=expression)? WS+ IDENT simple_indexer? ;
 
@@ -52,7 +52,7 @@ stmt_task           : (task_print | task_update) ;
 task_print          : AT_PRINT wsnl_req (expression | TEXT) ;
 task_update         : AT_QUEUEUPDATE ;
 
-stmt_vardecl        : LOCAL WS+ VARIABLE (SQUOTE size=atom)? (wsnl EQUALS wsnl expression)? ;
+stmt_vardecl        : LOCAL WS+ VARIABLE (SQUOTE size=expression)? (wsnl EQUALS wsnl initializer=expression)? ;
 
 stmt_return         : RETURN (WS+ expression)? ;
 
@@ -90,5 +90,5 @@ wsnl_req            : (WS | NL)+ ;
 slice_indexer       : LBRACE lr=(COMPARE_GREATER | COMPARE_LESSER)? WS* offset=expression wsnl (COMMA WS* len=expression)? RBRACE ;
 simple_indexer      : LBRACKET index=expression RBRACKET ;
 
-param_list          : WS* name=VARIABLE SQUOTE size=atom WS* (COMMA WS* param_list)? ;
+param_list          : WS* name=VARIABLE SQUOTE size=expression WS* (COMMA WS* param_list)? ;
 arg_list            : WS* value=expression WS* (COMMA WS* arg_list)? ;

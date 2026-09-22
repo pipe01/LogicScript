@@ -1,4 +1,5 @@
 ﻿using Antlr4.Runtime.Misc;
+using LogicScript.Data;
 using LogicScript.Parsing.Structures;
 using System.Collections;
 using System.Collections.Generic;
@@ -147,5 +148,7 @@ namespace LogicScript.Parsing
         public void AddOutputsMissing(SourceSpan span) => AddError(ErrorCodes.OutputsMissing, "Missing outputs declaration", span);
         public void AddPortValueMissing(SourceSpan span) => AddError(ErrorCodes.PortValueMissing, "Missing port value", span);
         public void AddDuplicatePort(SourceSpan span) => AddError(ErrorCodes.DuplicatePort, "Duplicate port", span);
+        public void AddBitLengthTooSmall(int bitLength, SourceSpan span) => AddError(ErrorCodes.ExpressionTooLarge, $"Bit length {bitLength} must be more than zero", span);
+        public void AddBitLengthTooLarge(int bitLength, SourceSpan span) => AddError(ErrorCodes.ExpressionTooLarge, $"Bit length {bitLength} must be less than or equal to {BitsValue.BitSize}", span);
     }
 }

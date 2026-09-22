@@ -10,7 +10,7 @@ namespace LogicScript.Parsing.Visitors
         {
             var name = context.name.Text;
             var nameSpan = context.name.Span();
-            var resultSize = (int)context.ret_size.GetConstantValue(scriptContext);
+            var resultSize = scriptContext.ParseBitSize(context.ret_size);
             var parameters = context.param_list() == null ? [] : ParseParameters(scriptContext, context.param_list());
 
             if (!scriptContext.Script.Functions.TryAdd(name, new(NodeID.Next(), context.Span(), name, nameSpan, resultSize, [.. parameters], null)))
@@ -22,7 +22,7 @@ namespace LogicScript.Parsing.Visitors
         public static IEnumerable<LocalInfo> ParseParameters(ScriptContext scriptContext, LogicScriptParser.Param_listContext context)
         {
             var name = context.name.Text;
-            var size = context.size == null ? 0 : (int)context.size.GetConstantValue(scriptContext);
+            var size = context.size == null ? 0 : scriptContext.ParseBitSize(context.size);
 
             yield return new(NodeID.Next(), size, name, context.name.Span());
 

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using LogicScript.Data;
+using LogicScript.Parsing.Structures.Expressions;
 
 namespace LogicScript.Parsing.Visitors
 {
@@ -12,9 +13,22 @@ namespace LogicScript.Parsing.Visitors
             || Script.Outputs.ContainsKey(iden)
             || Script.Registers.ContainsKey(iden);
 
-        public int ParseBitSize(LogicScriptParser.ExpressionContext expressionContext)
+        public int ParseBitSize(LogicScriptParser.ExpressionContext expressionContext) => ParseBitSize(expressionContext, out _);
+        public int ParseBitSize(LogicScriptParser.ExpressionContext expressionContext, out Expression expression)
         {
-            throw new NotImplementedException();
+            var value = (int)expressionContext.GetConstantValue(this, out expression);
+            if (value <= 0)
+            {
+                Errors.AddBitLengthTooSmall(value, expressionContext.Span());
+                return 1;
+            }
+            if (value > BitsValue.BitSize)
+            {
+                Errors.AddBitLengthTooLarge(value, expressionContext.Span());
+                return 64;
+            }
+
+            return value;
         }
     }
 }
