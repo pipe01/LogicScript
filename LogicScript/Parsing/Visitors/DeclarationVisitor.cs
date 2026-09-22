@@ -45,13 +45,13 @@ namespace LogicScript.Parsing.Visitors
                 if (!Context.Script.Constants.TryAdd(name, new(value.GetConstantValue(), value, nameSpan)))
                 {
                     var prevLine = Context.Script.Constants[name].Expression.Span.Start.Line;
-                    Errors.AddError($"The name '{name}' is already taken by previous constant at line {prevLine}", nameSpan);
+                    Errors.AddDuplicateConstant(name, prevLine, nameSpan);
                 }
             }
             else
             {
                 if (value is not PlaceholderExpression)
-                    Errors.AddError("Const declarations must have a constant value", value);
+                    Errors.AddConstValueRequired(value);
 
                 Context.Script.Constants.Add(name, new(0, new PlaceholderExpression(context.Span()), nameSpan));
             }
@@ -73,7 +73,7 @@ namespace LogicScript.Parsing.Visitors
             }
             else
             {
-                Context.Errors.AddError("Missing 'when' condition", context.Span());
+                Context.Errors.AddWhenConditionMissing(context.Span());
 
                 cond = new PlaceholderExpression(new(context.space.Span().Start, context.space.Span().End));
             }
@@ -97,7 +97,7 @@ namespace LogicScript.Parsing.Visitors
             else
             {
                 Script.Blocks.Add(new PlaceholderAssignBlock(context.Span()));
-                Errors.AddError("Assignment block must contain an assignment", context.Span());
+                Errors.AddAssignmentRequired(context.Span());
             }
 
             return null;
@@ -114,32 +114,27 @@ namespace LogicScript.Parsing.Visitors
         public override object? VisitDecl_function([NotNull] LogicScriptParser.Decl_functionContext context)
         {
             var name = context.name.Text;
-            var nameSpan = context.name.Span();
-            var resultSize = (int)context.ret_size.GetConstantValue(Context);
-            var parameters = context.param_list() == null ? [] : ParseParameters(context.param_list()).ToArray();
+            var declaration = Script.Functions[name];
 
-            var blockContext = new BlockContext(Context, functionResultSize: resultSize);
-            blockContext.Locals.AddRange(parameters);
+            var blockContext = new BlockContext(Context, functionResultSize: declaration.ResultSize);
+            blockContext.Locals.AddRange(declaration.Parameters);
 
             var body = context.block() == null
                 ? new BlockStatement(NodeID.Next(), new(), [], [])
                 : (BlockStatement)new StatementVisitor(Context, blockContext).Visit(context.block());
 
-            if (!Script.Functions.TryAdd(name, new(NodeID.Next(), context.Span(), name, nameSpan, resultSize, parameters, body)))
-                Context.Errors.AddError($"Function \"{name}\" already defined", nameSpan);
-
             if (!body.Statements.OfType<ReturnStatement>().Any()) // TODO: replace with control flow analysis lol
-                Context.Errors.AddError("Function must return a value", context.end.Span());
+                Context.Errors.AddFunctionReturnRequired(context.end.Span());
+
+            // Replace empty function declaration with a definition that contains the body
+            Script.Functions[name] = new(NodeID.Next(), context.Span(), name, context.name.Span(), declaration.ResultSize, declaration.Parameters, body);
 
             return null;
         }
 
         private void Visit(LogicScriptParser.Port_infoContext context, IDictionary<string, MachinePortInfo> dic, MachinePorts target)
         {
-            int size = context.size == null ? 1 : (int)context.size.GetConstantValue(Context);
-
-            if (size > BitsValue.BitSize)
-                Errors.AddError($"The maximum bit size is {BitsValue.BitSize}", context.Span());
+            int size = context.size == null ? 1 : Context.ParseBitSize(context.size);
 
             int length = 1;
             Expression? lengthExpression = null;
@@ -154,25 +149,25 @@ namespace LogicScript.Parsing.Visitors
 
             if (length <= 0)
             {
-                Errors.AddError("Vectors length must be greater than zero", context.Span());
+                Errors.AddVectorLengthGreaterZero(context.Span());
                 length = 1;
             }
 
             var name = context.IDENT()?.GetText();
             if (name == null)
             {
-                Errors.AddError("Missing register name", context.Span());
+                Errors.AddPortNameMissing(context.Span());
                 return;
             }
 
             if (Script.Inputs.TryGetValue(name, out var port) || Script.Outputs.TryGetValue(name, out port) || Script.Registers.TryGetValue(name, out port))
             {
-                Errors.AddError($"The name '{name}' is already taken by previous declaration at line {port.Span.Start.Line}", new SourceSpan(context.IDENT().Symbol));
+                Errors.AddDuplicateDeclaration(name, port.Span.Start.Line, new SourceSpan(context.IDENT().Symbol));
                 return;
             }
             if (Script.Constants.TryGetValue(name, out var @const))
             {
-                Errors.AddError($"The name '{name}' is already taken by previous constant at line {@const.Expression.Span.Start.Line}", new SourceSpan(context.IDENT().Symbol));
+                Errors.AddDuplicateConstant(name, @const.Expression.Span.Start.Line, new SourceSpan(context.IDENT().Symbol));
                 return;
             }
 
@@ -180,22 +175,6 @@ namespace LogicScript.Parsing.Visitors
             int startIndex = target == MachinePorts.Register ? dic.Count : dic.Values.Sum(o => o.BitSize);
 
             dic.Add(name, new MachinePortInfo(name, target, startIndex, size, length, lengthExpression, new(context.IDENT().Symbol)));
-        }
-
-        private IEnumerable<LocalInfo> ParseParameters(LogicScriptParser.Param_listContext context)
-        {
-            var name = context.name.Text;
-            var size = context.size == null ? 0 : (int)context.size.GetConstantValue(Context);
-
-            yield return new(NodeID.Next(), size, name, context.name.Span());
-
-            if (context.param_list() != null)
-            {
-                foreach (var param in ParseParameters(context.param_list()))
-                {
-                    yield return param;
-                }
-            }
         }
     }
 }

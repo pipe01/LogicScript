@@ -1,4 +1,6 @@
-﻿namespace LogicScript.Parsing.Visitors
+﻿using System;
+
+namespace LogicScript.Parsing.Visitors
 {
     internal sealed class ScriptContext(Script script, ErrorSink errors)
     {
@@ -9,5 +11,10 @@
             => Script.Inputs.ContainsKey(iden)
             || Script.Outputs.ContainsKey(iden)
             || Script.Registers.ContainsKey(iden);
+
+        public int ParseBitSize(LogicScriptParser.ExpressionContext expressionContext)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

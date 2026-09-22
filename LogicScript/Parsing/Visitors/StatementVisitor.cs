@@ -35,7 +35,7 @@ namespace LogicScript.Parsing.Visitors
             var @ref = new ReferenceVisitor(BlockContext, 0).Visit(context.reference());
 
             if (!@ref.IsWritable)
-                Context.Errors.AddError("The left hand side of an assignment must be writable", context.reference().Span());
+                Context.Errors.AddAssignmentTargetNotWritable(context.reference().Span());
 
             var value = new ExpressionVisitor(BlockContext, @ref.BitSize).Visit(context.expression());
 
@@ -47,7 +47,7 @@ namespace LogicScript.Parsing.Visitors
             var @ref = new ReferenceVisitor(BlockContext, 0).Visit(context.reference());
 
             if (!@ref.IsWritable)
-                Context.Errors.AddError("The left hand side of an assignment must be writable", context.reference().Span());
+                Context.Errors.AddAssignmentTargetNotWritable(context.reference().Span());
 
             var value = new ExpressionVisitor(BlockContext).Visit(context.expression());
             var truncated = new TruncateExpression(context.Span(), value, @ref.BitSize, null);
@@ -128,7 +128,7 @@ namespace LogicScript.Parsing.Visitors
                 : VisitBlock(context.block(), id);
 
             if (cond.IsConstant && cond.GetConstantValue() != 0 && !body.GetDescendants().Any(n => n is BreakStatement b && b.TargetID == id))
-                Context.Errors.AddError("Infinite loop detected", context.Span(), severity: Severity.Warning);
+                Context.Errors.AddInfiniteLoop(context.Span());
 
             return new WhileStatement(id, context.Span(), cond, body);
         }
@@ -150,12 +150,12 @@ namespace LogicScript.Parsing.Visitors
             }
             else if (size == null)
             {
-                BlockContext.Errors.AddError("You must specify a local's size or initialize it", context.Span(), true);
+                BlockContext.Errors.AddLocalSizeOrValueRequired(context.Span());
             }
 
             if (BlockContext.TryGetLocal(name, out var existingLocal, checkOuter: false))
             {
-                BlockContext.Errors.AddError($"Identifier {name} already taken by declaration at line {existingLocal.Span.Start.Line}", new SourceSpan(context.VARIABLE().Symbol));
+                BlockContext.Errors.AddDuplicateLocal(name, existingLocal.Span.Start.Line, new SourceSpan(context.VARIABLE().Symbol));
                 return new DeclareLocalStatement(NodeID.Next(), context.Span(), existingLocal, value, context.size != null);
             }
 
@@ -198,7 +198,7 @@ namespace LogicScript.Parsing.Visitors
         public override Statement VisitStmt_break([NotNull] LogicScriptParser.Stmt_breakContext context)
         {
             if (BlockContext.LoopID == null)
-                Context.Errors.AddError("Break statements can only be used inside loops", context.Span());
+                Context.Errors.AddBreakOutsideLoop(context.Span());
 
             return new BreakStatement(NodeID.Next(), context.Span(), BlockContext.LoopID.GetValueOrDefault());
         }
@@ -208,10 +208,10 @@ namespace LogicScript.Parsing.Visitors
             int? resultSize = BlockContext.Ancestry().Select(c => c.FunctionResultSize).FirstOrDefault(r => r != null);
 
             if (resultSize == null)
-                Context.Errors.AddError("Cannot return outside of a function", context.Span());
+                Context.Errors.AddReturnOutsideFunction(context.Span());
 
             if (context.expression() == null)
-                Context.Errors.AddError("Missing return value", context.Span());
+                Context.Errors.AddReturnValueMissing(context.Span());
 
             var returnedValue = new ExpressionVisitor(BlockContext, resultSize).VisitOrPlaceholder(context.expression(), context.Span());
 

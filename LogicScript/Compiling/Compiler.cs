@@ -6,6 +6,7 @@ using LogicScript.Parsing;
 using System.Reflection;
 using System.Reflection.Emit;
 using Sigil.NonGeneric;
+using System.Diagnostics;
 
 namespace LogicScript.Compiling
 {
@@ -104,6 +105,8 @@ namespace LogicScript.Compiling
             foreach (var func in Script.Functions.Values)
             {
                 var methodCompiler = FunctionMethods[func.ID];
+
+                Debug.Assert(func.Body != null);
 
                 methodCompiler.Compile(func.Body);
                 methodCompiler.Finish(false, false);

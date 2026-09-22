@@ -10,6 +10,7 @@ namespace LogicScript.Parsing
 
     public class Error
     {
+        public int Code { get; }
         public string Message { get; }
         public SourceSpan Span { get; }
         public Severity Severity { get; }
@@ -17,14 +18,15 @@ namespace LogicScript.Parsing
         internal ICodeNode? Node { get; }
         internal bool IsANTLR { get; }
 
-        internal Error(string message, SourceSpan span, Severity severity, bool isANTLR)
+        internal Error(int code, string message, SourceSpan span, Severity severity, bool isANTLR)
         {
+            this.Code = code;
             this.Message = message;
             this.Span = span;
             this.Severity = severity;
             this.IsANTLR = isANTLR;
         }
-        internal Error(string message, ICodeNode node, Severity severity, bool isANTLR) : this(message, node.Span, severity, isANTLR)
+        internal Error(int code, string message, ICodeNode node, Severity severity, bool isANTLR) : this(code, message, node.Span, severity, isANTLR)
         {
             this.Node = node;
             this.IsANTLR = isANTLR;

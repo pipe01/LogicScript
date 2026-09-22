@@ -35,7 +35,7 @@ namespace LogicScript.Parsing.Visitors
             }
 
             if (MaxBitSize != null && expr.BitSize > MaxBitSize)
-                Context.Errors.AddError($"Cannot fit a {expr.BitSize} bits long number into {MaxBitSize} bits", expr);
+                Context.Errors.AddExpressionTooLarge(expr.BitSize, MaxBitSize.Value, expr);
 
             return expr;
         }
@@ -59,7 +59,7 @@ namespace LogicScript.Parsing.Visitors
         public override Expression VisitRefLocal([NotNull] LogicScriptParser.RefLocalContext context)
         {
             if (Context.IsInConstant)
-                Context.Errors.AddError("You can only reference constants from other constants", context.Span(), true);
+                Context.Errors.AddConstantReferenceRequired(context.Span());
 
             var @ref = new ReferenceVisitor(Context, MaxBitSize ?? 0).Visit(context);
 
@@ -72,12 +72,12 @@ namespace LogicScript.Parsing.Visitors
                 return new ReferenceExpression(context.Span(), new ConstantReference(context.Span(), @const));
 
             if (Context.IsInConstant)
-                Context.Errors.AddError("You can only reference constants from other constants", context.Span(), true);
+                Context.Errors.AddConstantReferenceRequired(context.Span());
 
             var @ref = new ReferenceVisitor(Context, MaxBitSize ?? 0).Visit(context);
 
             if (!@ref.IsReadable)
-                Context.Errors.AddError("An identifier in an expression must be readable", context.Span());
+                Context.Errors.AddExpressionReferenceNotReadable(context.Span());
 
             return new ReferenceExpression(context.Span(), @ref);
         }
@@ -85,7 +85,7 @@ namespace LogicScript.Parsing.Visitors
         public override Expression VisitRefIndex([NotNull] LogicScriptParser.RefIndexContext context)
         {
             if (Context.IsInConstant)
-                Context.Errors.AddError("You can only reference constants from other constants", context.Span(), true);
+                Context.Errors.AddConstantReferenceRequired(context.Span());
 
             var @ref = new ReferenceVisitor(Context, MaxBitSize ?? 0).Visit(context);
 
@@ -112,7 +112,7 @@ namespace LogicScript.Parsing.Visitors
 
             if (context.slice_indexer().offset == null)
             {
-                Context.Errors.AddError("Missing indexer offset", context.slice_indexer().Span());
+                Context.Errors.AddIndexerOffsetMissing(context.slice_indexer().Span());
                 offset = new NumberLiteralExpression(context.slice_indexer().Span(), BitsValue.Zero);
             }
             else
@@ -124,7 +124,7 @@ namespace LogicScript.Parsing.Visitors
             var sliceExpr = new SliceExpression(context.Span(), operand, start, offset, length);
 
             if (length == 0)
-                Context.Errors.AddError("Slice length cannot be zero", context.slice_indexer().len.Span());
+                Context.Errors.AddSliceLengthZero(context.slice_indexer().len.Span());
 
             if (offset.IsConstant)
             {
@@ -132,14 +132,14 @@ namespace LogicScript.Parsing.Visitors
                 var offsetValue = (int)offset.GetConstantValue().Number;
 
                 if (offsetValue >= operand.BitSize)
-                    Context.Errors.AddError("Offset is out of bounds", context.slice_indexer().offset.Span());
+                    Context.Errors.AddSliceOffsetOutOfBounds(context.slice_indexer().offset.Span());
 
                 if (offsetValue + length > operand.BitSize)
-                    Context.Errors.AddError("Slice is out of bounds", context.slice_indexer().Span());
+                    Context.Errors.AddSliceOutOfBounds(context.slice_indexer().Span());
             }
 
             if (MaxBitSize != 0 && length > MaxBitSize)
-                Context.Errors.AddError($"Cannot fit a {length} bits long number into {MaxBitSize} bits", sliceExpr);
+                Context.Errors.AddExpressionTooLarge(length, MaxBitSize.Value, sliceExpr);
 
             return sliceExpr;
         }
@@ -190,15 +190,15 @@ namespace LogicScript.Parsing.Visitors
             {
                 if (context.arg_list() == null)
                 {
-                    Context.Errors.AddError($"{name} requires an operand", context.Span());
+                    Context.Errors.AddOperandRequired(name, context.Span());
                     return new PlaceholderExpression(context.Span());
                 }
 
                 if (context.arg_list().arg_list() != null)
-                    Context.Errors.AddError($"{name} takes a single parameter", context.Span());
+                    Context.Errors.AddSingleParameterRequired(name, context.Span());
 
                 if (op is Operator.Rise or Operator.Fall or Operator.Change)
-                    Context.Errors.AddError($"The {op.ToString().ToLower()} operator is not yet implemented", context.funcName.Span());
+                    Context.Errors.AddOperatorNotImplemented(op.ToString().ToLower(), context.funcName.Span());
 
                 var value = Visit(context.arg_list().value);
 
@@ -207,7 +207,7 @@ namespace LogicScript.Parsing.Visitors
 
             if (!Context.Script.Script.Functions.TryGetValue(name, out var function))
             {
-                Context.Errors.AddError($"Function \"{name}\" not found", context.funcName.Span());
+                Context.Errors.AddFunctionNotFound(name, context.funcName.Span());
                 return new PlaceholderExpression(context.Span());
             }
 
@@ -216,7 +216,7 @@ namespace LogicScript.Parsing.Visitors
                 .ToArray();
 
             if (args.Length != function.Parameters.Length)
-                Context.Errors.AddError($"Function \"{name}\" takes {function.Parameters.Length} parameter(s) but {args.Length} were given", context.Span());
+                Context.Errors.AddFunctionArgumentCountMismatch(name, function.Parameters.Length, args.Length, context.Span());
 
             return new FunctionCallExpression(context.Span(), function, args);
         }

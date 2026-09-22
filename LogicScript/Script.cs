@@ -14,6 +14,8 @@ using System.Linq;
 
 namespace LogicScript
 {
+    internal record FunctionDeclaration(string Name, int ReturnSize, int[] Parameters);
+
     public class Script
     {
         public IDictionary<string, MachinePortInfo> Inputs { get; } = new Dictionary<string, MachinePortInfo>();
@@ -112,7 +114,7 @@ namespace LogicScript
 
                 if (scriptCtx == null)
                 {
-                    errors.AddError("Expected script file", new SourceSpan(), true);
+                    throw new ParseException("Expected script file", new());
                 }
                 else
                 {

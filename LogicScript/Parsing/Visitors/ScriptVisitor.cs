@@ -11,6 +11,8 @@ namespace LogicScript.Parsing.Visitors
             var script = new Script(source, context.Start.TokenSource.SourceName, errors);
             var ctx = new ScriptContext(script, errors);
 
+            new FunctionDeclarationVisitor(ctx).Visit(context);
+
             var declVisitor = new DeclarationVisitor(ctx, errors);
             foreach (var decl in context.declaration())
             {
@@ -28,14 +30,14 @@ namespace LogicScript.Parsing.Visitors
                     foreach (var input in step.Inputs)
                     {
                         if (!script.Inputs.TryGetValue(input.Name, out var inputPort))
-                            errors.AddError($"Unknown input port '{input.Name}'", input.NameSpan);
+                            errors.AddUnknownInputPort(input.Name, input.NameSpan);
                         else
                             CheckTestPort(inputPort, input);
                     }
                     foreach (var output in step.Outputs)
                     {
                         if (!script.Outputs.TryGetValue(output.Name, out var outputPort))
-                            errors.AddError($"Unknown output port '{output.Name}'", output.NameSpan);
+                            errors.AddUnknownOutputPort(output.Name, output.NameSpan);
                         else
                             CheckTestPort(outputPort, output);
                     }
@@ -49,14 +51,14 @@ namespace LogicScript.Parsing.Visitors
             void CheckTestPort(MachinePortInfo port, PortValues values)
             {
                 if (values.Values.Length < port.VectorLength)
-                    errors.AddError("Not enough values to fill port vector", values.ValuesSpan);
+                    errors.AddPortVectorTooShort(values.ValuesSpan);
                 else if (values.Values.Length > port.VectorLength)
-                    errors.AddError("Too many values for port vector", values.ValuesSpan);
+                    errors.AddPortVectorTooLong(values.ValuesSpan);
 
                 foreach (var value in values.Values)
                 {
                     if (value.Value.Length > port.BitSize)
-                        errors.AddError("Value doesn't fit in port", value.Span);
+                        errors.AddPortValueTooLarge(value.Span);
                 }
             }
         }
