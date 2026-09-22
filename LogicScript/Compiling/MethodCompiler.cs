@@ -10,23 +10,26 @@ using LogicScript.Parsing.Structures.Expressions;
 using LogicScript.Parsing.Structures.Statements;
 using LogicScript.Parsing;
 using System.Reflection;
-using System.Reflection.Emit;
 using Sigil.NonGeneric;
 using Sigil;
 using LogicScript.Parsing.Visitors;
 using System.Text;
 using LogicScript.Utils;
+using System.Diagnostics;
+using System.Reflection.Emit;
 
 namespace LogicScript.Compiling
 {
     internal sealed class MethodCompiler(
         Script Script,
         Emit Emitter,
+        List<LocalInfo> Arguments,
         FieldInfo HasRunField,
         FieldInfo RegistersField,
         FieldInfo MachineField,
         FieldInfo DebuggerField,
-        bool EmitDebug
+        bool EmitDebug,
+        Dictionary<NodeID, MethodCompiler> FunctionMethods
     )
     {
         public enum Result
@@ -34,10 +37,9 @@ namespace LogicScript.Compiling
             Empty,
         }
 
-        private class Scope(IDictionary<LocalInfo, Local> locals)
-        {
-            public readonly IDictionary<LocalInfo, Local> Locals = locals;
-        }
+        public readonly Emit Emitter = Emitter;
+
+        private record Scope(IDictionary<LocalInfo, Local> Locals);
 
         private const int ArgumentThis = 0;
 
@@ -47,7 +49,7 @@ namespace LogicScript.Compiling
 
         private bool UsedHasRun;
 
-        public void Finish(bool setHasRun)
+        public MethodInfo Finish(bool setHasRun, bool addReturn)
         {
             if (setHasRun && UsedHasRun)
             {
@@ -56,8 +58,10 @@ namespace LogicScript.Compiling
                 Emitter.StoreField(HasRunField);
             }
 
-            Emitter.Return();
-            Emitter.CreateMethod();
+            if (addReturn)
+                Emitter.Return();
+
+            return Emitter.CreateMethod();
         }
 
         private void EmitThisField(FieldInfo field)
@@ -108,13 +112,11 @@ namespace LogicScript.Compiling
 
         private void DebugEmitSetLocal(LocalInfo localInfo)
         {
-            var local = FindLocal(localInfo);
-
             DebugEmit(() =>
             {
                 Emitter.LoadConstant(localInfo.ID.ID);
                 Emitter.NewObject<NodeID, int>();
-                Emitter.LoadLocal(local);
+                LoadLocal(localInfo);
                 Emitter.CallVirtual(typeof(IDebugger).GetMethod(nameof(IDebugger.SetLocal)));
             });
         }
@@ -221,7 +223,7 @@ namespace LogicScript.Compiling
                                 }
                                 else if (part is PrintStringFormat.PartInterpolate interp)
                                 {
-                                    Emitter.LoadLocalAddress(FindLocal(interp.LocalInfo));
+                                    LoadLocal(interp.LocalInfo, address: true);
                                     Emitter.LoadConstant(interp.Format switch
                                     {
                                         PrintStringFormat.NumberFormat.Hexadecimal => "X",
@@ -285,13 +287,11 @@ namespace LogicScript.Compiling
         {
             //TODO: optimize: compute 'to' once on loop enter and don't recompute on each iteration
 
-            var loopLocal = FindLocal(stmt.Variable);
-
             if (stmt.From != null)
                 Compile(stmt.From);
             else
                 EmitConstant(0);
-            Emitter.StoreLocal(loopLocal);
+            StoreLocal(stmt.Variable);
 
             var body = Emitter.DefineLabel();
             var head = Emitter.DefineLabel();
@@ -304,14 +304,14 @@ namespace LogicScript.Compiling
             Compile(stmt.Body);
             LoopBreaks.Remove(stmt.ID);
 
-            Emitter.LoadLocal(loopLocal);
+            LoadLocal(stmt.Variable);
             EmitConstant(1);
             Emitter.Add();
-            Emitter.StoreLocal(loopLocal);
+            StoreLocal(stmt.Variable);
             DebugEmitSetLocal(stmt.Variable);
 
             Emitter.MarkLabel(head);
-            Emitter.LoadLocal(loopLocal);
+            LoadLocal(stmt.Variable);
             Compile(stmt.To);
             Emitter.BranchIfLess(body);
 
@@ -466,10 +466,9 @@ namespace LogicScript.Compiling
 
                 case LocalReference local:
                     {
-                        var localVar = FindLocal(local.LocalInfo);
 
                         Compile(stmt.Value);
-                        Emitter.StoreLocal(localVar);
+                        StoreLocal(local.LocalInfo);
 
                         DebugEmitSetLocal(local.LocalInfo);
 
@@ -485,10 +484,8 @@ namespace LogicScript.Compiling
             if (stmt.Initializer is null)
                 return Result.Empty;
 
-            var localVar = FindLocal(stmt.Local);
-
             Compile(stmt.Initializer);
-            Emitter.StoreLocal(localVar);
+            StoreLocal(stmt.Local);
 
             DebugEmitSetLocal(stmt.Local);
 
@@ -525,6 +522,7 @@ namespace LogicScript.Compiling
                 TruncateExpression t => Compile(t),
                 UnaryOperatorExpression u => Compile(u),
                 ReferenceLengthExpression r => EmitConstant((ulong)r.Value),
+                FunctionCallExpression c => Compile(c),
                 _ => throw new NotImplementedException()
             };
         }
@@ -659,8 +657,7 @@ namespace LogicScript.Compiling
             switch (expr.Reference)
             {
                 case LocalReference local:
-                    var sLocal = FindLocal(local.LocalInfo);
-                    Emitter.LoadLocal(sLocal);
+                    LoadLocal(local.LocalInfo);
 
                     return Result.Empty;
 
@@ -728,12 +725,68 @@ namespace LogicScript.Compiling
             return Result.Empty;
         }
 
-        private Local FindLocal(LocalInfo info)
+        private Result Compile(FunctionCallExpression expr)
+        {
+            if (!FunctionMethods.TryGetValue(expr.Function.ID, out var method))
+                throw new Exception($"Function implementation for {expr.Function.Name} not found");
+
+            Emitter.LoadArgument(ArgumentThis);
+            foreach (var arg in expr.Arguments)
+            {
+                Compile(arg);
+            }
+
+            var innerEmit = typeof(Emit).GetField("InnerEmit", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(method.Emitter);
+            var methodBuilder = (MethodBuilder)innerEmit.GetType().GetProperty("MtdBuilder", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(innerEmit);
+
+            Emitter.Call(new MethodInfoProxy(methodBuilder, typeof(ulong), [.. Enumerable.Repeat(typeof(ulong), expr.Function.Parameters.Length)]));
+
+            return Result.Empty;
+        }
+
+        private void LoadLocal(LocalInfo info, bool address = false)
         {
             foreach (var scope in Stack)
             {
                 if (scope.Locals.TryGetValue(info, out var local))
-                    return local;
+                {
+                    if (address)
+                        Emitter.LoadLocalAddress(local);
+                    else
+                        Emitter.LoadLocal(local);
+                    return;
+                }
+            }
+
+            int argIndex = Arguments.FindIndex(i => i.Equals(info));
+            if (argIndex >= 0)
+            {
+                if (address)
+                    Emitter.LoadArgumentAddress((ushort)(argIndex + 1));
+                else
+                    Emitter.LoadArgument((ushort)(argIndex + 1));
+                return;
+            }
+
+            throw new Exception($"Local {info} not found");
+        }
+
+        private void StoreLocal(LocalInfo info)
+        {
+            foreach (var scope in Stack)
+            {
+                if (scope.Locals.TryGetValue(info, out var local))
+                {
+                    Emitter.StoreLocal(local);
+                    return;
+                }
+            }
+
+            int argIndex = Arguments.FindIndex(i => i.Equals(info));
+            if (argIndex >= 0)
+            {
+                Emitter.StoreArgument((ushort)argIndex);
+                return;
             }
 
             throw new Exception($"Local {info} not found");

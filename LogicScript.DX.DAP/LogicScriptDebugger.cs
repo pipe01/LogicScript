@@ -336,6 +336,16 @@ public class LogicScriptDebugger : IDebugger, IAttachHandler, IDisconnectHandler
         });
     }
 
+    void IDebugger.PushFunctionCall(NodeID id)
+    {
+        // TODO: implement
+    }
+
+    void IDebugger.PopFunctionCall(NodeID id)
+    {
+        // TODO: implement
+    }
+
     public async Task WaitForResumeAsync()
     {
         if (CurrentPause != null)

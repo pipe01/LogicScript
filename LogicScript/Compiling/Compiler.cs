@@ -1,22 +1,11 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using LogicScript.Data;
-using LogicScript.Interpreting;
 using LogicScript.Parsing.Structures;
-using LogicScript.Parsing.Structures.Blocks;
-using LogicScript.Parsing.Structures.Expressions;
-using LogicScript.Parsing.Structures.Statements;
 using LogicScript.Parsing;
 using System.Reflection;
 using System.Reflection.Emit;
 using Sigil.NonGeneric;
-using Sigil;
-using LogicScript.Parsing.Visitors;
-using System.Text;
-using LogicScript.Utils;
-using System.Diagnostics;
 
 namespace LogicScript.Compiling
 {
@@ -48,6 +37,8 @@ namespace LogicScript.Compiling
         private readonly FieldInfo MachineField;
         private readonly FieldInfo DebuggerField;
 
+        private readonly Dictionary<NodeID, MethodCompiler> FunctionMethods = [];
+
         private Compiler(Script script, bool emitDebug)
         {
             this.Script = script;
@@ -75,28 +66,28 @@ namespace LogicScript.Compiling
             ctorIL.Emit(OpCodes.Newobj, script.RegistersType.GetConstructor(Type.EmptyTypes));
             ctorIL.Emit(OpCodes.Stfld, RegistersField);
             ctorIL.Emit(OpCodes.Ret);
-
         }
 
-        private MethodCompiler CreateMethodCompiler(string methodName, Type returnType, Type[] parameters, bool isOverride)
+        private MethodCompiler CreateMethodCompiler(string methodName, Type returnType, LocalInfo[] parameters, bool isOverride)
         {
-            var emitter = Emit.BuildMethod(
+            var emitter = Emit.BuildInstanceMethod(
                 returnType,
-                parameters,
+                [.. Enumerable.Repeat(typeof(ulong), parameters.Length)],
                 TypeBuilder,
                 methodName,
-                isOverride ? MethodAttributes.Public | MethodAttributes.Virtual | MethodAttributes.NewSlot : MethodAttributes.Private,
-                CallingConventions.Standard | CallingConventions.HasThis
+                isOverride ? MethodAttributes.Public | MethodAttributes.Virtual | MethodAttributes.NewSlot : MethodAttributes.Private | MethodAttributes.HideBySig
             );
 
             return new(
                 Script,
                 emitter,
+                [.. parameters],
                 HasRunField,
                 RegistersField,
                 MachineField,
                 DebuggerField,
-                EmitDebug
+                EmitDebug,
+                FunctionMethods
             );
         }
 
@@ -107,17 +98,23 @@ namespace LogicScript.Compiling
 
             foreach (var func in Script.Functions.Values)
             {
-                var methodCompiler = CreateMethodCompiler(func.Name, typeof(ulong), [.. Enumerable.Repeat(typeof(ulong), func.Parameters.Length)], false);
-                methodCompiler.Compile(func.Body);
-                methodCompiler.Finish(false);
+                FunctionMethods[func.ID] = CreateMethodCompiler(func.Name, typeof(ulong), func.Parameters, false);
             }
 
-            var runMethodCompiler = CreateMethodCompiler(nameof(IScriptInstance.Run), typeof(void), Type.EmptyTypes, true);
+            foreach (var func in Script.Functions.Values)
+            {
+                var methodCompiler = FunctionMethods[func.ID];
+
+                methodCompiler.Compile(func.Body);
+                methodCompiler.Finish(false, false);
+            }
+
+            var runMethodCompiler = CreateMethodCompiler(nameof(IScriptInstance.Run), typeof(void), [], true);
             foreach (var block in Script.Blocks)
             {
                 runMethodCompiler.Compile(block);
             }
-            runMethodCompiler.Finish(true);
+            runMethodCompiler.Finish(true, true);
 
             return new(TypeBuilder.CreateType());
         }

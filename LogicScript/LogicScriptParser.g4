@@ -21,7 +21,7 @@ decl_register       : REG port_info ;
 decl_when           : WHEN space=WS+ (cond=expression | any='*') WS* NL+ block END ;
 decl_startup        : STARTUP WS* NL+ block END ;
 decl_assign         : ASSIGN WS+ stmt_assign ;
-decl_function       : DEF SQUOTE ret_size=atom WS+ name=IDENT LPAREN param_list? RPAREN WS* NL+ block END;
+decl_function       : DEF SQUOTE ret_size=atom WS+ name=IDENT LPAREN param_list? RPAREN WS* NL+ block end=END;
 
 port_info           : (SQUOTE size=expression)? WS+ IDENT simple_indexer? ;
 

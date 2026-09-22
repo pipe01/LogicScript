@@ -64,9 +64,9 @@ namespace LogicScript.DX.LSP.Commands
             debugger?.LoadedScript(script);
 
             // TODO: implement statement limit
-            var runner = Compiler.Compile(script, debugger != null).Instantiate();
+            var compiledScript = Compiler.Compile(script, debugger != null);
 
-            return await testCase.Run(runner, script, debugger, cancellationToken);
+            return await testCase.Run(compiledScript, script, debugger, cancellationToken);
         }
 
         private async Task<int> RequestStatementLimitAsync(CancellationToken cancellationToken)

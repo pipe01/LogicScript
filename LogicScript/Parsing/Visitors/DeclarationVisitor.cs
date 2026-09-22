@@ -125,8 +125,11 @@ namespace LogicScript.Parsing.Visitors
                 ? new BlockStatement(NodeID.Next(), new(), [], [])
                 : (BlockStatement)new StatementVisitor(Context, blockContext).Visit(context.block());
 
-            if (!Script.Functions.TryAdd(name, new(context.Span(), name, nameSpan, resultSize, parameters, body)))
+            if (!Script.Functions.TryAdd(name, new(NodeID.Next(), context.Span(), name, nameSpan, resultSize, parameters, body)))
                 Context.Errors.AddError($"Function \"{name}\" already defined", nameSpan);
+
+            if (!body.Statements.OfType<ReturnStatement>().Any()) // TODO: replace with control flow analysis lol
+                Context.Errors.AddError("Function must return a value", context.end.Span());
 
             return null;
         }
