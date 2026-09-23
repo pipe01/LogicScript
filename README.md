@@ -253,6 +253,8 @@ local $var'4
 $var '= 100 // Equivalent to (100)'len($var)
 ```
 
+See also: [`#truncate`](#truncate).
+
 #### Function calls
 
 You can call a function by using its name followed by parentheses, which can contain a comma-separated list of arguments.
@@ -333,6 +335,16 @@ When passing a string it must be wrapped in double quotes (`"`), and it can cont
 @print $myvar
 @print "The value of myvar is: $myvar, or $myvar:b in binary"
 ```
+
+## Pragma settings
+
+### `#truncate`
+
+You can use the `#truncate` pragma to choose what happens when you try to fit a value into a slot that is too small, e.g. `local $var'2 = 42`:
+
+- `#truncate explicit` (default): you need to explicitly truncate the value to make it fit.
+- `#truncate implicit`: values will be automatically truncated to fit.
+- `#truncate warn`: values will be automatically truncated to fit and you will see a warning when it occurs.
 
 ## Miscellaneous concepts
 

@@ -35,7 +35,19 @@ namespace LogicScript.Parsing.Visitors
             }
 
             if (MaxBitSize != null && expr.BitSize > MaxBitSize)
-                Context.Errors.AddExpressionTooLarge(expr.BitSize, MaxBitSize.Value, expr);
+            {
+                if (Context.Script.TruncatePragmaMode is TruncatePragmaMode.Implicit or TruncatePragmaMode.Warn)
+                {
+                    if (Context.Script.TruncatePragmaMode == TruncatePragmaMode.Warn)
+                        Context.Errors.AddExpressionTooLarge(expr.BitSize, MaxBitSize.Value, expr, Severity.Warning);
+
+                    return new TruncateExpression(expr.Span, expr, MaxBitSize.Value, null);
+                }
+                else
+                {
+                    Context.Errors.AddExpressionTooLarge(expr.BitSize, MaxBitSize.Value, expr, Severity.Error);
+                }
+            }
 
             return expr;
         }
@@ -139,7 +151,7 @@ namespace LogicScript.Parsing.Visitors
             }
 
             if (MaxBitSize != 0 && length > MaxBitSize)
-                Context.Errors.AddExpressionTooLarge(length, MaxBitSize.Value, sliceExpr);
+                Context.Errors.AddExpressionTooLarge(length, MaxBitSize.Value, sliceExpr, Severity.Error);
 
             return sliceExpr;
         }

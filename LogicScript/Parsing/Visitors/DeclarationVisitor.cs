@@ -15,6 +15,18 @@ namespace LogicScript.Parsing.Visitors
 
         private Script Script => Context.Script;
 
+        public override object? VisitPragma_truncate([NotNull] LogicScriptParser.Pragma_truncateContext context)
+        {
+            var mode = context.EXPLICIT() != null ? TruncatePragmaMode.Explicit
+                : context.IMPLICIT() != null ? TruncatePragmaMode.Implicit
+                : context.WARN() != null ? TruncatePragmaMode.Warn
+                : TruncatePragmaMode.Explicit;
+
+            Context.TruncatePragmaMode = mode;
+
+            return null;
+        }
+
         public override object? VisitDecl_input([NotNull] LogicScriptParser.Decl_inputContext context)
         {
             Visit(context.port_info(), Script.Inputs, MachinePorts.Input);

@@ -124,7 +124,7 @@ namespace LogicScript.Parsing
         public void AddBreakOutsideLoop(SourceSpan span) => AddError(ErrorCodes.BreakOutsideLoop, "Break statements can only be used inside loops", span);
         public void AddReturnOutsideFunction(SourceSpan span) => AddError(ErrorCodes.ReturnOutsideFunction, "Cannot return outside of a function", span);
         public void AddReturnValueMissing(SourceSpan span) => AddError(ErrorCodes.ReturnValueMissing, "Missing return value", span);
-        public void AddExpressionTooLarge(int expressionSize, int maxSize, ICodeNode node) => AddError(ErrorCodes.ExpressionTooLarge, $"Cannot fit a {expressionSize} bits long number into {maxSize} bits", node, data: maxSize);
+        public void AddExpressionTooLarge(int expressionSize, int maxSize, ICodeNode node, Severity severity) => AddError(ErrorCodes.ExpressionTooLarge, $"Cannot fit a {expressionSize} bits long number into {maxSize} bits", node, data: maxSize, severity: severity);
         public void AddConstantReferenceRequired(SourceSpan span) => AddError(ErrorCodes.ConstantReferenceRequired, "You can only reference constants from other constants", span, isFatal: true);
         public void AddExpressionReferenceNotReadable(SourceSpan span) => AddError(ErrorCodes.ExpressionReferenceNotReadable, "An identifier in an expression must be readable", span);
         public void AddIndexerOffsetMissing(SourceSpan span) => AddError(ErrorCodes.IndexerOffsetMissing, "Missing indexer offset", span);

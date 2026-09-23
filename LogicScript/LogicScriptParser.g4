@@ -5,6 +5,9 @@ options { tokenVocab = LogicScriptLexer; }
 script              : (wsnl declaration WS* NL+ wsnl)* (wsnl test_case NL+)* wsnl EOF ;
 test_bench          : (test_case NL+)* EOF ;
 
+pragma              : pragma_truncate ;
+pragma_truncate     : HASHTAG TRUNCATE WS+ (EXPLICIT | IMPLICIT | WARN) ;
+
 test_case           : AT_TEST WS+ (name=TEXT WS+)? LPAREN wsnl (test_step NL+)* wsnl RPAREN wsnl ;
 test_step           : wsnl (step_action | step_repeat) wsnl COMMA ;
 
@@ -13,7 +16,7 @@ step_repeat         : PLUS DEC_NUMBER ;
 step_ports          : (step_portvalue (WS+ step_portvalue)*)? ;
 step_portvalue      : port=IDENT LPAREN expression (wsnl COMMA wsnl expression)* RPAREN ;
 
-declaration         : decl_const | decl_input | decl_output | decl_register | decl_when | decl_startup | decl_assign | decl_function ;
+declaration         : pragma | decl_const | decl_input | decl_output | decl_register | decl_when | decl_startup | decl_assign | decl_function ;
 decl_const          : CONST WS+ IDENT WS+ EQUALS WS+ expression ;
 decl_input          : INPUT port_info ;
 decl_output         : OUTPUT port_info ;

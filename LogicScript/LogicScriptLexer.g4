@@ -27,6 +27,12 @@ LEN                 : 'len' ;
 DEF                 : 'def' ;
 RETURN              : 'return' ;
 
+HASHTAG             : '#' ;
+TRUNCATE            : 'truncate' ;
+EXPLICIT            : 'explicit' ;
+IMPLICIT            : 'implicit' ;
+WARN                : 'warn' ;
+
 AT_TEST             : '@test' ;
 AT_PRINT            : '@print' ;
 AT_QUEUEUPDATE      : '@queueUpdate' ;

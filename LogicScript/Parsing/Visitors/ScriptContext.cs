@@ -3,10 +3,19 @@ using LogicScript.Parsing.Structures.Expressions;
 
 namespace LogicScript.Parsing.Visitors
 {
+    internal enum TruncatePragmaMode
+    {
+        Explicit,
+        Implicit,
+        Warn,
+    }
+
     internal sealed class ScriptContext(Script script, ErrorSink errors)
     {
         public Script Script { get; } = script;
         public ErrorSink Errors { get; } = errors;
+
+        public TruncatePragmaMode TruncatePragmaMode { get; set; } = TruncatePragmaMode.Explicit;
 
         private int NextNodeID = 1;
 

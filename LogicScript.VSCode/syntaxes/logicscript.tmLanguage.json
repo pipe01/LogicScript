@@ -28,6 +28,9 @@
 		},
 		{
 			"include": "#identifiers"
+		},
+		{
+			"include": "#pragma"
 		}
 	],
 	"repository": {
@@ -132,6 +135,14 @@
 				{
 					"name": "",
 					"match": "\\[(<|>)"
+				}
+			]
+		},
+		"pragma": {
+			"patterns": [
+				{
+					"name": "meta.preprocessor.logicscript",
+					"match": "^#.*$"
 				}
 			]
 		}
