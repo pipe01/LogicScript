@@ -1,0 +1,15 @@
+output first
+output'5 second
+output'8 third[3]
+
+when *
+    first = 1
+    second = 31
+    third[0] = 1
+    third[1] = 2
+    third[2] = 3
+end
+
+@test (
+    => first(1) second(31) third(1, 2, 3),
+)
