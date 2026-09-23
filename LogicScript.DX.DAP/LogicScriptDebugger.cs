@@ -471,19 +471,19 @@ public class LogicScriptDebugger : IDebugger, IAttachHandler, IDisconnectHandler
                 new()
                 {
                     Name = "Locals",
-                    VariablesReference = LocalsReference,
+                    VariablesReference = LocalsReference << 16 | request.FrameId,
                     PresentationHint = "locals",
                 },
                 new()
                 {
                     Name = "Inputs",
-                    VariablesReference = InputsReference,
+                    VariablesReference = InputsReference << 16 | request.FrameId,
                     PresentationHint = "arguments",
                 },
                 new()
                 {
                     Name = "Registers",
-                    VariablesReference = RegistersReference,
+                    VariablesReference = RegistersReference << 16 | request.FrameId,
                     PresentationHint = "registers",
                 },
             ])
@@ -492,13 +492,16 @@ public class LogicScriptDebugger : IDebugger, IAttachHandler, IDisconnectHandler
 
     public async Task<VariablesResponse> Handle(VariablesArguments request, CancellationToken cancellationToken)
     {
+        var reference = request.VariablesReference >> 16;
+        var frameId = request.VariablesReference & 0xFFFF;
+
         return new()
         {
-            Variables = request.VariablesReference switch
+            Variables = reference switch
             {
                 LocalsReference
                     => new(
-                        CurrentFrame.Locals
+                        StackFrames.ElementAt((int)frameId).Locals
                         .Select(l =>
                         {
                             if (!TryFindNode<LocalInfo>(l.Key, out var localInfo, out _))
