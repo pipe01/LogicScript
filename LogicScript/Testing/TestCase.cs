@@ -3,7 +3,6 @@ using System;
 using System.Linq;
 using System.Threading.Tasks;
 using LogicScript.Data;
-using LogicScript.Interpreting;
 using LogicScript.Testing.Results;
 using LogicScript.Parsing;
 using LogicScript.Parsing.Structures;

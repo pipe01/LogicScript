@@ -16,7 +16,6 @@ using LogicScript.Parsing.Visitors;
 using System.Text;
 using LogicScript.Utils;
 using System.Reflection.Emit;
-using System.Diagnostics;
 
 namespace LogicScript.Compiling
 {

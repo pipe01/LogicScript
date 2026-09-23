@@ -7,7 +7,6 @@ using System.Reflection;
 using System.Reflection.Emit;
 using Sigil.NonGeneric;
 using System.Diagnostics;
-using LogicScript.Parsing.Structures.Blocks;
 
 namespace LogicScript.Compiling
 {

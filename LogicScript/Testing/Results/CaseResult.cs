@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using LogicScript.Data;
-using LogicScript.Parsing;
 
 namespace LogicScript.Testing.Results
 {

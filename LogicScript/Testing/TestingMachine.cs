@@ -1,7 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using LogicScript.Compiling;
 using LogicScript.Data;
 
 namespace LogicScript.Testing
