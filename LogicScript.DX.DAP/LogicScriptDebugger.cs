@@ -7,6 +7,7 @@ using LogicScript.Data;
 using LogicScript.Interpreting;
 using LogicScript.Parsing;
 using LogicScript.Parsing.Structures;
+using LogicScript.Parsing.Structures.Blocks;
 using LogicScript.Parsing.Structures.Statements;
 using OmniSharp.Extensions.DebugAdapter.Protocol.Events;
 using OmniSharp.Extensions.DebugAdapter.Protocol.Models;
@@ -165,7 +166,13 @@ public class LogicScriptDebugger : IDebugger, IAttachHandler, IDisconnectHandler
     private readonly List<Script> LoadedScripts = [];
     private PauseState? CurrentPause;
 
-    private readonly Dictionary<NodeID, ulong> CurrentLocals = [];
+    private record Frame(Dictionary<NodeID, ulong> Locals, string? FunctionName)
+    {
+        public SourceSpan Position { get; set; }
+    }
+
+    private readonly Stack<Frame> StackFrames = new([new Frame([], null)]);
+    private Frame CurrentFrame => StackFrames.Peek();
 
     private int BreakpointCounter = 0;
     private bool PauseNext;
@@ -278,23 +285,38 @@ public class LogicScriptDebugger : IDebugger, IAttachHandler, IDisconnectHandler
 
     void IDebugger.PushLocal(NodeID id)
     {
-        CurrentLocals.Add(id, 0);
+        CurrentFrame.Locals.Add(id, 0);
     }
 
     void IDebugger.SetLocal(NodeID id, ulong value)
     {
-        CurrentLocals[id] = value;
+        CurrentFrame.Locals[id] = value;
     }
 
     void IDebugger.PopLocal(NodeID id)
     {
-        CurrentLocals.Remove(id);
+        CurrentFrame.Locals.Remove(id);
+    }
+
+    void IDebugger.PushFunctionCall(NodeID functionId)
+    {
+        if (TryFindNode<FunctionBlock>(functionId, out var func, out _))
+        {
+            StackFrames.Push(new([], func.Name));
+        }
+    }
+
+    void IDebugger.PopFunctionCall()
+    {
+        StackFrames.Pop();
     }
 
     void IDebugger.TraceStatement(IScriptInstance compiledScript, IMachine machine, NodeID id)
     {
         if (!Attached || !TryFindNode<Statement>(id, out var stmt, out var script) || stmt is BlockStatement)
             return;
+
+        CurrentFrame.Position = stmt.Span;
 
         if (PauseNext)
         {
@@ -419,23 +441,21 @@ public class LogicScriptDebugger : IDebugger, IAttachHandler, IDisconnectHandler
 
     public async Task<StackTraceResponse> Handle(StackTraceArguments request, CancellationToken cancellationToken)
     {
-        var span = CurrentPause!.Statement.Span;
-
         return new()
         {
-            StackFrames = new([
-                new()
+            StackFrames = StackFrames.Select((f, i) => new OmniSharp.Extensions.DebugAdapter.Protocol.Models.StackFrame()
+            {
+                Id = i,
+                Name = f.FunctionName,
+                Source = new()
                 {
-                    Source = new()
-                    {
-                        Path = span.Start.FileName,
-                    },
-                    Line = span.Start.Line,
-                    Column = span.Start.Column,
-                    EndLine = span.End.Line,
-                    EndColumn = span.End.Column,
-                }
-            ])
+                    Path = f.Position.Start.FileName,
+                },
+                Line = f.Position.Start.Line,
+                Column = f.Position.Start.Column,
+                EndLine = f.Position.End.Line,
+                EndColumn = f.Position.End.Column,
+            }).ToArray()
         };
     }
 
@@ -478,7 +498,7 @@ public class LogicScriptDebugger : IDebugger, IAttachHandler, IDisconnectHandler
             {
                 LocalsReference
                     => new(
-                        CurrentLocals
+                        CurrentFrame.Locals
                         .Select(l =>
                         {
                             if (!TryFindNode<LocalInfo>(l.Key, out var localInfo, out _))
@@ -579,7 +599,7 @@ public class LogicScriptDebugger : IDebugger, IAttachHandler, IDisconnectHandler
         if (CurrentPause == null)
             throw new InvalidOperationException("Can't evaluate expression while program is running");
 
-        var locals = CurrentLocals.Select(o => (CurrentPause.Script.VisitAll().OfType<LocalInfo>().First(f => f.ID == o.Key), o.Value));
+        var locals = CurrentFrame.Locals.Select(o => (CurrentPause.Script.VisitAll().OfType<LocalInfo>().First(f => f.ID == o.Key), o.Value));
 
         var (parsed, errors) = CurrentPause.Script.ParseExpression(request.Expression, [.. locals.Select(p => p.Item1)]);
         if (parsed == null)

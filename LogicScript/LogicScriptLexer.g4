@@ -24,6 +24,8 @@ TO                  : 'to' ;
 END                 : 'end' ;
 LOCAL               : 'local' ;
 LEN                 : 'len' ;
+DEF                 : 'def' ;
+RETURN              : 'return' ;
 
 AT_TEST             : '@test' ;
 AT_PRINT            : '@print' ;

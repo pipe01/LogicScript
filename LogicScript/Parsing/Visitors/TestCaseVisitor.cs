@@ -21,7 +21,7 @@ namespace LogicScript.Parsing.Visitors
                 {
                     if (lastStep == null)
                     {
-                        errors.AddError("The first step on a case must not be a repetition", repeat.Span());
+                        errors.AddFirstStepCannotRepeat(repeat.Span());
                         continue;
                     }
 
@@ -36,7 +36,7 @@ namespace LogicScript.Parsing.Visitors
 
                     if (action.outputs == null)
                     {
-                        errors.AddError("Missing outputs declaration", action.Span());
+                        errors.AddOutputsMissing(action.Span());
                         continue;
                     }
 
@@ -58,13 +58,13 @@ namespace LogicScript.Parsing.Visitors
                 {
                     if (item.expression().Length == 0)
                     {
-                        errors.AddError("Missing port value", item.Span());
+                        errors.AddPortValueMissing(item.Span());
                         continue;
                     }
 
                     if (seen.Contains(item.port.Text))
                     {
-                        errors.AddError("Duplicate port", item.Span());
+                        errors.AddDuplicatePort(item.Span());
                         continue;
                     }
                     seen.Add(item.port.Text);

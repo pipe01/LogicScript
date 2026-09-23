@@ -18,9 +18,9 @@ namespace LogicScript.Parsing.Visitors
 
             if (target == MachinePorts.Placeholder)
             {
-                Context.Errors.AddError($"Unknown port '{name}'", nameSpan);
+                Context.Errors.AddUnknownPort(name, nameSpan);
 
-                return new("<>", MachinePorts.Placeholder, 0, defaultBitSize, 1, null, nameSpan);
+                return new("", MachinePorts.Placeholder, 0, defaultBitSize, 1, null, nameSpan);
             }
 
             return port;
@@ -32,7 +32,7 @@ namespace LogicScript.Parsing.Visitors
             var portInfo = GetPortInfo(context.IDENT().GetText(), nameSpan);
 
             if (portInfo.VectorLength > 1 && !allowRawVectors)
-                Context.Errors.AddError("Vectored port must be indexed", context.Span());
+                Context.Errors.AddVectoredPortRequiresIndex(context.Span());
 
             return new PortReference(context.Span(), nameSpan, portInfo, null);
         }
@@ -43,7 +43,7 @@ namespace LogicScript.Parsing.Visitors
 
             if (!Context.TryGetLocal(name, out var local))
             {
-                Context.Errors.AddError($"Local variable {name} is not declared", context.Span());
+                Context.Errors.AddLocalNotDeclared(name, context.Span());
                 return new LocalReference(context.Span(), name, default);
             }
 

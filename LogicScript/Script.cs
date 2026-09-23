@@ -14,15 +14,16 @@ using System.Linq;
 
 namespace LogicScript
 {
+    internal record FunctionDeclaration(string Name, int ReturnSize, int[] Parameters);
+
     public class Script
     {
         public IDictionary<string, MachinePortInfo> Inputs { get; } = new Dictionary<string, MachinePortInfo>();
         public IDictionary<string, MachinePortInfo> Outputs { get; } = new Dictionary<string, MachinePortInfo>();
         public IDictionary<string, MachinePortInfo> Registers { get; } = new Dictionary<string, MachinePortInfo>();
         public IDictionary<string, Constant> Constants { get; } = new Dictionary<string, Constant>();
+        internal IDictionary<string, FunctionBlock> Functions { get; } = new Dictionary<string, FunctionBlock>();
         public IList<TestCase> TestCases { get; } = [];
-
-        public MachineRegister[] MachineRegisters => Registers.Values.Select(r => new MachineRegister(r.BitSize, r.VectorLength, r.StartIndex)).ToArray();
 
         internal int RegisteredInputLength => Inputs.Values.Sum(o => o.BitSize * o.VectorLength);
         internal int RegisteredOutputLength => Outputs.Values.Sum(o => o.BitSize * o.VectorLength);
@@ -36,7 +37,7 @@ namespace LogicScript
         public bool HasErrors => Errors.Count > 0;
 
         private Type? registersType;
-        public Type RegistersType => registersType ??= RegistersStruct.Generate(MachineRegisters);
+        public Type RegistersType => registersType ??= RegistersStruct.Generate([.. Registers.Values]);
 
         internal Script(string source, string fileName, IReadOnlyList<Error> errors)
         {
@@ -52,7 +53,11 @@ namespace LogicScript
 
         public IEnumerable<ICodeNode> VisitAll(bool depthFirst = true)
         {
-            return Blocks.Cast<ICodeNode>().Concat(TestCases.Cast<ICodeNode>()).Concat(Constants.Values.Cast<ICodeNode>()).SelectMany(o => o.GetDescendants(depthFirst));
+            return Blocks.Cast<ICodeNode>()
+                .Concat(TestCases.Cast<ICodeNode>())
+                .Concat(Constants.Values.Cast<ICodeNode>())
+                .Concat(Functions.Values.Cast<ICodeNode>())
+                .SelectMany(o => o.GetDescendants(depthFirst));
         }
 
         public bool TryGetPort(string name, MachinePorts ports, [MaybeNullWhen(false)] out MachinePortInfo portInfo)
@@ -109,7 +114,7 @@ namespace LogicScript
 
                 if (scriptCtx == null)
                 {
-                    errors.AddError("Expected script file", new SourceSpan(), true);
+                    throw new ParseException("Expected script file", new());
                 }
                 else
                 {
@@ -169,7 +174,9 @@ namespace LogicScript
     {
         IRegisters Registers { get; }
         bool HasRun { get; set; }
+        IMachine Machine { get; set; }
+        IDebugger? Debugger { get; set; }
 
-        void Run(IMachine machine, IDebugger? debugger = null);
+        void Run();
     }
 }

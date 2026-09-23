@@ -4,18 +4,19 @@ using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
 using System.Runtime.InteropServices;
+using LogicScript.Parsing.Structures;
 using Sigil.NonGeneric;
 
 namespace LogicScript.Compiling
 {
     internal static class RegistersStruct
     {
-        private record struct ComputedRegister(MachineRegister MachineRegister, FieldInfo Field, Type ItemType, int ItemByteSize, int ByteStart, int Index)
+        private record struct ComputedRegister(MachinePortInfo PortInfo, FieldInfo Field, Type ItemType, int ItemByteSize, int ByteStart, int Index)
         {
-            public readonly bool IsVector => MachineRegister.VectorLength > 1;
+            public readonly bool IsVector => PortInfo.VectorLength > 1;
         }
 
-        public static Type Generate(MachineRegister[] registers)
+        public static Type Generate(MachinePortInfo[] registers)
         {
             if (registers.Length == 0)
                 return typeof(EmptyRegisters);
@@ -111,7 +112,7 @@ namespace LogicScript.Compiling
                 foreach (var reg in computedRegisters.Where(reg => reg.IsVector))
                 {
                     emitter.LoadArgument(0);
-                    emitter.LoadConstant(reg.MachineRegister.VectorLength);
+                    emitter.LoadConstant(reg.PortInfo.VectorLength);
                     emitter.NewArray(reg.ItemType);
                     emitter.StoreField(reg.Field);
                 }
@@ -145,7 +146,7 @@ namespace LogicScript.Compiling
 
                         emitter.LoadArgumentAddress(1);
                         emitter.LoadConstant(reg.ByteStart);
-                        emitter.LoadConstant(reg.ItemByteSize * reg.MachineRegister.VectorLength);
+                        emitter.LoadConstant(reg.ItemByteSize * reg.PortInfo.VectorLength);
                         emitter.Call(typeof(ReadOnlySpan<byte>).GetMethod(nameof(ReadOnlySpan<>.Slice), [typeof(int), typeof(int)]));
                         emitter.Call(typeof(MemoryMarshal).GetMethod(nameof(MemoryMarshal.Cast), [typeof(ReadOnlySpan<>).MakeGenericType(Type.MakeGenericMethodParameter(0))]).MakeGenericMethod(typeof(byte), reg.ItemType));
                         emitter.StoreLocal(casted);
@@ -206,7 +207,7 @@ namespace LogicScript.Compiling
                         emitter.LoadLocalAddress(casted);
                         emitter.LoadArgumentAddress(1);
                         emitter.LoadConstant(reg.ByteStart);
-                        emitter.LoadConstant(reg.ItemByteSize * reg.MachineRegister.VectorLength);
+                        emitter.LoadConstant(reg.ItemByteSize * reg.PortInfo.VectorLength);
                         emitter.Call(typeof(Span<byte>).GetMethod(nameof(Span<>.Slice), [typeof(int), typeof(int)]));
                         emitter.Call(typeof(ReadOnlySpan<byte>).GetMethod(nameof(ReadOnlySpan<>.CopyTo)));
                     }
@@ -301,7 +302,7 @@ namespace LogicScript.Compiling
             {
                 foreach (var reg in computedRegisters)
                 {
-                    if (reg.MachineRegister.VectorLength == 1)
+                    if (reg.PortInfo.VectorLength == 1)
                     {
                         emitter.LoadArgument(0);
                         switch (reg.ItemByteSize)
@@ -342,7 +343,7 @@ namespace LogicScript.Compiling
             }
         }
 
-        public static (Type Type, int Size) GetRegisterSize(MachineRegister reg)
+        public static (Type Type, int Size) GetRegisterSize(MachinePortInfo reg)
         {
             return reg.BitSize switch
             {

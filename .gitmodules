@@ -1,0 +1,3 @@
+[submodule "lib/Sigil"]
+	path = lib/Sigil
+	url = https://github.com/pipe01/Sigil

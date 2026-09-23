@@ -59,7 +59,7 @@ namespace LogicScript.Tests
         public async Task Run(string lsbenchFile, int caseIndex)
         {
             var script = ParseScript(lsbenchFile);
-            var result = await script.TestCases[caseIndex].Run(Compiler.Compile(script).Instantiate(), script);
+            var result = await script.TestCases[caseIndex].Run(Compiler.Compile(script), script);
 
             foreach (var line in result.PrintedLines)
             {

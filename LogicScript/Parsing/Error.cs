@@ -8,23 +8,18 @@ namespace LogicScript.Parsing
         Error
     }
 
-    public class Error
+    public class Error(int code, string message, SourceSpan span, Severity severity, bool isANTLR, object? data = null)
     {
-        public string Message { get; }
-        public SourceSpan Span { get; }
-        public Severity Severity { get; }
+        public int Code { get; } = code;
+        public string Message { get; } = message;
+        public SourceSpan Span { get; } = span;
+        public Severity Severity { get; } = severity;
+        public object? Data { get; } = data;
 
         internal ICodeNode? Node { get; }
-        internal bool IsANTLR { get; }
+        internal bool IsANTLR { get; } = isANTLR;
 
-        internal Error(string message, SourceSpan span, Severity severity, bool isANTLR)
-        {
-            this.Message = message;
-            this.Span = span;
-            this.Severity = severity;
-            this.IsANTLR = isANTLR;
-        }
-        internal Error(string message, ICodeNode node, Severity severity, bool isANTLR) : this(message, node.Span, severity, isANTLR)
+        internal Error(int code, string message, ICodeNode node, Severity severity, bool isANTLR, object? data = null) : this(code, message, node.Span, severity, isANTLR, data)
         {
             this.Node = node;
             this.IsANTLR = isANTLR;

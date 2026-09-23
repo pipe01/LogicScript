@@ -17,6 +17,14 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LogicScript.Benchmarks", "L
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LogicScript.DX.DAP", "LogicScript.DX.DAP\LogicScript.DX.DAP.csproj", "{D16DAB25-72B0-4336-A0EF-FDAACBB2E5CD}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "lib", "lib", "{3A8DF596-E814-FECC-DD4B-D8EF8AAC1A0D}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Sigil", "Sigil", "{D9A41281-547C-1760-DE35-DF6287F7D73C}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{65B05C00-D447-0A54-6AAE-464F070F95E5}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sigil", "lib\Sigil\src\Sigil\Sigil.csproj", "{E118DCFC-E757-4B3F-B6F3-A6692B1D73A7}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -111,9 +119,26 @@ Global
 		{D16DAB25-72B0-4336-A0EF-FDAACBB2E5CD}.Release|x64.Build.0 = Release|Any CPU
 		{D16DAB25-72B0-4336-A0EF-FDAACBB2E5CD}.Release|x86.ActiveCfg = Release|Any CPU
 		{D16DAB25-72B0-4336-A0EF-FDAACBB2E5CD}.Release|x86.Build.0 = Release|Any CPU
+		{E118DCFC-E757-4B3F-B6F3-A6692B1D73A7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E118DCFC-E757-4B3F-B6F3-A6692B1D73A7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E118DCFC-E757-4B3F-B6F3-A6692B1D73A7}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{E118DCFC-E757-4B3F-B6F3-A6692B1D73A7}.Debug|x64.Build.0 = Debug|Any CPU
+		{E118DCFC-E757-4B3F-B6F3-A6692B1D73A7}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{E118DCFC-E757-4B3F-B6F3-A6692B1D73A7}.Debug|x86.Build.0 = Debug|Any CPU
+		{E118DCFC-E757-4B3F-B6F3-A6692B1D73A7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E118DCFC-E757-4B3F-B6F3-A6692B1D73A7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E118DCFC-E757-4B3F-B6F3-A6692B1D73A7}.Release|x64.ActiveCfg = Release|Any CPU
+		{E118DCFC-E757-4B3F-B6F3-A6692B1D73A7}.Release|x64.Build.0 = Release|Any CPU
+		{E118DCFC-E757-4B3F-B6F3-A6692B1D73A7}.Release|x86.ActiveCfg = Release|Any CPU
+		{E118DCFC-E757-4B3F-B6F3-A6692B1D73A7}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{D9A41281-547C-1760-DE35-DF6287F7D73C} = {3A8DF596-E814-FECC-DD4B-D8EF8AAC1A0D}
+		{65B05C00-D447-0A54-6AAE-464F070F95E5} = {D9A41281-547C-1760-DE35-DF6287F7D73C}
+		{E118DCFC-E757-4B3F-B6F3-A6692B1D73A7} = {65B05C00-D447-0A54-6AAE-464F070F95E5}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {6FD74FFC-E943-4905-8464-6A6FF1F4108D}

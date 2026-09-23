@@ -165,6 +165,18 @@ assign z = a | b
 
 The `assign` block is a shortcut for a `when *` block, its body must be an assignment and it will always be run.
 
+### `def`
+
+```lua
+def'16 add($a'15, $b'15)
+    return $a + $b
+end
+```
+
+The `def` block can be used to define reusable pieces of code that can be called from other blocks. It can have a return value, and it can accept parameters that are passed by value.
+
+Functions must return a value, whose size is specified after the `def` keyword.
+
 ## Code blocks
 
 The body of the blocks mentioned above consists of multiple statements, one per line (except the `assign` block, which only accepts a single statement). These statements can optionally end with a semicolon (`;`), which allows for multiple statements in a single line.
@@ -239,6 +251,15 @@ There's also a shortcut truncation assignment, which will truncate the right sid
 local $var'4
 
 $var '= 100 // Equivalent to (100)'len($var)
+```
+
+#### Function calls
+
+You can call a function by using its name followed by parentheses, which can contain a comma-separated list of arguments.
+
+```lua
+myFunc()
+myFunc(1, 2, 3)
 ```
 
 ### Statements

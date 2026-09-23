@@ -3,8 +3,6 @@ using LogicScript.Data;
 
 namespace LogicScript
 {
-    public readonly record struct MachineRegister(int BitSize, int VectorLength, int Index);
-
     public interface IMachine
     {
         int InputCount { get; }

@@ -60,7 +60,7 @@ end
 
         private TestCase Case;
         private IMachine Machine;
-        private IScriptInstance CompiledScript, CompiledScriptDebug;
+        private IScriptInstance CompiledScript, CompiledScriptDebug, CompiledScriptWithDebugger;
 
         [GlobalSetup]
         public void GlobalSetup()
@@ -83,8 +83,10 @@ end
 
             this.Machine = new DummyMachine(Case.Inputs, Case.Outputs);
 
-            this.CompiledScript = Compiler.Compile(script).Instantiate();
-            this.CompiledScriptDebug = Compiler.Compile(script, true).Instantiate();
+            this.CompiledScript = Compiler.Compile(script).Instantiate(Machine);
+            this.CompiledScriptDebug = Compiler.Compile(script, true).Instantiate(Machine);
+            this.CompiledScriptWithDebugger = Compiler.Compile(script, true).Instantiate(Machine);
+            this.CompiledScriptWithDebugger.Debugger = DummyDebugger.Instance;
         }
 
         interface IRunner
@@ -100,7 +102,7 @@ end
             }
         }
 
-        private IRunner _Runner = new Runner();
+        private readonly IRunner _Runner = new Runner();
         [Benchmark(Baseline = true)]
         public void RunCSharp()
         {
@@ -110,19 +112,19 @@ end
         [Benchmark]
         public void RunCompiledNoDebug()
         {
-            CompiledScript.Run(Machine);
+            CompiledScript.Run();
         }
 
         [Benchmark]
         public void RunCompiledDebug()
         {
-            CompiledScriptDebug.Run(Machine);
+            CompiledScriptDebug.Run();
         }
 
         [Benchmark]
         public void RunCompiledDebugWithDebugger()
         {
-            CompiledScriptDebug.Run(Machine, DummyDebugger.Instance);
+            CompiledScriptWithDebugger.Run();
         }
     }
 
@@ -171,10 +173,18 @@ end
         {
         }
 
-        public void PopLocal(NodeID id)
+        public void PushFunctionCall(NodeID id)
         {
         }
 
+
+        public void PopFunctionCall()
+        {
+        }
+
+        public void PopLocal(NodeID id)
+        {
+        }
         public void PushLocal(NodeID id)
         {
         }

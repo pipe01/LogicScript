@@ -1,0 +1,15 @@
+input'3 a
+input'3 b
+output'4 out
+
+def'4 my_func($a'3, $b'3)
+    return $a + $b
+end
+
+when *
+    out = my_func(1, 2)
+end
+
+@test (
+    a(1) b(2) => out(3),
+)

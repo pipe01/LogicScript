@@ -1,0 +1,19 @@
+output'10 out
+
+def'5 inner($n'5)
+    return ($n * 2)'5
+end
+
+def'5 first($in'5)
+    local $temp = inner($in)
+
+    return ($temp + 1)'5
+end
+
+when *
+    out = first(10)
+end
+
+@test (
+    => out(21),
+)

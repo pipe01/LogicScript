@@ -13,12 +13,15 @@
     <ItemGroup>
         <PackageReference Include="Antlr4.Runtime.Standard" Version="4.13.1" />
         <PackageReference Include="Antlr4BuildTasks" Version="12.14.0" PrivateAssets="all" />
-        <PackageReference Include="Sigil" Version="5.0.0" />
     </ItemGroup>
 
     <ItemGroup>
         <Antlr4 Include="LogicScriptLexer.g4" />
         <Antlr4 Include="LogicScriptParser.g4" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\lib\Sigil\src\Sigil\Sigil.csproj" />
     </ItemGroup>
 
 </Project>

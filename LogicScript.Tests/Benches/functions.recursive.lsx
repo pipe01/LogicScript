@@ -1,0 +1,19 @@
+input'32 in
+output'32 out
+
+def'32 fib($i'32)
+    if $i < 2
+        return $i
+    end
+
+    return (fib($i - 1) + fib($i - 2))'32
+end
+
+when *
+    out = fib(in)
+end
+
+@test (
+    in(10) => out(55),
+    in(20) => out(6765),
+)
