@@ -61,10 +61,10 @@ namespace LogicScript.Parsing
 
         private readonly IList<Error> Errors = [];
 
-        public void AddError(string msg, SourceSpan span, bool isFatal = false, bool isANTLR = false, Severity severity = Severity.Error)
-            => AddError(0, msg, span, isFatal, isANTLR, severity);
+        public void AddError(string msg, SourceSpan span, bool isFatal = false, bool isANTLR = false, Severity severity = Severity.Error, object? data = null)
+            => AddError(0, msg, span, isFatal, isANTLR, severity, data);
 
-        public void AddError(int code, string msg, SourceSpan span, bool isFatal = false, bool isANTLR = false, Severity severity = Severity.Error)
+        public void AddError(int code, string msg, SourceSpan span, bool isFatal = false, bool isANTLR = false, Severity severity = Severity.Error, object? data = null)
         {
             if (isANTLR)
             {
@@ -74,17 +74,17 @@ namespace LogicScript.Parsing
                     goto exit;
             }
 
-            Errors.Add(new Error(code, msg, span, severity, isANTLR));
+            Errors.Add(new Error(code, msg, span, severity, isANTLR, data));
 
         exit:
             if (isFatal)
                 throw new ParseCanceledException();
         }
 
-        public void AddError(string msg, ICodeNode node, bool isFatal = false, bool isANTLR = false, Severity severity = Severity.Error)
-            => AddError(0, msg, node, isFatal, isANTLR, severity);
+        public void AddError(string msg, ICodeNode node, bool isFatal = false, bool isANTLR = false, Severity severity = Severity.Error, object? data = null)
+            => AddError(0, msg, node, isFatal, isANTLR, severity, data);
 
-        public void AddError(int code, string msg, ICodeNode node, bool isFatal = false, bool isANTLR = false, Severity severity = Severity.Error)
+        public void AddError(int code, string msg, ICodeNode node, bool isFatal = false, bool isANTLR = false, Severity severity = Severity.Error, object? data = null)
         {
             if (isANTLR)
             {
@@ -96,7 +96,7 @@ namespace LogicScript.Parsing
 
             if (!Errors.Any(o => o.Node == node))
             {
-                Errors.Add(new Error(code, msg, node, severity, isANTLR));
+                Errors.Add(new Error(code, msg, node, severity, isANTLR, data));
             }
 
         exit:
@@ -124,7 +124,7 @@ namespace LogicScript.Parsing
         public void AddBreakOutsideLoop(SourceSpan span) => AddError(ErrorCodes.BreakOutsideLoop, "Break statements can only be used inside loops", span);
         public void AddReturnOutsideFunction(SourceSpan span) => AddError(ErrorCodes.ReturnOutsideFunction, "Cannot return outside of a function", span);
         public void AddReturnValueMissing(SourceSpan span) => AddError(ErrorCodes.ReturnValueMissing, "Missing return value", span);
-        public void AddExpressionTooLarge(int expressionSize, int maxSize, ICodeNode node) => AddError(ErrorCodes.ExpressionTooLarge, $"Cannot fit a {expressionSize} bits long number into {maxSize} bits", node);
+        public void AddExpressionTooLarge(int expressionSize, int maxSize, ICodeNode node) => AddError(ErrorCodes.ExpressionTooLarge, $"Cannot fit a {expressionSize} bits long number into {maxSize} bits", node, data: maxSize);
         public void AddConstantReferenceRequired(SourceSpan span) => AddError(ErrorCodes.ConstantReferenceRequired, "You can only reference constants from other constants", span, isFatal: true);
         public void AddExpressionReferenceNotReadable(SourceSpan span) => AddError(ErrorCodes.ExpressionReferenceNotReadable, "An identifier in an expression must be readable", span);
         public void AddIndexerOffsetMissing(SourceSpan span) => AddError(ErrorCodes.IndexerOffsetMissing, "Missing indexer offset", span);
@@ -148,7 +148,7 @@ namespace LogicScript.Parsing
         public void AddOutputsMissing(SourceSpan span) => AddError(ErrorCodes.OutputsMissing, "Missing outputs declaration", span);
         public void AddPortValueMissing(SourceSpan span) => AddError(ErrorCodes.PortValueMissing, "Missing port value", span);
         public void AddDuplicatePort(SourceSpan span) => AddError(ErrorCodes.DuplicatePort, "Duplicate port", span);
-        public void AddBitLengthTooSmall(int bitLength, SourceSpan span) => AddError(ErrorCodes.ExpressionTooLarge, $"Bit length {bitLength} must be more than zero", span);
-        public void AddBitLengthTooLarge(int bitLength, SourceSpan span) => AddError(ErrorCodes.ExpressionTooLarge, $"Bit length {bitLength} must be less than or equal to {BitsValue.BitSize}", span);
+        public void AddBitLengthTooSmall(int bitLength, SourceSpan span) => AddError(ErrorCodes.ExpressionTooLarge, $"All bit lengths {bitLength} must be more than zero", span);
+        public void AddBitLengthTooLarge(int bitLength, SourceSpan span) => AddError(ErrorCodes.ExpressionTooLarge, $"All bit lengths {bitLength} must be less than or equal to {BitsValue.BitSize}", span);
     }
 }

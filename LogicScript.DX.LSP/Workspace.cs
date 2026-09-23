@@ -4,6 +4,7 @@ using LogicScript.Parsing.Structures.Expressions;
 using LogicScript.Parsing.Structures.Statements;
 using LogicScript.Testing;
 using LogicScript.Utils;
+using Newtonsoft.Json.Linq;
 using OmniSharp.Extensions.LanguageServer.Protocol;
 using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 using System;
@@ -37,7 +38,9 @@ namespace LogicScript.DX.LSP
                 {
                     return new Diagnostic()
                     {
+                        Code = new(item.Code),
                         Message = item.Message,
+                        Data = JObject.FromObject(item),
                         Severity = item.Severity switch
                         {
                             Severity.Error => DiagnosticSeverity.Error,

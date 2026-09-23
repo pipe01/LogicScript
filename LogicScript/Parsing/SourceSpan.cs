@@ -9,7 +9,7 @@ namespace LogicScript.Parsing
         public SourceLocation Start { get; }
         public SourceLocation End { get; }
 
-        internal SourceSpan(SourceLocation start, SourceLocation end)
+        public SourceSpan(SourceLocation start, SourceLocation end)
         {
             if (start.FileName != end.FileName)
                 throw new ArgumentException("Start and end locations must be in the same file");
