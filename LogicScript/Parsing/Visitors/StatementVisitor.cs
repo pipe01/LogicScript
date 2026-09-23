@@ -142,7 +142,7 @@ namespace LogicScript.Parsing.Visitors
             // If the variable has a bit size marker, we will use that size. Otherwise, we will later infer it from the value
             int? size = context.size == null ? null : BlockContext.Script.ParseBitSize(context.size);
 
-            if (context.expression() != null)
+            if (context.initializer != null)
             {
                 value = new ExpressionVisitor(BlockContext, size).Visit(context.initializer);
 
