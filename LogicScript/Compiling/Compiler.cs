@@ -7,6 +7,7 @@ using System.Reflection;
 using System.Reflection.Emit;
 using Sigil.NonGeneric;
 using System.Diagnostics;
+using LogicScript.Parsing.Structures.Blocks;
 
 namespace LogicScript.Compiling
 {
@@ -99,7 +100,7 @@ namespace LogicScript.Compiling
 
             foreach (var func in Script.Functions.Values)
             {
-                FunctionMethods[func.ID] = CreateMethodCompiler(func.Name, typeof(ulong), func.Parameters, isOverride: false);
+                FunctionMethods[func.ID] = CreateMethodCompiler(func.Name, typeof(ulong), func.Parameters, false);
             }
 
             foreach (var func in Script.Functions.Values)
@@ -114,7 +115,7 @@ namespace LogicScript.Compiling
                 methodCompiler.Finish(false, false);
             }
 
-            var runMethodCompiler = CreateMethodCompiler(nameof(IScriptInstance.Run), typeof(void), [], isOverride: true);
+            var runMethodCompiler = CreateMethodCompiler(nameof(IScriptInstance.Run), typeof(void), [], true);
             foreach (var block in Script.Blocks)
             {
                 runMethodCompiler.Compile(block);

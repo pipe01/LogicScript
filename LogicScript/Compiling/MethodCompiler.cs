@@ -15,8 +15,8 @@ using Sigil;
 using LogicScript.Parsing.Visitors;
 using System.Text;
 using LogicScript.Utils;
-using System.Diagnostics;
 using System.Reflection.Emit;
+using System.Diagnostics;
 
 namespace LogicScript.Compiling
 {
@@ -39,7 +39,10 @@ namespace LogicScript.Compiling
 
         public readonly Emit Emitter = Emitter;
 
-        private record Scope(IDictionary<LocalInfo, Local> Locals);
+        private record Scope(IDictionary<LocalInfo, Local> Locals)
+        {
+            public bool HasReturned { get; set; }
+        }
 
         private const int ArgumentThis = 0;
 
@@ -129,6 +132,12 @@ namespace LogicScript.Compiling
                 Emitter.NewObject<NodeID, int>();
                 Emitter.CallVirtual(typeof(IDebugger).GetMethod(nameof(IDebugger.PushFunctionCall)));
             });
+
+            foreach (var param in function.Parameters)
+            {
+                DebugEmitPushLocal(param);
+                DebugEmitSetLocal(param);
+            }
         }
 
         public Result Compile(Block block)
@@ -402,14 +411,20 @@ namespace LogicScript.Compiling
                 Compile(child);
             }
 
-            var poppedScope = Stack.Pop();
-            foreach (var local in poppedScope.Locals.Values)
+            var poppedStack = Stack.Pop();
+            foreach (var local in poppedStack.Locals)
             {
-                local.Dispose();
+                local.Value.Dispose();
             }
-            foreach (var local in locals)
+
+            // If the block statement's body directly contains a return statement, the compiler will emit a "pop function"
+            // debug call which will clear all locals, so we don't need to individually emit "pop local" calls.
+            if (EmitDebug && !poppedStack.HasReturned)
             {
-                DebugEmitPopLocal(local.Key);
+                foreach (var local in poppedStack.Locals)
+                {
+                    DebugEmitPopLocal(local.Key);
+                }
             }
 
             return Result.Empty;
@@ -507,7 +522,10 @@ namespace LogicScript.Compiling
             Compile(stmt.Value);
 
             DebugEmit(() => Emitter.CallVirtual(typeof(IDebugger).GetMethod(nameof(IDebugger.PopFunctionCall))));
+
             Emitter.Return();
+
+            Stack.Peek().HasReturned = true;
 
             return Result.Empty;
         }
