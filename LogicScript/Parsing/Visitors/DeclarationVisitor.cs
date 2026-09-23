@@ -79,7 +79,7 @@ namespace LogicScript.Parsing.Visitors
             }
 
             var body = context.block() == null
-                ? new BlockStatement(NodeID.Next(), context.Span(), [], [])
+                ? new BlockStatement(Context.NewNodeID(), context.Span(), [], [])
                 : new StatementVisitor(Context).Visit(context.block());
 
             Script.Blocks.Add(new WhenBlock(context.Span(), cond, body));
@@ -120,7 +120,7 @@ namespace LogicScript.Parsing.Visitors
             blockContext.Locals.AddRange(declaration.Parameters);
 
             var body = context.block() == null
-                ? new BlockStatement(NodeID.Next(), new(), [], [])
+                ? new BlockStatement(Context.NewNodeID(), new(), [], [])
                 : (BlockStatement)new StatementVisitor(Context, blockContext).Visit(context.block());
 
             if (!body.Statements.OfType<ReturnStatement>().Any()) // TODO: replace with control flow analysis lol

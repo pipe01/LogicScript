@@ -13,7 +13,7 @@ namespace LogicScript.Parsing.Visitors
             var resultSize = scriptContext.ParseBitSize(context.ret_size);
             var parameters = context.param_list() == null ? [] : ParseParameters(scriptContext, context.param_list());
 
-            if (!scriptContext.Script.Functions.TryAdd(name, new(NodeID.Next(), context.Span(), name, nameSpan, resultSize, [.. parameters], null)))
+            if (!scriptContext.Script.Functions.TryAdd(name, new(scriptContext.NewNodeID(), context.Span(), name, nameSpan, resultSize, [.. parameters], null)))
                 scriptContext.Errors.AddFunctionAlreadyDefined(name, nameSpan);
 
             return null;
@@ -24,7 +24,7 @@ namespace LogicScript.Parsing.Visitors
             var name = context.name.Text;
             var size = context.size == null ? 0 : scriptContext.ParseBitSize(context.size);
 
-            yield return new(NodeID.Next(), size, name, context.name.Span());
+            yield return new(scriptContext.NewNodeID(), size, name, context.name.Span());
 
             if (context.param_list() != null)
             {

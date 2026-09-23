@@ -8,6 +8,8 @@ namespace LogicScript.Parsing.Visitors
         public Script Script { get; } = script;
         public ErrorSink Errors { get; } = errors;
 
+        private int NextNodeID = 1;
+
         public bool DoesIdentifierExist(string iden)
             => Script.Inputs.ContainsKey(iden)
             || Script.Outputs.ContainsKey(iden)
@@ -30,5 +32,7 @@ namespace LogicScript.Parsing.Visitors
 
             return value;
         }
+
+        public NodeID NewNodeID() => new(NextNodeID++);
     }
 }

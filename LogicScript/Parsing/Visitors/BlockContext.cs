@@ -21,7 +21,7 @@ namespace LogicScript.Parsing.Visitors
 
         public LocalInfo AddLocal(string name, int size, SourceSpan span)
         {
-            var info = new LocalInfo(NodeID.Next(), size, name, span);
+            var info = new LocalInfo(Script.NewNodeID(), size, name, span);
             Locals.Add(info);
             return info;
         }
