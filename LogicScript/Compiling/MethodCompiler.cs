@@ -121,6 +121,16 @@ namespace LogicScript.Compiling
             });
         }
 
+        public void DebugEmitFunctionStart(FunctionBlock function)
+        {
+            DebugEmit(() =>
+            {
+                Emitter.LoadConstant(function.ID.ID);
+                Emitter.NewObject<NodeID, int>();
+                Emitter.CallVirtual(typeof(IDebugger).GetMethod(nameof(IDebugger.PushFunctionCall)));
+            });
+        }
+
         public Result Compile(Block block)
         {
             return block switch
@@ -496,12 +506,7 @@ namespace LogicScript.Compiling
         {
             Compile(stmt.Value);
 
-            DebugEmit(() =>
-            {
-                Emitter.LoadConstant(stmt.ID.ID);
-                Emitter.NewObject<NodeID, int>();
-                Emitter.CallVirtual(typeof(IDebugger).GetMethod(nameof(IDebugger.PopFunctionCall)));
-            });
+            DebugEmit(() => Emitter.CallVirtual(typeof(IDebugger).GetMethod(nameof(IDebugger.PopFunctionCall))));
             Emitter.Return();
 
             return Result.Empty;

@@ -24,6 +24,10 @@ public class LogicScriptDebugger : IDebugger, IAttachHandler, IDisconnectHandler
     private readonly record struct PendingBreakpoint(int Number, SourceLocation Location);
     private readonly HashSet<PendingBreakpoint> PendingBreakpoints = [];
 
+    private record Frame();
+
+    private readonly Stack<Frame> StackFrames = new();
+
     private DebugAdapterServer? Server;
 
     private LogicScriptDebugger()
@@ -336,12 +340,12 @@ public class LogicScriptDebugger : IDebugger, IAttachHandler, IDisconnectHandler
         });
     }
 
-    void IDebugger.PushFunctionCall(NodeID id)
+    void IDebugger.PushFunctionCall(NodeID functionId)
     {
         // TODO: implement
     }
 
-    void IDebugger.PopFunctionCall(NodeID id)
+    void IDebugger.PopFunctionCall()
     {
         // TODO: implement
     }

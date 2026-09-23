@@ -8,8 +8,8 @@ namespace LogicScript.Compiling
         void SetLocal(NodeID id, ulong value);
         void PopLocal(NodeID id);
 
-        void PushFunctionCall(NodeID id);
-        void PopFunctionCall(NodeID id);
+        void PushFunctionCall(NodeID functionId);
+        void PopFunctionCall();
 
         void TraceStatement(IScriptInstance compiledScript, IMachine machine, NodeID id);
 

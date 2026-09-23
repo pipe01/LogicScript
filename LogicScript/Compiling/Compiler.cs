@@ -79,7 +79,7 @@ namespace LogicScript.Compiling
                 isOverride ? MethodAttributes.Public | MethodAttributes.Virtual | MethodAttributes.NewSlot : MethodAttributes.Private | MethodAttributes.HideBySig
             );
 
-            return new(
+            return new MethodCompiler(
                 Script,
                 emitter,
                 [.. parameters],
@@ -99,12 +99,14 @@ namespace LogicScript.Compiling
 
             foreach (var func in Script.Functions.Values)
             {
-                FunctionMethods[func.ID] = CreateMethodCompiler(func.Name, typeof(ulong), func.Parameters, false);
+                FunctionMethods[func.ID] = CreateMethodCompiler(func.Name, typeof(ulong), func.Parameters, isOverride: false);
             }
 
             foreach (var func in Script.Functions.Values)
             {
                 var methodCompiler = FunctionMethods[func.ID];
+
+                methodCompiler.DebugEmitFunctionStart(func);
 
                 Debug.Assert(func.Body != null);
 
@@ -112,7 +114,7 @@ namespace LogicScript.Compiling
                 methodCompiler.Finish(false, false);
             }
 
-            var runMethodCompiler = CreateMethodCompiler(nameof(IScriptInstance.Run), typeof(void), [], true);
+            var runMethodCompiler = CreateMethodCompiler(nameof(IScriptInstance.Run), typeof(void), [], isOverride: true);
             foreach (var block in Script.Blocks)
             {
                 runMethodCompiler.Compile(block);

@@ -126,8 +126,10 @@ namespace LogicScript.Parsing.Visitors
             if (!body.Statements.OfType<ReturnStatement>().Any()) // TODO: replace with control flow analysis lol
                 Context.Errors.AddFunctionReturnRequired(context.end.Span());
 
+            var definition = Script.Functions[name];
+
             // Replace empty function declaration with a definition that contains the body
-            Script.Functions[name] = new(NodeID.Next(), context.Span(), name, context.name.Span(), declaration.ResultSize, declaration.Parameters, body);
+            Script.Functions[name] = new(definition.ID, context.Span(), name, context.name.Span(), declaration.ResultSize, declaration.Parameters, body);
 
             return null;
         }
