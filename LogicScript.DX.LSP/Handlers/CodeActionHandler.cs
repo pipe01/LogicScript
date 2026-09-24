@@ -38,11 +38,10 @@ namespace LogicScript.DX.LSP.Handlers
                 if (error == null)
                     continue;
 
-                var text = error.Span.GetText(script.Source);
-
                 if (diag.Code == ErrorCodes.ExpressionTooLarge && error.Data != null)
                 {
                     var maxSize = (long)error.Data;
+                    var text = error.Span.GetText(script.Source);
 
                     ret.Add(new(new CodeAction()
                     {
