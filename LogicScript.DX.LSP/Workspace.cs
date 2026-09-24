@@ -220,6 +220,6 @@ namespace LogicScript.DX.LSP
             return script.GetNodeAt(location, types);
         }
         public ICodeNode? GetNodeAt(DocumentUri uri, Position position, Type[]? types = null)
-            => GetNodeAt(uri, new SourceLocation(uri.ToString(), position.Line + 1, position.Character + 1), types);
+            => GetNodeAt(uri, position.ToLocation(uri), types);
     }
 }

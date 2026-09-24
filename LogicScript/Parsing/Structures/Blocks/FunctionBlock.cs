@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using LogicScript.Parsing.Structures.Statements;
 
 namespace LogicScript.Parsing.Structures.Blocks
@@ -21,6 +22,13 @@ namespace LogicScript.Parsing.Structures.Blocks
 
             if (Body != null)
                 yield return Body;
+        }
+
+        public override string ToString()
+        {
+            var parameters = Parameters.Select(p => $"{p.Name}'{p.BitSize}");
+
+            return $"def'{ResultSize} {Name}({string.Join(", ", parameters)})";
         }
     }
 }

@@ -29,7 +29,9 @@ namespace LogicScript.DX.LSP.Handlers
 
         public override Task<Hover?> Handle(HoverParams request, CancellationToken cancellationToken)
         {
-            var node = Workspace.GetNodeAt(request.TextDocument.Uri, request.Position, [
+            var location = request.Position.ToLocation(request.TextDocument.Uri);
+
+            var node = Workspace.GetNodeAt(request.TextDocument.Uri, location, [
                 typeof(PrintStringFormat.PartInterpolate),
                 typeof(MachinePortInfo),
                 typeof(Reference),
@@ -71,6 +73,11 @@ namespace LogicScript.DX.LSP.Handlers
                 case PrintStringFormat.PartInterpolate interp:
                     size = interp.LocalInfo.BitSize;
                     span = interp.Span;
+                    break;
+
+                case FunctionCallExpression functionCall when functionCall.NameSpan.Contains(location):
+                    lines.Add(SyntaxHighlight(functionCall.Function.ToString()));
+                    span = functionCall.Span;
                     break;
 
                 case Expression expr:
