@@ -9,6 +9,7 @@ using LogicScript.Parsing.Visitors;
 using LogicScript.Testing;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 
@@ -127,6 +128,13 @@ namespace LogicScript
             }
             catch (ParseCanceledException)
             {
+            }
+            catch (Exception e)
+            {
+                if (errors.Count == 0)
+                    errors.AddError($"Exception while parsing: {e.GetType().FullName}", new SourceSpan());
+
+                Debug.WriteLine($"Unhandled exception while parsing script: {e}");
             }
 
             return (script, errors);
