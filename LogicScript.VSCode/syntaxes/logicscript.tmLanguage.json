@@ -101,7 +101,7 @@
 					"match": "(\\!=|==?|'=|\\+|\\*\\*?|\\/|-|&|\\||\\^|<<?|>>?|!|~)"
 				},
 				{
-					"name": "entity.name.function.logicscript",
+					"name": "keyword.function.logicscript",
 					"match": "(len|allOnes)(?=\\()"
 				}
 			]

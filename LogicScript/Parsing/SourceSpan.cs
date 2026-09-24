@@ -4,7 +4,7 @@ using System.Text;
 
 namespace LogicScript.Parsing
 {
-    public readonly struct SourceSpan : IEquatable<SourceSpan>
+    public readonly struct SourceSpan : IEquatable<SourceSpan>, IComparable<SourceSpan>
     {
         public SourceLocation Start { get; }
         public SourceLocation End { get; }
@@ -89,6 +89,27 @@ namespace LogicScript.Parsing
 
                 return sb.ToString();
             }
+        }
+
+        public int CompareTo(SourceSpan other)
+        {
+            int fileComparison = string.Compare(Start.FileName, other.Start.FileName, StringComparison.Ordinal);
+            if (fileComparison != 0)
+                return fileComparison;
+
+            int startLineComparison = Start.Line.CompareTo(other.Start.Line);
+            if (startLineComparison != 0)
+                return startLineComparison;
+
+            int startColumnComparison = Start.Column.CompareTo(other.Start.Column);
+            if (startColumnComparison != 0)
+                return startColumnComparison;
+
+            int endLineComparison = End.Line.CompareTo(other.End.Line);
+            if (endLineComparison != 0)
+                return endLineComparison;
+
+            return End.Column.CompareTo(other.End.Column);
         }
     }
 }

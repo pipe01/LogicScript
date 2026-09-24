@@ -46,6 +46,7 @@ namespace LogicScript.DX.LSP
                 .WithHandler<DocumentHighlightHandler>()
                 .WithHandler<RunTestHandler>()
                 .WithHandler<CodeActionHandler>()
+                .WithHandler<SemanticTokensHandler>()
             );
 
             await server.Initialize(CancellationToken.None);
