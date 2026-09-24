@@ -28,6 +28,9 @@ namespace LogicScript.DX.LSP
             if (!workspace.TryParsePartial(request.TextDocument.Uri, request.Position.ToLocation(request.TextDocument.Uri), out var script, out var lastLine))
                 return new();
 
+            if (lastLine.StartsWith('#'))
+                return GetPragmaCompletions(lastLine);
+
             var completions = new List<CompletionItem>();
             var location = request.Position.ToLocation(request.TextDocument.Uri, -1);
 
@@ -264,6 +267,35 @@ namespace LogicScript.DX.LSP
                     }
                 }
             }
+        }
+
+        private static CompletionList GetPragmaCompletions(string lastLine)
+        {
+            // Pragma completion
+
+            var keywords = new List<string>();
+
+            if (!lastLine.Contains(' '))
+            {
+                keywords.Add("truncate");
+            }
+            else
+            {
+                var pragma = lastLine[1..].Split(' ')[0];
+
+                switch (pragma)
+                {
+                    case "truncate":
+                        keywords.AddRange("explicit", "implicit", "warn");
+                        break;
+                }
+            }
+
+            return new(keywords.Select(k => new CompletionItem()
+            {
+                Label = k,
+                Kind = CompletionItemKind.Keyword,
+            }));
         }
 
         public override Task<CompletionItem> Handle(CompletionItem request, CancellationToken cancellationToken)
