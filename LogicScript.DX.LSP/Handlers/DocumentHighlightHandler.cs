@@ -5,7 +5,6 @@ using System.Threading.Tasks;
 using LogicScript.Parsing.Structures;
 using LogicScript.Parsing.Structures.Blocks;
 using LogicScript.Parsing.Structures.Expressions;
-using LogicScript.Parsing.Structures.Statements;
 using OmniSharp.Extensions.LanguageServer.Protocol.Client.Capabilities;
 using OmniSharp.Extensions.LanguageServer.Protocol.Document;
 using OmniSharp.Extensions.LanguageServer.Protocol.Models;
@@ -50,33 +49,22 @@ namespace LogicScript.DX.LSP.Handlers
 
             return highlights;
 
-            void HighlightPortInfo(IPortInfo portInfo)
+            void HighlightPortInfo(IPortInfo portInfo, ICodeNode? skip = null)
             {
                 highlights.Add(new()
                 {
                     Kind = DocumentHighlightKind.Write,
                     Range = portInfo.Span.ToRange()
                 });
-
-                foreach (var node in workspace.VisitAll(request.TextDocument.Uri))
-                {
-                    if (node is AssignStatement assign && assign.Reference.Port.Equals(portInfo))
-                    {
-                        highlights.Add(new()
+                highlights.AddRange(
+                    workspace.FindReferencesTo(request.TextDocument.Uri, portInfo)
+                        .Where(n => skip == null || n.Node != skip)
+                        .Select(r => new DocumentHighlight()
                         {
-                            Kind = DocumentHighlightKind.Write,
-                            Range = assign.Reference is PortReference portRef ? portRef.PortSpan.ToRange() : assign.Reference.Span.ToRange()
-                        });
-                    }
-                    else if (node is ReferenceExpression refExpr && refExpr.Reference.Port.Equals(portInfo))
-                    {
-                        highlights.Add(new()
-                        {
-                            Kind = DocumentHighlightKind.Read,
-                            Range = refExpr.Reference is PortReference portRef ? portRef.PortSpan.ToRange() : refExpr.Reference.Span.ToRange()
-                        });
-                    }
-                }
+                            Kind = r.IsWrite ? DocumentHighlightKind.Write : DocumentHighlightKind.Read,
+                            Range = r.Node is IHasNameSpan hasName ? hasName.NameSpan.ToRange() : r.Node.Span.ToRange()
+                        })
+                );
             }
 
             void HighlightFunction(FunctionBlock function)

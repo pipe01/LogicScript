@@ -29,12 +29,12 @@ namespace LogicScript.DX.LSP.Handlers
                 return null;
 
             var newText = definition is LocalInfo ? "$" + request.NewName : request.NewName;
-            var refs = Workspace.FindReferencesTo(request.TextDocument.Uri, definition).Prepend(definition);
+            var refs = Workspace.FindReferencesTo(request.TextDocument.Uri, definition).Prepend((definition, false));
 
             var edits = refs.Select(r => new TextEdit
             {
                 NewText = newText,
-                Range = r is IHasNameSpan withName ? withName.NameSpan.ToRange() : r.Span.ToRange()
+                Range = r.Item1 is IHasNameSpan withName ? withName.NameSpan.ToRange() : r.Item1.Span.ToRange()
             });
 
             return new()

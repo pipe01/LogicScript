@@ -116,7 +116,7 @@ namespace LogicScript.DX.LSP
             return [];
         }
 
-        public IEnumerable<ICodeNode> FindReferencesTo(DocumentUri uri, ICodeNode target)
+        public IEnumerable<(ICodeNode Node, bool IsWrite)> FindReferencesTo(DocumentUri uri, ICodeNode target)
         {
             foreach (var node in VisitAll(uri))
             {
@@ -125,26 +125,42 @@ namespace LogicScript.DX.LSP
                     switch (node)
                     {
                         case ReferenceExpression refExpr when refExpr.Reference.Port.Equals(portInfo):
-                            yield return refExpr;
+                            yield return (refExpr, false);
                             break;
 
                         case AssignStatement assign when assign.Reference.Port.Equals(portInfo):
-                            yield return assign.Reference;
+                            yield return (assign.Reference, true);
                             break;
 
                         case PrintTaskStatement print:
                             foreach (var item in print.String.Parts.OfType<PrintStringFormat.PartInterpolate>().Where(i => i.LocalInfo.Equals(portInfo)))
                             {
-                                yield return item;
+                                yield return (item, false);
+                            }
+                            break;
+
+                        case PortValues portValues:
+                            if (TryGetPortValuesPort(uri, portValues, out var machinePort) && machinePort.Equals(portInfo))
+                            {
+                                yield return (portValues, true);
                             }
                             break;
                     }
                 }
                 else if (node is FunctionCallExpression functionCall && functionCall.Function == target)
                 {
-                    yield return functionCall;
+                    yield return (functionCall, false);
                 }
             }
+        }
+
+        public bool TryGetPortValuesPort(DocumentUri uri, PortValues portValues, out MachinePortInfo machinePort)
+        {
+            if (TryGetScript(uri, out var script) && script.TryGetPort(portValues.Name, portValues.Ports, out machinePort))
+                return true;
+
+            machinePort = default;
+            return false;
         }
 
         public bool TryGetDefinition(SourceLocation location, [MaybeNullWhen(false)] out ICodeNode definition)
@@ -182,7 +198,7 @@ namespace LogicScript.DX.LSP
                 Reference r => r.Port,
                 IPortInfo p => p,
                 PrintStringFormat.PartInterpolate interp => interp.LocalInfo,
-                PortValues portValue when TryGetScript(uri, out var script) && script.TryGetPort(portValue.Name, portValue.Ports, out var port) => port,
+                PortValues portValues when TryGetPortValuesPort(uri, portValues, out var machinePort) => machinePort,
                 _ => null
             };
         }

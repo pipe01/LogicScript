@@ -31,7 +31,7 @@ namespace LogicScript.DX.LSP.Handlers
 
             return new(refs.Select(o => new Location
             {
-                Range = o.Span.ToRange(),
+                Range = o.Node.Span.ToRange(),
                 Uri = request.TextDocument.Uri
             }));
         }
