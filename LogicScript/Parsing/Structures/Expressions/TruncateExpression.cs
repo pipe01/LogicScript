@@ -2,7 +2,7 @@
 
 namespace LogicScript.Parsing.Structures.Expressions
 {
-    internal sealed class TruncateExpression(SourceSpan span, Expression operand, int size, Expression? sizeExpression) : Expression(span)
+    internal sealed class TruncateExpression(SourceSpan span, Expression operand, int size, Expression? sizeExpression, bool isImplicit) : Expression(span)
     {
         public Expression Operand { get; set; } = operand;
         public int Size { get; set; } = size;
@@ -10,6 +10,8 @@ namespace LogicScript.Parsing.Structures.Expressions
 
         public override bool IsConstant => Operand.IsConstant;
         public override int BitSize => Size;
+
+        public bool IsImplicit { get; } = isImplicit;
 
         public override IEnumerable<ICodeNode> GetChildren()
         {

@@ -50,7 +50,7 @@ namespace LogicScript.Parsing.Visitors
                 Context.Errors.AddAssignmentTargetNotWritable(context.reference().Span());
 
             var value = new ExpressionVisitor(BlockContext).Visit(context.expression());
-            var truncated = new TruncateExpression(context.Span(), value, @ref.BitSize, null);
+            var truncated = new TruncateExpression(context.expression().Span(), value, @ref.BitSize, null, false);
 
             return new AssignStatement(Context.NewNodeID(), context.Span(), @ref, truncated);
         }

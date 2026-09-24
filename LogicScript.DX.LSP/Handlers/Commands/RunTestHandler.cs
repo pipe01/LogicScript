@@ -43,7 +43,7 @@ namespace LogicScript.DX.LSP.Commands
             if (testCase == default)
                 throw new ArgumentException("Test not found");
 
-            var statementLimit = await RequestStatementLimitAsync(cancellationToken);
+            var statementLimit = await server.GetConfigurationAsync(["test", "statementLimit"], -1, cancellationToken);
 
             CaseResult result = new SuccessStepResult(testCase, []);
             await RunTestAsync(scriptUri, testCase, statementLimit, DebugSession.Current?.Debugger, workspace, cancellationToken);
@@ -67,18 +67,6 @@ namespace LogicScript.DX.LSP.Commands
             var compiledScript = Compiler.Compile(script, debugger != null);
 
             return await testCase.Run(compiledScript, script, debugger, cancellationToken);
-        }
-
-        private async Task<int> RequestStatementLimitAsync(CancellationToken cancellationToken)
-        {
-            var config = await server.Workspace.RequestConfiguration(new()
-            {
-                Items = new([
-                    new() { Section = "logicscript" }
-                ])
-            }, cancellationToken: cancellationToken);
-
-            return config.FirstOrDefault()?["test"]?["statementLimit"]?.ToObject<int>() ?? -1;
         }
     }
 }

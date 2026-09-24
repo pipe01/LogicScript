@@ -60,6 +60,18 @@
                     "type": "integer",
                     "default": 100000,
                     "description": "Limit the number of statements that can run per test case to prevent infinite loops"
+                },
+                "logicscript.inlayHints.showSizeAnnotations": {
+                    "scope": "window",
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Enable inlay hints for size annotations on locals and parameters"
+                },
+                "logicscript.inlayHints.showImplicitTruncations": {
+                    "scope": "window",
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Enable inlay hints for implicit truncations when #truncate is set to 'implicit' or 'warn'"
                 }
             }
         },

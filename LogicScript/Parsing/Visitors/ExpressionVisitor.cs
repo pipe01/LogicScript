@@ -41,7 +41,7 @@ namespace LogicScript.Parsing.Visitors
                     if (Context.Script.TruncatePragmaMode == TruncatePragmaMode.Warn)
                         Context.Errors.AddExpressionTooLarge(expr.BitSize, MaxBitSize.Value, expr, Severity.Warning);
 
-                    return new TruncateExpression(expr.Span, expr, MaxBitSize.Value, null);
+                    return new TruncateExpression(expr.Span, expr, MaxBitSize.Value, null, true);
                 }
                 else
                 {
@@ -273,7 +273,7 @@ namespace LogicScript.Parsing.Visitors
             var operand = new ExpressionVisitor(Context).Visit(context.expression(0));
             var size = Context.Script.ParseBitSize(context.size, out var sizeExpr);
 
-            return new TruncateExpression(context.Span(), operand, size, sizeExpr);
+            return new TruncateExpression(context.Span(), operand, size, sizeExpr, false);
         }
 
         private IEnumerable<LogicScriptParser.ExpressionContext> Flatten(LogicScriptParser.Arg_listContext context)
