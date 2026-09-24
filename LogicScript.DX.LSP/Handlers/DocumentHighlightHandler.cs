@@ -89,7 +89,7 @@ namespace LogicScript.DX.LSP.Handlers
                 highlights.AddRange(
                     workspace.VisitAll(request.TextDocument.Uri)
                         .OfType<FunctionCallExpression>()
-                        .Where(call => call.Function == function)
+                        .Where(call => call.Function.ID == function.ID)
                         .Select(call => new DocumentHighlight()
                         {
                             Kind = DocumentHighlightKind.Read,
