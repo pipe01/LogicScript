@@ -3,7 +3,6 @@
 using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Running;
 using LogicScript.Data;
-using LogicScript.Interpreting;
 using LogicScript.Compiling;
 using System.Runtime.CompilerServices;
 using LogicScript.Parsing;

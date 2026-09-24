@@ -1,4 +1,3 @@
-using LogicScript.Parsing.Structures;
 using NUnit.Framework;
 
 namespace LogicScript.Tests

@@ -1,5 +1,4 @@
 using LogicScript.Parsing.Structures.Blocks;
-using LogicScript.Parsing.Structures.Expressions;
 using LogicScript.Parsing.Structures.Statements;
 using NUnit.Framework;
 

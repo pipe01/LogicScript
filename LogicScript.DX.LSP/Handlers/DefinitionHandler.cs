@@ -1,6 +1,4 @@
-﻿using LogicScript.Parsing;
-using LogicScript.Parsing.Structures;
-using LogicScript.Parsing.Structures.Expressions;
+﻿using LogicScript.Parsing.Structures;
 using OmniSharp.Extensions.LanguageServer.Protocol.Client.Capabilities;
 using OmniSharp.Extensions.LanguageServer.Protocol.Document;
 using OmniSharp.Extensions.LanguageServer.Protocol.Models;
