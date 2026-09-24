@@ -20,20 +20,20 @@ namespace LogicScript.DX.LSP.Handlers
             };
         }
 
-        public override Task<LocationContainer?> Handle(ReferenceParams request, CancellationToken cancellationToken)
+        public override async Task<LocationContainer?> Handle(ReferenceParams request, CancellationToken cancellationToken)
         {
-            var port = Workspace.GetPortAt(request.TextDocument.Uri, request.Position.ToLocation(request.TextDocument.Uri));
+            var node = Workspace.GetNodeAt(request.TextDocument.Uri, request.Position);
 
-            if (port == null)
-                return Task.FromResult<LocationContainer?>(LocationContainer.From(Array.Empty<Location>()));
+            if (node == null)
+                return new();
 
-            var refs = Workspace.FindReferencesTo(request.TextDocument.Uri, port);
+            var refs = Workspace.FindReferencesTo(request.TextDocument.Uri, node);
 
-            return Task.FromResult<LocationContainer?>(LocationContainer.From(refs.Select(o => new Location
+            return new(refs.Select(o => new Location
             {
                 Range = o.Span.ToRange(),
                 Uri = request.TextDocument.Uri
-            })));
+            }));
         }
     }
 }

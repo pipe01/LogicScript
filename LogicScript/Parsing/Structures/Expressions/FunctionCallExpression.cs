@@ -3,10 +3,12 @@ using LogicScript.Parsing.Structures.Blocks;
 
 namespace LogicScript.Parsing.Structures.Expressions
 {
-    internal sealed class FunctionCallExpression(SourceSpan span, FunctionBlock function, Expression[] arguments) : Expression(span)
+    internal sealed class FunctionCallExpression(SourceSpan span, SourceSpan nameSpan, FunctionBlock function, Expression[] arguments) : Expression(span), IHasNameSpan
     {
         public FunctionBlock Function { get; } = function;
         public Expression[] Arguments { get; } = arguments;
+
+        public SourceSpan NameSpan { get; } = nameSpan;
 
         public override bool IsConstant => false;
         public override int BitSize => Function.ResultSize;

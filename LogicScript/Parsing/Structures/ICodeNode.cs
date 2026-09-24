@@ -8,4 +8,14 @@ namespace LogicScript.Parsing.Structures
 
         IEnumerable<ICodeNode> GetChildren();
     }
+
+    internal interface IIdentifiableCodeNode : ICodeNode
+    {
+        NodeID ID { get; }
+    }
+
+    internal interface IHasNameSpan : ICodeNode
+    {
+        SourceSpan NameSpan { get; }
+    }
 }

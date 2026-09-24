@@ -1,5 +1,6 @@
 ﻿using LogicScript.Parsing;
 using LogicScript.Parsing.Structures;
+using LogicScript.Parsing.Structures.Blocks;
 using LogicScript.Parsing.Structures.Expressions;
 using LogicScript.Parsing.Structures.Statements;
 using LogicScript.Testing;
@@ -110,36 +111,73 @@ namespace LogicScript.DX.LSP
         public IEnumerable<ICodeNode> VisitAll(DocumentUri uri)
         {
             if (TryGetScript(uri, out var script))
-                return script.Blocks.SelectMany(Visit);
+                return script.VisitAll(depthFirst: false);
 
             return [];
-
-            static IEnumerable<ICodeNode> Visit(ICodeNode node)
-            {
-                return node.GetChildren().SelectMany(Visit).Prepend(node);
-            }
         }
 
-        public IReadOnlyList<ICodeNode> FindReferencesTo(DocumentUri uri, IPortInfo port)
+        public IEnumerable<ICodeNode> FindReferencesTo(DocumentUri uri, ICodeNode target)
         {
-            var refs = new List<ICodeNode>();
-
             foreach (var node in VisitAll(uri))
             {
-                if (node is ReferenceExpression refExpr && refExpr.Reference.Port.Equals(port))
-                    refs.Add(refExpr);
-                else if (node is AssignStatement assign && assign.Reference.Port.Equals(port))
-                    refs.Add(assign.Reference);
-                else if (node is PrintTaskStatement print && port is LocalInfo local)
-                    refs.AddRange(print.String.Parts.OfType<PrintStringFormat.PartInterpolate>().Where(i => i.LocalInfo.Equals(local)).Cast<ICodeNode>());
-            }
+                if (target is IPortInfo portInfo)
+                {
+                    switch (node)
+                    {
+                        case ReferenceExpression refExpr when refExpr.Reference.Port.Equals(portInfo):
+                            yield return refExpr;
+                            break;
 
-            return refs;
+                        case AssignStatement assign when assign.Reference.Port.Equals(portInfo):
+                            yield return assign.Reference;
+                            break;
+
+                        case PrintTaskStatement print:
+                            foreach (var item in print.String.Parts.OfType<PrintStringFormat.PartInterpolate>().Where(i => i.LocalInfo.Equals(portInfo)))
+                            {
+                                yield return item;
+                            }
+                            break;
+                    }
+                }
+                else if (node is FunctionCallExpression functionCall && functionCall.Function == target)
+                {
+                    yield return functionCall;
+                }
+            }
         }
 
-        public IPortInfo? GetPortAt(DocumentUri uri, SourceLocation location)
+        public bool TryGetDefinition(SourceLocation location, [MaybeNullWhen(false)] out ICodeNode definition)
         {
-            return GetNodeAt(uri, location) switch
+            var node = GetNodeAt(location.FileName, location);
+
+            if (node is FunctionCallExpression functionCall && functionCall.NameSpan.Contains(location))
+            {
+                definition = functionCall.Function;
+                return true;
+            }
+            else if (node is FunctionBlock)
+            {
+                definition = node;
+                return true;
+            }
+            else
+            {
+                var port = GetPortAt(location.FileName, node);
+                if (port != null)
+                {
+                    definition = port;
+                    return true;
+                }
+            }
+
+            definition = null;
+            return false;
+        }
+
+        private IPortInfo? GetPortAt(DocumentUri uri, ICodeNode? node)
+        {
+            return node switch
             {
                 Reference r => r.Port,
                 IPortInfo p => p,

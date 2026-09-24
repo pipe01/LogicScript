@@ -16,15 +16,13 @@ namespace LogicScript.Testing
         public override string ToString() => Value.ToString();
     }
 
-    public readonly record struct PortValues(string Name, MachinePorts Ports, PortValue[] Values, SourceSpan NameSpan) : ICodeNode
+    public readonly record struct PortValues(SourceSpan Span, string Name, MachinePorts Ports, PortValue[] Values, SourceSpan NameSpan) : ICodeNode
     {
-        readonly SourceSpan ICodeNode.Span => NameSpan;
-
         public SourceSpan ValuesSpan => new(Values[0].Span.Start, Values[^1].Span.End);
 
         public IEnumerable<ICodeNode> GetChildren()
         {
-            yield break;
+            return Values.Cast<ICodeNode>();
         }
 
         public override string ToString() => $"{Name}({string.Join(", ", Values)})";

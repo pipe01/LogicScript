@@ -1,4 +1,7 @@
-﻿using OmniSharp.Extensions.LanguageServer.Protocol.Client.Capabilities;
+﻿using LogicScript.Parsing;
+using LogicScript.Parsing.Structures;
+using LogicScript.Parsing.Structures.Expressions;
+using OmniSharp.Extensions.LanguageServer.Protocol.Client.Capabilities;
 using OmniSharp.Extensions.LanguageServer.Protocol.Document;
 using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 using System.Threading;
@@ -20,16 +23,16 @@ namespace LogicScript.DX.LSP.Handlers
 
         public override async Task<LocationOrLocationLinks?> Handle(DefinitionParams request, CancellationToken cancellationToken)
         {
-            var port = Workspace.GetPortAt(request.TextDocument.Uri, request.Position.ToLocation(request.TextDocument.Uri));
-
-            if (port == null)
-                return new();
-
-            return new(new LocationOrLocationLink(new Location
+            if (Workspace.TryGetDefinition(request.Position.ToLocation(request.TextDocument.Uri), out var definition))
             {
-                Uri = request.TextDocument.Uri,
-                Range = port.Span.ToRange()
-            }));
+                return new(new LocationOrLocationLink(new Location
+                {
+                    Uri = request.TextDocument.Uri,
+                    Range = definition is IHasNameSpan hasName ? hasName.NameSpan.ToRange() : definition.Span.ToRange()
+                }));
+            }
+
+            return new();
         }
     }
 }

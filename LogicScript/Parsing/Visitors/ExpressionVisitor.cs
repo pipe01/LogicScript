@@ -230,7 +230,7 @@ namespace LogicScript.Parsing.Visitors
             if (args.Length != function.Parameters.Length)
                 Context.Errors.AddFunctionArgumentCountMismatch(name, function.Parameters.Length, args.Length, context.Span());
 
-            return new FunctionCallExpression(context.Span(), function, args);
+            return new FunctionCallExpression(context.Span(), context.funcName.Span(), function, args);
         }
 
         public override Expression VisitExprLength([NotNull] LogicScriptParser.ExprLengthContext context)

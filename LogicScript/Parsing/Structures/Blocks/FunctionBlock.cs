@@ -3,7 +3,7 @@ using LogicScript.Parsing.Structures.Statements;
 
 namespace LogicScript.Parsing.Structures.Blocks
 {
-    internal class FunctionBlock(NodeID id, SourceSpan span, string name, SourceSpan nameSpan, int resultSize, LocalInfo[] parameters, Statement? body) : Block(span), IIdentifiableCodeNode
+    internal class FunctionBlock(NodeID id, SourceSpan span, string name, SourceSpan nameSpan, int resultSize, LocalInfo[] parameters, Statement? body) : Block(span), IIdentifiableCodeNode, IHasNameSpan
     {
         public NodeID ID { get; } = id;
         public string Name { get; } = name;

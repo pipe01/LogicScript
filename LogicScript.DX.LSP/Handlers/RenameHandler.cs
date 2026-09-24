@@ -1,4 +1,5 @@
 ﻿using LogicScript.Parsing.Structures;
+using LogicScript.Parsing.Structures.Blocks;
 using OmniSharp.Extensions.LanguageServer.Protocol;
 using OmniSharp.Extensions.LanguageServer.Protocol.Client.Capabilities;
 using OmniSharp.Extensions.LanguageServer.Protocol.Document;
@@ -22,33 +23,27 @@ namespace LogicScript.DX.LSP.Handlers
             };
         }
 
-        public override Task<WorkspaceEdit?> Handle(RenameParams request, CancellationToken cancellationToken)
+        public override async Task<WorkspaceEdit?> Handle(RenameParams request, CancellationToken cancellationToken)
         {
-            var port = Workspace.GetPortAt(request.TextDocument.Uri, request.Position.ToLocation(request.TextDocument.Uri));
+            if (!Workspace.TryGetDefinition(request.Position.ToLocation(request.TextDocument.Uri), out var definition))
+                return null;
 
-            if (port == null)
-                return Task.FromResult(null as WorkspaceEdit);
+            var newText = definition is LocalInfo ? "$" + request.NewName : request.NewName;
+            var refs = Workspace.FindReferencesTo(request.TextDocument.Uri, definition).Prepend(definition);
 
-            var newText = port is LocalInfo ? "$" + request.NewName : request.NewName;
-            var refs = Workspace.FindReferencesTo(request.TextDocument.Uri, port);
-
-            var edits = refs.Select(o => new TextEdit
+            var edits = refs.Select(r => new TextEdit
             {
                 NewText = newText,
-                Range = o.Span.ToRange()
-            }).Prepend(new()
-            {
-                NewText = newText,
-                Range = port.Span.ToRange()
+                Range = r is IHasNameSpan withName ? withName.NameSpan.ToRange() : r.Span.ToRange()
             });
 
-            return Task.FromResult<WorkspaceEdit?>(new WorkspaceEdit
+            return new()
             {
                 Changes = new Dictionary<DocumentUri, IEnumerable<TextEdit>>
                 {
                     { request.TextDocument.Uri, edits }
                 }
-            });
+            };
         }
     }
 }

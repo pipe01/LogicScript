@@ -56,7 +56,7 @@ namespace LogicScript.Parsing.Visitors
 
                 foreach (var item in ctx.step_portvalue())
                 {
-                    if (item.expression().Length == 0)
+                    if (item.expression() == null || item.expression().Length == 0)
                     {
                         errors.AddPortValueMissing(item.Span());
                         continue;
@@ -70,7 +70,7 @@ namespace LogicScript.Parsing.Visitors
                     seen.Add(item.port.Text);
 
                     var values = item.expression().Select(e => new PortValue(e.GetConstantValue(script ?? new(new(), errors)), e.Span())).ToArray();
-                    yield return new PortValues(item.port.Text, ports, values, item.port.Span());
+                    yield return new PortValues(ctx.Span(), item.port.Text, ports, values, item.port.Span());
                 }
             }
         }
