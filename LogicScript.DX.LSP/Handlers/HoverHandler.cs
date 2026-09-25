@@ -119,11 +119,11 @@ namespace LogicScript.DX.LSP.Handlers
 
             if (constValue != null)
             {
-                lines.Add($@"```logicscript
-{constValue}
-0x{constValue.Value.ToStringHex()}
-{constValue.Value.ToStringBinary()}b
-```");
+                lines.Add(SyntaxHighlight(
+                    $"dec: {constValue}\n" +
+                    $"hex: 0x{constValue.Value.ToStringHex()}\n" +
+                    $"bin: {constValue.Value.ToStringBinary()}b"
+                ));
             }
 
             if (size != 0)
