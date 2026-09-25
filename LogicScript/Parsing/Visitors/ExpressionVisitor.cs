@@ -220,7 +220,9 @@ namespace LogicScript.Parsing.Visitors
                 _ => throw new ParseException("Unknown operator", context.Span())
             };
 
-            return new BinaryOperatorExpression(context.Span(), op, Visit(context.expression(0)), Visit(context.expression(1)));
+            var visitor = new ExpressionVisitor(Context); // We don't care about bit size
+
+            return new BinaryOperatorExpression(context.Span(), op, visitor.Visit(context.expression(0)), visitor.Visit(context.expression(1)));
         }
 
         public override Expression VisitExprShift([NotNull] LogicScriptParser.ExprShiftContext context)
