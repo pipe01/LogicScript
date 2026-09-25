@@ -1,6 +1,7 @@
 ﻿using LogicScript.Data;
 using LogicScript.Parsing;
 using LogicScript.Parsing.Structures;
+using LogicScript.Parsing.Structures.Blocks;
 using LogicScript.Parsing.Structures.Expressions;
 using LogicScript.Parsing.Structures.Statements;
 using LogicScript.Parsing.Visitors;
@@ -38,6 +39,7 @@ namespace LogicScript.DX.LSP.Handlers
                 typeof(Expression),
                 typeof(DeclareLocalStatement),
                 typeof(PortValue),
+                typeof(FunctionBlock),
             ]);
             var lines = new List<string>();
             int size = 0;
@@ -104,6 +106,11 @@ namespace LogicScript.DX.LSP.Handlers
                     size = portValue.Value.Length;
                     span = portValue.Span;
                     constValue = portValue.Value;
+                    break;
+
+                case FunctionBlock function when function.NameSpan.Contains(location):
+                    span = function.NameSpan;
+                    lines.Add(SyntaxHighlight(function.ToString()));
                     break;
 
                 default:
