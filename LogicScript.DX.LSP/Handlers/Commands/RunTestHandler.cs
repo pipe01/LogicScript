@@ -39,14 +39,16 @@ namespace LogicScript.DX.LSP.Commands
             if (!workspace.TryGetScript(scriptUri, out var script))
                 throw new ArgumentException("Script not found");
 
+            if (script.Errors.Count > 0)
+                throw new InvalidOperationException("Script has errors");
+
             var testCase = script.TestCases.FirstOrDefault(t => HashCode.Combine(t.Index, t.Name).ToString() == testCaseID);
             if (testCase == default)
                 throw new ArgumentException("Test not found");
 
             var statementLimit = await server.GetConfigurationAsync(["test", "statementLimit"], -1, cancellationToken);
 
-            CaseResult result = new SuccessStepResult(testCase, []);
-            await RunTestAsync(scriptUri, testCase, statementLimit, DebugSession.Current?.Debugger, workspace, cancellationToken);
+            var result = await RunTestAsync(scriptUri, testCase, statementLimit, DebugSession.Current?.Debugger, workspace, cancellationToken);
 
             return new
             {
