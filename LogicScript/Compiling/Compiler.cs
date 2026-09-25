@@ -32,6 +32,8 @@ namespace LogicScript.Compiling
         private readonly Script Script;
         private readonly bool EmitDebug;
 
+        private readonly Type RegistersType;
+
         private readonly TypeBuilder TypeBuilder;
         private readonly FieldInfo HasRunField;
         private readonly FieldInfo RegistersField;
@@ -51,8 +53,10 @@ namespace LogicScript.Compiling
             tb.AddInterfaceImplementation(typeof(IScriptInstance));
             TypeBuilder = tb;
 
+            this.RegistersType = RegistersStruct.Generate(mb, [.. Script.Registers.Values]);
+
             HasRunField = tb.DefineField("_hasRun", typeof(bool), FieldAttributes.Private);
-            RegistersField = tb.DefineField("_registers", script.RegistersType, FieldAttributes.Private);
+            RegistersField = tb.DefineField("_registers", RegistersType, FieldAttributes.Private);
             MachineField = tb.DefineField("_machine", typeof(IMachine), FieldAttributes.Private);
             DebuggerField = tb.DefineField("_debugger", typeof(IDebugger), FieldAttributes.Private);
 
@@ -64,7 +68,7 @@ namespace LogicScript.Compiling
             var ctorMethod = tb.DefineConstructor(MethodAttributes.Public, CallingConventions.HasThis, Type.EmptyTypes);
             var ctorIL = ctorMethod.GetILGenerator();
             ctorIL.Emit(OpCodes.Ldarg_0);
-            ctorIL.Emit(OpCodes.Newobj, script.RegistersType.GetConstructor(Type.EmptyTypes));
+            ctorIL.Emit(OpCodes.Newobj, RegistersType.GetConstructor(Type.EmptyTypes));
             ctorIL.Emit(OpCodes.Stfld, RegistersField);
             ctorIL.Emit(OpCodes.Ret);
         }
@@ -80,7 +84,7 @@ namespace LogicScript.Compiling
             );
 
             return new MethodCompiler(
-                Script,
+                RegistersType,
                 emitter,
                 [.. parameters],
                 HasRunField,

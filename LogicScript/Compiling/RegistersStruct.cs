@@ -16,13 +16,11 @@ namespace LogicScript.Compiling
             public readonly bool IsVector => PortInfo.VectorLength > 1;
         }
 
-        public static Type Generate(MachinePortInfo[] registers)
+        public static Type Generate(ModuleBuilder mb, MachinePortInfo[] registers)
         {
             if (registers.Length == 0)
                 return typeof(EmptyRegisters);
 
-            var ab = AssemblyBuilder.DefineDynamicAssembly(new AssemblyName("<>RegistersAssembly"), AssemblyBuilderAccess.Run);
-            var mb = ab.DefineDynamicModule("Module");
             var tb = mb.DefineType("RegistersStruct", TypeAttributes.Class | TypeAttributes.Public);
             tb.AddInterfaceImplementation(typeof(IRegisters));
 

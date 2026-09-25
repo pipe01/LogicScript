@@ -37,9 +37,6 @@ namespace LogicScript
 
         public bool HasErrors => Errors.Count > 0;
 
-        private Type? registersType;
-        public Type RegistersType => registersType ??= RegistersStruct.Generate([.. Registers.Values]);
-
         internal Script(string source, string fileName, IReadOnlyList<Error> errors)
         {
             this.Source = source;

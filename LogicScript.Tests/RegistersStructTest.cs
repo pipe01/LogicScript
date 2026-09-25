@@ -1,4 +1,6 @@
 using System;
+using System.Reflection;
+using System.Reflection.Emit;
 using LogicScript.Compiling;
 using LogicScript.Parsing.Structures;
 using NUnit.Framework;
@@ -9,7 +11,10 @@ namespace LogicScript.Tests
     {
         private static IRegisters Compile(MachinePortInfo[] regs)
         {
-            var regsType = RegistersStruct.Generate(regs);
+            var ab = AssemblyBuilder.DefineDynamicAssembly(new AssemblyName("<>ScriptAssembly"), AssemblyBuilderAccess.Run);
+            var mb = ab.DefineDynamicModule("Module");
+
+            var regsType = RegistersStruct.Generate(mb, regs);
             return (IRegisters)Activator.CreateInstance(regsType)!;
         }
 
