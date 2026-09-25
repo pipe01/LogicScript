@@ -9,6 +9,9 @@
         ShiftLeft,
         ShiftRight,
 
+        AndAlso,
+        OrElse,
+
         Add,
         Subtract,
         Multiply,

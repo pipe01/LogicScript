@@ -240,6 +240,20 @@ namespace LogicScript.Parsing.Visitors
             return new UnaryOperatorExpression(context.Span(), Operator.Not, Visit(context.expression()));
         }
 
+        public override Expression VisitExprAndOrBool([NotNull] LogicScriptParser.ExprAndOrBoolContext context)
+        {
+            var op = context.op.Type switch
+            {
+                LogicScriptParser.AND_ALSO => Operator.AndAlso,
+                LogicScriptParser.OR_ELSE => Operator.OrElse,
+                _ => throw new ParseException("Unknown operator", context.Span())
+            };
+
+            var visitor = new ExpressionVisitor(Context); // We don't care about bit size
+
+            return new BinaryOperatorExpression(context.Span(), op, visitor.Visit(context.expression(0)), visitor.Visit(context.expression(1)));
+        }
+
         private static readonly Dictionary<string, Operator> UnaryFunctions = new()
         {
             ["rise"] = Operator.Rise,

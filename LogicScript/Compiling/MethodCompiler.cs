@@ -664,6 +664,29 @@ namespace LogicScript.Compiling
                     Emitter.UnsignedShiftRight();
                     break;
 
+                case Operator.AndAlso or Operator.OrElse:
+                    {
+                        bool isAnd = expr.Operator == Operator.AndAlso;
+
+                        var end = Emitter.DefineLabel();
+                        var shortcut = Emitter.DefineLabel();
+
+                        Compile(expr.Left);
+                        if (isAnd)
+                            Emitter.BranchIfFalse(shortcut);
+                        else
+                            Emitter.BranchIfTrue(shortcut);
+
+                        Compile(expr.Right);
+                        Emitter.Branch(end);
+
+                        Emitter.MarkLabel(shortcut);
+                        Emitter.LoadConstant(isAnd ? 0ul : 1ul);
+
+                        Emitter.MarkLabel(end);
+                    }
+                    break;
+
                 case Operator.Power:
                     throw new NotImplementedException("TODO: implement power");
 

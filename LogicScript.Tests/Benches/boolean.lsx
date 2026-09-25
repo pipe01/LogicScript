@@ -1,0 +1,19 @@
+input'3 a
+input b
+output c
+output d
+
+assign c = a && b
+assign d = a || b
+
+when *
+    if a == b
+    end
+end
+
+@test (
+    a(0) b(0) => c(0) d(0),
+    a(4) b(0) => c(0) d(1),
+    a(0) b(1) => c(0) d(1),
+    a(3) b(1) => c(1) d(1),
+)

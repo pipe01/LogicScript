@@ -78,6 +78,7 @@ expression          : LPAREN wsnl expression wsnl RPAREN                        
                       | COMPARE_GREATER
                       | COMPARE_LESSER
                     ) wsnl expression                                           # exprCompare
+                    | expression wsnl op=(OR_ELSE | AND_ALSO) wsnl expression   # exprAndOrBool
                     | <assoc=right> cond=expression wsnl QMARK wsnl
                       ifTrue=expression wsnl COLON wsnl
                       ifFalse=expression                                        # exprTernary

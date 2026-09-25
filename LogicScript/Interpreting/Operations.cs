@@ -28,6 +28,8 @@ namespace LogicScript.Interpreting
                 Operator.NotEqualsCompare => new BitsValue(left.Number != right.Number ? 1ul : 0, 1),
                 Operator.Greater => new BitsValue(left.Number > right.Number ? 1ul : 0, 1),
                 Operator.Lesser => new BitsValue(left.Number < right.Number ? 1ul : 0, 1),
+                Operator.AndAlso => new BitsValue(left.Number != 0 && right.Number != 0 ? 1ul : 0ul, 1),
+                Operator.OrElse => new BitsValue(left.Number != 0 || right.Number != 0 ? 1ul : 0ul, 1),
                 _ => throw new InterpreterException("Unknown operator"),
             };
         }

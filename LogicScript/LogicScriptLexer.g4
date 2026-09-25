@@ -70,7 +70,9 @@ QMARK               : '?' ;
 COLON               : ':' ;
 
 AND                 : '&' ;
+AND_ALSO            : '&&' ;
 OR                  : '|' ;
+OR_ELSE             : '||' ;
 XOR                 : '^' ;
 LSHIFT              : '<<' ;
 RSHIFT              : '>>' ;

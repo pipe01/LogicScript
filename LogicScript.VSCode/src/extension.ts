@@ -168,7 +168,6 @@ function runTests(debug: boolean, testsController: vscode.TestController, mapFil
 
 				if (resp.success)
 					run.passed(item);
-
 				else
 					run.failed(item, new vscode.TestMessage("Test failed"));
 			} catch (err) {
