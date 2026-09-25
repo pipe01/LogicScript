@@ -6,7 +6,7 @@ using System.Collections.Generic;
 
 namespace LogicScript.Interpreting
 {
-    internal readonly record struct InterpreterContext(IMachine? Machine, IRegisters? Registers, IReadOnlyDictionary<LocalInfo, ulong>? Locals);
+    internal readonly record struct InterpreterContext(IMachine? Machine, IRegistersInstance? Registers, IReadOnlyDictionary<LocalInfo, ulong>? Locals);
 
     /// <summary>
     /// We only need the interpreter for computing constant values when parsing and for executing expressions entered while debugging,

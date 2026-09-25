@@ -1,0 +1,14 @@
+reg'2 register
+output'4 out
+
+when *
+    register '= register + 1
+    out = register
+end
+
+@test (
+    => out(1),
+    => out(2),
+    => out(3),
+    => out(0),
+)

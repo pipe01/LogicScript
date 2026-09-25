@@ -20,13 +20,12 @@ using System.Reflection.Emit;
 namespace LogicScript.Compiling
 {
     internal sealed class MethodCompiler(
-        Type RegistersType,
         Emit Emitter,
         List<LocalInfo> Arguments,
         FieldInfo HasRunField,
-        FieldInfo RegistersField,
         FieldInfo MachineField,
         FieldInfo DebuggerField,
+        RegistersStructBuilder RegistersStruct,
         bool EmitDebug,
         Dictionary<NodeID, MethodCompiler> FunctionMethods
     )
@@ -465,9 +464,8 @@ namespace LogicScript.Compiling
 
                         case MachinePorts.Register:
                             Emitter.LoadArgument(ArgumentThis);
-                            Emitter.LoadField(RegistersField);
 
-                            var field = RegistersType.GetField($"Register{port.PortInfo.StartIndex}");
+                            var field = RegistersStruct.Registers[port.PortInfo].Field;
 
                             if (port.VectorIndex != null)
                             {
@@ -727,9 +725,8 @@ namespace LogicScript.Compiling
 
                         case MachinePorts.Register:
                             Emitter.LoadArgument(ArgumentThis);
-                            Emitter.LoadField(RegistersField);
 
-                            var field = RegistersType.GetField($"Register{port.PortInfo.StartIndex}");
+                            var field = RegistersStruct.Registers[port.PortInfo].Field;
                             Emitter.LoadField(field);
 
                             var elemType = field.FieldType;

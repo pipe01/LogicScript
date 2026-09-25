@@ -175,14 +175,29 @@ namespace LogicScript
         }
     }
 
-    public interface IScriptInstance
+    public interface IScriptInstance : IRegistersInstance
     {
-        IRegisters Registers { get; }
         bool HasRun { get; set; }
         IMachine Machine { get; set; }
         IDebugger? Debugger { get; set; }
 
         void Run();
+    }
+
+    public interface IRegistersInstance
+    {
+        /// <summary>
+        /// Sum of the size in bytes of all registers.
+        /// </summary>
+        int RegistersSize { get; }
+
+        void ResetRegisters();
+
+        void DecodeRegisters(ReadOnlySpan<byte> data);
+        void EncodeRegisters(Span<byte> data);
+
+        ulong GetRegister(int index, int vectorIndex);
+        void SetRegister(int index, int vectorIndex, ulong value);
     }
 
     public interface ICompiledScript

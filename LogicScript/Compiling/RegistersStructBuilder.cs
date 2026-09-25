@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
@@ -9,73 +10,84 @@ using Sigil.NonGeneric;
 
 namespace LogicScript.Compiling
 {
-    internal static class RegistersStruct
+    internal class RegistersStructBuilder
     {
-        private record struct ComputedRegister(MachinePortInfo PortInfo, FieldInfo Field, Type ItemType, int ItemByteSize, int ByteStart, int Index)
+        public record struct ComputedRegister(MachinePortInfo PortInfo, FieldInfo Field, Type ItemType, int ItemByteSize, int ByteStart, int Index)
         {
             public readonly bool IsVector => PortInfo.VectorLength > 1;
         }
 
-        public static Type Generate(ModuleBuilder mb, MachinePortInfo[] registers)
+        public readonly Dictionary<MachinePortInfo, ComputedRegister> Registers = [];
+        private readonly int TotalBytes;
+        private readonly TypeBuilder TypeBuilder;
+
+        public RegistersStructBuilder(TypeBuilder tb, MachinePortInfo[] registers)
         {
-            if (registers.Length == 0)
-                return typeof(EmptyRegisters);
+            TypeBuilder = tb;
 
-            var tb = mb.DefineType("RegistersStruct", TypeAttributes.Class | TypeAttributes.Public);
-            tb.AddInterfaceImplementation(typeof(IRegisters));
-
-            var computedRegisters = new List<ComputedRegister>();
-
-            int totalBytes = 0;
             for (int i = 0; i < registers.Length; i++)
             {
                 var reg = registers[i];
                 var (type, size) = GetRegisterSize(reg);
 
-                var field = tb.DefineField($"Register{i}", reg.VectorLength > 1 ? type.MakeArrayType() : type, FieldAttributes.Public);
-                computedRegisters.Add(new(reg, field, type, size, totalBytes, i));
+                var field = TypeBuilder.DefineField($"Register{i}", reg.VectorLength > 1 ? type.MakeArrayType() : type, FieldAttributes.Public);
+                Registers.Add(reg, new(reg, field, type, size, TotalBytes, i));
 
-                totalBytes += size * reg.VectorLength;
+                TotalBytes += size * reg.VectorLength;
             }
+        }
 
-            var ctorEmitter = Emit.BuildConstructor(Type.EmptyTypes, tb, MethodAttributes.Public);
-            GenerateConstructorMethod(ctorEmitter);
+        public void EmitConstructorInit(Emit emitter)
+        {
+            // Initialize all vector registers with empty arrays
 
+            foreach (var reg in Registers.Values.Where(reg => reg.IsVector))
+            {
+                emitter.LoadArgument(0);
+                emitter.LoadConstant(reg.PortInfo.VectorLength);
+                emitter.NewArray(reg.ItemType);
+                emitter.StoreField(reg.Field);
+            }
+        }
+
+        public void GenerateMethods()
+        {
             var decodeEmitter = Emit.BuildInstanceMethod(
                 typeof(void),
                 [typeof(ReadOnlySpan<byte>)],
-                tb,
-                nameof(IRegisters.Decode),
-                MethodAttributes.Public | MethodAttributes.Virtual | MethodAttributes.Final | MethodAttributes.HideBySig | MethodAttributes.NewSlot
+                TypeBuilder,
+                nameof(IRegistersInstance.DecodeRegisters),
+                MethodAttributes.Public | MethodAttributes.Virtual | MethodAttributes.Final | MethodAttributes.HideBySig | MethodAttributes.NewSlot,
+                doVerify: false
             );
             GenerateDecodeMethod(decodeEmitter);
 
             var encodeMethod = Emit.BuildInstanceMethod(
                 typeof(void),
                 [typeof(Span<byte>)],
-                tb,
-                nameof(IRegisters.Encode),
+                TypeBuilder,
+                nameof(IRegistersInstance.EncodeRegisters),
                 MethodAttributes.Public | MethodAttributes.Virtual | MethodAttributes.Final | MethodAttributes.HideBySig | MethodAttributes.NewSlot
             );
             GenerateEncodeMethod(encodeMethod);
 
-            var sizeProperty = tb.DefineProperty(nameof(IRegisters.Size), PropertyAttributes.None, typeof(int), Type.EmptyTypes);
+            var sizeProperty = TypeBuilder.DefineProperty(nameof(IRegistersInstance.RegistersSize), PropertyAttributes.None, typeof(int), Type.EmptyTypes);
             var getSizeEmitter = Emit.BuildInstanceMethod(
                 typeof(int),
                 Type.EmptyTypes,
-                tb,
-                "get_" + nameof(IRegisters.Size),
+                TypeBuilder,
+                "get_" + nameof(IRegistersInstance.RegistersSize),
                 MethodAttributes.Public | MethodAttributes.Virtual | MethodAttributes.Final | MethodAttributes.HideBySig | MethodAttributes.NewSlot
             );
-            getSizeEmitter.LoadConstant(totalBytes);
+            getSizeEmitter.LoadConstant(TotalBytes);
             getSizeEmitter.Return();
             sizeProperty.SetGetMethod(getSizeEmitter.CreateMethod());
 
             var getRegisterEmitter = Emit.BuildInstanceMethod(
                 typeof(ulong),
                 [typeof(int), typeof(int)],
-                tb,
-                nameof(IRegisters.GetRegister),
+                TypeBuilder,
+                nameof(IRegistersInstance.GetRegister),
                 MethodAttributes.Public | MethodAttributes.Virtual | MethodAttributes.Final | MethodAttributes.HideBySig | MethodAttributes.NewSlot
             );
             GenerateGetRegisterMethod(getRegisterEmitter);
@@ -83,53 +95,34 @@ namespace LogicScript.Compiling
             var setRegisterEmitter = Emit.BuildInstanceMethod(
                 typeof(void),
                 [typeof(int), typeof(int), typeof(ulong)],
-                tb,
-                nameof(IRegisters.SetRegister),
-                MethodAttributes.Public | MethodAttributes.Virtual | MethodAttributes.Final | MethodAttributes.HideBySig | MethodAttributes.NewSlot
+                TypeBuilder,
+                nameof(IRegistersInstance.SetRegister),
+                MethodAttributes.Public | MethodAttributes.Virtual | MethodAttributes.Final | MethodAttributes.HideBySig | MethodAttributes.NewSlot,
+                doVerify: false
             );
             GenerateSetRegisterMethod(setRegisterEmitter);
 
             var resetMethodEmitter = Emit.BuildInstanceMethod(
                 typeof(void),
                 Type.EmptyTypes,
-                tb,
-                nameof(IRegisters.Reset),
-                MethodAttributes.Public | MethodAttributes.Virtual | MethodAttributes.Final | MethodAttributes.HideBySig | MethodAttributes.NewSlot
+                TypeBuilder,
+                nameof(IRegistersInstance.ResetRegisters),
+                MethodAttributes.Public | MethodAttributes.Virtual | MethodAttributes.Final | MethodAttributes.HideBySig | MethodAttributes.NewSlot,
+                doVerify: false
             );
             GenerateResetMethod(resetMethodEmitter);
-
-            return tb.CreateType();
-
-            void GenerateConstructorMethod(Emit emitter)
-            {
-                // Initialize all vector registers with empty arrays
-
-                emitter.LoadArgument(0);
-                emitter.Call(typeof(object).GetConstructor(Type.EmptyTypes));
-
-                foreach (var reg in computedRegisters.Where(reg => reg.IsVector))
-                {
-                    emitter.LoadArgument(0);
-                    emitter.LoadConstant(reg.PortInfo.VectorLength);
-                    emitter.NewArray(reg.ItemType);
-                    emitter.StoreField(reg.Field);
-                }
-
-                emitter.Return();
-                emitter.CreateConstructor();
-            }
 
             void GenerateDecodeMethod(Emit emitter)
             {
                 var exit = emitter.DefineLabel();
 
-                //= if (span.Length < totalBytes) return;
+                //= if (span.Length < TotalBytes) return;
                 emitter.LoadArgumentAddress(1);
                 emitter.Call(typeof(ReadOnlySpan<byte>).GetMethod("get_Length"));
-                emitter.LoadConstant(totalBytes);
+                emitter.LoadConstant(TotalBytes);
                 emitter.BranchIfLess(exit);
 
-                foreach (var reg in computedRegisters)
+                foreach (var reg in Registers.Values)
                 {
                     if (reg.IsVector)
                     {
@@ -170,20 +163,21 @@ namespace LogicScript.Compiling
 
                 emitter.MarkLabel(exit);
                 emitter.Return();
-                emitter.CreateMethod();
+                emitter.CreateMethod(out var inst);
+                Debug.WriteLine(inst);
             }
 
             void GenerateEncodeMethod(Emit emitter)
             {
                 var exit = emitter.DefineLabel();
 
-                //= if (span.Length < totalBytes) return;
+                //= if (span.Length < TotalBytes) return;
                 emitter.LoadArgumentAddress(1);
                 emitter.Call(typeof(Span<byte>).GetMethod("get_Length"));
-                emitter.LoadConstant(totalBytes);
+                emitter.LoadConstant(TotalBytes);
                 emitter.BranchIfLess(exit);
 
-                foreach (var reg in computedRegisters)
+                foreach (var reg in Registers.Values)
                 {
                     if (reg.IsVector)
                     {
@@ -229,7 +223,7 @@ namespace LogicScript.Compiling
 
             void GenerateGetRegisterMethod(Emit emitter)
             {
-                foreach (var reg in computedRegisters)
+                foreach (var reg in Registers.Values)
                 {
                     var next = emitter.DefineLabel();
 
@@ -262,7 +256,7 @@ namespace LogicScript.Compiling
 
             void GenerateSetRegisterMethod(Emit emitter)
             {
-                foreach (var reg in computedRegisters)
+                foreach (var reg in Registers.Values)
                 {
                     var next = emitter.DefineLabel();
 
@@ -298,7 +292,7 @@ namespace LogicScript.Compiling
 
             void GenerateResetMethod(Emit emitter)
             {
-                foreach (var reg in computedRegisters)
+                foreach (var reg in Registers.Values)
                 {
                     if (reg.PortInfo.VectorLength == 1)
                     {

@@ -4,27 +4,39 @@ using System.Reflection.Emit;
 using LogicScript.Compiling;
 using LogicScript.Parsing.Structures;
 using NUnit.Framework;
+using Sigil.NonGeneric;
 
 namespace LogicScript.Tests
 {
     public class RegistersStructTest
     {
-        private static IRegisters Compile(MachinePortInfo[] regs)
+        private static IRegistersInstance Compile(MachinePortInfo[] regs)
         {
             var ab = AssemblyBuilder.DefineDynamicAssembly(new AssemblyName("<>ScriptAssembly"), AssemblyBuilderAccess.Run);
             var mb = ab.DefineDynamicModule("Module");
+            var tb = mb.DefineType("Registers");
+            tb.AddInterfaceImplementation(typeof(IRegistersInstance));
 
-            var regsType = RegistersStruct.Generate(mb, regs);
-            return (IRegisters)Activator.CreateInstance(regsType)!;
+            var regsStruct = new RegistersStructBuilder(tb, regs);
+            regsStruct.GenerateMethods();
+
+            var ctorEmit = Emit.BuildConstructor(Type.EmptyTypes, tb, MethodAttributes.Public);
+            regsStruct.EmitConstructorInit(ctorEmit);
+            ctorEmit.LoadArgument(0);
+            ctorEmit.Call(typeof(object).GetConstructor(Type.EmptyTypes));
+            ctorEmit.Return();
+            ctorEmit.CreateConstructor();
+
+            return (IRegistersInstance)Activator.CreateInstance(tb.CreateType())!;
         }
 
         private static void DecodeEncode(MachinePortInfo[] machineRegs, byte[] data)
         {
             var regs = Compile(machineRegs);
-            regs.Decode(data);
+            regs.DecodeRegisters(data);
 
             Span<byte> newData = stackalloc byte[data.Length];
-            regs.Encode(newData);
+            regs.EncodeRegisters(newData);
 
             Assert.AreEqual(data, newData.ToArray());
         }
@@ -49,7 +61,7 @@ namespace LogicScript.Tests
             Assert.AreEqual(103, regs.GetRegister(1, 3));
             Assert.AreEqual(123123, regs.GetRegister(2, 0));
 
-            regs.Reset();
+            regs.ResetRegisters();
 
             Assert.AreEqual(0, regs.GetRegister(0, 0));
             Assert.AreEqual(0, regs.GetRegister(1, 0));
@@ -74,7 +86,7 @@ namespace LogicScript.Tests
         public void TestSize()
         {
             var regs = Compile([Port(8, 1, 0), Port(13, 4, 1), Port(64, 1, 0)]);
-            Assert.AreEqual(1 + (2 * 4) + 8, regs.Size);
+            Assert.AreEqual(1 + (2 * 4) + 8, regs.RegistersSize);
         }
 
         [Test]

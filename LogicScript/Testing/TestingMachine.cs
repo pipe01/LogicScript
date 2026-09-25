@@ -15,8 +15,6 @@ namespace LogicScript.Testing
 
         public readonly IList<string> PrintOutput = [];
 
-        public IRegisters? Registers { get; set; }
-
         public event Action<string>? LineOutput;
 
         public void Reset()
