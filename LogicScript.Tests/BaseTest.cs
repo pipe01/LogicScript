@@ -22,7 +22,7 @@ namespace LogicScript.Tests
 
         protected static void Run(Script script, DummyMachine machine, byte[]? registers = null, bool runStartup = true)
         {
-            var instance = Compiler.Compile(script).Instantiate(machine);
+            var instance = script.CreateInstance(machine);
             instance.DecodeRegisters(registers);
             instance.HasRun = !runStartup;
             instance.Run();

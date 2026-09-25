@@ -18,14 +18,14 @@ namespace LogicScript.Testing
             return Steps;
         }
 
-        public async Task<CaseResult> Run(ICompiledScript compiledScript, Script script, IDebugger? debugger = null, CancellationToken cancellationToken = default)
+        public async Task<CaseResult> Run(Script script, IDebugger? debugger = null, CancellationToken cancellationToken = default)
         {
             var machine = new TestingMachine(script.RegisteredInputLength, script.RegisteredOutputLength);
 
             if (debugger != null)
                 machine.LineOutput += debugger.GotOutput;
 
-            var instance = compiledScript.Instantiate(machine);
+            var instance = script.CreateInstance(machine, debugger != null);
             instance.Debugger = debugger;
 
             return await Run(instance, script, machine, cancellationToken);

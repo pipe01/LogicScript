@@ -62,11 +62,9 @@ namespace LogicScript.DX.CLI.Commands
 
             logger.LogStartBench(bench);
 
-            var compiledScript = Compiler.Compile(script, debugger != null);
-
             debugger?.LoadedScript(script);
 
-            var results = bench.Run(compiledScript, script, debugger);
+            var results = bench.Run(script, debugger);
             int successful = 0, failed = 0;
 
             await foreach (var result in results)

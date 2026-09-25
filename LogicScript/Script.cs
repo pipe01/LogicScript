@@ -37,11 +37,15 @@ namespace LogicScript
 
         public bool HasErrors => Errors.Count > 0;
 
+        private readonly Lazy<ICompiledScript> CompiledScript, CompiledScriptDebug;
+
         internal Script(string source, string fileName, IReadOnlyList<Error> errors)
         {
             this.Source = source;
             this.FileName = fileName;
             this.Errors = errors;
+            this.CompiledScript = new(() => Compiler.Compile(this));
+            this.CompiledScriptDebug = new(() => Compiler.Compile(this, true));
         }
 
         // For tests
@@ -85,6 +89,13 @@ namespace LogicScript
             }
 
             return null;
+        }
+
+        public IScriptInstance CreateInstance(IMachine machine, bool debug = false)
+        {
+            var lazy = debug ? CompiledScriptDebug : CompiledScript;
+
+            return lazy.Value.Instantiate(machine);
         }
 
         public static (Script? Script, IReadOnlyList<Error> Errors) Parse(string source, string fileName = "<script>", bool addNewline = true)

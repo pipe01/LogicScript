@@ -82,9 +82,9 @@ end
 
             this.Machine = new DummyMachine(Case.Inputs, Case.Outputs);
 
-            this.ICompiledScript = Compiler.Compile(script).Instantiate(Machine);
-            this.CompiledScriptDebug = Compiler.Compile(script, true).Instantiate(Machine);
-            this.CompiledScriptWithDebugger = Compiler.Compile(script, true).Instantiate(Machine);
+            this.ICompiledScript = script.CreateInstance(Machine);
+            this.CompiledScriptDebug = script.CreateInstance(Machine, true);
+            this.CompiledScriptWithDebugger = script.CreateInstance(Machine, true);
             this.CompiledScriptWithDebugger.Debugger = DummyDebugger.Instance;
         }
 

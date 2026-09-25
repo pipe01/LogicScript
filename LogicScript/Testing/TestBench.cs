@@ -20,7 +20,7 @@ namespace LogicScript.Testing
             this.Cases = cases;
         }
 
-        public async IAsyncEnumerable<CaseResult> Run(ICompiledScript compiledScript, Script script, IDebugger? debugger)
+        public async IAsyncEnumerable<CaseResult> Run(Script script, IDebugger? debugger)
         {
             var machine = new TestingMachine(script.RegisteredInputLength, script.RegisteredOutputLength);
 
@@ -31,7 +31,7 @@ namespace LogicScript.Testing
             {
                 machine.Reset();
 
-                var instance = compiledScript.Instantiate(machine);
+                var instance = script.CreateInstance(machine, debugger != null);
                 instance.Debugger = debugger;
 
                 yield return await @case.Run(instance, script, machine);
