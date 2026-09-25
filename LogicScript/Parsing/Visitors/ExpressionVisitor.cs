@@ -156,25 +156,79 @@ namespace LogicScript.Parsing.Visitors
             return sliceExpr;
         }
 
-        public override Expression VisitExprBinOp([NotNull] LogicScriptParser.ExprBinOpContext context)
+        public override Expression VisitExprXor([NotNull] LogicScriptParser.ExprXorContext context)
+        {
+            return new BinaryOperatorExpression(context.Span(), Operator.Xor, Visit(context.expression(0)), Visit(context.expression(1)));
+        }
+
+        public override Expression VisitExprAndOr([NotNull] LogicScriptParser.ExprAndOrContext context)
         {
             var op = context.op.Type switch
             {
-                LogicScriptParser.OR => Operator.Or,
                 LogicScriptParser.AND => Operator.And,
-                LogicScriptParser.XOR => Operator.Xor,
-                LogicScriptParser.POW => Operator.Power,
+                LogicScriptParser.OR => Operator.Or,
+                _ => throw new ParseException("Unknown operator", context.Span())
+            };
+
+            return new BinaryOperatorExpression(context.Span(), op, Visit(context.expression(0)), Visit(context.expression(1)));
+        }
+
+        public override Expression VisitExprPower([NotNull] LogicScriptParser.ExprPowerContext context)
+        {
+            return new BinaryOperatorExpression(context.Span(), Operator.Power, Visit(context.expression(0)), Visit(context.expression(1)));
+        }
+
+        public override Expression VisitExprModulus([NotNull] LogicScriptParser.ExprModulusContext context)
+        {
+            return new BinaryOperatorExpression(context.Span(), Operator.Modulus, Visit(context.expression(0)), Visit(context.expression(1)));
+        }
+
+        public override Expression VisitExprPlusMinus([NotNull] LogicScriptParser.ExprPlusMinusContext context)
+        {
+            var op = context.op.Type switch
+            {
                 LogicScriptParser.PLUS => Operator.Add,
                 LogicScriptParser.MINUS => Operator.Subtract,
+                _ => throw new ParseException("Unknown operator", context.Span())
+            };
+
+            return new BinaryOperatorExpression(context.Span(), op, Visit(context.expression(0)), Visit(context.expression(1)));
+        }
+
+        public override Expression VisitExprMultDiv([NotNull] LogicScriptParser.ExprMultDivContext context)
+        {
+            var op = context.op.Type switch
+            {
                 LogicScriptParser.MULT => Operator.Multiply,
                 LogicScriptParser.DIVIDE => Operator.Divide,
-                LogicScriptParser.MOD => Operator.Modulus,
-                LogicScriptParser.LSHIFT => Operator.ShiftLeft,
-                LogicScriptParser.RSHIFT => Operator.ShiftRight,
+                _ => throw new ParseException("Unknown operator", context.Span())
+            };
+
+            return new BinaryOperatorExpression(context.Span(), op, Visit(context.expression(0)), Visit(context.expression(1)));
+        }
+
+        public override Expression VisitExprCompare([NotNull] LogicScriptParser.ExprCompareContext context)
+        {
+            // TODO: warn/error if operands are of different size
+
+            var op = context.op.Type switch
+            {
                 LogicScriptParser.COMPARE_EQUALS => Operator.EqualsCompare,
                 LogicScriptParser.COMPARE_NOTEQUALS => Operator.NotEqualsCompare,
                 LogicScriptParser.COMPARE_GREATER => Operator.Greater,
                 LogicScriptParser.COMPARE_LESSER => Operator.Lesser,
+                _ => throw new ParseException("Unknown operator", context.Span())
+            };
+
+            return new BinaryOperatorExpression(context.Span(), op, Visit(context.expression(0)), Visit(context.expression(1)));
+        }
+
+        public override Expression VisitExprShift([NotNull] LogicScriptParser.ExprShiftContext context)
+        {
+            var op = context.op.Type switch
+            {
+                LogicScriptParser.LSHIFT => Operator.ShiftLeft,
+                LogicScriptParser.RSHIFT => Operator.ShiftRight,
                 _ => throw new ParseException("Unknown operator", context.Span())
             };
 
