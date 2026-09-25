@@ -1,4 +1,5 @@
-﻿using Antlr4.Runtime.Misc;
+﻿using System.Linq;
+using Antlr4.Runtime.Misc;
 using LogicScript.Parsing.Structures;
 using LogicScript.Testing;
 
@@ -11,10 +12,17 @@ namespace LogicScript.Parsing.Visitors
             var script = new Script(source, context.Start.TokenSource.SourceName, errors);
             var ctx = new ScriptContext(script, errors);
 
+            var declVisitor = new DeclarationVisitor(ctx, errors);
+
+            // Visit constant declarations first so that function declarations can use them in bit size specifiers
+            foreach (var decl in context.declaration().Where(d => d.decl_const() != null))
+            {
+                declVisitor.Visit(decl);
+            }
+
             new FunctionDeclarationVisitor(ctx).Visit(context);
 
-            var declVisitor = new DeclarationVisitor(ctx, errors);
-            foreach (var decl in context.declaration())
+            foreach (var decl in context.declaration().Where(d => d.decl_const() == null))
             {
                 declVisitor.Visit(decl);
             }
