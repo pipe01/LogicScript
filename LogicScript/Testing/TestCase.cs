@@ -18,7 +18,7 @@ namespace LogicScript.Testing
             return Steps;
         }
 
-        public async Task<CaseResult> Run(CompiledScript compiledScript, Script script, IDebugger? debugger = null, CancellationToken cancellationToken = default)
+        public async Task<CaseResult> Run(ICompiledScript compiledScript, Script script, IDebugger? debugger = null, CancellationToken cancellationToken = default)
         {
             var machine = new TestingMachine(script.RegisteredInputLength, script.RegisteredOutputLength);
 

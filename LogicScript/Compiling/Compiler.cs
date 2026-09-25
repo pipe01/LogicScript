@@ -10,23 +10,6 @@ using System.Diagnostics;
 
 namespace LogicScript.Compiling
 {
-    public sealed class CompiledScript
-    {
-        private readonly Type Type;
-
-        internal CompiledScript(Type type)
-        {
-            this.Type = type;
-        }
-
-        public IScriptInstance Instantiate(IMachine machine)
-        {
-            var instance = (IScriptInstance)Activator.CreateInstance(Type);
-            instance.Machine = machine;
-            return instance;
-        }
-    }
-
     public sealed class Compiler
     {
         private readonly Script Script;
@@ -34,11 +17,14 @@ namespace LogicScript.Compiling
 
         private readonly Type RegistersType;
 
+        private readonly ModuleBuilder ModuleBuilder;
         private readonly TypeBuilder TypeBuilder;
+
         private readonly FieldInfo HasRunField;
         private readonly FieldInfo RegistersField;
         private readonly FieldInfo MachineField;
         private readonly FieldInfo DebuggerField;
+        private readonly ConstructorBuilder Constructor;
 
         private readonly Dictionary<NodeID, MethodCompiler> FunctionMethods = [];
 
@@ -48,25 +34,24 @@ namespace LogicScript.Compiling
             this.EmitDebug = emitDebug;
 
             var ab = AssemblyBuilder.DefineDynamicAssembly(new AssemblyName("<>ScriptAssembly"), AssemblyBuilderAccess.Run);
-            var mb = ab.DefineDynamicModule("Module");
-            var tb = mb.DefineType("CompiledScript", TypeAttributes.Class);
-            tb.AddInterfaceImplementation(typeof(IScriptInstance));
-            TypeBuilder = tb;
+            ModuleBuilder = ab.DefineDynamicModule("Module");
+            TypeBuilder = ModuleBuilder.DefineType("ICompiledScript", TypeAttributes.Class);
+            TypeBuilder.AddInterfaceImplementation(typeof(IScriptInstance));
 
-            this.RegistersType = RegistersStruct.Generate(mb, [.. Script.Registers.Values]);
+            this.RegistersType = RegistersStruct.Generate(ModuleBuilder, [.. Script.Registers.Values]);
 
-            HasRunField = tb.DefineField("_hasRun", typeof(bool), FieldAttributes.Private);
-            RegistersField = tb.DefineField("_registers", RegistersType, FieldAttributes.Private);
-            MachineField = tb.DefineField("_machine", typeof(IMachine), FieldAttributes.Private);
-            DebuggerField = tb.DefineField("_debugger", typeof(IDebugger), FieldAttributes.Private);
+            HasRunField = TypeBuilder.DefineField("_hasRun", typeof(bool), FieldAttributes.Assembly);
+            RegistersField = TypeBuilder.DefineField("_registers", RegistersType, FieldAttributes.Assembly);
+            MachineField = TypeBuilder.DefineField("_machine", typeof(IMachine), FieldAttributes.Assembly);
+            DebuggerField = TypeBuilder.DefineField("_debugger", typeof(IDebugger), FieldAttributes.Assembly);
 
-            tb.DefineProperty(nameof(IScriptInstance.Registers), typeof(IRegisters), RegistersField, false);
-            tb.DefineProperty(nameof(IScriptInstance.HasRun), typeof(bool), HasRunField, true);
-            tb.DefineProperty(nameof(IScriptInstance.Machine), typeof(IMachine), MachineField, true);
-            tb.DefineProperty(nameof(IScriptInstance.Debugger), typeof(IDebugger), DebuggerField, true);
+            TypeBuilder.DefineProperty(nameof(IScriptInstance.Registers), typeof(IRegisters), RegistersField, false);
+            TypeBuilder.DefineProperty(nameof(IScriptInstance.HasRun), typeof(bool), HasRunField, true);
+            TypeBuilder.DefineProperty(nameof(IScriptInstance.Machine), typeof(IMachine), MachineField, true);
+            TypeBuilder.DefineProperty(nameof(IScriptInstance.Debugger), typeof(IDebugger), DebuggerField, true);
 
-            var ctorMethod = tb.DefineConstructor(MethodAttributes.Public, CallingConventions.HasThis, Type.EmptyTypes);
-            var ctorIL = ctorMethod.GetILGenerator();
+            Constructor = TypeBuilder.DefineConstructor(MethodAttributes.Public, CallingConventions.HasThis, Type.EmptyTypes);
+            var ctorIL = Constructor.GetILGenerator();
             ctorIL.Emit(OpCodes.Ldarg_0);
             ctorIL.Emit(OpCodes.Newobj, RegistersType.GetConstructor(Type.EmptyTypes));
             ctorIL.Emit(OpCodes.Stfld, RegistersField);
@@ -96,7 +81,31 @@ namespace LogicScript.Compiling
             );
         }
 
-        private CompiledScript Compile()
+        private ICompiledScript CreateFactory()
+        {
+            var tb = ModuleBuilder.DefineType("Factory", TypeAttributes.Class | TypeAttributes.Sealed);
+            tb.AddInterfaceImplementation(typeof(ICompiledScript));
+
+            var emitter = Emit.BuildInstanceMethod(
+                typeof(IScriptInstance),
+                [typeof(IMachine)],
+                tb,
+                nameof(ICompiledScript.Instantiate),
+                MethodAttributes.Public | MethodAttributes.Virtual | MethodAttributes.NewSlot
+            );
+            emitter.NewObject(Constructor);
+            emitter.Duplicate();
+            emitter.LoadArgument(1);
+            emitter.StoreField(MachineField);
+            emitter.Return();
+            emitter.CreateMethod();
+
+            var type = tb.CreateType();
+
+            return (ICompiledScript)Activator.CreateInstance(type);
+        }
+
+        private ICompiledScript Compile()
         {
             if (Script.HasErrors)
                 throw new Exception("Script has errors");
@@ -125,10 +134,12 @@ namespace LogicScript.Compiling
             }
             runMethodCompiler.Finish(true, true);
 
-            return new(TypeBuilder.CreateType());
+            TypeBuilder.CreateType();
+
+            return CreateFactory();
         }
 
-        public static CompiledScript Compile(Script script, bool emitDebug = false)
+        public static ICompiledScript Compile(Script script, bool emitDebug = false)
         {
             return new Compiler(script, emitDebug).Compile();
         }

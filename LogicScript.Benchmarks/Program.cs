@@ -59,7 +59,7 @@ end
 
         private TestCase Case;
         private IMachine Machine;
-        private IScriptInstance CompiledScript, CompiledScriptDebug, CompiledScriptWithDebugger;
+        private IScriptInstance ICompiledScript, CompiledScriptDebug, CompiledScriptWithDebugger;
 
         [GlobalSetup]
         public void GlobalSetup()
@@ -82,7 +82,7 @@ end
 
             this.Machine = new DummyMachine(Case.Inputs, Case.Outputs);
 
-            this.CompiledScript = Compiler.Compile(script).Instantiate(Machine);
+            this.ICompiledScript = Compiler.Compile(script).Instantiate(Machine);
             this.CompiledScriptDebug = Compiler.Compile(script, true).Instantiate(Machine);
             this.CompiledScriptWithDebugger = Compiler.Compile(script, true).Instantiate(Machine);
             this.CompiledScriptWithDebugger.Debugger = DummyDebugger.Instance;
@@ -111,7 +111,7 @@ end
         [Benchmark]
         public void RunCompiledNoDebug()
         {
-            CompiledScript.Run();
+            ICompiledScript.Run();
         }
 
         [Benchmark]

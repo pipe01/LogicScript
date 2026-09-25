@@ -20,7 +20,7 @@ namespace LogicScript.Testing
             this.Cases = cases;
         }
 
-        public async IAsyncEnumerable<CaseResult> Run(CompiledScript compiledScript, Script script, IDebugger? debugger)
+        public async IAsyncEnumerable<CaseResult> Run(ICompiledScript compiledScript, Script script, IDebugger? debugger)
         {
             var machine = new TestingMachine(script.RegisteredInputLength, script.RegisteredOutputLength);
 

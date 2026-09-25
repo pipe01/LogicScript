@@ -184,4 +184,9 @@ namespace LogicScript
 
         void Run();
     }
+
+    public interface ICompiledScript
+    {
+        IScriptInstance Instantiate(IMachine machine);
+    }
 }

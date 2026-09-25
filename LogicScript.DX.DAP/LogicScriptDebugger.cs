@@ -153,7 +153,7 @@ public class LogicScriptDebugger : IDebugger, IAttachHandler, IDisconnectHandler
 
     private readonly record struct StatementBreakpoint(int Number, Statement Statement);
 
-    private record class PauseState(int? BreakpointNumber, Statement Statement, IScriptInstance CompiledScript, IMachine Machine, Script Script)
+    private record class PauseState(int? BreakpointNumber, Statement Statement, IScriptInstance ICompiledScript, IMachine Machine, Script Script)
     {
         public readonly TaskCompletionSource<bool> PauseBarrier = new(TaskCreationOptions.RunContinuationsAsynchronously);
 
@@ -539,7 +539,7 @@ public class LogicScriptDebugger : IDebugger, IAttachHandler, IDisconnectHandler
                 Value = FormatBitsValue(port.Target switch
                 {
                     MachinePorts.Input => CurrentPause!.Machine.ReadInputs(port.StartIndex, port.BitSize),
-                    MachinePorts.Register => CurrentPause!.CompiledScript.Registers.GetRegister(port.StartIndex, 0),
+                    MachinePorts.Register => CurrentPause!.ICompiledScript.Registers.GetRegister(port.StartIndex, 0),
                     _ => throw new NotImplementedException()
                 }, port.BitSize)
             };
@@ -562,7 +562,7 @@ public class LogicScriptDebugger : IDebugger, IAttachHandler, IDisconnectHandler
                     Value = FormatBitsValue(port.Target switch
                     {
                         MachinePorts.Input => CurrentPause!.Machine.ReadInputs(port.StartIndex + vi * port.BitSize, port.BitSize),
-                        MachinePorts.Register => CurrentPause!.CompiledScript.Registers.GetRegister(port.StartIndex, vi),
+                        MachinePorts.Register => CurrentPause!.ICompiledScript.Registers.GetRegister(port.StartIndex, vi),
                         _ => throw new NotImplementedException()
                     }, port.BitSize)
                 });
@@ -613,7 +613,7 @@ public class LogicScriptDebugger : IDebugger, IAttachHandler, IDisconnectHandler
             };
         }
 
-        var result = Interpreter.Visit(parsed, new(CurrentPause.Machine, CurrentPause.CompiledScript.Registers, locals.ToDictionary(p => p.Item1, p => p.Value)));
+        var result = Interpreter.Visit(parsed, new(CurrentPause.Machine, CurrentPause.ICompiledScript.Registers, locals.ToDictionary(p => p.Item1, p => p.Value)));
 
         return new()
         {
