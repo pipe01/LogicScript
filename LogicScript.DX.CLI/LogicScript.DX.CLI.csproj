@@ -1,13 +1,13 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
-    <ProjectReference Include="..\..\Yaclip\Yaclip.csproj" />
     <ProjectReference Include="..\LogicScript\LogicScript.csproj" />
     <ProjectReference Include="..\LogicScript.DX.DAP\LogicScript.DX.DAP.csproj" />
   </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="SimpleConsoleColor" Version="1.0.2" />
+    <PackageReference Include="Yaclip" Version="1.1.0" />
   </ItemGroup>
 
   <PropertyGroup>
