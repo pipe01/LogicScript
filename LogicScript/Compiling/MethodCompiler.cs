@@ -610,6 +610,8 @@ namespace LogicScript.Compiling
                     break;
 
                 case Operator.AllOnes:
+                    // TODO: optimize: add short-circuiting when doing allOnes of inputs
+
                     Compile(expr.Operand);
                     EmitAllOnes(expr.Operand.BitSize);
                     break;

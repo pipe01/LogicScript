@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using LogicScript.Data;
+using LogicScript.Parsing.Structures;
 
 namespace LogicScript.Testing.Results
 {
@@ -36,10 +37,10 @@ namespace LogicScript.Testing.Results
         public int StepIndex { get; }
         public CaseStep Step { get; }
         public string StepSource { get; }
-        public IDictionary<string, BitsValue[]> ExpectedOutputs { get; }
-        public IDictionary<string, BitsValue[]> MismatchedOutputs { get; }
+        public IDictionary<MachinePortInfo, BitsValue[]> ExpectedOutputs { get; }
+        public IDictionary<MachinePortInfo, BitsValue[]> MismatchedOutputs { get; }
 
-        internal FailedStepCaseResult(TestCase testCase, IReadOnlyCollection<string> printedLines, int stepIndex, CaseStep step, string stepSource, IDictionary<string, BitsValue[]> expectedOutputs, IDictionary<string, BitsValue[]> mismatchedOutputs) : base(testCase, printedLines)
+        internal FailedStepCaseResult(TestCase testCase, IReadOnlyCollection<string> printedLines, int stepIndex, CaseStep step, string stepSource, IDictionary<MachinePortInfo, BitsValue[]> expectedOutputs, IDictionary<MachinePortInfo, BitsValue[]> mismatchedOutputs) : base(testCase, printedLines)
         {
             this.StepIndex = stepIndex;
             this.Step = step;
@@ -63,9 +64,9 @@ namespace LogicScript.Testing.Results
 
             return msg.ToString();
 
-            static string FormatIO(IDictionary<string, BitsValue[]> values, IEnumerable<string> keys)
+            static string FormatIO(IDictionary<MachinePortInfo, BitsValue[]> values, IEnumerable<MachinePortInfo> keys)
             {
-                return string.Join(' ', keys.Select(k => $"{k}({string.Join(", ", values[k])})").ToArray());
+                return string.Join(' ', keys.Select(k => $"{k.Name}({string.Join(", ", values[k])})").ToArray());
             }
         }
     }

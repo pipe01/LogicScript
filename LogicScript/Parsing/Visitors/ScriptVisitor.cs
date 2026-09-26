@@ -37,14 +37,14 @@ namespace LogicScript.Parsing.Visitors
                 {
                     foreach (var input in step.Inputs)
                     {
-                        if (!script.Inputs.TryGetValue(input.Name, out var inputPort))
+                        if (!script.Inputs.TryGetValue(input.Name, out var inputPort) && !script.Registers.TryGetValue(input.Name, out inputPort))
                             errors.AddUnknownInputPort(input.Name, input.NameSpan);
                         else
                             CheckTestPort(inputPort, input);
                     }
                     foreach (var output in step.Outputs)
                     {
-                        if (!script.Outputs.TryGetValue(output.Name, out var outputPort))
+                        if (!script.Outputs.TryGetValue(output.Name, out var outputPort) && !script.Registers.TryGetValue(output.Name, out outputPort))
                             errors.AddUnknownOutputPort(output.Name, output.NameSpan);
                         else
                             CheckTestPort(outputPort, output);
