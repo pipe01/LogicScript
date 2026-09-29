@@ -28,13 +28,13 @@ namespace LogicScript.Testing
         public override string ToString() => $"{Name}({string.Join(", ", Values)})";
     }
 
-    public record CaseStep(IList<PortValues> Inputs, IList<PortValues> Outputs, SourceSpan Span) : ICodeNode
+    public record CaseStep(IList<PortValues> Inputs, IList<PortValues> Assertions, SourceSpan Span) : ICodeNode
     {
         public IEnumerable<ICodeNode> GetChildren()
         {
-            return Inputs.Concat(Outputs).Cast<ICodeNode>();
+            return Inputs.Concat(Assertions).Cast<ICodeNode>();
         }
 
-        public override string ToString() => $"{string.Join(' ', Inputs)} => {string.Join(' ', Outputs)}";
+        public override string ToString() => $"{string.Join(' ', Inputs)} => {string.Join(' ', Assertions)}";
     }
 }

@@ -66,23 +66,30 @@ namespace LogicScript.Testing
                 var mismatchedOutputs = new Dictionary<MachinePortInfo, BitsValue[]>();
                 var resultOutputs = new Dictionary<MachinePortInfo, BitsValue[]>();
 
-                foreach (var output in step.Outputs)
+                foreach (var assertion in step.Assertions)
                 {
-                    if (!script.Outputs.TryGetValue(output.Name, out var port) && !script.Registers.TryGetValue(output.Name, out port))
-                        throw new ArgumentException($"Unknown output port '{output.Name}'");
+                    if (!script.Outputs.TryGetValue(assertion.Name, out var port) && !script.Registers.TryGetValue(assertion.Name, out port))
+                        throw new ArgumentException($"Unknown output port '{assertion.Name}'");
 
-                    var machineValues = Enumerable.Range(0, output.Values.Length).Select(i =>
+                    var gotValues = Enumerable.Range(0, assertion.Values.Length).Select(i =>
                     {
-                        int vectorStart = port.StartIndex + i * port.BitSize;
-                        return new BitsValue(machine.Outputs[vectorStart..(vectorStart + port.BitSize)]);
+                        if (port.Target == MachinePorts.Output)
+                        {
+                            int vectorStart = port.StartIndex + i * port.BitSize;
+                            return new BitsValue(machine.Outputs[vectorStart..(vectorStart + port.BitSize)]);
+                        }
+                        else
+                        {
+                            return new BitsValue(instance.GetRegister(port.StartIndex, i));
+                        }
                     }).ToArray();
 
-                    resultOutputs.Add(port, machineValues);
+                    resultOutputs.Add(port, [.. assertion.Values.Select(v => v.Value)]);
 
-                    bool mismatched = !machineValues.SequenceEqual(output.Values.Select(v => v.Value));
+                    bool mismatched = !gotValues.SequenceEqual(assertion.Values.Select(v => v.Value));
 
                     if (mismatched)
-                        mismatchedOutputs.Add(port, machineValues);
+                        mismatchedOutputs.Add(port, gotValues);
                 }
 
                 if (mismatchedOutputs.Count > 0)
