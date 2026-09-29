@@ -1,8 +1,7 @@
 ﻿namespace LogicScript.Parsing.Structures
 {
-    internal enum Operator
+    internal enum BinaryOperator
     {
-        // Binary operators
         And,
         Or,
         Xor,
@@ -19,13 +18,15 @@
         Power,
         Modulus,
 
-        // (Binary) comparison operators
+        // Comparison operators
         EqualsCompare,
         NotEqualsCompare,
         Greater,
         Lesser,
+    }
 
-        // Unary operators
+    internal enum UnaryOperator
+    {
         Not,
         Rise,
         Fall,

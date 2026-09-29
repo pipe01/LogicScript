@@ -600,16 +600,16 @@ namespace LogicScript.Compiling
         {
             switch (expr.Operator)
             {
-                case Operator.Not:
+                case UnaryOperator.Not:
                     Compile(expr.Operand);
                     Emitter.Not();
                     break;
 
-                case Operator.Length:
+                case UnaryOperator.Length:
                     EmitConstant(expr.Operand.BitSize);
                     break;
 
-                case Operator.AllOnes:
+                case UnaryOperator.AllOnes:
                     // TODO: optimize: add short-circuiting when doing allOnes of inputs
 
                     Compile(expr.Operand);
@@ -627,46 +627,46 @@ namespace LogicScript.Compiling
         {
             switch (expr.Operator)
             {
-                case Operator.And or Operator.Or or Operator.Xor or Operator.Add or Operator.Subtract or Operator.Multiply
-                    or Operator.Divide or Operator.Modulus or Operator.EqualsCompare or Operator.NotEqualsCompare or Operator.Greater or Operator.Lesser:
+                case BinaryOperator.And or BinaryOperator.Or or BinaryOperator.Xor or BinaryOperator.Add or BinaryOperator.Subtract or BinaryOperator.Multiply
+                    or BinaryOperator.Divide or BinaryOperator.Modulus or BinaryOperator.EqualsCompare or BinaryOperator.NotEqualsCompare or BinaryOperator.Greater or BinaryOperator.Lesser:
                     Compile(expr.Left);
                     Compile(expr.Right);
 
                     _ = expr.Operator switch
                     {
-                        Operator.And => Emitter.And(),
-                        Operator.Or => Emitter.Or(),
-                        Operator.Xor => Emitter.Xor(),
-                        Operator.Add => Emitter.Add(),
-                        Operator.Subtract => Emitter.Subtract(),
-                        Operator.Multiply => Emitter.Multiply(),
-                        Operator.Divide => Emitter.UnsignedDivide(),
-                        Operator.Modulus => Emitter.Remainder(),
-                        Operator.EqualsCompare => Emitter.CompareEqual(),
-                        Operator.NotEqualsCompare => Emitter.CompareEqual().LoadConstant(0UL).CompareEqual(),
-                        Operator.Greater => Emitter.CompareGreaterThan(),
-                        Operator.Lesser => Emitter.CompareLessThan(),
+                        BinaryOperator.And => Emitter.And(),
+                        BinaryOperator.Or => Emitter.Or(),
+                        BinaryOperator.Xor => Emitter.Xor(),
+                        BinaryOperator.Add => Emitter.Add(),
+                        BinaryOperator.Subtract => Emitter.Subtract(),
+                        BinaryOperator.Multiply => Emitter.Multiply(),
+                        BinaryOperator.Divide => Emitter.UnsignedDivide(),
+                        BinaryOperator.Modulus => Emitter.Remainder(),
+                        BinaryOperator.EqualsCompare => Emitter.CompareEqual(),
+                        BinaryOperator.NotEqualsCompare => Emitter.CompareEqual().LoadConstant(0UL).CompareEqual(),
+                        BinaryOperator.Greater => Emitter.CompareGreaterThan(),
+                        BinaryOperator.Lesser => Emitter.CompareLessThan(),
                         _ => throw new NotImplementedException()
                     };
                     break;
 
-                case Operator.ShiftLeft:
+                case BinaryOperator.ShiftLeft:
                     Compile(expr.Left);
                     Compile(expr.Right);
                     Emitter.Convert<int>();
                     Emitter.ShiftLeft();
                     break;
 
-                case Operator.ShiftRight:
+                case BinaryOperator.ShiftRight:
                     Compile(expr.Left);
                     Compile(expr.Right);
                     Emitter.Convert<int>();
                     Emitter.UnsignedShiftRight();
                     break;
 
-                case Operator.AndAlso or Operator.OrElse:
+                case BinaryOperator.AndAlso or BinaryOperator.OrElse:
                     {
-                        bool isAnd = expr.Operator == Operator.AndAlso;
+                        bool isAnd = expr.Operator == BinaryOperator.AndAlso;
 
                         var end = Emitter.DefineLabel();
                         var shortcut = Emitter.DefineLabel();
@@ -687,7 +687,7 @@ namespace LogicScript.Compiling
                     }
                     break;
 
-                case Operator.Power:
+                case BinaryOperator.Power:
                     throw new NotImplementedException("TODO: implement power");
 
                 default:

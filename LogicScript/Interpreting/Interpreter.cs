@@ -87,18 +87,18 @@ namespace LogicScript.Interpreting
 
         private static BitsValue Visit(UnaryOperatorExpression expr, InterpreterContext context)
         {
-            if (expr.Operator == Operator.Length)
+            if (expr.Operator == UnaryOperator.Length)
                 return new BitsValue((ulong)expr.Operand.BitSize, 7);
 
             var operand = Visit(expr.Operand, context);
 
             return expr.Operator switch
             {
-                Operator.Not => operand.Negated,
-                Operator.Rise => throw new NotImplementedException(),
-                Operator.Fall => throw new NotImplementedException(),
-                Operator.Change => throw new NotImplementedException(),
-                Operator.AllOnes => (BitsValue)operand.AreAllBitsSet,
+                UnaryOperator.Not => operand.Negated,
+                UnaryOperator.Rise => throw new NotImplementedException(),
+                UnaryOperator.Fall => throw new NotImplementedException(),
+                UnaryOperator.Change => throw new NotImplementedException(),
+                UnaryOperator.AllOnes => (BitsValue)operand.AreAllBitsSet,
                 _ => throw new InterpreterException("Unknown operand", expr.Span),
             };
         }

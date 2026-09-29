@@ -158,15 +158,15 @@ namespace LogicScript.Parsing.Visitors
 
         public override Expression VisitExprXor([NotNull] LogicScriptParser.ExprXorContext context)
         {
-            return new BinaryOperatorExpression(context.Span(), Operator.Xor, Visit(context.expression(0)), Visit(context.expression(1)));
+            return new BinaryOperatorExpression(context.Span(), BinaryOperator.Xor, Visit(context.expression(0)), Visit(context.expression(1)));
         }
 
         public override Expression VisitExprAndOr([NotNull] LogicScriptParser.ExprAndOrContext context)
         {
             var op = context.op.Type switch
             {
-                LogicScriptParser.AND => Operator.And,
-                LogicScriptParser.OR => Operator.Or,
+                LogicScriptParser.AND => BinaryOperator.And,
+                LogicScriptParser.OR => BinaryOperator.Or,
                 _ => throw new ParseException("Unknown operator", context.Span())
             };
 
@@ -175,20 +175,20 @@ namespace LogicScript.Parsing.Visitors
 
         public override Expression VisitExprPower([NotNull] LogicScriptParser.ExprPowerContext context)
         {
-            return new BinaryOperatorExpression(context.Span(), Operator.Power, Visit(context.expression(0)), Visit(context.expression(1)));
+            return new BinaryOperatorExpression(context.Span(), BinaryOperator.Power, Visit(context.expression(0)), Visit(context.expression(1)));
         }
 
         public override Expression VisitExprModulus([NotNull] LogicScriptParser.ExprModulusContext context)
         {
-            return new BinaryOperatorExpression(context.Span(), Operator.Modulus, Visit(context.expression(0)), Visit(context.expression(1)));
+            return new BinaryOperatorExpression(context.Span(), BinaryOperator.Modulus, Visit(context.expression(0)), Visit(context.expression(1)));
         }
 
         public override Expression VisitExprPlusMinus([NotNull] LogicScriptParser.ExprPlusMinusContext context)
         {
             var op = context.op.Type switch
             {
-                LogicScriptParser.PLUS => Operator.Add,
-                LogicScriptParser.MINUS => Operator.Subtract,
+                LogicScriptParser.PLUS => BinaryOperator.Add,
+                LogicScriptParser.MINUS => BinaryOperator.Subtract,
                 _ => throw new ParseException("Unknown operator", context.Span())
             };
 
@@ -199,8 +199,8 @@ namespace LogicScript.Parsing.Visitors
         {
             var op = context.op.Type switch
             {
-                LogicScriptParser.MULT => Operator.Multiply,
-                LogicScriptParser.DIVIDE => Operator.Divide,
+                LogicScriptParser.MULT => BinaryOperator.Multiply,
+                LogicScriptParser.DIVIDE => BinaryOperator.Divide,
                 _ => throw new ParseException("Unknown operator", context.Span())
             };
 
@@ -213,10 +213,10 @@ namespace LogicScript.Parsing.Visitors
 
             var op = context.op.Type switch
             {
-                LogicScriptParser.COMPARE_EQUALS => Operator.EqualsCompare,
-                LogicScriptParser.COMPARE_NOTEQUALS => Operator.NotEqualsCompare,
-                LogicScriptParser.COMPARE_GREATER => Operator.Greater,
-                LogicScriptParser.COMPARE_LESSER => Operator.Lesser,
+                LogicScriptParser.COMPARE_EQUALS => BinaryOperator.EqualsCompare,
+                LogicScriptParser.COMPARE_NOTEQUALS => BinaryOperator.NotEqualsCompare,
+                LogicScriptParser.COMPARE_GREATER => BinaryOperator.Greater,
+                LogicScriptParser.COMPARE_LESSER => BinaryOperator.Lesser,
                 _ => throw new ParseException("Unknown operator", context.Span())
             };
 
@@ -229,8 +229,8 @@ namespace LogicScript.Parsing.Visitors
         {
             var op = context.op.Type switch
             {
-                LogicScriptParser.LSHIFT => Operator.ShiftLeft,
-                LogicScriptParser.RSHIFT => Operator.ShiftRight,
+                LogicScriptParser.LSHIFT => BinaryOperator.ShiftLeft,
+                LogicScriptParser.RSHIFT => BinaryOperator.ShiftRight,
                 _ => throw new ParseException("Unknown operator", context.Span())
             };
 
@@ -239,15 +239,15 @@ namespace LogicScript.Parsing.Visitors
 
         public override Expression VisitExprNegate([NotNull] LogicScriptParser.ExprNegateContext context)
         {
-            return new UnaryOperatorExpression(context.Span(), Operator.Not, Visit(context.expression()));
+            return new UnaryOperatorExpression(context.Span(), UnaryOperator.Not, Visit(context.expression()));
         }
 
         public override Expression VisitExprAndOrBool([NotNull] LogicScriptParser.ExprAndOrBoolContext context)
         {
             var op = context.op.Type switch
             {
-                LogicScriptParser.AND_ALSO => Operator.AndAlso,
-                LogicScriptParser.OR_ELSE => Operator.OrElse,
+                LogicScriptParser.AND_ALSO => BinaryOperator.AndAlso,
+                LogicScriptParser.OR_ELSE => BinaryOperator.OrElse,
                 _ => throw new ParseException("Unknown operator", context.Span())
             };
 
@@ -256,12 +256,12 @@ namespace LogicScript.Parsing.Visitors
             return new BinaryOperatorExpression(context.Span(), op, visitor.Visit(context.expression(0)), visitor.Visit(context.expression(1)));
         }
 
-        private static readonly Dictionary<string, Operator> UnaryFunctions = new()
+        private static readonly Dictionary<string, UnaryOperator> UnaryFunctions = new()
         {
-            ["rise"] = Operator.Rise,
-            ["fall"] = Operator.Fall,
-            ["change"] = Operator.Change,
-            ["allOnes"] = Operator.AllOnes,
+            ["rise"] = UnaryOperator.Rise,
+            ["fall"] = UnaryOperator.Fall,
+            ["change"] = UnaryOperator.Change,
+            ["allOnes"] = UnaryOperator.AllOnes,
         };
 
         public override Expression VisitExprCall([NotNull] LogicScriptParser.ExprCallContext context)
@@ -279,7 +279,7 @@ namespace LogicScript.Parsing.Visitors
                 if (context.arg_list().arg_list() != null)
                     Context.Errors.AddSingleParameterRequired(name, context.Span());
 
-                if (op is Operator.Rise or Operator.Fall or Operator.Change)
+                if (op is UnaryOperator.Rise or UnaryOperator.Fall or UnaryOperator.Change)
                     Context.Errors.AddOperatorNotImplemented(op.ToString().ToLower(), context.funcName.Span());
 
                 var value = Visit(context.arg_list().value);
@@ -312,7 +312,7 @@ namespace LogicScript.Parsing.Visitors
             {
                 var name = context.reference().GetText();
                 if (Context.Script.Script.Constants.TryGetValue(name, out var @const))
-                    return new UnaryOperatorExpression(context.Span(), Operator.Length, @const.Expression);
+                    return new UnaryOperatorExpression(context.Span(), UnaryOperator.Length, @const.Expression);
 
                 var reference = new ReferenceVisitor(Context, MaxBitSize ?? 0, true).Visit(context.reference());
                 return new ReferenceLengthExpression(context.Span(), reference);
@@ -321,11 +321,11 @@ namespace LogicScript.Parsing.Visitors
             if (context.expression() != null)
             {
                 var value = new ExpressionVisitor(new BlockContext(Context.Script, Context.Outer)).Visit(context.expression());
-                return new UnaryOperatorExpression(context.Span(), Operator.Length, value);
+                return new UnaryOperatorExpression(context.Span(), UnaryOperator.Length, value);
             }
 
             // For partial parsing
-            return new UnaryOperatorExpression(context.Span(), Operator.Length, new PlaceholderExpression(context.Span()));
+            return new UnaryOperatorExpression(context.Span(), UnaryOperator.Length, new PlaceholderExpression(context.Span()));
         }
 
         public override Expression VisitExprTernary([NotNull] LogicScriptParser.ExprTernaryContext context)

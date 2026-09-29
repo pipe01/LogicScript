@@ -7,29 +7,29 @@ namespace LogicScript.Interpreting
 {
     internal static class Operations
     {
-        public static BitsValue DoOperation(BitsValue left, BitsValue right, Operator op)
+        public static BitsValue DoOperation(BitsValue left, BitsValue right, BinaryOperator op)
         {
             var maxLen = left.Length > right.Length ? left.Length : right.Length;
 
             return op switch
             {
-                Operator.And => new BitsValue(left.Number & right.Number, maxLen),
-                Operator.Or => new BitsValue(left.Number | right.Number, maxLen),
-                Operator.Xor => new BitsValue(left.Number ^ right.Number, maxLen),
-                Operator.ShiftLeft => new BitsValue(left.Number << (int)right.Number, left.Length + (int)right.Number),
-                Operator.ShiftRight => new BitsValue(left.Number >> (int)right.Number, left.Length - (int)right.Number),
-                Operator.Add => new BitsValue(left.Number + right.Number),
-                Operator.Subtract => new BitsValue(left.Number - right.Number),
-                Operator.Multiply => new BitsValue(left.Number * right.Number),
-                Operator.Divide => new BitsValue(left.Number / right.Number),
-                Operator.Power => new BitsValue((ulong)Math.Pow(left.Number, right.Number)),
-                Operator.Modulus => new BitsValue(left.Number % right.Number),
-                Operator.EqualsCompare => new BitsValue(left.Number == right.Number ? 1ul : 0, 1),
-                Operator.NotEqualsCompare => new BitsValue(left.Number != right.Number ? 1ul : 0, 1),
-                Operator.Greater => new BitsValue(left.Number > right.Number ? 1ul : 0, 1),
-                Operator.Lesser => new BitsValue(left.Number < right.Number ? 1ul : 0, 1),
-                Operator.AndAlso => new BitsValue(left.Number != 0 && right.Number != 0 ? 1ul : 0ul, 1),
-                Operator.OrElse => new BitsValue(left.Number != 0 || right.Number != 0 ? 1ul : 0ul, 1),
+                BinaryOperator.And => new BitsValue(left.Number & right.Number, maxLen),
+                BinaryOperator.Or => new BitsValue(left.Number | right.Number, maxLen),
+                BinaryOperator.Xor => new BitsValue(left.Number ^ right.Number, maxLen),
+                BinaryOperator.ShiftLeft => new BitsValue(left.Number << (int)right.Number, left.Length + (int)right.Number),
+                BinaryOperator.ShiftRight => new BitsValue(left.Number >> (int)right.Number, left.Length - (int)right.Number),
+                BinaryOperator.Add => new BitsValue(left.Number + right.Number),
+                BinaryOperator.Subtract => new BitsValue(left.Number - right.Number),
+                BinaryOperator.Multiply => new BitsValue(left.Number * right.Number),
+                BinaryOperator.Divide => new BitsValue(left.Number / right.Number),
+                BinaryOperator.Power => new BitsValue((ulong)Math.Pow(left.Number, right.Number)),
+                BinaryOperator.Modulus => new BitsValue(left.Number % right.Number),
+                BinaryOperator.EqualsCompare => new BitsValue(left.Number == right.Number ? 1ul : 0, 1),
+                BinaryOperator.NotEqualsCompare => new BitsValue(left.Number != right.Number ? 1ul : 0, 1),
+                BinaryOperator.Greater => new BitsValue(left.Number > right.Number ? 1ul : 0, 1),
+                BinaryOperator.Lesser => new BitsValue(left.Number < right.Number ? 1ul : 0, 1),
+                BinaryOperator.AndAlso => new BitsValue(left.Number != 0 && right.Number != 0 ? 1ul : 0ul, 1),
+                BinaryOperator.OrElse => new BitsValue(left.Number != 0 || right.Number != 0 ? 1ul : 0ul, 1),
                 _ => throw new InterpreterException("Unknown operator"),
             };
         }
