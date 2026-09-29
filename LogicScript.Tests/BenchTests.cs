@@ -26,16 +26,17 @@ namespace LogicScript.Tests
                 return lsxFiles.SelectMany(lsxFile =>
                 {
                     var script = ParseScript(lsxFile);
+                    var fileName = lsxFile[prefix.Length..^".lsx".Length];
 
                     return script.TestCases.SelectMany((@case, i) =>
                     {
-                        var caseName = @case.Name ?? $"Case_{i}";
+                        var suffix = script.TestCases.Count == 1 ? "" : (@case.Name ?? $".Case_{i}");
 
                         return new TestCaseParameters[]
                         {
                             new([lsxFile, i])
                             {
-                                TestName = $"{lsxFile[prefix.Length..^".lsx".Length]}.{caseName}"
+                                TestName = fileName + suffix
                             },
                         };
                     });
