@@ -13,6 +13,8 @@ namespace LogicScript.Parsing.Structures.Expressions
         public override bool IsConstant => false;
         public override int BitSize => Function.ResultSize;
 
+        public override Integer ResultType => Function.ResultType;
+
         public override string ToString() => $"{Function.Name}({string.Join<Expression>(", ", Arguments)})";
 
         public override IEnumerable<ICodeNode> GetChildren() => Arguments;

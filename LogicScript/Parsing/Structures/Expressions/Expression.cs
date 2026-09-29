@@ -9,6 +9,8 @@ namespace LogicScript.Parsing.Structures.Expressions
         public abstract bool IsConstant { get; }
         public abstract int BitSize { get; }
 
+        public virtual Integer ResultType => BitSize.ToIntegerSize();
+
         public virtual IEnumerable<ICodeNode> GetChildren()
         {
             yield break;

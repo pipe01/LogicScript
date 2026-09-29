@@ -58,7 +58,7 @@ namespace LogicScript.Parsing.Visitors
             {
                 var n = new NumberVisitor().Visit(context.number());
 
-                return new NumberLiteralExpression(context.Span(), new BitsValue(n, Math.Max(MaxBitSize ?? 0, n.Length)));
+                return new NumberLiteralExpression(context.Span(), n);
             }
             else if (context.reference() != null)
             {

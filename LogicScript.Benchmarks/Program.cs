@@ -16,11 +16,19 @@ namespace LogicScript.Benchmarks
 
         private static readonly TestCase[] TestCases = [
             new(0, 0, @"
-reg a
-reg b
-reg c
+reg'16 a
+reg'16 b
+reg'16 c
 
-when 1
+when *
+    a = b & c
+    b = a & c
+    c = a & b
+    a = b & c
+    b = a & c
+    c = a & b
+    a = b & c
+    b = a & c
     c = a & b
 end
 "),
@@ -94,10 +102,18 @@ end
         }
         class Runner : IRunner
         {
-            public byte A, B, C;
+            public uint A, B, C;
             void IRunner.Run()
             {
-                C = (byte)(A & B);
+                A = B & C;
+                B = A & C;
+                C = A & B;
+                A = B & C;
+                B = A & C;
+                C = A & B;
+                A = B & C;
+                B = A & C;
+                C = A & B;
             }
         }
 

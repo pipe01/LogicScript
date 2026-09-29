@@ -4,6 +4,7 @@ input'size a
 input'size b
 input'3 op
 output'(size + 1) out
+output'size out_trunc
 
 const op_add = 1
 const op_sub = 2
@@ -12,14 +13,11 @@ const op_div = 4
 
 when *
     out = 0
-
-    for $i to 20
-        @print $i
-    end
 end
 
 when op == op_add
     out = a + b
+    out_trunc '= a + b
 end
 
 when op == op_sub
@@ -45,8 +43,8 @@ end
 )
 
 @test "Subtraction" (
-    a(1) b(1) => out(0),
-    op(op_sub) => out(0),
+    a(3) b(1) => out(0),
+    op(op_sub) => out(2),
 
     op(0) => out(0),
 

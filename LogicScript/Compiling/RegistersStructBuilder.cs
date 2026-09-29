@@ -28,12 +28,29 @@ namespace LogicScript.Compiling
             for (int i = 0; i < registers.Length; i++)
             {
                 var reg = registers[i];
-                var (type, size) = GetRegisterSize(reg);
 
-                var field = TypeBuilder.DefineField($"Register{i}", reg.VectorLength > 1 ? type.MakeArrayType() : type, FieldAttributes.Public);
-                Registers.Add(reg, new(reg, field, type, size, TotalBytes, i));
+                Type itemType;
+                int itemByteSize;
 
-                TotalBytes += size * reg.VectorLength;
+                // For vectors we want to use the smallest possible integer type to reduce memory usage
+                // For regular fields we use either uint or ulong for better performance
+                if (reg.VectorLength > 1)
+                {
+                    (itemType, itemByteSize) = GetRegisterSize(reg);
+                }
+                else
+                {
+                    (itemType, itemByteSize) = reg.BitSize switch
+                    {
+                        <= 32 => (typeof(uint), 4),
+                        _ => (typeof(ulong), 8),
+                    };
+                }
+
+                var field = TypeBuilder.DefineField($"Register{i}", reg.VectorLength > 1 ? itemType.MakeArrayType() : itemType, FieldAttributes.Public);
+                Registers.Add(reg, new(reg, field, itemType, itemByteSize, TotalBytes, i));
+
+                TotalBytes += itemByteSize * reg.VectorLength;
             }
         }
 
@@ -163,8 +180,7 @@ namespace LogicScript.Compiling
 
                 emitter.MarkLabel(exit);
                 emitter.Return();
-                emitter.CreateMethod(out var inst);
-                Debug.WriteLine(inst);
+                emitter.CreateMethod();
             }
 
             void GenerateEncodeMethod(Emit emitter)

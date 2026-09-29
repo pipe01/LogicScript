@@ -86,19 +86,19 @@ namespace LogicScript.Tests
         public void TestSize()
         {
             var regs = Compile([Port(8, 1, 0), Port(13, 4, 1), Port(64, 1, 0)]);
-            Assert.AreEqual(1 + (2 * 4) + 8, regs.RegistersSize);
+            Assert.AreEqual(4 + (2 * 4) + 8, regs.RegistersSize);
         }
 
         [Test]
         public void TestOneSmallRegister()
         {
-            DecodeEncode([Port(5, 1, 0)], [123]);
+            DecodeEncode([Port(5, 1, 0)], [123, 0, 0, 0]);
         }
 
         [Test]
         public void TestTwoSmallRegisters()
         {
-            DecodeEncode([Port(5, 1, 0), Port(3, 1, 1)], [123, 0b10101010]);
+            DecodeEncode([Port(5, 1, 0), Port(3, 1, 1)], [123, 0, 0, 0, 0b10101010, 0, 0, 0]);
         }
 
         [Test]

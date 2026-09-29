@@ -1,0 +1,9 @@
+reg'16 a
+reg'16 b
+reg'17 c
+
+assign c = a + b
+
+@test (
+    a(1) b(1) => c(2),
+)

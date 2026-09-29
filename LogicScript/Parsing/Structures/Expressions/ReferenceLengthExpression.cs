@@ -9,6 +9,8 @@ namespace LogicScript.Parsing.Structures.Expressions
         public override bool IsConstant => true;
         public override int BitSize => (int)Math.Ceiling(Math.Log(Value, 2)) + 1;
 
+        public override Integer ResultType => Integer.Int;
+
         public int Value
         {
             get

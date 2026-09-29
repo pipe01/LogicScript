@@ -15,6 +15,8 @@ namespace LogicScript.Parsing.Structures.Blocks
 
         public bool IsDefined => Body != null;
 
+        public Integer ResultType => ResultSize.ToIntegerSize();
+
         public override IEnumerable<ICodeNode> GetChildren()
         {
             foreach (var param in Parameters)

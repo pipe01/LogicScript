@@ -16,6 +16,7 @@ using LogicScript.Parsing.Visitors;
 using System.Text;
 using LogicScript.Utils;
 using System.Reflection.Emit;
+using System.Diagnostics;
 
 namespace LogicScript.Compiling
 {
@@ -62,7 +63,10 @@ namespace LogicScript.Compiling
             if (addReturn)
                 Emitter.Return();
 
-            return Emitter.CreateMethod();
+            var method = Emitter.CreateMethod(out var insts);
+            Debug.WriteLine(insts);
+
+            return method;
         }
 
         private void EmitThisField(FieldInfo field)
@@ -71,10 +75,17 @@ namespace LogicScript.Compiling
             Emitter.LoadField(field);
         }
 
-        private Result EmitConstant(BitsValue value)
+        private Integer EmitConstant(BitsValue value) => EmitConstant(value, value.Length <= 32 ? Integer.Int : Integer.Long);
+        private Integer EmitConstant(BitsValue value, Integer size)
         {
+            if (size == Integer.Int)
+            {
+                Emitter.LoadConstant((uint)value.Number);
+                return Integer.Int;
+            }
+
             Emitter.LoadConstant(value.Number);
-            return Result.Empty;
+            return Integer.Long;
         }
 
         private void DebugEmit(Action body)
@@ -247,7 +258,9 @@ namespace LogicScript.Compiling
                                         PrintStringFormat.NumberFormat.Binary => "b",
                                         _ => "",
                                     });
-                                    Emitter.Call(typeof(ulong).GetMethod(nameof(ToString), [typeof(string)]));
+
+                                    var intType = interp.LocalInfo.BitSize.ToIntegerSize().ToIntegerType();
+                                    Emitter.Call(intType.GetMethod(nameof(ToString), [typeof(string)]));
                                 }
                                 else
                                 {
@@ -272,11 +285,12 @@ namespace LogicScript.Compiling
                     EmitThisField(MachineField);
                     Compile(show.Value);
 
-                    using (var local = Emitter.DeclareLocal<ulong>())
+                    var valueType = show.Value.ResultType.ToIntegerType();
+                    using (var local = Emitter.DeclareLocal(valueType))
                     {
                         Emitter.StoreLocal(local);
                         Emitter.LoadLocalAddress(local);
-                        Emitter.Call(typeof(ulong).GetMethod(nameof(ToString), Type.EmptyTypes));
+                        Emitter.Call(valueType.GetMethod(nameof(ToString), Type.EmptyTypes));
                         Emitter.CallVirtual(typeof(IMachine).GetMethod(nameof(IMachine.PrintLine)));
                     }
 
@@ -395,7 +409,7 @@ namespace LogicScript.Compiling
 
         private Result Compile(BlockStatement stmt)
         {
-            var locals = stmt.Locals.ToDictionary(l => l, l => Emitter.DeclareLocal<ulong>($"{l.Name}_{LocalCounter++}"));
+            var locals = stmt.Locals.ToDictionary(l => l, l => Emitter.DeclareLocal(l.BitSize.ToIntegerSize().ToIntegerType(), $"{l.Name}_{LocalCounter++}"));
 
             foreach (var local in locals)
             {
@@ -441,21 +455,22 @@ namespace LogicScript.Compiling
                             if (port.VectorIndex != null)
                             {
                                 Emitter.LoadConstant(port.PortInfo.BitSize);
-                                Compile(port.VectorIndex);
-                                Emitter.Convert<int>();
+                                var indexType = Compile(port.VectorIndex);
+                                Coerce(indexType, Integer.Int);
                                 Emitter.Multiply();
                                 Emitter.Add();
                             }
-                            Compile(stmt.Value);
+                            var valueType = Compile(stmt.Value);
 
-                            if (stmt.Value.BitSize == 1)
+                            if (port.BitSize == 1)
                             {
                                 Emitter.Convert<bool>();
                                 Emitter.CallVirtual(typeof(IMachine).GetMethod(nameof(IMachine.WriteOutput)));
                             }
                             else
                             {
-                                Emitter.LoadConstant(port.BitSize);
+                                Coerce(valueType, Integer.Long);
+                                EmitConstant(port.BitSize, Integer.Int);
                                 Emitter.NewObject(typeof(BitsValue), [typeof(ulong), typeof(int)]);
 
                                 Emitter.CallVirtual(typeof(IMachine).GetMethod(nameof(IMachine.WriteOutputs)));
@@ -527,7 +542,7 @@ namespace LogicScript.Compiling
             return Result.Empty;
         }
 
-        private Result Compile(Expression expr)
+        private Integer Compile(Expression expr)
         {
             if (expr.IsConstant)
                 return EmitConstant(expr.GetConstantValue());
@@ -547,7 +562,7 @@ namespace LogicScript.Compiling
             };
         }
 
-        private Result Compile(TernaryOperatorExpression expr)
+        private Integer Compile(TernaryOperatorExpression expr)
         {
             if (expr.Condition.IsConstant)
             {
@@ -570,33 +585,34 @@ namespace LogicScript.Compiling
             Compile(expr.IfFalse);
             Emitter.MarkLabel(end);
 
-            return Result.Empty;
+            return expr.ResultType;
         }
 
-        private Result Compile(SliceExpression expr)
+        private Integer Compile(SliceExpression expr)
         {
             // TODO: check that this is right
 
-            Compile(expr.Operand);
+            var operandType = Compile(expr.Operand);
+
             if (expr.Start == IndexStart.Right)
             {
                 Compile(expr.Offset);
             }
             else
             {
-                EmitConstant(expr.Operand.BitSize - expr.Length);
+                EmitConstant(expr.Operand.BitSize - expr.Length, expr.Offset.ResultType);
                 Compile(expr.Offset);
                 Emitter.Subtract();
             }
             Emitter.UnsignedShiftRight();
 
-            Emitter.LoadConstant((1UL << expr.Length) - 1);
+            EmitConstant((1UL << expr.Length) - 1, operandType);
             Emitter.And();
 
-            return Result.Empty;
+            return expr.ResultType;
         }
 
-        private Result Compile(UnaryOperatorExpression expr)
+        private Integer Compile(UnaryOperatorExpression expr)
         {
             switch (expr.Operator)
             {
@@ -620,17 +636,20 @@ namespace LogicScript.Compiling
                     throw new InterpreterException("Unknown operand", expr.Span);
             }
 
-            return Result.Empty;
+            return expr.ResultType;
         }
 
-        private Result Compile(BinaryOperatorExpression expr)
+        private Integer Compile(BinaryOperatorExpression expr)
         {
             switch (expr.Operator)
             {
                 case BinaryOperator.And or BinaryOperator.Or or BinaryOperator.Xor or BinaryOperator.Add or BinaryOperator.Subtract or BinaryOperator.Multiply
                     or BinaryOperator.Divide or BinaryOperator.Modulus or BinaryOperator.EqualsCompare or BinaryOperator.NotEqualsCompare or BinaryOperator.Greater or BinaryOperator.Lesser:
-                    Compile(expr.Left);
-                    Compile(expr.Right);
+                    var leftType = Compile(expr.Left);
+                    Coerce(leftType, expr.ResultType);
+
+                    var rightType = Compile(expr.Right);
+                    Coerce(rightType, expr.ResultType);
 
                     _ = expr.Operator switch
                     {
@@ -651,16 +670,21 @@ namespace LogicScript.Compiling
                     break;
 
                 case BinaryOperator.ShiftLeft:
-                    Compile(expr.Left);
-                    Compile(expr.Right);
-                    Emitter.Convert<int>();
+                    leftType = Compile(expr.Left);
+                    Coerce(leftType, expr.ResultType); // shifting left over the 32-bit boundary produces a 64-bit number
+
+                    rightType = Compile(expr.Right);
+                    Coerce(rightType, Integer.Int);
+
                     Emitter.ShiftLeft();
                     break;
 
                 case BinaryOperator.ShiftRight:
                     Compile(expr.Left);
-                    Compile(expr.Right);
-                    Emitter.Convert<int>();
+
+                    rightType = Compile(expr.Right);
+                    Coerce(rightType, Integer.Int);
+
                     Emitter.UnsignedShiftRight();
                     break;
 
@@ -681,7 +705,7 @@ namespace LogicScript.Compiling
                         Emitter.Branch(end);
 
                         Emitter.MarkLabel(shortcut);
-                        Emitter.LoadConstant(isAnd ? 0ul : 1ul);
+                        EmitConstant(isAnd ? 0 : 1, expr.ResultType);
 
                         Emitter.MarkLabel(end);
                     }
@@ -694,17 +718,16 @@ namespace LogicScript.Compiling
                     throw new InterpreterException("Unknown operator", expr.Span);
             }
 
-            return Result.Empty;
+            return expr.ResultType;
         }
 
-        private Result Compile(ReferenceExpression expr)
+        private Integer Compile(ReferenceExpression expr)
         {
             switch (expr.Reference)
             {
                 case LocalReference local:
                     LoadLocal(local.LocalInfo);
-
-                    return Result.Empty;
+                    break;
 
                 case PortReference port:
                     switch (port.PortInfo.Target)
@@ -723,7 +746,8 @@ namespace LogicScript.Compiling
                             Emitter.LoadConstant(port.PortInfo.BitSize);
                             Emitter.CallVirtual(typeof(IMachine).GetMethod(nameof(IMachine.ReadInputs)));
                             Emitter.LoadField(typeof(BitsValue).GetField(nameof(BitsValue.Number))); // TODO: make ReadInputs return a ulong directly
-                            return Result.Empty;
+                            Coerce(Integer.Long, expr.ResultType);
+                            break;
 
                         case MachinePorts.Register:
                             Emitter.LoadArgument(ArgumentThis);
@@ -740,15 +764,12 @@ namespace LogicScript.Compiling
                                 Emitter.Convert<int>();
                                 Emitter.LoadElement(elemType);
                             }
-
-                            if (elemType != typeof(ulong))
-                                Emitter.Convert<ulong>();
-
-                            return Result.Empty;
+                            break;
 
                         default:
                             throw new NotImplementedException();
                     }
+                    break;
 
                 case ConstantReference cnst:
                     return EmitConstant(cnst.Constant.Value);
@@ -756,20 +777,22 @@ namespace LogicScript.Compiling
                 default:
                     throw new NotImplementedException();
             }
+
+            return expr.ResultType;
         }
 
-        private Result Compile(TruncateExpression expr)
+        private Integer Compile(TruncateExpression expr)
         {
             ulong mask = (1UL << expr.BitSize) - 1;
 
-            Compile(expr.Operand);
-            EmitConstant(mask);
+            var operandType = Compile(expr.Operand);
+            EmitConstant(mask, operandType);
             Emitter.And();
 
-            return Result.Empty;
+            return expr.ResultType;
         }
 
-        private Result Compile(FunctionCallExpression expr)
+        private Integer Compile(FunctionCallExpression expr)
         {
             if (!FunctionMethods.TryGetValue(expr.Function.ID, out var method))
                 throw new Exception($"Function implementation for {expr.Function.Name} not found");
@@ -785,7 +808,7 @@ namespace LogicScript.Compiling
 
             Emitter.Call(new MethodInfoProxy(methodBuilder, typeof(ulong), [.. Enumerable.Repeat(typeof(ulong), expr.Function.Parameters.Length)]));
 
-            return Result.Empty;
+            return expr.ResultType;
         }
 
         private void LoadLocal(LocalInfo info, bool address = false)
@@ -841,6 +864,24 @@ namespace LogicScript.Compiling
             EmitConstant((1UL << length) - 1);
             Emitter.CompareEqual(); // TODO: this is an int32
             return Result.Empty;
+        }
+
+        private void Coerce(Integer current, Integer wanted)
+        {
+            if (current != wanted)
+            {
+                switch (wanted)
+                {
+                    case Integer.Int:
+                        Emitter.Convert<int>();
+                        break;
+                    case Integer.Long:
+                        Emitter.Convert<long>();
+                        break;
+                    default:
+                        throw new ArgumentException(nameof(wanted));
+                }
+            }
         }
     }
 }

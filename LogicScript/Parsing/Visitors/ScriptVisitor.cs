@@ -42,7 +42,7 @@ namespace LogicScript.Parsing.Visitors
                         else
                             CheckTestPort(inputPort, input);
                     }
-                    foreach (var output in step.Outputs)
+                    foreach (var output in step.Assertions)
                     {
                         if (!script.Outputs.TryGetValue(output.Name, out var outputPort) && !script.Registers.TryGetValue(output.Name, out outputPort))
                             errors.AddUnknownOutputPort(output.Name, output.NameSpan);

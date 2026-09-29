@@ -10,6 +10,8 @@ namespace LogicScript.Parsing.Structures.Expressions
         public Expression Right { get; set; } = right;
 
         public override bool IsConstant => Left.IsConstant && Right.IsConstant;
+
+#pragma warning disable CS8524 // The switch expression does not handle some values of its input type (it is not exhaustive) involving an unnamed enum value.
         public override int BitSize => Operator switch
         {
             BinaryOperator.And or BinaryOperator.Or or BinaryOperator.Xor or BinaryOperator.Subtract or BinaryOperator.Divide => Left.BitSize > Right.BitSize ? Left.BitSize : Right.BitSize,
@@ -20,8 +22,32 @@ namespace LogicScript.Parsing.Structures.Expressions
             BinaryOperator.Multiply => Left.BitSize + Right.BitSize,
             BinaryOperator.Power => Left.BitSize * ((1 << Right.BitSize) - 1),
             BinaryOperator.Modulus => Right.BitSize,
-            _ => throw new ParseException("Unknown operator bitsize", Span)
         };
+
+        public override Integer ResultType => Operator switch
+        {
+            BinaryOperator.And or
+            BinaryOperator.Or or
+            BinaryOperator.Xor or
+            BinaryOperator.Add or
+            BinaryOperator.Subtract or
+            BinaryOperator.Multiply or
+            BinaryOperator.Divide or
+            BinaryOperator.Power or
+            BinaryOperator.Modulus => Left.ResultType == Integer.Long || Right.ResultType == Integer.Long ? Integer.Long : Integer.Int,
+
+            BinaryOperator.ShiftLeft => BitSize.ToIntegerSize(), // Shifting left over the 32-bit boundary produces a 64-bit number
+            BinaryOperator.ShiftRight => Left.ResultType,
+
+            // Booleans are treated as int32's on stack
+            BinaryOperator.AndAlso or
+            BinaryOperator.OrElse or
+            BinaryOperator.EqualsCompare or
+            BinaryOperator.NotEqualsCompare or
+            BinaryOperator.Greater or
+            BinaryOperator.Lesser => Integer.Int,
+        };
+#pragma warning restore CS8524 // The switch expression does not handle some values of its input type (it is not exhaustive) involving an unnamed enum value.
 
         public override IEnumerable<ICodeNode> GetChildren()
         {

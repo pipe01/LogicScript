@@ -6,6 +6,8 @@ namespace LogicScript.Tests
     {
         private static void AssertExpression(string expr, ulong value)
         {
+            // TODO: add compiler mode to not compute constants, otherwise we're just testing the interpreter
+
             Run($@"
             startup
                 @print {expr}
@@ -79,18 +81,30 @@ namespace LogicScript.Tests
         [Test]
         public void AddRegisters()
         {
-            var machine = new DummyMachine();
-
             Run(@"
-            reg a
-            reg b
+            reg'4 a
+            reg'4 b
 
             startup
                 @print a + b
             end
-            ", machine, [1, 2]);
+            ", out var machine, [1, 0, 0, 0, 2, 0, 0, 0]);
 
             machine.AssertPrinted("3");
+        }
+
+        [Test]
+        public void DecodedSmallRegister()
+        {
+            Run(@"
+            reg'2 a
+
+            startup
+                @print a
+            end
+            ", out var machine, [1, 2, 3, 4]);
+
+            machine.AssertPrinted("1");
         }
 
         [Test]

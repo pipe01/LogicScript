@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -14,5 +15,18 @@ namespace LogicScript.Parsing.Structures
 
             return depthFirst ? children.Append(parent) : children.Prepend(parent);
         }
+
+        public static Integer ToIntegerSize(this int bitSize) => bitSize switch
+        {
+            <= 32 => Integer.Int,
+            <= 64 => Integer.Long,
+            _ => throw new ArgumentOutOfRangeException(nameof(bitSize)),
+        };
+        public static Type ToIntegerType(this Integer size) => size switch
+        {
+            Integer.Int => typeof(int),
+            Integer.Long => typeof(long),
+            _ => throw new ArgumentException(nameof(size)),
+        };
     }
 }

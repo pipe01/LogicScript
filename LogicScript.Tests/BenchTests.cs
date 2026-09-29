@@ -30,7 +30,7 @@ namespace LogicScript.Tests
 
                     return script.TestCases.SelectMany((@case, i) =>
                     {
-                        var suffix = script.TestCases.Count == 1 ? "" : (@case.Name ?? $".Case_{i}");
+                        var suffix = script.TestCases.Count == 1 ? "" : ("." + (@case.Name ?? $"Case_{i}"));
 
                         return new TestCaseParameters[]
                         {

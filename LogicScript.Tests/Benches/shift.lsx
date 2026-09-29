@@ -4,5 +4,6 @@ output'64 c
 assign c = a << 63
 
 @test (
+    a(0) => c(0),
     a(1) => c(1 << 63),
 )

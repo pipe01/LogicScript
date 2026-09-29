@@ -36,20 +36,19 @@ namespace LogicScript.Interpreting
 
         public static BitsValue Slice(BitsValue value, IndexStart start, int offset, byte length)
         {
-            var startIndex = start switch
+            var shift = start switch
             {
-                IndexStart.Left => offset,
-                IndexStart.Right => value.Length - offset - length,
+                IndexStart.Right => offset,
+                IndexStart.Left => value.Length - offset - length,
                 _ => throw new Exception("Unknown slice start")
             };
 
-            if (startIndex < 0 || startIndex >= value.Length)
-                throw new Exception($"Index {startIndex} out of bounds for {value.Length} bits");
+            if (shift < 0 || shift >= value.Length)
+                throw new Exception($"Index {shift} out of bounds for {value.Length} bits");
 
-            if (length == 1)
-                return value[startIndex] ? BitsValue.One : BitsValue.Zero;
+            var mask = (1UL << length) - 1;
 
-            return new BitsValue(value.Bits.AsSpan().Slice(startIndex, length));
+            return new BitsValue((value >> shift) & mask, length);
         }
     }
 }
