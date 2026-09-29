@@ -115,8 +115,8 @@ namespace LogicScript.Parsing.Visitors
             var operand = new ExpressionVisitor(Context).Visit(context.expression());
             var start = context.slice_indexer().lr?.Text switch
             {
-                ">" => IndexStart.Right,
-                "<" or null => IndexStart.Left,
+                ">" or null => IndexStart.Right,
+                "<" => IndexStart.Left,
                 _ => throw new ParseException("Unknown index start position", context.slice_indexer().Span())
             };
 
