@@ -17,8 +17,8 @@ namespace LogicScript.Parsing.Structures.Expressions
         public override int BitSize => Operator switch
         {
             BinaryOperator.And or BinaryOperator.Or or BinaryOperator.Xor or BinaryOperator.Subtract or BinaryOperator.Divide => Left.BitSize > Right.BitSize ? Left.BitSize : Right.BitSize,
-            BinaryOperator.ShiftLeft => Right.IsConstant ? Left.BitSize + (int)Right.GetConstantValue().Number : Left.BitSize + (1 << Right.BitSize) - 1,
-            BinaryOperator.ShiftRight => Right.IsConstant ? Left.BitSize - (int)Right.GetConstantValue().Number : Left.BitSize,
+            BinaryOperator.ShiftLeft => Right.IsConstant ? Left.BitSize + (int)Right.GetValue().Number : Left.BitSize + (1 << Right.BitSize) - 1,
+            BinaryOperator.ShiftRight => Right.IsConstant ? Left.BitSize - (int)Right.GetValue().Number : Left.BitSize,
             BinaryOperator.EqualsCompare or BinaryOperator.NotEqualsCompare or BinaryOperator.Greater or BinaryOperator.Lesser or BinaryOperator.AndAlso or BinaryOperator.OrElse => 1,
             BinaryOperator.Add => Left.BitSize > Right.BitSize ? Left.BitSize + 1 : Right.BitSize + 1,
             BinaryOperator.Multiply => Left.BitSize + Right.BitSize,
@@ -61,7 +61,7 @@ namespace LogicScript.Parsing.Structures.Expressions
 
         public override BitsValue GetValue(in GetValueContext ctx)
         {
-            return Operations.DoOperation(Left.GetValue(ctx), right.GetValue(ctx), Operator);
+            return Operations.DoOperation(Left.GetValue(ctx), Right.GetValue(ctx), Operator);
         }
     }
 }

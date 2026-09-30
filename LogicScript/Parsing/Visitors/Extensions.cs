@@ -11,10 +11,7 @@ namespace LogicScript.Parsing.Visitors
         public static BitsValue GetConstantValue(this IParseTree tree, ScriptContext context, out Expression expr)
         {
             expr = new ExpressionVisitor(new BlockContext(context, null, true)).Visit(tree);
-            return expr.GetConstantValue();
+            return expr.GetValue();
         }
-
-        public static BitsValue GetConstantValue(this Expression expr)
-            => expr.GetValue(GetValueContext.Empty);
     }
 }

@@ -53,7 +53,7 @@ namespace LogicScript.Parsing.Visitors
 
             if (value.IsConstant)
             {
-                if (!Context.Script.Constants.TryAdd(name, new(value.GetConstantValue(), value, nameSpan)))
+                if (!Context.Script.Constants.TryAdd(name, new(value.GetValue(), value, nameSpan)))
                 {
                     var prevLine = Context.Script.Constants[name].Expression.Span.Start.Line;
                     Errors.AddDuplicateConstant(name, prevLine, nameSpan);
@@ -157,7 +157,7 @@ namespace LogicScript.Parsing.Visitors
                 lengthExpression = new ExpressionVisitor(new(Context, isInConstant: true)).Visit(context.simple_indexer().index);
 
                 if (lengthExpression is not PlaceholderExpression)
-                    length = (int)lengthExpression.GetConstantValue().Number;
+                    length = (int)lengthExpression.GetValue().Number;
             }
 
             if (length <= 0)

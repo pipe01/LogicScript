@@ -27,5 +27,6 @@ namespace LogicScript.Parsing.Structures.Expressions
         /// which means that no statement execution is required.
         /// </summary>
         public abstract BitsValue GetValue(in GetValueContext ctx);
+        public BitsValue GetValue() => GetValue(GetValueContext.Empty);
     }
 }

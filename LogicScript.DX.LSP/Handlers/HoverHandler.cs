@@ -4,7 +4,6 @@ using LogicScript.Parsing.Structures;
 using LogicScript.Parsing.Structures.Blocks;
 using LogicScript.Parsing.Structures.Expressions;
 using LogicScript.Parsing.Structures.Statements;
-using LogicScript.Parsing.Visitors;
 using LogicScript.Testing;
 using LogicScript.Utils;
 using OmniSharp.Extensions.LanguageServer.Protocol.Client.Capabilities;
@@ -90,7 +89,7 @@ namespace LogicScript.DX.LSP.Handlers
                     {
                         try
                         {
-                            constValue = expr.GetConstantValue();
+                            constValue = expr.GetValue();
                         }
                         catch { }
                     }

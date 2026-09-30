@@ -140,7 +140,7 @@ namespace LogicScript.Parsing.Visitors
             if (offset.IsConstant)
             {
                 //TODO Figure out the logic for left-indexed slices
-                var offsetValue = (int)offset.GetConstantValue().Number;
+                var offsetValue = (int)offset.GetValue().Number;
 
                 if (offsetValue >= operand.BitSize)
                     Context.Errors.AddSliceOffsetOutOfBounds(context.slice_indexer().offset.Span());

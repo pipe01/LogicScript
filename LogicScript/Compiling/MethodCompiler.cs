@@ -178,7 +178,7 @@ namespace LogicScript.Compiling
 
         private Result Compile(WhenBlock block)
         {
-            if (block.Condition == null || (block.Condition.IsConstant == true && block.Condition.GetConstantValue() != 0))
+            if (block.Condition == null || (block.Condition.IsConstant == true && block.Condition.GetValue() != 0))
             {
                 // Always true
 
@@ -374,7 +374,7 @@ namespace LogicScript.Compiling
         {
             if (stmt.Condition.IsConstant)
             {
-                var condConst = stmt.Condition.GetConstantValue();
+                var condConst = stmt.Condition.GetValue();
 
                 if (condConst != 0)
                     return Compile(stmt.Body);
@@ -545,7 +545,7 @@ namespace LogicScript.Compiling
         private Integer Compile(Expression expr)
         {
             if (expr.IsConstant && Optimizations.HasFlag(Optimizations.ConstantFolding))
-                return EmitConstant(expr.GetConstantValue());
+                return EmitConstant(expr.GetValue());
 
             return expr switch
             {
@@ -566,7 +566,7 @@ namespace LogicScript.Compiling
         {
             if (expr.Condition.IsConstant)
             {
-                var condConst = expr.Condition.GetConstantValue();
+                var condConst = expr.Condition.GetValue();
 
                 if (condConst != 0)
                     return Compile(expr.IfTrue);

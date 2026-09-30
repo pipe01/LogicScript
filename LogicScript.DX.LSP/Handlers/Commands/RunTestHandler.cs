@@ -2,7 +2,6 @@ using System;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using LogicScript.Compiling;
 using LogicScript.DX.DAP;
 using LogicScript.DX.LSP.Debugging;
 using LogicScript.Testing;

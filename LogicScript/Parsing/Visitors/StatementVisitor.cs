@@ -99,7 +99,7 @@ namespace LogicScript.Parsing.Visitors
                 // so if the "to" value is constant we can determine the actual bit length it will be
                 // once the loop variable reaches its maximum value, which is one less than "to".
 
-                var toValue = to.GetConstantValue();
+                var toValue = to.GetValue();
                 toSize = new BitsValue(toValue.Number - 1).Length;
             }
             else
@@ -127,7 +127,7 @@ namespace LogicScript.Parsing.Visitors
                 ? new BlockStatement(Context.NewNodeID(), context.Span(), [], [])
                 : VisitBlock(context.block(), id);
 
-            if (cond.IsConstant && cond.GetConstantValue() != 0 && !body.GetDescendants().Any(n => n is BreakStatement b && b.TargetID == id))
+            if (cond.IsConstant && cond.GetValue() != 0 && !body.GetDescendants().Any(n => n is BreakStatement b && b.TargetID == id))
                 Context.Errors.AddInfiniteLoop(context.Span());
 
             return new WhileStatement(id, context.Span(), cond, body);
