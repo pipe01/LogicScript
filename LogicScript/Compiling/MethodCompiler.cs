@@ -12,7 +12,6 @@ using LogicScript.Parsing;
 using System.Reflection;
 using Sigil.NonGeneric;
 using Sigil;
-using LogicScript.Parsing.Visitors;
 using System.Text;
 using LogicScript.Utils;
 using System.Diagnostics;

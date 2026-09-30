@@ -4,7 +4,6 @@ using System.Net;
 using System.Net.Sockets;
 using LogicScript.Compiling;
 using LogicScript.Data;
-using LogicScript.Interpreting;
 using LogicScript.Parsing;
 using LogicScript.Parsing.Structures;
 using LogicScript.Parsing.Structures.Blocks;
