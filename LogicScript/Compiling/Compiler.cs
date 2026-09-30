@@ -7,6 +7,10 @@ using System.Reflection.Emit;
 using Sigil.NonGeneric;
 using System.Diagnostics;
 
+#if NET5_0_OR_GREATER
+using System.Runtime.Loader;
+#endif
+
 namespace LogicScript.Compiling
 {
     [Flags]
@@ -24,6 +28,10 @@ namespace LogicScript.Compiling
         private readonly bool EmitDebug;
         private readonly Optimizations Optimizations;
 
+#if NET5_0_OR_GREATER
+        private readonly AssemblyLoadContext AssemblyLoadContext;
+#endif
+
         private readonly ModuleBuilder ModuleBuilder;
         private readonly TypeBuilder TypeBuilder;
         private readonly RegistersStructBuilder RegistersStruct;
@@ -35,11 +43,19 @@ namespace LogicScript.Compiling
 
         private readonly Dictionary<NodeID, MethodCompiler> FunctionMethods = [];
 
-        private Compiler(Script script, bool emitDebug, Optimizations optimizations)
+        private Compiler(Script script, bool emitDebug, Optimizations optimizations
+#if NET5_0_OR_GREATER
+        , AssemblyLoadContext assemblyLoadContext
+#endif
+        )
         {
             this.Script = script;
             this.EmitDebug = emitDebug;
             this.Optimizations = optimizations;
+
+#if NET5_0_OR_GREATER
+            this.AssemblyLoadContext = assemblyLoadContext;
+#endif
 
             var ab = AssemblyBuilder.DefineDynamicAssembly(new AssemblyName("<>ScriptAssembly"), AssemblyBuilderAccess.Run);
             ModuleBuilder = ab.DefineDynamicModule("Module");
@@ -94,23 +110,45 @@ namespace LogicScript.Compiling
             var tb = ModuleBuilder.DefineType("Factory", TypeAttributes.Class | TypeAttributes.Sealed);
             tb.AddInterfaceImplementation(typeof(ICompiledScript));
 
-            var emitter = Emit.BuildInstanceMethod(
+            var instEmitter = Emit.BuildInstanceMethod(
                 typeof(IScriptInstance),
                 [typeof(IMachine)],
                 tb,
                 nameof(ICompiledScript.Instantiate),
                 MethodAttributes.Public | MethodAttributes.Virtual | MethodAttributes.NewSlot
             );
-            emitter.NewObject(Constructor);
-            emitter.Duplicate();
-            emitter.LoadArgument(1);
-            emitter.StoreField(MachineField);
-            emitter.Return();
-            emitter.CreateMethod();
+            instEmitter.NewObject(Constructor);
+            instEmitter.Duplicate();
+            instEmitter.LoadArgument(1);
+            instEmitter.StoreField(MachineField);
+            instEmitter.Return();
+            instEmitter.CreateMethod();
+
+            var dispEmitter = Emit.BuildInstanceMethod(
+                typeof(void),
+                Type.EmptyTypes,
+                tb,
+                nameof(IDisposable.Dispose),
+                MethodAttributes.Public | MethodAttributes.Virtual | MethodAttributes.NewSlot
+            );
+
+#if NET5_0_OR_GREATER
+            var alcField = tb.DefineField("ContainingLoadContext", typeof(AssemblyLoadContext), FieldAttributes.Private);
+            dispEmitter.LoadArgument(0);
+            dispEmitter.LoadField(alcField);
+            dispEmitter.Call(typeof(AssemblyLoadContext).GetMethod(nameof(AssemblyLoadContext.Unload)));
+#endif
+            dispEmitter.Return();
+            dispEmitter.CreateMethod();
 
             var type = tb.CreateType() ?? throw new Exception("Failed to create factory type");
+            var instance = (ICompiledScript)(Activator.CreateInstance(type) ?? throw new Exception("Failed to create factory instance"));
 
-            return (ICompiledScript)(Activator.CreateInstance(type) ?? throw new Exception("Failed to create factory instance"));
+#if NET5_0_OR_GREATER
+            type.GetField(alcField.Name, BindingFlags.NonPublic | BindingFlags.Instance)!.SetValue(instance, AssemblyLoadContext);
+#endif
+
+            return instance;
         }
 
         private ICompiledScript Compile()
@@ -149,7 +187,15 @@ namespace LogicScript.Compiling
 
         public static ICompiledScript Compile(Script script, bool emitDebug = false, Optimizations optimizations = Optimizations.All)
         {
+#if NET5_0_OR_GREATER
+            var alc = new AssemblyLoadContext("ScriptLoadContext", true);
+            using (alc.EnterContextualReflection())
+            {
+                return new Compiler(script, emitDebug, optimizations, alc).Compile();
+            }
+#else
             return new Compiler(script, emitDebug, optimizations).Compile();
+#endif
         }
     }
 }

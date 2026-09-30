@@ -15,7 +15,7 @@ using System.Linq;
 
 namespace LogicScript
 {
-    public class Script
+    public class Script : IDisposable
     {
         public IDictionary<string, MachinePortInfo> Inputs { get; } = new Dictionary<string, MachinePortInfo>();
         public IDictionary<string, MachinePortInfo> Outputs { get; } = new Dictionary<string, MachinePortInfo>();
@@ -186,6 +186,14 @@ namespace LogicScript
 
             return (parsed, errors);
         }
+
+        public void Dispose()
+        {
+            foreach (var compiled in Compiled)
+            {
+                compiled.Value.Dispose();
+            }
+        }
     }
 
     public interface IScriptInstance : IRegistersInstance
@@ -213,7 +221,7 @@ namespace LogicScript
         void SetRegister(int index, int vectorIndex, ulong value);
     }
 
-    public interface ICompiledScript
+    public interface ICompiledScript : IDisposable
     {
         IScriptInstance Instantiate(IMachine machine);
     }
