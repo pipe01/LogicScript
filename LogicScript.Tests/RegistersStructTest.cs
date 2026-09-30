@@ -92,19 +92,25 @@ namespace LogicScript.Tests
         [Test]
         public void TestOneSmallRegister()
         {
-            DecodeEncode([Port(5, 1, 0)], [123, 0, 0, 0]);
+            DecodeEncode([Port(9, 1, 0)], [123, 0, 0, 0]);
+            DecodeEncode([Port(15, 1, 0)], [123, 0, 0, 0]);
+            DecodeEncode([Port(18, 1, 0)], [123, 0, 0, 0]);
+            DecodeEncode([Port(32, 1, 0)], [123, 0, 0, 0]);
+            DecodeEncode([Port(33, 1, 0)], [123, 0, 0, 0, 0, 0, 0, 0]);
+            DecodeEncode([Port(63, 1, 0)], [123, 0, 0, 0, 0, 0, 0, 0]);
+            DecodeEncode([Port(64, 1, 0)], [123, 0, 0, 0, 0, 0, 0, 0]);
         }
 
         [Test]
         public void TestTwoSmallRegisters()
         {
-            DecodeEncode([Port(5, 1, 0), Port(3, 1, 1)], [123, 0, 0, 0, 0b10101010, 0, 0, 0]);
+            DecodeEncode([Port(8, 1, 0), Port(8, 1, 1)], [123, 0, 0, 0, 0b10101010, 0, 0, 0]);
         }
 
         [Test]
         public void TestVectors()
         {
-            DecodeEncode([Port(5, 3, 0), Port(16, 2, 1)], [123, 69, 42, 0, 1, 42, 0]);
+            DecodeEncode([Port(8, 3, 0), Port(16, 2, 1)], [123, 69, 42, 0, 1, 42, 0]);
         }
 
         [Test]
