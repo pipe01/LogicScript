@@ -158,7 +158,20 @@ namespace LogicScript.Data
             return this;
         }
 
-        public static int BitsToFit(ulong n) => n is 0 or 1 ? 1 : (int)Math.Floor(Math.Log(n, 2) + 1);
+        public static int BitsToFit(ulong x)
+        {
+#if NETCOREAPP3_0_OR_GREATER || NET5_0_OR_GREATER
+            return 64 - System.Numerics.BitOperations.LeadingZeroCount(x);
+#else
+            int count = 0;
+            while (x != 0)
+            {
+                x &= x - 1;
+                count++;
+            }
+            return 64 - count;
+#endif
+        }
 
         public static BitsValue FromBool(bool b) => b ? One : Zero;
 
