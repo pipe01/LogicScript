@@ -1,6 +1,5 @@
 ﻿using Antlr4.Runtime.Tree;
 using LogicScript.Data;
-using LogicScript.Interpreting;
 using LogicScript.Parsing.Structures.Expressions;
 
 namespace LogicScript.Parsing.Visitors

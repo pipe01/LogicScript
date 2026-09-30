@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
 using LogicScript.Data;
-using LogicScript.Interpreting;
 
 namespace LogicScript.Parsing.Structures.Expressions
 {
