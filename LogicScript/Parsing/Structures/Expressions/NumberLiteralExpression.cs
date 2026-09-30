@@ -1,4 +1,5 @@
 ﻿using LogicScript.Data;
+using LogicScript.Interpreting;
 
 namespace LogicScript.Parsing.Structures.Expressions
 {
@@ -10,5 +11,7 @@ namespace LogicScript.Parsing.Structures.Expressions
         public override int BitSize => Value.Length;
 
         public override string ToString() => Value.ToString();
+
+        public override BitsValue GetValue(in GetValueContext ctx) => Value;
     }
 }

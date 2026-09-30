@@ -1,4 +1,7 @@
+using System;
 using System.Collections.Generic;
+using LogicScript.Data;
+using LogicScript.Interpreting;
 using LogicScript.Parsing.Structures.Blocks;
 
 namespace LogicScript.Parsing.Structures.Expressions
@@ -18,5 +21,7 @@ namespace LogicScript.Parsing.Structures.Expressions
         public override string ToString() => $"{Function.Name}({string.Join<Expression>(", ", Arguments)})";
 
         public override IEnumerable<ICodeNode> GetChildren() => Arguments;
+
+        public override BitsValue GetValue(in GetValueContext ctx) => throw new NotImplementedException("Cannot call functions on interpreter mode");
     }
 }

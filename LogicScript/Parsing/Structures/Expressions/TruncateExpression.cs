@@ -1,4 +1,6 @@
 ﻿using System.Collections.Generic;
+using LogicScript.Data;
+using LogicScript.Interpreting;
 
 namespace LogicScript.Parsing.Structures.Expressions
 {
@@ -20,5 +22,7 @@ namespace LogicScript.Parsing.Structures.Expressions
             if (SizeExpression != null)
                 yield return SizeExpression;
         }
+
+        public override BitsValue GetValue(in GetValueContext ctx) => Operand.GetValue(ctx).Resize(Size);
     }
 }

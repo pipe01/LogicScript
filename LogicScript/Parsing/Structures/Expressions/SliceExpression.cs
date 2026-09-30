@@ -1,4 +1,6 @@
 ﻿using System.Collections.Generic;
+using LogicScript.Data;
+using LogicScript.Interpreting;
 
 namespace LogicScript.Parsing.Structures.Expressions
 {
@@ -23,6 +25,14 @@ namespace LogicScript.Parsing.Structures.Expressions
         {
             yield return Operand;
             yield return Offset;
+        }
+
+        public override BitsValue GetValue(in GetValueContext ctx)
+        {
+            var operand = Operand.GetValue(ctx);
+            var offset = (int)Offset.GetValue(ctx).Number;
+
+            return Operations.Slice(operand, Start, offset, (byte)Length);
         }
     }
 }

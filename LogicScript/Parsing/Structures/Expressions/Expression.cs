@@ -1,7 +1,13 @@
 ﻿using System.Collections.Generic;
+using LogicScript.Data;
 
 namespace LogicScript.Parsing.Structures.Expressions
 {
+    internal readonly record struct GetValueContext(IMachine? Machine, IRegistersInstance? Registers, IReadOnlyDictionary<LocalInfo, ulong>? Locals)
+    {
+        public static readonly GetValueContext Empty = new();
+    }
+
     internal abstract class Expression(SourceSpan span) : ICodeNode
     {
         public SourceSpan Span { get; } = span;
@@ -15,5 +21,11 @@ namespace LogicScript.Parsing.Structures.Expressions
         {
             yield break;
         }
+
+        /// <summary>
+        /// Only used when computing constant values while parsing and for executing expressions entered while debugging,
+        /// which means that no statement execution is required.
+        /// </summary>
+        public abstract BitsValue GetValue(in GetValueContext ctx);
     }
 }

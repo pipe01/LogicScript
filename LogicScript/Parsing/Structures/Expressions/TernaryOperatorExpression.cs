@@ -1,4 +1,6 @@
 ﻿using System.Collections.Generic;
+using LogicScript.Data;
+using LogicScript.Interpreting;
 
 namespace LogicScript.Parsing.Structures.Expressions
 {
@@ -22,5 +24,15 @@ namespace LogicScript.Parsing.Structures.Expressions
         }
 
         public override string ToString() => $"If({Condition}, {IfTrue}, {IfFalse})";
+
+        public override BitsValue GetValue(in GetValueContext ctx)
+        {
+            var cond = Condition.GetValue(ctx);
+
+            if (cond.Number != 0)
+                return IfTrue.GetValue(ctx);
+            else
+                return IfFalse.GetValue(ctx);
+        }
     }
 }

@@ -1,4 +1,7 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using LogicScript.Data;
+using LogicScript.Interpreting;
 
 namespace LogicScript.Parsing.Structures.Expressions
 {
@@ -22,5 +25,23 @@ namespace LogicScript.Parsing.Structures.Expressions
         }
 
         public override string ToString() => $"{Operator}({Operand})";
+
+        public override BitsValue GetValue(in GetValueContext ctx)
+        {
+            if (Operator == UnaryOperator.Length)
+                return new BitsValue((ulong)Operand.BitSize, 7);
+
+            var operand = Operand.GetValue(ctx);
+
+            return Operator switch
+            {
+                UnaryOperator.Not => operand.Negated,
+                UnaryOperator.Rise => throw new NotImplementedException(),
+                UnaryOperator.Fall => throw new NotImplementedException(),
+                UnaryOperator.Change => throw new NotImplementedException(),
+                UnaryOperator.AllOnes => (BitsValue)operand.AreAllBitsSet,
+                _ => throw new InterpreterException("Unknown operand", Span),
+            };
+        }
     }
 }

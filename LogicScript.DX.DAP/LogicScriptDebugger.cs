@@ -613,7 +613,7 @@ public class LogicScriptDebugger : IDebugger, IAttachHandler, IDisconnectHandler
             };
         }
 
-        var result = Interpreter.Visit(parsed, new(CurrentPause.Machine, CurrentPause.ScriptInstance, locals.ToDictionary(p => p.Item1, p => p.Value)));
+        var result = parsed.GetValue(new(CurrentPause.Machine, CurrentPause.ScriptInstance, locals.ToDictionary(p => p.Item1, p => p.Value)));
 
         return new()
         {

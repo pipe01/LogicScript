@@ -1,4 +1,6 @@
 ﻿using System.Collections.Generic;
+using LogicScript.Data;
+using LogicScript.Interpreting;
 using LogicScript.Parsing.Visitors;
 
 namespace LogicScript.Parsing.Structures.Expressions
@@ -56,5 +58,10 @@ namespace LogicScript.Parsing.Structures.Expressions
         }
 
         public override string ToString() => $"{Operator}({Left}, {Right})";
+
+        public override BitsValue GetValue(in GetValueContext ctx)
+        {
+            return Operations.DoOperation(Left.GetValue(ctx), right.GetValue(ctx), Operator);
+        }
     }
 }
