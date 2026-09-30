@@ -23,7 +23,7 @@ namespace LogicScript.Parsing.Structures.Expressions
         }
 
         /// <summary>
-        /// Only used when computing constant values while parsing and for executing expressions entered while debugging,
+        /// Only used when computing constant values while parsing, for constant folding and for executing expressions entered while debugging,
         /// which means that no statement execution is required.
         /// </summary>
         public abstract BitsValue GetValue(in GetValueContext ctx);
