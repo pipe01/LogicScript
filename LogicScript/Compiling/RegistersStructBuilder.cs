@@ -164,16 +164,56 @@ namespace LogicScript.Compiling
                         emitter.LoadField(reg.Field);
                         emitter.Call(typeof(MemoryExtensions).GetMethod(nameof(MemoryExtensions.AsSpan), [Type.MakeGenericMethodParameter(0).MakeArrayType()]).MakeGenericMethod(reg.ItemType));
                         emitter.Call(typeof(ReadOnlySpan<>).MakeGenericType(reg.ItemType).GetMethod(nameof(ReadOnlySpan<>.CopyTo)));
+
+                        if (reg.PortInfo.BitSize != reg.ItemByteSize * 8)
+                        {
+                            /*=
+                            for (int i = 0; i < vectorLength; i++) {
+                                this.Field[i] = TrimNumber(this.Field[i]);
+                            }
+                            */
+
+                            var loopStart = emitter.DefineLabel();
+                            var loopEnd = emitter.DefineLabel();
+
+                            using var i = emitter.DeclareLocal(typeof(int));
+
+                            emitter.LoadConstant(0);
+                            emitter.StoreLocal(i);
+                            emitter.MarkLabel(loopStart);
+                            emitter.LoadLocal(i);
+                            emitter.LoadConstant(reg.PortInfo.VectorLength);
+                            emitter.BranchIfGreaterOrEqual(loopEnd);
+
+                            emitter.LoadArgument(0);
+                            emitter.LoadField(reg.Field);
+                            emitter.LoadLocal(i);
+                            emitter.LoadArgument(0);
+                            emitter.LoadField(reg.Field);
+                            emitter.LoadLocal(i);
+                            emitter.LoadElement(reg.ItemType);
+                            TrimNumber(reg, reg.PortInfo.BitSize);
+                            emitter.StoreElement(reg.ItemType);
+
+                            emitter.LoadLocal(i);
+                            emitter.LoadConstant(1);
+                            emitter.Add();
+                            emitter.StoreLocal(i);
+                            emitter.Branch(loopStart);
+
+                            emitter.MarkLabel(loopEnd);
+                        }
                     }
                     else
                     {
-                        //= this.Field = MemoryMarshal.Read<TItem>(data.Slice(byteStart));
+                        //= this.Field = TrimNumber(MemoryMarshal.Read<TItem>(data.Slice(byteStart)));
 
                         emitter.LoadArgument(0);
                         emitter.LoadArgumentAddress(1);
                         emitter.LoadConstant(reg.ByteStart);
                         emitter.Call(typeof(ReadOnlySpan<byte>).GetMethod(nameof(ReadOnlySpan<>.Slice), [typeof(int)]));
                         emitter.Call(typeof(MemoryMarshal).GetMethod(nameof(MemoryMarshal.Read)).MakeGenericMethod(reg.ItemType));
+                        TrimNumber(reg, reg.PortInfo.BitSize);
                         emitter.StoreField(reg.Field);
                     }
                 }
@@ -181,6 +221,23 @@ namespace LogicScript.Compiling
                 emitter.MarkLabel(exit);
                 emitter.Return();
                 emitter.CreateMethod();
+
+                void TrimNumber(ComputedRegister reg, int bitSize)
+                {
+                    // If the field we are writing to isn't exactly as long as its container type (uint or ulong),
+                    // we need to truncate the number after decoding it from bytes to make sure the bits above the length aren't set
+                    if (bitSize != reg.ItemByteSize * 8)
+                    {
+                        ulong mask = (1UL << bitSize) - 1;
+
+                        if (reg.ItemType == typeof(ulong))
+                            emitter.LoadConstant(mask);
+                        else
+                            emitter.LoadConstant((uint)mask);
+
+                        emitter.And();
+                    }
+                }
             }
 
             void GenerateEncodeMethod(Emit emitter)

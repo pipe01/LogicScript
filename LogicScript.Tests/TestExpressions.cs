@@ -94,20 +94,6 @@ namespace LogicScript.Tests
         }
 
         [Test]
-        public void DecodedSmallRegister()
-        {
-            Run(@"
-            reg'2 a
-
-            startup
-                @print a
-            end
-            ", out var machine, [1, 2, 3, 4]);
-
-            machine.AssertPrinted("1");
-        }
-
-        [Test]
         public void LiteralSliceRight()
         {
             AssertExpression("13{0,1}", 1);

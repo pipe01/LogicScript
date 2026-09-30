@@ -130,5 +130,45 @@ namespace LogicScript.Tests
             Assert.AreEqual(102, regs.GetRegister(0, 2));
             Assert.AreEqual(103, regs.GetRegister(0, 3));
         }
+
+        [Test]
+        public void TestDecodeBigNumberIntoSmallRegister()
+        {
+            var regs = Compile([Port(3, 1, 0)]);
+            regs.DecodeRegisters([1, 2, 3, 4]);
+
+            Assert.AreEqual(1, regs.GetRegister(0, 0));
+        }
+
+        [Test]
+        public void TestDecodeBigNumberIntoSmallRegisterVector()
+        {
+            var regs = Compile([Port(3, 2, 0), Port(15, 2, 1), Port(25, 2, 2), Port(40, 2, 3)]);
+
+            ushort n1 = (1 << 15) + 6;
+            uint n2 = (1 << 25) + 8;
+            ulong n3 = (1UL << 40) + 10;
+
+            regs.DecodeRegisters([
+                1,
+                20,
+                1, 0,
+                (byte)(n1 & 0xFF), (byte)(n1 >> 8),
+                1, 0, 0, 0,
+                (byte)(n2 & 0xFF), (byte)((n2 >> 8) & 0xFF), (byte)(n2 >> 16), 0,
+                1, 0, 0, 0, 0, 0, 0, 0,
+                (byte)(n3 & 0xFF), (byte)((n3 >> 8) & 0xFF), (byte)((n3 >> 16) & 0xFF), (byte)((n3 >> 24) & 0xFF),
+                    (byte)((n3 >> 32) & 0xFF), (byte)((n3 >> 40) & 0xFF), (byte)((n3 >> 48) & 0xFF), (byte)((n3 >> 56) & 0xFF)
+            ]);
+
+            Assert.AreEqual(1, regs.GetRegister(0, 0));
+            Assert.AreEqual(4, regs.GetRegister(0, 1));
+            Assert.AreEqual(1, regs.GetRegister(1, 0));
+            Assert.AreEqual(6, regs.GetRegister(1, 1));
+            Assert.AreEqual(1, regs.GetRegister(2, 0));
+            Assert.AreEqual(8, regs.GetRegister(2, 1));
+            Assert.AreEqual(1, regs.GetRegister(3, 0));
+            Assert.AreEqual(10, regs.GetRegister(3, 1));
+        }
     }
 }
