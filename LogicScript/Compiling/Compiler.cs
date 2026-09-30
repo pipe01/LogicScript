@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using LogicScript.Parsing.Structures;
 using LogicScript.Parsing;
 using System.Reflection;
@@ -10,10 +9,20 @@ using System.Diagnostics;
 
 namespace LogicScript.Compiling
 {
-    public sealed class Compiler
+    [Flags]
+    public enum Optimizations
+    {
+        ConstantFolding = 1 << 0,
+
+        All = ConstantFolding,
+        None = 0,
+    }
+
+    internal sealed class Compiler
     {
         private readonly Script Script;
         private readonly bool EmitDebug;
+        private readonly Optimizations Optimizations;
 
         private readonly ModuleBuilder ModuleBuilder;
         private readonly TypeBuilder TypeBuilder;
@@ -26,10 +35,11 @@ namespace LogicScript.Compiling
 
         private readonly Dictionary<NodeID, MethodCompiler> FunctionMethods = [];
 
-        private Compiler(Script script, bool emitDebug)
+        private Compiler(Script script, bool emitDebug, Optimizations optimizations)
         {
             this.Script = script;
             this.EmitDebug = emitDebug;
+            this.Optimizations = optimizations;
 
             var ab = AssemblyBuilder.DefineDynamicAssembly(new AssemblyName("<>ScriptAssembly"), AssemblyBuilderAccess.Run);
             ModuleBuilder = ab.DefineDynamicModule("Module");
@@ -74,7 +84,8 @@ namespace LogicScript.Compiling
                 DebuggerField,
                 RegistersStruct,
                 EmitDebug,
-                FunctionMethods
+                FunctionMethods,
+                Optimizations
             );
         }
 
@@ -136,9 +147,9 @@ namespace LogicScript.Compiling
             return CreateFactory();
         }
 
-        public static ICompiledScript Compile(Script script, bool emitDebug = false)
+        public static ICompiledScript Compile(Script script, bool emitDebug = false, Optimizations optimizations = Optimizations.All)
         {
-            return new Compiler(script, emitDebug).Compile();
+            return new Compiler(script, emitDebug, optimizations).Compile();
         }
     }
 }

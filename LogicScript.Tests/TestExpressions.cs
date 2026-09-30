@@ -1,24 +1,24 @@
+using System;
+using System.Diagnostics;
+using LogicScript.Compiling;
 using NUnit.Framework;
 
 namespace LogicScript.Tests
 {
-    internal class TestExpressions : BaseTest
+    [TestFixture(Optimizations.All)]
+    [TestFixture(Optimizations.None)]
+    internal class TestExpressions(Optimizations Optimizations) : BaseTest
     {
-        private static void AssertExpression(string expr, ulong value)
+        private void AssertExpression(string expr, ulong value)
         {
-            // TODO: add compiler mode to not compute constants, otherwise we're just testing the interpreter
-
             Run($@"
             startup
                 @print {expr}
             end
-            ", out var machine);
+            ", out var machine, optimizations: Optimizations);
 
             Assert.AreEqual(machine.Printed.Count, 1);
-
-            var printed = ulong.Parse(machine.Printed[0]);
-
-            Assert.AreEqual(value, printed);
+            Assert.AreEqual(value.ToString(), machine.Printed[0].Trim());
         }
 
         [Test]
@@ -50,15 +50,17 @@ namespace LogicScript.Tests
         }
 
         [Test]
+        [TestCase(1, 1, "!", 0)]
         [TestCase(3, 3, "!", 4)]
+        [TestCase(1, 32, "!", 0xFFFFFFFE)]
         [TestCase(0, 3, "len", 3)]
         [TestCase(2, 3, "len", 3)]
         [TestCase(0, 3, "allOnes", 0)]
         [TestCase(1, 3, "allOnes", 0)]
         [TestCase(7, 3, "allOnes", 1)]
-        public void UnaryOperators(int val, int len, string op, int result)
+        public void UnaryOperators(int val, int len, string op, object result)
         {
-            AssertExpression($"{op}(({val})'{len})", (ulong)result);
+            AssertExpression($"{op}(({val})'{len})", Convert.ToUInt64(result));
         }
 
         [Test]
@@ -73,7 +75,7 @@ namespace LogicScript.Tests
             startup
                 @print a + b
             end
-            ", machine);
+            ", machine, optimizations: Optimizations);
 
             machine.AssertPrinted("3");
         }
@@ -88,7 +90,7 @@ namespace LogicScript.Tests
             startup
                 @print a + b
             end
-            ", out var machine, [1, 0, 0, 0, 2, 0, 0, 0]);
+            ", out var machine, [1, 0, 0, 0, 2, 0, 0, 0], optimizations: Optimizations);
 
             machine.AssertPrinted("3");
         }
@@ -138,9 +140,21 @@ namespace LogicScript.Tests
             startup
                 @print a[1]
             end
-            ", machine);
+            ", machine, optimizations: Optimizations);
 
             machine.AssertPrinted("3");
+        }
+
+        [Test]
+        public void PrintNegativeNumberIsNotNegative()
+        {
+            Run(@"
+            startup
+                @print 0xFFFFFFFFFFFFFFFF
+            end
+            ", out var machine, optimizations: Optimizations);
+
+            machine.AssertPrinted("18446744073709551615");
         }
     }
 }

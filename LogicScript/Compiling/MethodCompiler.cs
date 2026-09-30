@@ -28,7 +28,8 @@ namespace LogicScript.Compiling
         FieldInfo DebuggerField,
         RegistersStructBuilder RegistersStruct,
         bool EmitDebug,
-        Dictionary<NodeID, MethodCompiler> FunctionMethods
+        Dictionary<NodeID, MethodCompiler> FunctionMethods,
+        Optimizations Optimizations
     )
     {
         public enum Result
@@ -544,7 +545,7 @@ namespace LogicScript.Compiling
 
         private Integer Compile(Expression expr)
         {
-            if (expr.IsConstant)
+            if (expr.IsConstant && Optimizations.HasFlag(Optimizations.ConstantFolding))
                 return EmitConstant(expr.GetConstantValue());
 
             return expr switch
@@ -619,6 +620,11 @@ namespace LogicScript.Compiling
                 case UnaryOperator.Not:
                     Compile(expr.Operand);
                     Emitter.Not();
+                    if (expr.BitSize % 32 != 0)
+                    {
+                        EmitConstant((1UL << expr.BitSize) - 1, expr.ResultType);
+                        Emitter.And();
+                    }
                     break;
 
                 case UnaryOperator.Length:

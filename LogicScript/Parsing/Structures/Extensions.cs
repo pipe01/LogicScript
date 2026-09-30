@@ -24,8 +24,8 @@ namespace LogicScript.Parsing.Structures
         };
         public static Type ToIntegerType(this Integer size) => size switch
         {
-            Integer.Int => typeof(int),
-            Integer.Long => typeof(long),
+            Integer.Int => typeof(uint),
+            Integer.Long => typeof(ulong),
             _ => throw new ArgumentException(nameof(size)),
         };
     }

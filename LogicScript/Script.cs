@@ -15,8 +15,6 @@ using System.Linq;
 
 namespace LogicScript
 {
-    internal record FunctionDeclaration(string Name, int ReturnSize, int[] Parameters);
-
     public class Script
     {
         public IDictionary<string, MachinePortInfo> Inputs { get; } = new Dictionary<string, MachinePortInfo>();
@@ -37,15 +35,14 @@ namespace LogicScript
 
         public bool HasErrors => Errors.Count > 0;
 
-        private readonly Lazy<ICompiledScript> CompiledScript, CompiledScriptDebug;
+        private record CompilationOptions(bool Debug, Optimizations Optimizations);
+        private readonly Dictionary<CompilationOptions, ICompiledScript> Compiled = new();
 
         internal Script(string source, string fileName, IReadOnlyList<Error> errors)
         {
             this.Source = source;
             this.FileName = fileName;
             this.Errors = errors;
-            this.CompiledScript = new(() => Compiler.Compile(this));
-            this.CompiledScriptDebug = new(() => Compiler.Compile(this, true));
         }
 
         // For tests
@@ -91,11 +88,16 @@ namespace LogicScript
             return null;
         }
 
-        public IScriptInstance CreateInstance(IMachine machine, bool debug = false)
+        public IScriptInstance CreateInstance(IMachine machine, bool debug = false, Optimizations optimizations = Optimizations.All)
         {
-            var lazy = debug ? CompiledScriptDebug : CompiledScript;
+            var opts = new CompilationOptions(debug, optimizations);
 
-            return lazy.Value.Instantiate(machine);
+            if (!Compiled.TryGetValue(opts, out var compiledScript))
+            {
+                Compiled[opts] = compiledScript = Compiler.Compile(this, debug, optimizations);
+            }
+
+            return compiledScript.Instantiate(machine);
         }
 
         public static (Script? Script, IReadOnlyList<Error> Errors) Parse(string source, string fileName = "<script>", bool addNewline = true)
