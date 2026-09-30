@@ -717,7 +717,18 @@ namespace LogicScript.Compiling
                     break;
 
                 case BinaryOperator.Power:
-                    throw new NotImplementedException("TODO: implement power");
+                    Compile(expr.Left);
+                    Coerce(expr.Left.ResultType, Integer.Long);
+                    Emitter.Convert<double>();
+
+                    Compile(expr.Right);
+                    Coerce(expr.Right.ResultType, Integer.Long);
+                    Emitter.Convert<double>();
+
+                    Emitter.Call(typeof(Math).GetMethod(nameof(Math.Pow), [typeof(double), typeof(double)]));
+                    Emitter.Convert<ulong>();
+                    Coerce(Integer.Long, expr.ResultType);
+                    break;
 
                 default:
                     throw new InterpreterException("Unknown operator", expr.Span);

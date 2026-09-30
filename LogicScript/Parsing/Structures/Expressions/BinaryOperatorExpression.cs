@@ -33,8 +33,8 @@ namespace LogicScript.Parsing.Structures.Expressions
             BinaryOperator.Subtract or
             BinaryOperator.Multiply or
             BinaryOperator.Divide or
-            BinaryOperator.Power or
             BinaryOperator.Modulus => Left.ResultType == Integer.Long || Right.ResultType == Integer.Long ? Integer.Long : Integer.Int,
+            BinaryOperator.Power => BitSize.ToIntegerSize(),
 
             BinaryOperator.ShiftLeft => BitSize.ToIntegerSize(), // Shifting left over the 32-bit boundary produces a 64-bit number
             BinaryOperator.ShiftRight => Left.ResultType,

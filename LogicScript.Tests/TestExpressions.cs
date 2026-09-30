@@ -32,7 +32,10 @@ namespace LogicScript.Tests
         [TestCase(5, 3, "*", 15)]
         [TestCase(6, 3, "/", 2)]
         [TestCase(5, 3, "/", 1)]
-        [TestCase(5, 3, "**", 125)]
+        [TestCase(4, 2, "**", 16)]
+        [TestCase(4, 3, "**", 64)]
+        [TestCase(3, 8, "**", 6561)]
+        [TestCase(5, 14, "**", 6103515625)]
         [TestCase(5, 3, "%", 2)]
         [TestCase(5, 3, "==", 0)]
         [TestCase(5, 5, "==", 1)]
@@ -44,9 +47,9 @@ namespace LogicScript.Tests
         [TestCase(5, 3, "<", 0)]
         [TestCase(3, 5, "<", 1)]
         [TestCase(3, 3, "<", 0)]
-        public void BinaryOperators(int a, int b, string op, int result)
+        public void BinaryOperators(int a, int b, string op, object result)
         {
-            AssertExpression($"{a} {op} {b}", (ulong)result);
+            AssertExpression($"{a} {op} {b}", Convert.ToUInt64(result));
         }
 
         [Test]
