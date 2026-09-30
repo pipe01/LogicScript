@@ -60,7 +60,7 @@ namespace LogicScript.Compiling
         {
             var emitter = Emit.BuildInstanceMethod(
                 returnType,
-                [.. Enumerable.Repeat(typeof(ulong), parameters.Length)],
+                parameters.ToIntegerTypes(),
                 TypeBuilder,
                 methodName,
                 isOverride ? MethodAttributes.Public | MethodAttributes.Virtual | MethodAttributes.NewSlot : MethodAttributes.Private | MethodAttributes.HideBySig
@@ -109,7 +109,7 @@ namespace LogicScript.Compiling
 
             foreach (var func in Script.Functions.Values)
             {
-                FunctionMethods[func.ID] = CreateMethodCompiler(func.Name, typeof(ulong), func.Parameters, false);
+                FunctionMethods[func.ID] = CreateMethodCompiler(func.Name, func.ResultType.ToIntegerType(), func.Parameters, false);
             }
 
             foreach (var func in Script.Functions.Values)

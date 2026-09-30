@@ -806,7 +806,12 @@ namespace LogicScript.Compiling
             var innerEmit = typeof(Emit).GetField("InnerEmit", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(method.Emitter);
             var methodBuilder = (MethodBuilder)innerEmit.GetType().GetProperty("MtdBuilder", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(innerEmit);
 
-            Emitter.Call(new MethodInfoProxy(methodBuilder, typeof(ulong), [.. Enumerable.Repeat(typeof(ulong), expr.Function.Parameters.Length)]));
+            var proxy = new MethodInfoProxy(
+                methodBuilder,
+                expr.Function.ResultType.ToIntegerType(),
+                expr.Function.Parameters.ToIntegerTypes()
+            );
+            Emitter.Call(proxy);
 
             return expr.ResultType;
         }

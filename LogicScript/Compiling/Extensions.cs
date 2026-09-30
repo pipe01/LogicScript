@@ -1,6 +1,8 @@
 using System;
+using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
+using LogicScript.Parsing.Structures;
 
 namespace LogicScript.Compiling
 {
@@ -42,5 +44,7 @@ namespace LogicScript.Compiling
 
             return property;
         }
+
+        public static Type[] ToIntegerTypes(this LocalInfo[] localInfos) => localInfos.Select(p => p.BitSize.ToIntegerSize().ToIntegerType()).ToArray();
     }
 }
