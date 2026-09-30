@@ -15,7 +15,6 @@ using Sigil;
 using LogicScript.Parsing.Visitors;
 using System.Text;
 using LogicScript.Utils;
-using System.Reflection.Emit;
 using System.Diagnostics;
 
 namespace LogicScript.Compiling
@@ -809,15 +808,7 @@ namespace LogicScript.Compiling
                 Compile(arg);
             }
 
-            var innerEmit = typeof(Emit).GetField("InnerEmit", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(method.Emitter);
-            var methodBuilder = (MethodBuilder)innerEmit.GetType().GetProperty("MtdBuilder", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(innerEmit);
-
-            var proxy = new MethodInfoProxy(
-                methodBuilder,
-                expr.Function.ResultType.ToIntegerType(),
-                expr.Function.Parameters.ToIntegerTypes()
-            );
-            Emitter.Call(proxy);
+            Emitter.Call(method.Emitter.MethodBuilder, expr.Function.Parameters.ToIntegerTypes(), expr.Function.ResultType.ToIntegerType());
 
             return expr.ResultType;
         }
@@ -890,7 +881,7 @@ namespace LogicScript.Compiling
                         Emitter.Convert<long>();
                         break;
                     default:
-                        throw new ArgumentException(nameof(wanted));
+                        throw new ArgumentException(null, nameof(wanted));
                 }
             }
         }
