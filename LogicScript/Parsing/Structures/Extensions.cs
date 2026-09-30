@@ -26,7 +26,7 @@ namespace LogicScript.Parsing.Structures
         {
             Integer.Int => typeof(uint),
             Integer.Long => typeof(ulong),
-            _ => throw new ArgumentException(nameof(size)),
+            _ => throw new ArgumentException(null, nameof(size)),
         };
     }
 }

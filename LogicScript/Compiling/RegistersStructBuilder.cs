@@ -156,13 +156,13 @@ namespace LogicScript.Compiling
                         emitter.LoadConstant(reg.ByteStart);
                         emitter.LoadConstant(reg.ItemByteSize * reg.PortInfo.VectorLength);
                         emitter.Call(typeof(ReadOnlySpan<byte>).GetMethod(nameof(ReadOnlySpan<>.Slice), [typeof(int), typeof(int)]));
-                        emitter.Call(typeof(MemoryMarshal).GetMethod(nameof(MemoryMarshal.Cast), [typeof(ReadOnlySpan<>).MakeGenericType(Type.MakeGenericMethodParameter(0))]).MakeGenericMethod(typeof(byte), reg.ItemType));
+                        emitter.Call(typeof(MemoryMarshal).GetMethod(nameof(MemoryMarshal.Cast), [typeof(ReadOnlySpan<>).MakeGenericType(Type.MakeGenericMethodParameter(0))])!.MakeGenericMethod(typeof(byte), reg.ItemType));
                         emitter.StoreLocal(casted);
 
                         emitter.LoadLocalAddress(casted);
                         emitter.LoadArgument(0);
                         emitter.LoadField(reg.Field);
-                        emitter.Call(typeof(MemoryExtensions).GetMethod(nameof(MemoryExtensions.AsSpan), [Type.MakeGenericMethodParameter(0).MakeArrayType()]).MakeGenericMethod(reg.ItemType));
+                        emitter.Call(typeof(MemoryExtensions).GetMethod(nameof(MemoryExtensions.AsSpan), [Type.MakeGenericMethodParameter(0).MakeArrayType()])!.MakeGenericMethod(reg.ItemType));
                         emitter.Call(typeof(ReadOnlySpan<>).MakeGenericType(reg.ItemType).GetMethod(nameof(ReadOnlySpan<>.CopyTo)));
 
                         if (reg.PortInfo.BitSize != reg.ItemByteSize * 8)
@@ -212,7 +212,7 @@ namespace LogicScript.Compiling
                         emitter.LoadArgumentAddress(1);
                         emitter.LoadConstant(reg.ByteStart);
                         emitter.Call(typeof(ReadOnlySpan<byte>).GetMethod(nameof(ReadOnlySpan<>.Slice), [typeof(int)]));
-                        emitter.Call(typeof(MemoryMarshal).GetMethod(nameof(MemoryMarshal.Read)).MakeGenericMethod(reg.ItemType));
+                        emitter.Call(typeof(MemoryMarshal).GetMethod(nameof(MemoryMarshal.Read))!.MakeGenericMethod(reg.ItemType));
                         TrimNumber(reg, reg.PortInfo.BitSize);
                         emitter.StoreField(reg.Field);
                     }
@@ -266,7 +266,7 @@ namespace LogicScript.Compiling
                         emitter.LoadArgument(0);
                         emitter.LoadField(reg.Field);
                         emitter.NewObject(typeof(ReadOnlySpan<>).MakeGenericType(reg.ItemType), [reg.ItemType.MakeArrayType()]);
-                        emitter.Call(typeof(MemoryMarshal).GetMethod(nameof(MemoryMarshal.Cast), [typeof(ReadOnlySpan<>).MakeGenericType(Type.MakeGenericMethodParameter(0))]).MakeGenericMethod(reg.ItemType, typeof(byte)));
+                        emitter.Call(typeof(MemoryMarshal).GetMethod(nameof(MemoryMarshal.Cast), [typeof(ReadOnlySpan<>).MakeGenericType(Type.MakeGenericMethodParameter(0))])!.MakeGenericMethod(reg.ItemType, typeof(byte)));
                         emitter.StoreLocal(casted);
 
                         emitter.LoadLocalAddress(casted);
@@ -285,7 +285,7 @@ namespace LogicScript.Compiling
                         emitter.Call(typeof(Span<byte>).GetMethod(nameof(Span<>.Slice), [typeof(int)]));
                         emitter.LoadArgument(0);
                         emitter.LoadFieldAddress(reg.Field);
-                        emitter.Call(typeof(MemoryMarshal).GetMethod(nameof(MemoryMarshal.Write)).MakeGenericMethod(reg.ItemType));
+                        emitter.Call(typeof(MemoryMarshal).GetMethod(nameof(MemoryMarshal.Write))!.MakeGenericMethod(reg.ItemType));
                     }
                 }
 
@@ -398,7 +398,7 @@ namespace LogicScript.Compiling
                             typeof(Array).GetMethod(nameof(Array.Fill), [
                                 Type.MakeGenericMethodParameter(0).MakeArrayType(),
                                 Type.MakeGenericMethodParameter(0)
-                            ]).MakeGenericMethod(reg.ItemType)
+                            ])!.MakeGenericMethod(reg.ItemType)
                         );
                     }
                 }

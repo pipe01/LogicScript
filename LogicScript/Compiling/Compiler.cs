@@ -108,9 +108,9 @@ namespace LogicScript.Compiling
             emitter.Return();
             emitter.CreateMethod();
 
-            var type = tb.CreateType();
+            var type = tb.CreateType() ?? throw new Exception("Failed to create factory type");
 
-            return (ICompiledScript)Activator.CreateInstance(type);
+            return (ICompiledScript)(Activator.CreateInstance(type) ?? throw new Exception("Failed to create factory instance"));
         }
 
         private ICompiledScript Compile()

@@ -25,6 +25,6 @@ namespace LogicScript.Parsing.Structures
             yield return Expression;
         }
 
-        public bool Equals(IPortInfo other) => other is Constant c && c.Value.Equals(Value) && c.Span.Equals(Span);
+        public bool Equals(IPortInfo? other) => other is Constant c && c.Value.Equals(Value) && c.Span.Equals(Span);
     }
 }
