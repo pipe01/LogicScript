@@ -50,6 +50,7 @@ namespace LogicScript.Tests
         }
 
         [Test]
+        [TestCase(0, 4, "!", 15)]
         [TestCase(1, 1, "!", 0)]
         [TestCase(3, 3, "!", 4)]
         [TestCase(1, 32, "!", 0xFFFFFFFE)]
@@ -106,9 +107,11 @@ namespace LogicScript.Tests
         [Test]
         public void LiteralSliceLeft()
         {
-            AssertExpression("13{<1,2}", 2);
-            AssertExpression("13{<2,1}", 1);
-            AssertExpression("13{<0,1}", 1);
+            AssertExpression("1101b{<0,1}", 1);
+            AssertExpression("1101b{<0,2}", 0b11);
+            AssertExpression("1101b{<1,2}", 0b10);
+            AssertExpression("1101b{<1,3}", 0b101);
+            AssertExpression("1101b{<2,1}", 0);
         }
 
         [Test]
