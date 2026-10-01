@@ -372,12 +372,6 @@ public class LogicScriptDebugger : IDebugger, IAttachHandler, IDisconnectHandler
         });
     }
 
-    public async Task WaitForResumeAsync()
-    {
-        if (CurrentPause != null)
-            await CurrentPause.PauseBarrier.Task;
-    }
-
     public void WaitForResume()
     {
 #pragma warning disable VSTHRD002 // Avoid problematic synchronous waits
