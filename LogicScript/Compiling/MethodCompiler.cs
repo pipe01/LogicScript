@@ -128,6 +128,7 @@ namespace LogicScript.Compiling
                 Emitter.LoadConstant(localInfo.ID.ID);
                 Emitter.NewObject<NodeID, int>();
                 LoadLocal(localInfo);
+                Coerce(localInfo.IntegerSize, Integer.Long);
                 Emitter.CallVirtual(typeof(IDebugger).GetMethod(nameof(IDebugger.SetLocal)));
             });
         }
@@ -408,7 +409,7 @@ namespace LogicScript.Compiling
 
         private Result Compile(BlockStatement stmt)
         {
-            var locals = stmt.Locals.ToDictionary(l => l, l => Emitter.DeclareLocal(l.BitSize.ToIntegerSize().ToIntegerType(), $"{l.Name}_{LocalCounter++}"));
+            var locals = stmt.Locals.ToDictionary(l => l, l => Emitter.DeclareLocal(l.IntegerSize.ToIntegerType(), $"{l.Name}_{LocalCounter++}"));
 
             foreach (var local in locals)
             {

@@ -1,14 +1,17 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
 namespace LogicScript.Parsing.Structures
 {
-    public readonly struct LocalInfo(NodeID id, int bitSize, string name, SourceSpan span) : IPortInfo, IIdentifiableCodeNode
+    internal readonly struct LocalInfo(NodeID id, int bitSize, string name, SourceSpan span) : IPortInfo, IIdentifiableCodeNode
     {
         public int BitSize { get; } = bitSize;
         public string Name { get; } = name;
         public SourceSpan Span { get; } = span;
 
         public NodeID ID { get; } = id;
+
+        public Integer IntegerSize => BitSize.ToIntegerSize();
 
         public IEnumerable<ICodeNode> GetChildren()
         {
