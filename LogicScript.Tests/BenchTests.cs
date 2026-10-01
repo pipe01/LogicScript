@@ -87,7 +87,7 @@ namespace LogicScript.Tests
             var lsxSource = ReadEmbeddedFile(lsxFile);
 
             var (script, scriptErrors) = Script.Parse(lsxSource, lsxFile);
-            Assert.IsEmpty(scriptErrors);
+            Assert.IsEmpty(scriptErrors, $"Script {lsxFile} has errors");
             Assert.NotNull(script);
 
             return script!;

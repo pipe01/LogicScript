@@ -15,6 +15,8 @@ namespace LogicScript.Parsing.Visitors
 
         private Script Script => Context.Script;
 
+        private bool SeenBlocks = false;
+
         public override object? VisitPragma_truncate([NotNull] LogicScriptParser.Pragma_truncateContext context)
         {
             var mode = context.EXPLICIT() != null ? TruncatePragmaMode.Explicit
@@ -29,20 +31,34 @@ namespace LogicScript.Parsing.Visitors
 
         public override object? VisitDecl_input([NotNull] LogicScriptParser.Decl_inputContext context)
         {
+            AssertNotSeenBlocks(context.Span());
+
             Visit(context.port_info(), Script.Inputs, MachinePorts.Input);
             return null;
         }
 
         public override object? VisitDecl_output([NotNull] LogicScriptParser.Decl_outputContext context)
         {
+            AssertNotSeenBlocks(context.Span());
+
             Visit(context.port_info(), Script.Outputs, MachinePorts.Output);
             return null;
         }
 
         public override object? VisitDecl_register([NotNull] LogicScriptParser.Decl_registerContext context)
         {
+            AssertNotSeenBlocks(context.Span());
+
             Visit(context.port_info(), Script.Registers, MachinePorts.Register);
             return null;
+        }
+
+        private void AssertNotSeenBlocks(SourceSpan span)
+        {
+            if (SeenBlocks)
+            {
+                Errors.AddWrongIODeclarationOrder(span);
+            }
         }
 
         public override object? VisitDecl_const([NotNull] LogicScriptParser.Decl_constContext context)
@@ -72,6 +88,8 @@ namespace LogicScript.Parsing.Visitors
 
         public override object? VisitDecl_when([NotNull] LogicScriptParser.Decl_whenContext context)
         {
+            SeenBlocks = true;
+
             Expression? cond;
 
             if (context.any != null)
@@ -99,6 +117,8 @@ namespace LogicScript.Parsing.Visitors
 
         public override object? VisitDecl_assign([NotNull] LogicScriptParser.Decl_assignContext context)
         {
+            SeenBlocks = true;
+
             var body = context.stmt_assign() == null ? null : new StatementVisitor(Context).Visit(context.stmt_assign());
 
             if (body is AssignStatement assign)
@@ -116,6 +136,8 @@ namespace LogicScript.Parsing.Visitors
 
         public override object? VisitDecl_startup([NotNull] LogicScriptParser.Decl_startupContext context)
         {
+            SeenBlocks = true;
+
             var body = new StatementVisitor(Context).Visit(context.block());
 
             Script.Blocks.Add(new StartupBlock(context.Span(), body));
@@ -124,6 +146,8 @@ namespace LogicScript.Parsing.Visitors
 
         public override object? VisitDecl_function([NotNull] LogicScriptParser.Decl_functionContext context)
         {
+            SeenBlocks = true;
+
             var name = context.name.Text;
             var declaration = Script.Functions[name];
 

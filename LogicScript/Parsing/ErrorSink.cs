@@ -49,6 +49,7 @@ namespace LogicScript.Parsing
         public const int OutputsMissing = 38;
         public const int PortValueMissing = 39;
         public const int DuplicatePort = 40;
+        public const int WrongIODeclarationOrder = 41;
     }
 
     internal class ErrorSink : IReadOnlyList<Error>
@@ -151,5 +152,6 @@ namespace LogicScript.Parsing
         public void AddBitLengthTooSmall(int bitLength, SourceSpan span) => AddError(ErrorCodes.ExpressionTooLarge, $"All bit lengths {bitLength} must be more than zero", span);
         public void AddBitLengthTooLarge(int bitLength, SourceSpan span) => AddError(ErrorCodes.ExpressionTooLarge, $"All bit lengths {bitLength} must be less than or equal to {BitsValue.BitSize}", span);
         public void AddCannotIndexNonVector(SourceSpan span) => AddError(ErrorCodes.SliceOutOfBounds, "Cannot index into non-vector port", span);
+        public void AddWrongIODeclarationOrder(SourceSpan span) => AddError(ErrorCodes.WrongIODeclarationOrder, "Inputs, outputs and registers must be declared before any code blocks", span);
     }
 }
