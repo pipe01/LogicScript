@@ -33,9 +33,13 @@ namespace LogicScript.Tests
 
                         return new TestCaseParameters[]
                         {
-                            new([lsxFile, i])
+                            new([lsxFile, i, false])
                             {
-                                TestName = fileName + suffix
+                                TestName = "NoDebug." + fileName + suffix
+                            },
+                            new([lsxFile, i, true])
+                            {
+                                TestName = "Debug." + fileName + suffix
                             },
                         };
                     });
@@ -56,10 +60,10 @@ namespace LogicScript.Tests
         }
 
         [TestCaseSource(nameof(Benches))]
-        public async Task Run(string lsbenchFile, int caseIndex)
+        public async Task Run(string lsbenchFile, int caseIndex, bool debug)
         {
             using var script = ParseScript(lsbenchFile);
-            var result = await script.TestCases[caseIndex].Run(script);
+            var result = await script.TestCases[caseIndex].Run(script, debugger: debug ? DummyDebugger.Instance : null);
 
             foreach (var line in result.PrintedLines)
             {
@@ -83,8 +87,8 @@ namespace LogicScript.Tests
             var lsxSource = ReadEmbeddedFile(lsxFile);
 
             var (script, scriptErrors) = Script.Parse(lsxSource, lsxFile);
-            Assert.NotNull(script);
             Assert.IsEmpty(scriptErrors);
+            Assert.NotNull(script);
 
             return script!;
         }
