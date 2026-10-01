@@ -42,10 +42,10 @@ namespace LogicScript.Parsing.Structures.Expressions
                     }
 
                 case LocalReference localReference:
-                    if (ctx.Locals == null)
+                    if (ctx.LocalFetcher == null)
                         throw new InterpreterException("Can't access locals on interpreter runner");
                     else
-                        return ctx.Locals[localReference.LocalInfo];
+                        return ctx.LocalFetcher(localReference.LocalInfo.ID);
 
                 case ConstantReference cnst:
                     return cnst.Constant.Value;

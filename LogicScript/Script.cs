@@ -5,6 +5,7 @@ using LogicScript.Parsing;
 using LogicScript.Parsing.Structures;
 using LogicScript.Parsing.Structures.Blocks;
 using LogicScript.Parsing.Structures.Expressions;
+using LogicScript.Parsing.Structures.Statements;
 using LogicScript.Parsing.Visitors;
 using LogicScript.Testing;
 using System;
@@ -94,6 +95,20 @@ namespace LogicScript
             return null;
         }
 
+        internal IEnumerable<LocalInfo> GetAvailableLocalsAt(SourceLocation location)
+        {
+            return VisitAll()
+                .Where(node => node.Span.Contains(location))
+                .SelectMany(node =>
+                {
+                    if (node is BlockStatement blockStatement)
+                        return blockStatement.Locals;
+                    if (node is FunctionBlock functionBlock)
+                        return functionBlock.Parameters;
+                    return [];
+                });
+        }
+
         public IScriptInstance CreateInstance(IMachine machine, bool debug = false, Optimizations optimizations = Optimizations.All)
         {
             var opts = new CompilationOptions(debug, optimizations);
@@ -156,7 +171,7 @@ namespace LogicScript
             return (script, errors);
         }
 
-        internal (Expression? Parsed, IReadOnlyCollection<Error> Errors) ParseExpression(string expression, IReadOnlyCollection<LocalInfo> locals)
+        internal (Expression? Parsed, IReadOnlyCollection<Error> Errors) ParseExpression(string expression, IEnumerable<LocalInfo> locals)
         {
             var errors = new ErrorSink();
             var scriptContext = new ScriptContext(this, errors);

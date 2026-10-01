@@ -7,6 +7,7 @@ using LogicScript.Data;
 using LogicScript.Parsing;
 using LogicScript.Parsing.Structures;
 using LogicScript.Parsing.Structures.Blocks;
+using LogicScript.Parsing.Structures.Expressions;
 using LogicScript.Parsing.Structures.Statements;
 using OmniSharp.Extensions.DebugAdapter.Protocol.Events;
 using OmniSharp.Extensions.DebugAdapter.Protocol.Models;
@@ -21,7 +22,7 @@ public class LogicScriptDebugger : IDebugger, IAttachHandler, IDisconnectHandler
 
     private bool Attached;
 
-    private readonly record struct PendingBreakpoint(int Number, SourceLocation Location);
+    private readonly record struct PendingBreakpoint(int Number, SourceLocation Location, string? Condition);
     private readonly HashSet<PendingBreakpoint> PendingBreakpoints = [];
 
     private DebugAdapterServer? Server;
@@ -150,9 +151,9 @@ public class LogicScriptDebugger : IDebugger, IAttachHandler, IDisconnectHandler
 
     #region Debugger
 
-    private readonly record struct StatementBreakpoint(int Number, Statement Statement);
+    private readonly record struct StatementBreakpoint(int Number, Statement Statement, Expression? Condition);
 
-    private record class PauseState(int? BreakpointNumber, Statement Statement, IScriptInstance ScriptInstance, IMachine Machine, Script Script)
+    private record PauseState(int? BreakpointNumber, Statement Statement, IScriptInstance ScriptInstance, IMachine Machine, Script Script)
     {
         public readonly TaskCompletionSource<bool> PauseBarrier = new(TaskCreationOptions.RunContinuationsAsynchronously);
 
@@ -176,9 +177,9 @@ public class LogicScriptDebugger : IDebugger, IAttachHandler, IDisconnectHandler
     private int BreakpointCounter = 0;
     private bool PauseNext;
 
-    private Breakpoint AddBreakpoint(SourceLocation location, int? wantNumber = null)
+    private Breakpoint AddBreakpoint(SourceLocation location, string? condition, int? wantNumber = null)
     {
-        var verified = TryAddBreakpoint(location, out var id, out var realLocation, wantNumber);
+        var verified = TryAddBreakpoint(location, condition, out var id, out var realLocation, wantNumber);
         if (!verified)
             return new Breakpoint
             {
@@ -195,24 +196,32 @@ public class LogicScriptDebugger : IDebugger, IAttachHandler, IDisconnectHandler
         };
     }
 
-    private bool TryAddBreakpoint(SourceLocation location, out int number, out SourceLocation realLocation, int? wantNumber = null)
+    private bool TryAddBreakpoint(SourceLocation location, string? condition, out int number, out SourceLocation realLocation, int? wantNumber = null)
     {
         BreakpointsMutex.WaitOne();
         number = wantNumber ?? BreakpointCounter++;
 
         try
         {
-            if (TryFindStatement(location, out var stmt))
+            if (TryFindStatement(location, out var stmt, out var script))
             {
                 realLocation = stmt.Span.Start;
 
-                Breakpoints.Add(number, new(number, stmt));
+                Expression? condExpr = null;
+                if (condition != null)
+                {
+                    (condExpr, _) = script.ParseExpression(condition, script.GetAvailableLocalsAt(realLocation));
+                    if (condExpr == null)
+                        return false;
+                }
+
+                Breakpoints.Add(number, new(number, stmt, condExpr));
 
                 return true;
             }
             else
             {
-                PendingBreakpoints.Add(new(number, location));
+                PendingBreakpoints.Add(new(number, location, condition));
             }
         }
         finally
@@ -224,9 +233,9 @@ public class LogicScriptDebugger : IDebugger, IAttachHandler, IDisconnectHandler
         return false;
     }
 
-    private bool TryFindStatement(SourceLocation location, [MaybeNullWhen(false)] out Statement stmt)
+    private bool TryFindStatement(SourceLocation location, [MaybeNullWhen(false)] out Statement stmt, [MaybeNullWhen(false)] out Script script)
     {
-        var script = LoadedScripts.FirstOrDefault(s => s.FileName == location.FileName);
+        script = LoadedScripts.FirstOrDefault(s => s.FileName == location.FileName);
         if (script != null)
         {
             foreach (var node in script.VisitAll())
@@ -310,7 +319,7 @@ public class LogicScriptDebugger : IDebugger, IAttachHandler, IDisconnectHandler
         StackFrames.Pop();
     }
 
-    void IDebugger.TraceStatement(IScriptInstance compiledScript, IMachine machine, NodeID id)
+    void IDebugger.TraceStatement(IScriptInstance scriptInstance, IMachine machine, NodeID id)
     {
         if (!Attached || !TryFindNode<Statement>(id, out var stmt, out var script) || stmt is BlockStatement)
             return;
@@ -323,7 +332,7 @@ public class LogicScriptDebugger : IDebugger, IAttachHandler, IDisconnectHandler
 
             PauseNext = false;
 
-            Pause(new(null, stmt, compiledScript, machine, script));
+            Pause(new(null, stmt, scriptInstance, machine, script));
             WaitForResume();
             return;
         }
@@ -335,9 +344,15 @@ public class LogicScriptDebugger : IDebugger, IAttachHandler, IDisconnectHandler
             {
                 if (bp.Statement.ID == id)
                 {
+                    if (bp.Condition != null)
+                    {
+                        if (EvaluateExpression(bp.Condition, machine, scriptInstance) == 0)
+                            continue;
+                    }
+
                     Debug.WriteLine("Pausing due to hit breakpoint");
 
-                    Pause(new(bp.Number, bp.Statement, compiledScript, machine, script));
+                    Pause(new(bp.Number, bp.Statement, scriptInstance, machine, script));
                     WaitForResume();
                     break;
                 }
@@ -376,7 +391,7 @@ public class LogicScriptDebugger : IDebugger, IAttachHandler, IDisconnectHandler
 
         foreach (var pending in PendingBreakpoints.ToArray())
         {
-            var bp = AddBreakpoint(pending.Location, pending.Number);
+            var bp = AddBreakpoint(pending.Location, pending.Condition, pending.Number);
 
             if (bp.Verified)
             {
@@ -420,7 +435,7 @@ public class LogicScriptDebugger : IDebugger, IAttachHandler, IDisconnectHandler
 
         return new()
         {
-            Breakpoints = new(request.Breakpoints.Select(b => AddBreakpoint(new SourceLocation(documentUri, b.Line, b.Column ?? 0))))
+            Breakpoints = new(request.Breakpoints.Select(b => AddBreakpoint(new SourceLocation(documentUri, b.Line, b.Column ?? 0), b.Condition)))
         };
     }
 
@@ -601,9 +616,10 @@ public class LogicScriptDebugger : IDebugger, IAttachHandler, IDisconnectHandler
         if (CurrentPause == null)
             throw new InvalidOperationException("Can't evaluate expression while program is running");
 
-        var locals = CurrentFrame.Locals.Select(o => (CurrentPause.Script.VisitAll().OfType<LocalInfo>().First(f => f.ID == o.Key), o.Value));
+        // var locals = CurrentFrame.Locals.Select(o => (CurrentPause.Script.VisitAll().OfType<LocalInfo>().First(f => f.ID == o.Key), o.Value));
+        var locals = CurrentPause.Script.GetAvailableLocalsAt(CurrentFrame.Position.Start);
 
-        var (parsed, errors) = CurrentPause.Script.ParseExpression(request.Expression, [.. locals.Select(p => p.Item1)]);
+        var (parsed, errors) = CurrentPause.Script.ParseExpression(request.Expression, locals);
         if (parsed == null)
         {
             return new()
@@ -612,12 +628,17 @@ public class LogicScriptDebugger : IDebugger, IAttachHandler, IDisconnectHandler
             };
         }
 
-        var result = parsed.GetValue(new(CurrentPause.Machine, CurrentPause.ScriptInstance, locals.ToDictionary(p => p.Item1, p => p.Value)));
+        var result = EvaluateExpression(parsed, CurrentPause.Machine, CurrentPause.ScriptInstance);
 
         return new()
         {
             Result = result.ToString()
         };
+    }
+
+    private BitsValue EvaluateExpression(Expression expression, IMachine machine, IScriptInstance scriptInstance)
+    {
+        return expression.GetValue(new(machine, scriptInstance, id => CurrentFrame.Locals[id]));
     }
 
     #endregion

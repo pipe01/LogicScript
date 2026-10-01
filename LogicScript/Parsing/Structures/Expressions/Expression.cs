@@ -1,9 +1,10 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using LogicScript.Data;
 
 namespace LogicScript.Parsing.Structures.Expressions
 {
-    internal readonly record struct GetValueContext(IMachine? Machine, IRegistersInstance? Registers, IReadOnlyDictionary<LocalInfo, ulong>? Locals)
+    internal readonly record struct GetValueContext(IMachine? Machine, IRegistersInstance? Registers, Func<NodeID, ulong>? LocalFetcher)
     {
         public static readonly GetValueContext Empty = new();
     }
