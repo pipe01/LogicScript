@@ -667,9 +667,9 @@ namespace LogicScript.Compiling
                         BinaryOperator.Divide => Emitter.UnsignedDivide(),
                         BinaryOperator.Modulus => Emitter.Remainder(),
                         BinaryOperator.EqualsCompare => Emitter.CompareEqual(),
-                        BinaryOperator.NotEqualsCompare => Emitter.CompareEqual().LoadConstant(0UL).CompareEqual(),
-                        BinaryOperator.Greater => Emitter.CompareGreaterThan(),
-                        BinaryOperator.Lesser => Emitter.CompareLessThan(),
+                        BinaryOperator.NotEqualsCompare => Emitter.CompareEqual().LoadConstant(0).CompareEqual(),
+                        BinaryOperator.Greater => Emitter.UnsignedCompareGreaterThan(),
+                        BinaryOperator.Lesser => Emitter.UnsignedCompareLessThan(),
                         _ => throw new NotImplementedException()
                     };
                     break;
