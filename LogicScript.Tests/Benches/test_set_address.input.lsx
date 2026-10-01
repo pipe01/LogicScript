@@ -1,0 +1,9 @@
+input'8 vector[5]
+reg'8 out;
+
+assign out = vector[3]
+
+@test (
+    vector(0, 1, 2, 3, 4) => out(3),
+    vector@3(123) => out(123),
+)

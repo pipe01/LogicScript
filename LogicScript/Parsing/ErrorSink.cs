@@ -150,5 +150,6 @@ namespace LogicScript.Parsing
         public void AddDuplicatePort(SourceSpan span) => AddError(ErrorCodes.DuplicatePort, "Duplicate port", span);
         public void AddBitLengthTooSmall(int bitLength, SourceSpan span) => AddError(ErrorCodes.ExpressionTooLarge, $"All bit lengths {bitLength} must be more than zero", span);
         public void AddBitLengthTooLarge(int bitLength, SourceSpan span) => AddError(ErrorCodes.ExpressionTooLarge, $"All bit lengths {bitLength} must be less than or equal to {BitsValue.BitSize}", span);
+        public void AddCannotIndexNonVector(SourceSpan span) => AddError(ErrorCodes.SliceOutOfBounds, "Cannot index into non-vector port", span);
     }
 }

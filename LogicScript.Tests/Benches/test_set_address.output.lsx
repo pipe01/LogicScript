@@ -1,0 +1,9 @@
+input'3 pos
+input'8 value
+output'8 out[8]
+
+assign out[pos] = value
+
+@test (
+    pos(1) value(123) => out@1(123),
+)

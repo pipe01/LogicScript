@@ -42,17 +42,20 @@ namespace LogicScript.Testing
                     if (!script.Inputs.TryGetValue(input.Name, out var port) && !script.Registers.TryGetValue(input.Name, out port))
                         throw new ArgumentException($"Unknown input port '{input.Name}'");
 
+                    int offset = (int)(input.Offset ?? 0);
+
                     for (int i = 0; i < input.Values.Length; i++)
                     {
-                        ulong value = input.Values[i].Value.Number;
+                        var portValue = input.Values[i];
+                        ulong value = portValue.Value.Number;
 
                         if (port.Target == MachinePorts.Register)
                         {
-                            instance.SetRegister(port.StartIndex, i, value);
+                            instance.SetRegister(port.StartIndex, i + offset, value);
                         }
                         else
                         {
-                            int vectorStart = port.StartIndex + i * port.BitSize;
+                            int vectorStart = port.StartIndex + (i + offset) * port.BitSize;
                             var expandedValue = new BitsValue(value, port.BitSize);
                             expandedValue.Bits.CopyTo(machine.Inputs.AsSpan()[vectorStart..(vectorStart + port.BitSize)]);
                         }
@@ -71,16 +74,19 @@ namespace LogicScript.Testing
                     if (!script.Outputs.TryGetValue(assertion.Name, out var port) && !script.Registers.TryGetValue(assertion.Name, out port))
                         throw new ArgumentException($"Unknown output port '{assertion.Name}'");
 
+                    int offset = (int)(assertion.Offset ?? 0);
+
                     var gotValues = Enumerable.Range(0, assertion.Values.Length).Select(i =>
                     {
+
                         if (port.Target == MachinePorts.Output)
                         {
-                            int vectorStart = port.StartIndex + i * port.BitSize;
+                            int vectorStart = port.StartIndex + (i + offset) * port.BitSize;
                             return new BitsValue(machine.Outputs[vectorStart..(vectorStart + port.BitSize)]);
                         }
                         else
                         {
-                            return new BitsValue(instance.GetRegister(port.StartIndex, i));
+                            return new BitsValue(instance.GetRegister(port.StartIndex, i + offset));
                         }
                     }).ToArray();
 

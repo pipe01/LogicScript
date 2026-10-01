@@ -8,7 +8,7 @@ using LogicScript.Parsing.Structures;
 
 namespace LogicScript.Utils
 {
-    public readonly struct PrintStringFormat(SourceSpan span, string text, IReadOnlyCollection<PrintStringFormat.Part> parts) : ICodeNode
+    internal readonly struct PrintStringFormat(SourceSpan span, string text, IReadOnlyCollection<PrintStringFormat.Part> parts) : ICodeNode
     {
         public enum NumberFormat
         {

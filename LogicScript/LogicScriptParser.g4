@@ -14,7 +14,7 @@ test_step           : wsnl (step_action | step_repeat) wsnl COMMA ;
 step_action         : inputs=step_ports wsnl ARROW wsnl outputs=step_ports ;
 step_repeat         : PLUS DEC_NUMBER ;
 step_ports          : (step_portvalue (wsnl_req step_portvalue)*)? ;
-step_portvalue      : port=IDENT LPAREN expression (wsnl COMMA wsnl expression)* RPAREN ;
+step_portvalue      : port=IDENT (AT_SIGN offset=number)? LPAREN expression (wsnl COMMA wsnl expression)* RPAREN ;
 
 declaration         : pragma | decl_const | decl_input | decl_output | decl_register | decl_when | decl_startup | decl_assign | decl_function ;
 decl_const          : CONST WS+ IDENT WS+ EQUALS WS+ expression ;

@@ -52,7 +52,8 @@ namespace LogicScript.Parsing.Visitors
 
             IEnumerable<PortValues> GetPorts(MachinePorts ports, LogicScriptParser.Step_portsContext ctx)
             {
-                var seen = new HashSet<string>();
+                var seen = new HashSet<(string, uint?)>();
+                var scriptContext = script ?? new(new(), errors);
 
                 foreach (var item in ctx.step_portvalue())
                 {
@@ -62,15 +63,33 @@ namespace LogicScript.Parsing.Visitors
                         continue;
                     }
 
-                    if (seen.Contains(item.port.Text))
+                    string name = item.port.Text;
+                    uint? offset = item.offset == null ? null : (uint)new NumberVisitor().Visit(item.offset).Number;
+
+                    if (script != null)
+                    {
+                        if (!script.Script.TryGetPort(name, out var machinePort))
+                        {
+                            errors.AddUnknownPort(name, item.port.Span());
+                            continue;
+                        }
+
+                        if (offset != null && machinePort.VectorLength == 1)
+                        {
+                            errors.AddCannotIndexNonVector(item.Span());
+                            continue;
+                        }
+                    }
+
+                    if (seen.Contains((name, offset)))
                     {
                         errors.AddDuplicatePort(item.Span());
                         continue;
                     }
-                    seen.Add(item.port.Text);
+                    seen.Add((name, offset));
 
-                    var values = item.expression().Select(e => new PortValue(e.GetConstantValue(script ?? new(new(), errors)), e.Span())).ToArray();
-                    yield return new PortValues(ctx.Span(), item.port.Text, ports, values, item.port.Span());
+                    var values = item.expression().Select(e => new PortValue(e.GetConstantValue(scriptContext), e.Span())).ToArray();
+                    yield return new PortValues(ctx.Span(), item.port.Text, ports, offset, values, item.port.Span());
                 }
             }
         }

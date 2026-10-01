@@ -16,7 +16,7 @@ namespace LogicScript.Testing
         public override string ToString() => Value.ToString();
     }
 
-    public readonly record struct PortValues(SourceSpan Span, string Name, MachinePorts Ports, PortValue[] Values, SourceSpan NameSpan) : ICodeNode
+    public readonly record struct PortValues(SourceSpan Span, string Name, MachinePorts Ports, uint? Offset, PortValue[] Values, SourceSpan NameSpan) : ICodeNode
     {
         public SourceSpan ValuesSpan => new(Values[0].Span.Start, Values[^1].Span.End);
 
@@ -25,7 +25,7 @@ namespace LogicScript.Testing
             return Values.Cast<ICodeNode>();
         }
 
-        public override string ToString() => $"{Name}({string.Join(", ", Values)})";
+        public override string ToString() => $"{Name}{(Offset != null ? "@" + Offset : "")}({string.Join(", ", Values)})";
     }
 
     public record CaseStep(IList<PortValues> Inputs, IList<PortValues> Assertions, SourceSpan Span) : ICodeNode

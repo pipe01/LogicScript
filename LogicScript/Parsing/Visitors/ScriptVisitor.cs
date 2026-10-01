@@ -58,9 +58,9 @@ namespace LogicScript.Parsing.Visitors
 
             void CheckTestPort(MachinePortInfo port, PortValues values)
             {
-                if (values.Values.Length < port.VectorLength)
+                if (values.Values.Length < port.VectorLength && values.Offset == null)
                     errors.AddPortVectorTooShort(values.ValuesSpan);
-                else if (values.Values.Length > port.VectorLength)
+                else if (values.Values.Length > port.VectorLength - (values.Offset ?? 0))
                     errors.AddPortVectorTooLong(values.ValuesSpan);
 
                 foreach (var value in values.Values)

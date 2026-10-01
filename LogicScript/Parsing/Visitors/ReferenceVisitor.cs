@@ -55,6 +55,12 @@ namespace LogicScript.Parsing.Visitors
             var nameSpan = context.IDENT().Symbol.Span();
             var portInfo = GetPortInfo(context.IDENT().GetText(), nameSpan);
 
+            if (portInfo.VectorLength == 1)
+            {
+                Context.Errors.AddCannotIndexNonVector(context.Span());
+                return new PortReference(context.Span(), nameSpan, portInfo, null);
+            }
+
             int maxIndexerBitSize = (int)Math.Ceiling(Math.Log(portInfo.VectorLength, 2));
             var index = new ExpressionVisitor(Context, maxIndexerBitSize).Visit(context.simple_indexer().index);
 

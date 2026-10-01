@@ -74,6 +74,12 @@ namespace LogicScript
                     return false;
             }
         }
+        public bool TryGetPort(string name, [MaybeNullWhen(false)] out MachinePortInfo portInfo)
+        {
+            return Inputs.TryGetValue(name, out portInfo)
+                || Outputs.TryGetValue(name, out portInfo)
+                || Registers.TryGetValue(name, out portInfo);
+        }
 
         internal ICodeNode? GetNodeAt(SourceLocation loc, Type[]? types = null, bool depthFirst = true)
         {

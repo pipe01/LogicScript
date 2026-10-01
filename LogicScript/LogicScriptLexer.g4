@@ -84,3 +84,4 @@ DIVIDE              : '/' ;
 POW                 : '**' ;
 MOD                 : '%' ;
 SQUOTE              : '\'' ;
+AT_SIGN             : '@' ;
